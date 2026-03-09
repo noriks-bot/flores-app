@@ -413,6 +413,7 @@ tr.campaign-loss:hover td { background: rgba(239,68,68,0.15) !important; }
           <tbody id="tableBody">
             <tr><td colspan="22"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>
           </tbody>
+          <tbody id="tableTotalsBottom"></tbody>
         </table>
       </div>
     </div>
@@ -560,6 +561,7 @@ function updateSummary() {
     <td>${fmtCompact(clicks)}</td><td>${ctr}</td><td>${cpm}</td><td>${cpc}</td>
     <td>${profitPill(mpTotals.yesterday)}</td><td>${profitPill(mpTotals.d3)}</td><td>${profitPill(mpTotals.d7)}</td><td>${profitPill(mpTotals.d14)}</td><td>${profitPill(mpTotals.lifetime)}</td>
   </tr>`;
+  document.getElementById('tableTotalsBottom').innerHTML=document.getElementById('tableTotals').innerHTML;
   document.getElementById('lastUpdated').textContent='Updated '+new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('campaignCount').textContent=campaigns.length+' campaign'+(campaigns.length!==1?'s':'');
 }
