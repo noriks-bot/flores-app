@@ -14,6 +14,17 @@ const DASH_CACHE_FILE = path.join(CACHE_DIR, 'dash-cache.json');
 const ORIGIN_CACHE_FILE = path.join(CACHE_DIR, 'origin-data.json');
 
 const PRODUCT_COSTS = { tshirt: 3.5, boxers: 2.25 };
+
+// WooCommerce API keys per country store
+const WC_STORES = {
+  HR: { url: 'https://noriks.com/hr', ck: 'ck_ff08e90a8ff90be9f7fdfe7badfd4fdaa456d86b', cs: 'cs_0c36e01e44e488ae9d8a931b591a4d52584d975f' },
+  CZ: { url: 'https://noriks.com/cz', ck: 'ck_396d624acec5f7a46dfcfa7d2a74b95c82b38962', cs: 'cs_2a69c7ad4a4d118a2b8abdf44abdd058c9be9115' },
+  PL: { url: 'https://noriks.com/pl', ck: 'ck_8fd83582ada887d0e586a04bf870d43634ca8f2c', cs: 'cs_f1bf98e46a3ae0623c5f2f9fcf7c2478240c5115' },
+  GR: { url: 'https://noriks.com/gr', ck: 'ck_2595568b83966151e08031e42388dd1c34307107', cs: 'cs_dbd091b4fc11091638f8ec4c838483be32cfb15b' },
+  SK: { url: 'https://noriks.com/sk', ck: 'ck_1abaeb006bb9039da0ad40f00ab674067ff1d978', cs: 'cs_32b33bc2716b07a738ff18eb377a767ef60edfe7' },
+  IT: { url: 'https://noriks.com/it', ck: 'ck_84a1e1425710ff9eeed69b100ed9ac445efc39e2', cs: 'cs_81d25dcb0371773387da4d30482afc7ce83d1b3e' },
+  HU: { url: 'https://noriks.com/hu', ck: 'ck_e591c2a0bf8c7a59ec5893e03adde3c760fbdaae', cs: 'cs_d84113ee7a446322d191be0725c0c92883c984c3' }
+};
 const VAT_RATES = { HR: 0.25, CZ: 0.21, PL: 0.23, GR: 0.24, IT: 0.22, HU: 0.27, SK: 0.23 };
 
 // Parse campaign name for country + product type
@@ -103,77 +114,110 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
       const originDay = originData?.daily?.[ds]?.[country];
       const fbOrders = originDay?.wcByProduct || {};
       
+      // Use FULL country data (same as Advertiser dashboard) — not proportioned by FB ratio
+      // This ensures Flores total matches Advertiser total exactly
       for (const ptype of ['shirts', 'boxers', 'starter', 'kompleti', 'catalog']) {
-        if (!wcAgg[country][ptype]) wcAgg[country][ptype] = { orders: 0, revenueGross: 0, productCost: 0, shippingCost: 0 };
+        if (!wcAgg[country][ptype]) wcAgg[country][ptype] = { orders: 0, revenueGross: 0, profit: 0 };
         const orders = fbOrders[ptype] || 0;
         if (orders === 0) continue;
         
-        const totalOrders = cd.orders || 1;
-        const orderRatio = orders / totalOrders;
+        const totalFbOrders = Object.values(fbOrders).reduce((s, v) => s + (v || 0), 0);
+        const typeRatio = totalFbOrders > 0 ? orders / totalFbOrders : 0;
         
         wcAgg[country][ptype].orders += orders;
-        wcAgg[country][ptype].revenueGross += (cd.revenue_gross_eur || 0) * orderRatio;
-        wcAgg[country][ptype].productCost += (cd.product_cost || 0) * orderRatio;
-        wcAgg[country][ptype].shippingCost += (cd.shipping_cost || 0) * orderRatio;
+        wcAgg[country][ptype].revenueGross += (cd.revenue_gross_eur || 0) * typeRatio;
+        wcAgg[country][ptype].profit += (cd.profit || 0) * typeRatio;
       }
     }
   }
 
-  // Now distribute WC data to campaigns based on country+type and spend ratio
-  // Group campaigns by country+type
-  const groups = {}; // "HR_shirts" -> [campaign1, campaign2]
+  // Group campaigns by country (for profit distribution by spend ratio)
+  const countryGroups = {}; // "HR" -> [campaign1, campaign2, ...]
+  const countryProductGroups = {}; // "HR_shirts" -> [campaign1, campaign2] (for order distribution)
+  
   for (const c of campaigns) {
     const parsed = parseCampaignName(c.name);
     c._parsed = parsed;
     const spend = parseFloat(c.insights?.spend || 0);
     
-    for (const country of (parsed.countries.length ? parsed.countries : ['_ALL'])) {
-      const key = country + '_' + (parsed.productType || '_all');
-      if (!groups[key]) groups[key] = [];
-      groups[key].push({ campaign: c, spend });
+    for (const country of (parsed.countries.length ? parsed.countries : [])) {
+      // Country group (for profit)
+      if (!countryGroups[country]) countryGroups[country] = [];
+      countryGroups[country].push({ campaign: c, spend });
+      
+      // Country+product group (for orders)
+      if (parsed.productType) {
+        const key = country + '_' + parsed.productType;
+        if (!countryProductGroups[key]) countryProductGroups[key] = [];
+        countryProductGroups[key].push({ campaign: c, spend });
+      }
     }
   }
 
-  // Assign WC metrics to each campaign
-  for (const [key, group] of Object.entries(groups)) {
+  // 1. Distribute ORDERS by country+product spend ratio (integer, largest remainder)
+  for (const [key, group] of Object.entries(countryProductGroups)) {
     const [country, ptype] = key.split('_');
-    if (country === '_ALL' || ptype === '_all') continue;
-    
     const wcData = wcAgg[country]?.[ptype];
     if (!wcData || wcData.orders === 0) continue;
     
     const totalSpend = group.reduce((s, g) => s + g.spend, 0);
     if (totalSpend === 0) continue;
     
-    const vatRate = VAT_RATES[country] || 0;
+    const totalOrders = wcData.orders;
+    const rawShares = group.map(g => ({ g, raw: (g.spend / totalSpend) * totalOrders }));
+    const floorSum = rawShares.reduce((s, r) => s + Math.floor(r.raw), 0);
+    let remaining = totalOrders - floorSum;
+    const byRemainder = rawShares.map((r, i) => ({ i, frac: r.raw - Math.floor(r.raw) })).sort((a, b) => b.frac - a.frac);
+    const orderAlloc = rawShares.map(r => Math.floor(r.raw));
+    for (const br of byRemainder) { if (remaining <= 0) break; orderAlloc[br.i]++; remaining--; }
     
-    for (const g of group) {
-      const ratio = g.spend / totalSpend;
-      const wcOrders = Math.round(wcData.orders * ratio * 10) / 10;
-      const wcRevenueGross = wcData.revenueGross * ratio;
-      const wcRevenueNet = wcRevenueGross / (1 + vatRate);
-      const wcProductCost = wcData.productCost * ratio;
-      const wcShippingCost = wcData.shippingCost * ratio;
-      const wcProfit = wcRevenueNet - g.spend - wcProductCost - wcShippingCost;
-      
-      if (!g.campaign.wc) g.campaign.wc = { orders: 0, revenueGross: 0, revenueNet: 0, productCost: 0, shippingCost: 0, profit: 0 };
-      g.campaign.wc.orders += wcOrders;
-      g.campaign.wc.revenueGross += wcRevenueGross;
-      g.campaign.wc.revenueNet += wcRevenueNet;
-      g.campaign.wc.productCost += wcProductCost;
-      g.campaign.wc.shippingCost += wcShippingCost;
-      g.campaign.wc.profit += wcProfit;
+    for (let idx = 0; idx < group.length; idx++) {
+      if (!group[idx].campaign.wc) group[idx].campaign.wc = { orders: 0, revenueGross: 0, profit: 0 };
+      group[idx].campaign.wc.orders += orderAlloc[idx];
     }
   }
 
-  // Round WC values
+  // 2. Distribute PROFIT + REVENUE by spend ratio ONLY to campaigns that have orders > 0
+  // Campaigns with 0 orders = pure loss (revenue 0, profit = -spend)
+  for (const [country, group] of Object.entries(countryGroups)) {
+    // Sum all product types for this country
+    let countryRevenue = 0, countryProfit = 0;
+    for (const ptype of ['shirts', 'boxers', 'starter', 'kompleti', 'catalog']) {
+      const wd = wcAgg[country]?.[ptype];
+      if (wd) { countryRevenue += wd.revenueGross; countryProfit += wd.profit; }
+    }
+    if (countryRevenue === 0 && countryProfit === 0) continue;
+    
+    // Only campaigns with orders participate in revenue/profit distribution
+    const withOrders = group.filter(g => g.campaign.wc && g.campaign.wc.orders > 0);
+    const totalSpend = withOrders.reduce((s, g) => s + g.spend, 0);
+    if (totalSpend === 0) continue;
+    
+    for (const g of withOrders) {
+      const ratio = g.spend / totalSpend;
+      g.campaign.wc.revenueGross += countryRevenue * ratio;
+      g.campaign.wc.profit += countryProfit * ratio;
+    }
+  }
+
+  // Round WC values + pure loss for 0-order campaigns
   for (const c of campaigns) {
+    const spend = parseFloat(c.insights?.spend || 0);
+    if (spend > 0 && !c.wc) {
+      c.wc = { orders: 0, revenueGross: 0, profit: -spend, roas: 0 };
+    }
     if (c.wc) {
-      c.wc.orders = Math.round(c.wc.orders * 10) / 10;
-      c.wc.revenueGross = Math.round(c.wc.revenueGross * 100) / 100;
-      c.wc.revenueNet = Math.round(c.wc.revenueNet * 100) / 100;
-      c.wc.profit = Math.round(c.wc.profit * 100) / 100;
-      c.wc.roas = parseFloat(c.insights?.spend || 0) > 0 ? Math.round(c.wc.revenueGross / parseFloat(c.insights.spend) * 100) / 100 : 0;
+      c.wc.orders = Math.round(c.wc.orders);
+      if (c.wc.orders === 0) {
+        // Pure loss: no orders = no revenue, profit = -spend
+        c.wc.revenueGross = 0;
+        c.wc.profit = spend > 0 ? -spend : 0;
+        c.wc.roas = 0;
+      } else {
+        c.wc.revenueGross = Math.round(c.wc.revenueGross * 100) / 100;
+        c.wc.profit = Math.round(c.wc.profit * 100) / 100;
+        c.wc.roas = spend > 0 ? Math.round(c.wc.revenueGross / spend * 100) / 100 : 0;
+      }
     }
   }
 
@@ -309,34 +353,49 @@ async function getAdsets(campaignId, dateFrom, dateTo) {
   let cached = getCached(cacheKey);
   if (cached) return cached;
 
-  const adsets = await metaGetAll(`${campaignId}/adsets`, {
-    fields: 'id,name,status,daily_budget,lifetime_budget,targeting',
-    limit: 500
-  });
-
+  // Get insights first (source of truth for IDs)
   const insights = await metaGetAll(`${campaignId}/insights`, {
-    fields: INSIGHT_FIELDS,
+    fields: INSIGHT_FIELDS + ',adset_id,adset_name',
     level: 'adset',
     time_range: JSON.stringify({ since: dateFrom, until: dateTo }),
     limit: 500
   });
 
-  const insightMap = {};
+  // Get adset metadata
+  let adsetMeta = {};
+  try {
+    const adsets = await metaGetAll(`${campaignId}/adsets`, {
+      fields: 'id,name,status,daily_budget,lifetime_budget',
+      limit: 500
+    });
+    for (const a of adsets) adsetMeta[a.id] = a;
+  } catch(e) {}
+
+  // Build from insights first (like campaigns)
+  const insightAdsets = {};
   for (const i of insights) {
-    insightMap[i.adset_id] = i;
+    const aid = i.adset_id;
+    insightAdsets[aid] = {
+      id: aid,
+      name: i.adset_name || adsetMeta[aid]?.name || aid,
+      status: adsetMeta[aid]?.status || 'ACTIVE',
+      daily_budget: adsetMeta[aid]?.daily_budget || '0',
+      insights: i
+    };
   }
 
-  const result = adsets.map(a => ({
-    ...a,
-    insights: insightMap[a.id] || null
-  }));
+  // Add active adsets without spend
+  for (const [id, meta] of Object.entries(adsetMeta)) {
+    if (!insightAdsets[id] && meta.status === 'ACTIVE') {
+      insightAdsets[id] = { ...meta, insights: null };
+    }
+  }
 
+  const result = Object.values(insightAdsets);
   result.sort((a, b) => {
     if (a.status === 'ACTIVE' && b.status !== 'ACTIVE') return -1;
     if (b.status === 'ACTIVE' && a.status !== 'ACTIVE') return 1;
-    const spendA = parseFloat(a.insights?.spend || 0);
-    const spendB = parseFloat(b.insights?.spend || 0);
-    return spendB - spendA;
+    return parseFloat(b.insights?.spend || 0) - parseFloat(a.insights?.spend || 0);
   });
 
   setCache(cacheKey, result);
@@ -348,33 +407,86 @@ async function getAds(adsetId, dateFrom, dateTo) {
   let cached = getCached(cacheKey);
   if (cached) return cached;
 
-  const ads = await metaGetAll(`${adsetId}/ads`, {
-    fields: 'id,name,status,creative{title,body,thumbnail_url}',
-    limit: 500
-  });
-
-  const insights = await metaGetAll(`${adsetId}/insights`, {
-    fields: INSIGHT_FIELDS,
+  // Fetch ad-level insights filtered by adset
+  const insights = await metaGetAll(`${AD_ACCOUNT}/insights`, {
+    fields: INSIGHT_FIELDS + ',ad_id,ad_name,adset_id',
     level: 'ad',
+    filtering: JSON.stringify([{field:'adset.id',operator:'EQUAL',value:adsetId}]),
     time_range: JSON.stringify({ since: dateFrom, until: dateTo }),
     limit: 500
   });
 
-  const insightMap = {};
-  for (const i of insights) {
-    insightMap[i.ad_id] = i;
-  }
+  // Try to get ad metadata
+  let adMeta = {};
+  try {
+    const ads = await metaGetAll(`${adsetId}/ads`, {
+      fields: 'id,name,status',
+      limit: 500
+    });
+    for (const a of ads) adMeta[a.id] = a;
+  } catch(e) {}
 
-  const result = ads.map(a => ({
-    ...a,
-    insights: insightMap[a.id] || null
+  // Build from insights
+  const result = insights.filter(i => i.adset_id === adsetId).map(i => ({
+    id: i.ad_id,
+    name: adMeta[i.ad_id]?.name || i.ad_name || i.ad_id,
+    status: adMeta[i.ad_id]?.status || 'ACTIVE',
+    insights: i
   }));
 
-  result.sort((a, b) => {
-    const spendA = parseFloat(a.insights?.spend || 0);
-    const spendB = parseFloat(b.insights?.spend || 0);
-    return spendB - spendA;
-  });
+  result.sort((a, b) => parseFloat(b.insights?.spend || 0) - parseFloat(a.insights?.spend || 0));
+
+  setCache(cacheKey, result);
+  return result;
+}
+
+// Multi-period profit: returns {campaignId: {yesterday, d3, d7, d14, lifetime}} 
+async function getMultiPeriodProfit() {
+  const cacheKey = 'multiprofit_' + new Date().toISOString().slice(0,10);
+  let cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  const today = new Date();
+  const fmt = d => d.toISOString().slice(0,10);
+  const addD = (d,n) => { const r=new Date(d); r.setDate(r.getDate()+n); return r; };
+  
+  const periods = {
+    yesterday: { from: fmt(addD(today,-1)), to: fmt(addD(today,-1)) },
+    d3: { from: fmt(addD(today,-2)), to: fmt(today) },
+    d7: { from: fmt(addD(today,-6)), to: fmt(today) },
+    d14: { from: fmt(addD(today,-13)), to: fmt(today) },
+    lifetime: { from: '2025-01-01', to: fmt(today) }
+  };
+
+  const result = {};
+
+  for (const [period, range] of Object.entries(periods)) {
+    // Get campaign insights for this period
+    const insights = await metaGetAll(`${AD_ACCOUNT}/insights`, {
+      fields: 'spend,campaign_id,campaign_name',
+      level: 'campaign',
+      time_range: JSON.stringify({ since: range.from, until: range.to }),
+      limit: 500
+    });
+
+    // Build temporary campaign objects for enrichment
+    const camps = insights.map(i => ({
+      id: i.campaign_id,
+      name: i.campaign_name || i.campaign_id,
+      insights: { spend: i.spend }
+    }));
+
+    enrichCampaignsWithProfit(camps, range.from, range.to);
+
+    for (const c of camps) {
+      if (!result[c.id]) result[c.id] = {};
+      result[c.id][period] = {
+        spend: parseFloat(c.insights?.spend || 0),
+        profit: c.wc?.profit ?? -(parseFloat(c.insights?.spend || 0)),
+        orders: c.wc?.orders || 0
+      };
+    }
+  }
 
   setCache(cacheKey, result);
   return result;
@@ -410,7 +522,7 @@ const MIME = {
 };
 
 function sendJSON(res, data, status = 200) {
-  res.writeHead(status, { 'Content-Type': 'application/json' });
+  res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache, no-store, must-revalidate' });
   res.end(JSON.stringify(data));
 }
 
@@ -453,13 +565,158 @@ const server = http.createServer(async (req, res) => {
         const data = await getAds(query.adset_id, dateFrom, dateTo);
         return sendJSON(res, data);
       }
+      if (urlPath === '/api/campaign-orders') {
+        if (!query.campaign_id) return sendJSON(res, { error: 'campaign_id required' }, 400);
+        const camp = query.campaign_name || '';
+        const parsed = parseCampaignName(camp);
+        const df = dateFrom, dt = dateTo;
+        
+        if (!parsed.countries.length) return sendJSON(res, { error: 'Cannot determine country from campaign name' }, 400);
+        
+        const allOrders = [];
+        for (const country of parsed.countries) {
+          const store = WC_STORES[country];
+          if (!store) continue;
+          
+          try {
+            // Fetch orders from WC API
+            const wcUrl = `${store.url}/wp-json/wc/v3/orders?after=${df}T00:00:00&before=${dt}T23:59:59&per_page=100&status=processing,completed&consumer_key=${store.ck}&consumer_secret=${store.cs}`;
+            const wcData = await new Promise((resolve, reject) => {
+              https.get(wcUrl, res2 => {
+                let data2 = '';
+                res2.on('data', c2 => data2 += c2);
+                res2.on('end', () => { try { resolve(JSON.parse(data2)); } catch(e2) { reject(e2); } });
+              }).on('error', reject);
+            });
+            
+            if (!Array.isArray(wcData)) continue;
+            
+            for (const order of wcData) {
+              // Check FB attribution
+              const meta = order.meta_data || [];
+              const source = meta.find(m => m.key === '_wc_order_attribution_source_type')?.value || '';
+              const utm = meta.find(m => m.key === '_wc_order_attribution_utm_source')?.value || '';
+              const referrer = meta.find(m => m.key === '_wc_order_attribution_referrer')?.value || '';
+              const sessionEntry = meta.find(m => m.key === '_wc_order_attribution_session_entry')?.value || '';
+              const utmL = utm.toLowerCase();
+              const refL = referrer.toLowerCase();
+              const isFB = utmL.includes('facebook') || utmL.includes('fb') || utmL.includes('ig') || utmL.includes('meta') ||
+                           refL.includes('facebook.com') || refL.includes('fb.com') || refL.includes('instagram.com') ||
+                           refL.includes('fbclid') || sessionEntry.includes('fbclid') || sessionEntry.includes('campaignID');
+              
+              if (!isFB) continue;
+              
+              // Check product type match (multi-language product names)
+              const items = order.line_items || [];
+              let orderType = null;
+              const shirtWords = /shirt|majic|μπλουζ|koszulk|tričko|tričk|póló|magliett|tshirt|t-shirt|λευκ|μαύρα μπλουζ/i;
+              const boxerWords = /boxer|μπόξερ|μποξερ|bokser|boxerk|airflow|modal/i;
+              const kompletWords = /komplet|bundle|σετ.*μπλουζ.*μπ|set/i;
+              const starterWords = /starter|εκκίνησ|start/i;
+              
+              const hasKomplet = items.some(i => kompletWords.test(i.name||'') || (i.sku||'').includes('BUNDLE'));
+              const hasStarter = items.some(i => starterWords.test(i.name||''));
+              const hasShirt = items.some(i => shirtWords.test(i.name||''));
+              const hasBoxer = items.some(i => boxerWords.test(i.name||''));
+              
+              if (hasKomplet) orderType = 'kompleti';
+              else if (hasStarter) orderType = 'starter';
+              else if (hasShirt && !hasBoxer) orderType = 'shirts';
+              else if (hasBoxer && !hasShirt) orderType = 'boxers';
+              else if (hasShirt) orderType = 'shirts';
+              else if (hasBoxer) orderType = 'boxers';
+              
+              // For catalog campaigns, accept all FB orders
+              const isCatalog = parsed.productType === 'catalog';
+              if (!isCatalog && parsed.productType && orderType !== parsed.productType) continue;
+              
+              // Calculate order profit
+              const grossTotal = parseFloat(order.total || 0);
+              const vatRate = VAT_RATES[country] || 0;
+              const rejRate = 0.1; // approximate
+              const netRevenue = grossTotal * (1 - rejRate) / (1 + vatRate);
+              let productCost = 0;
+              let totalQty = 0;
+              const products = items.map(i => {
+                const qty = i.quantity || 1;
+                totalQty += qty;
+                const isShirt = (i.name||'').toLowerCase().includes('shirt') || (i.name||'').toLowerCase().includes('majic');
+                const cost = isShirt ? PRODUCT_COSTS.tshirt * qty : PRODUCT_COSTS.boxers * qty;
+                productCost += cost;
+                return { name: i.name, qty, price: parseFloat(i.total || 0), sku: i.sku || '' };
+              });
+              
+              const shippingCost = parseFloat(order.shipping_total || 0) > 0 ? 3.5 : 0; // avg shipping cost
+              const profit = netRevenue - productCost - shippingCost;
+              
+              allOrders.push({
+                id: order.id,
+                number: order.number,
+                date: order.date_created?.slice(0, 10) || '',
+                customer: (order.billing?.first_name || '') + ' ' + (order.billing?.last_name || ''),
+                email: order.billing?.email || '',
+                country,
+                total: grossTotal,
+                currency: order.currency || 'EUR',
+                products,
+                productCost: Math.round(productCost * 100) / 100,
+                profit: Math.round(profit * 100) / 100,
+                qty: totalQty,
+                type: orderType
+              });
+            }
+          } catch(e) { console.error(`WC fetch error for ${country}:`, e.message); }
+        }
+        
+        allOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+        return sendJSON(res, allOrders);
+      }
+      if (urlPath === '/api/campaign-daily') {
+        if (!query.campaign_id) return sendJSON(res, { error: 'campaign_id required' }, 400);
+        const cacheKey2 = `cdaily_${query.campaign_id}_${getToday()}`;
+        let cached2 = getCached(cacheKey2);
+        if (cached2) return sendJSON(res, cached2);
+        
+        // Fetch daily breakdown for this campaign (last 90 days)
+        const d90 = new Date(); d90.setDate(d90.getDate() - 89);
+        const dailyInsights = await metaGetAll(`${query.campaign_id}/insights`, {
+          fields: 'spend,impressions,clicks,actions,cost_per_action_type',
+          time_increment: 1,
+          time_range: JSON.stringify({ since: d90.toISOString().slice(0,10), until: getToday() }),
+          limit: 500
+        });
+        
+        // Enrich each day with WC profit
+        const days = dailyInsights.map(i => {
+          const day = i.date_start;
+          const spend = parseFloat(i.spend || 0);
+          const purchases = (i.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
+          const purch = purchases ? parseInt(purchases.value) : 0;
+          const cpa = purch > 0 ? spend / purch : 0;
+          
+          // Get WC profit for this campaign on this day
+          const camps = [{ id: query.campaign_id, name: query.campaign_name || '', insights: { spend: i.spend } }];
+          enrichCampaignsWithProfit(camps, day, day);
+          const profit = camps[0].wc?.profit ?? -spend;
+          const orders = camps[0].wc?.orders ?? 0;
+          
+          return { date: day, spend, purchases: purch, cpa, profit, orders };
+        });
+        
+        setCache(cacheKey2, days);
+        return sendJSON(res, days);
+      }
+      if (urlPath === '/api/multi-profit') {
+        const data = await getMultiPeriodProfit();
+        return sendJSON(res, data);
+      }
       if (urlPath === '/api/insights') {
         const level = query.level || 'campaign';
         const data = await getInsights(level, dateFrom, dateTo, query.breakdown);
         return sendJSON(res, data);
       }
       if (urlPath === '/api/clear-cache') {
-        const files = fs.readdirSync(CACHE_DIR);
+        const files = fs.readdirSync(CACHE_DIR).filter(f => !f.startsWith('dash-') && f !== 'origin-data.json');
         files.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
         return sendJSON(res, { cleared: files.length });
       }
@@ -479,7 +736,12 @@ const server = http.createServer(async (req, res) => {
 
   try {
     const content = fs.readFileSync(filePath);
-    res.writeHead(200, { 'Content-Type': contentType });
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
     res.end(content);
   } catch (e) {
     res.writeHead(404);
