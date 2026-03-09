@@ -197,13 +197,12 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
   //
   // This ensures: SUM(campaign_profit) = SUM(country_profit × attrRatio) = Advertiser total
   
-  // Pre-calculate per-country values  
+  // Pre-calculate per-country per-order values (BEFORE ad spend)
   for (const [country, ca] of Object.entries(countryAgg)) {
     if (ca.totalOrders === 0) continue;
-    const attrRatio = ca.totalFbOrders / ca.totalOrders;
-    // profit field from dash-cache already = effectiveNet - spend - productCost - shipping
-    ca.fbProfit = ca.profit * attrRatio;
-    ca.profitPerFbOrder = ca.totalFbOrders > 0 ? ca.fbProfit / ca.totalFbOrders : 0;
+    // marginPerOrder = revenue value per order BEFORE ad spend
+    // = (effectiveNet - productCost - shipping) / totalOrders
+    ca.marginPerOrder = (ca.effectiveNet - ca.productCost - ca.shipping) / ca.totalOrders;
     ca.revenuePerOrder = ca.revenueGross / ca.totalOrders;
   }
   
@@ -213,21 +212,23 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
     
     if (c.wc.orders > 0 && c._countryOrders) {
       let totalRevenue = 0;
-      let totalProfit = 0;
+      let totalMargin = 0;
       
-      // Use actual per-country order allocations (tracked in Step 3)
+      // Per-country order allocations → actual margin from those orders
       for (const [country, countryOrders] of Object.entries(c._countryOrders)) {
         const ca = countryAgg[country];
         if (!ca) continue;
         totalRevenue += (ca.revenuePerOrder || 0) * countryOrders;
-        totalProfit += (ca.profitPerFbOrder || 0) * countryOrders;
+        totalMargin += (ca.marginPerOrder || 0) * countryOrders;
       }
       
       c.wc.revenueGross = totalRevenue;
-      c.wc.profit = totalProfit;
+      // Actual campaign profit = margin from its orders - its own ad spend
+      c.wc.profit = totalMargin - spend;
     } else {
       c.wc.revenueGross = 0;
-      c.wc.profit = 0;
+      // No orders = pure loss (all spend wasted)
+      c.wc.profit = spend > 0 ? -spend : 0;
     }
     
     // Round
