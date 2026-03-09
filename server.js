@@ -34,10 +34,10 @@ function parseCampaignName(name) {
   const n = name.toUpperCase();
   
   // Extract countries (before __)
-  const countryMatch = n.match(/^([A-Z+]+)__/);
+  const countryMatch = n.match(/^([A-Z_+]+?)__/);
   let countries = [];
   if (countryMatch) {
-    countries = countryMatch[1].split('+').filter(c => ['HR','CZ','PL','GR','SK','IT','HU'].includes(c));
+    countries = countryMatch[1].split(/[+_]/).filter(c => ['HR','CZ','PL','GR','SK','IT','HU'].includes(c));
   }
   
   // Extract product type
