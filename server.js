@@ -94,11 +94,16 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
   const originData = loadOriginData();
   if (!dashData || !dashData.data) return campaigns;
 
-  // Aggregate WC data per country per product type for date range
-  const wcAgg = {}; // country -> { shirts: {orders,revenue,cost}, boxers: {...}, ... }
+  // Step 1: Build per-country per-day margin data
+  // margin_per_order = (effective_net - product_cost - shipping) / total_orders
+  // This is the "value per order" before ad spend
+  const countryMargin = {}; // country -> { marginPerOrder, revenuePerOrder, totalOrders, fbOrders: {shirts,boxers,...} }
   
   const from = new Date(dateFrom);
   const to = new Date(dateTo);
+  
+  // Aggregate across date range
+  const countryAgg = {}; // country -> { effectiveNet, productCost, shipping, totalOrders, revenueGross, fbOrdersByType }
   
   for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
     const ds = d.toISOString().slice(0, 10);
@@ -106,40 +111,39 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
     if (!dayData) continue;
     
     for (const country of Object.keys(dayData)) {
-      if (!wcAgg[country]) wcAgg[country] = {};
       const cd = dayData[country];
       if (!cd) continue;
       
-      // Get origin data for attribution ratio (same as Advertiser)
+      if (!countryAgg[country]) countryAgg[country] = { effectiveNet: 0, productCost: 0, shipping: 0, totalOrders: 0, revenueGross: 0, profit: 0, fbOrdersByType: {} };
+      const ca = countryAgg[country];
+      
+      ca.effectiveNet += cd.effective_net_eur || 0;
+      ca.productCost += cd.effective_product_cost || cd.product_cost || 0;
+      ca.shipping += cd.shipping_cost || 0;
+      ca.totalOrders += cd.orders || 0;
+      ca.revenueGross += cd.revenue_gross_eur || 0;
+      ca.profit += cd.profit || 0;
+      
+      // FB orders by product type from origin data
       const originDay = originData?.daily?.[ds]?.[country];
       const fbOrders = originDay?.wcByProduct || {};
-      
-      // Attribution ratio: FB orders / total orders (same as Advertiser's attrRatio)
-      const totalCountryOrders = cd.orders || cd.total_orders || 0;
-      const totalFbOrders = Object.values(fbOrders).reduce((s, v) => s + (v || 0), 0);
-      const attrRatio = totalCountryOrders > 0 ? totalFbOrders / totalCountryOrders : (totalFbOrders > 0 ? 1 : 0);
-      
-      // FB-attributed revenue and profit (proportioned like Advertiser)
-      const fbRevenueGross = (cd.revenue_gross_eur || 0) * attrRatio;
-      const fbProfit = (cd.profit || 0) * attrRatio;
-      
       for (const ptype of ['shirts', 'boxers', 'starter', 'kompleti', 'catalog']) {
-        if (!wcAgg[country][ptype]) wcAgg[country][ptype] = { orders: 0, revenueGross: 0, profit: 0 };
-        const orders = fbOrders[ptype] || 0;
-        if (orders === 0) continue;
-        
-        const typeRatio = totalFbOrders > 0 ? orders / totalFbOrders : 0;
-        
-        wcAgg[country][ptype].orders += orders;
-        wcAgg[country][ptype].revenueGross += fbRevenueGross * typeRatio;
-        wcAgg[country][ptype].profit += fbProfit * typeRatio;
+        ca.fbOrdersByType[ptype] = (ca.fbOrdersByType[ptype] || 0) + (fbOrders[ptype] || 0);
       }
     }
   }
+  
+  // Calculate margin per order for each country
+  for (const [country, ca] of Object.entries(countryAgg)) {
+    if (ca.totalOrders === 0) continue;
+    // margin = what each order is worth BEFORE ad spend
+    ca.marginPerOrder = (ca.effectiveNet - ca.productCost - ca.shipping) / ca.totalOrders;
+    ca.revenuePerOrder = ca.revenueGross / ca.totalOrders;
+    ca.totalFbOrders = Object.values(ca.fbOrdersByType).reduce((s, v) => s + v, 0);
+  }
 
-  // Group campaigns by country (for profit distribution by spend ratio)
-  const countryGroups = {}; // "HR" -> [campaign1, campaign2, ...]
-  const countryProductGroups = {}; // "HR_shirts" -> [campaign1, campaign2] (for order distribution)
+  // Step 2: Parse campaigns and group by country+product for order distribution
+  const countryProductGroups = {}; // "HR_shirts" -> [{campaign, spend}]
   
   for (const c of campaigns) {
     const parsed = parseCampaignName(c.name);
@@ -147,87 +151,90 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
     const spend = parseFloat(c.insights?.spend || 0);
     
     for (const country of (parsed.countries.length ? parsed.countries : [])) {
-      // Country group (for profit)
-      if (!countryGroups[country]) countryGroups[country] = [];
-      countryGroups[country].push({ campaign: c, spend });
-      
-      // Country+product group (for orders)
       if (parsed.productType) {
         const key = country + '_' + parsed.productType;
         if (!countryProductGroups[key]) countryProductGroups[key] = [];
-        countryProductGroups[key].push({ campaign: c, spend });
+        countryProductGroups[key].push({ campaign: c, spend, country });
       }
     }
   }
 
-  // 1. Distribute ORDERS by country+product spend ratio (integer, largest remainder)
+  // Step 3: Distribute orders by spend ratio (largest remainder method)
+  // Also track per-country order allocations for multi-country campaigns
   for (const [key, group] of Object.entries(countryProductGroups)) {
     const [country, ptype] = key.split('_');
-    const wcData = wcAgg[country]?.[ptype];
-    if (!wcData || wcData.orders === 0) continue;
+    const ca = countryAgg[country];
+    if (!ca) continue;
+    const fbTypeOrders = ca.fbOrdersByType[ptype] || 0;
+    if (fbTypeOrders === 0) continue;
     
     const totalSpend = group.reduce((s, g) => s + g.spend, 0);
     if (totalSpend === 0) continue;
     
-    const totalOrders = wcData.orders;
-    const rawShares = group.map(g => ({ g, raw: (g.spend / totalSpend) * totalOrders }));
-    const floorSum = rawShares.reduce((s, r) => s + Math.floor(r.raw), 0);
-    let remaining = totalOrders - floorSum;
-    const byRemainder = rawShares.map((r, i) => ({ i, frac: r.raw - Math.floor(r.raw) })).sort((a, b) => b.frac - a.frac);
+    const rawShares = group.map(g => ({ g, raw: (g.spend / totalSpend) * fbTypeOrders }));
     const orderAlloc = rawShares.map(r => Math.floor(r.raw));
+    let remaining = fbTypeOrders - orderAlloc.reduce((a, b) => a + b, 0);
+    const byRemainder = rawShares.map((r, i) => ({ i, frac: r.raw - Math.floor(r.raw) })).sort((a, b) => b.frac - a.frac);
     for (const br of byRemainder) { if (remaining <= 0) break; orderAlloc[br.i]++; remaining--; }
     
     for (let idx = 0; idx < group.length; idx++) {
       if (!group[idx].campaign.wc) group[idx].campaign.wc = { orders: 0, revenueGross: 0, profit: 0 };
       group[idx].campaign.wc.orders += orderAlloc[idx];
+      // Track per-country orders for accurate profit calculation
+      if (!group[idx].campaign._countryOrders) group[idx].campaign._countryOrders = {};
+      group[idx].campaign._countryOrders[country] = (group[idx].campaign._countryOrders[country] || 0) + orderAlloc[idx];
     }
   }
 
-  // 2. Distribute PROFIT + REVENUE by spend ratio ONLY to campaigns that have orders > 0
-  // Campaigns with 0 orders = pure loss (revenue 0, profit = -spend)
-  for (const [country, group] of Object.entries(countryGroups)) {
-    // Sum all product types for this country
-    let countryRevenue = 0, countryProfit = 0;
-    for (const ptype of ['shirts', 'boxers', 'starter', 'kompleti', 'catalog']) {
-      const wd = wcAgg[country]?.[ptype];
-      if (wd) { countryRevenue += wd.revenueGross; countryProfit += wd.profit; }
-    }
-    if (countryRevenue === 0 && countryProfit === 0) continue;
-    
-    // Distribute revenue only to campaigns with orders, profit to ALL by spend ratio
-    // (dash profit already has country spend deducted, so all campaigns share in the P&L)
-    const totalSpend = group.reduce((s, g) => s + g.spend, 0);
-    if (totalSpend === 0) continue;
-    
-    // Revenue: only to campaigns with orders
-    const withOrders = group.filter(g => g.campaign.wc && g.campaign.wc.orders > 0);
-    const ordersSpend = withOrders.reduce((s, g) => s + g.spend, 0);
-    if (ordersSpend > 0) {
-      for (const g of withOrders) {
-        g.campaign.wc.revenueGross += countryRevenue * (g.spend / ordersSpend);
-      }
-    }
-    
-    // Profit: to ALL campaigns by spend ratio (spend already included in dash profit)
-    for (const g of group) {
-      const ratio = g.spend / totalSpend;
-      if (!g.campaign.wc) g.campaign.wc = { orders: 0, revenueGross: 0, profit: 0 };
-      g.campaign.wc.profit += countryProfit * ratio;
-    }
+  // Step 4: Calculate per-campaign profit & revenue from its orders
+  // 
+  // Method (matches Advertiser exactly):
+  // - profitPerFbOrder = (dash_profit × attrRatio) / totalFbOrders
+  //   where dash_profit already has country-level spend, product cost, shipping deducted
+  //   and attrRatio = totalFbOrders / totalOrders
+  // - campaign_profit = profitPerFbOrder × campaign_orders
+  // - campaign_revenue = revenuePerOrder × campaign_orders
+  //
+  // This ensures: SUM(campaign_profit) = SUM(country_profit × attrRatio) = Advertiser total
+  
+  // Pre-calculate per-country values  
+  for (const [country, ca] of Object.entries(countryAgg)) {
+    if (ca.totalOrders === 0) continue;
+    const attrRatio = ca.totalFbOrders / ca.totalOrders;
+    // profit field from dash-cache already = effectiveNet - spend - productCost - shipping
+    ca.fbProfit = ca.profit * attrRatio;
+    ca.profitPerFbOrder = ca.totalFbOrders > 0 ? ca.fbProfit / ca.totalFbOrders : 0;
+    ca.revenuePerOrder = ca.revenueGross / ca.totalOrders;
   }
-
-  // Round WC values
+  
   for (const c of campaigns) {
     const spend = parseFloat(c.insights?.spend || 0);
-    if (spend > 0 && !c.wc) {
-      c.wc = { orders: 0, revenueGross: 0, profit: 0, roas: 0 };
+    if (!c.wc) c.wc = { orders: 0, revenueGross: 0, profit: 0 };
+    
+    if (c.wc.orders > 0 && c._countryOrders) {
+      let totalRevenue = 0;
+      let totalProfit = 0;
+      
+      // Use actual per-country order allocations (tracked in Step 3)
+      for (const [country, countryOrders] of Object.entries(c._countryOrders)) {
+        const ca = countryAgg[country];
+        if (!ca) continue;
+        totalRevenue += (ca.revenuePerOrder || 0) * countryOrders;
+        totalProfit += (ca.profitPerFbOrder || 0) * countryOrders;
+      }
+      
+      c.wc.revenueGross = totalRevenue;
+      c.wc.profit = totalProfit;
+    } else {
+      c.wc.revenueGross = 0;
+      c.wc.profit = 0;
     }
-    if (c.wc) {
-      c.wc.orders = Math.round(c.wc.orders);
-      c.wc.revenueGross = Math.round(c.wc.revenueGross * 100) / 100;
-      c.wc.profit = Math.round(c.wc.profit * 100) / 100;
-      c.wc.roas = spend > 0 ? Math.round(c.wc.revenueGross / spend * 100) / 100 : 0;
-    }
+    
+    // Round
+    c.wc.orders = Math.round(c.wc.orders);
+    c.wc.revenueGross = Math.round(c.wc.revenueGross * 100) / 100;
+    c.wc.profit = Math.round(c.wc.profit * 100) / 100;
+    c.wc.roas = spend > 0 ? Math.round(c.wc.revenueGross / spend * 100) / 100 : 0;
   }
 
   return campaigns;
