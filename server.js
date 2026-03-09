@@ -110,23 +110,29 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
       const cd = dayData[country];
       if (!cd) continue;
       
-      // Get origin wcByProduct for Facebook-attributed orders
+      // Get origin data for attribution ratio (same as Advertiser)
       const originDay = originData?.daily?.[ds]?.[country];
       const fbOrders = originDay?.wcByProduct || {};
       
-      // Use FULL country data (same as Advertiser dashboard) — not proportioned by FB ratio
-      // This ensures Flores total matches Advertiser total exactly
+      // Attribution ratio: FB orders / total orders (same as Advertiser's attrRatio)
+      const totalCountryOrders = cd.orders || cd.total_orders || 0;
+      const totalFbOrders = Object.values(fbOrders).reduce((s, v) => s + (v || 0), 0);
+      const attrRatio = totalCountryOrders > 0 ? totalFbOrders / totalCountryOrders : (totalFbOrders > 0 ? 1 : 0);
+      
+      // FB-attributed revenue and profit (proportioned like Advertiser)
+      const fbRevenueGross = (cd.revenue_gross_eur || 0) * attrRatio;
+      const fbProfit = (cd.profit || 0) * attrRatio;
+      
       for (const ptype of ['shirts', 'boxers', 'starter', 'kompleti', 'catalog']) {
         if (!wcAgg[country][ptype]) wcAgg[country][ptype] = { orders: 0, revenueGross: 0, profit: 0 };
         const orders = fbOrders[ptype] || 0;
         if (orders === 0) continue;
         
-        const totalFbOrders = Object.values(fbOrders).reduce((s, v) => s + (v || 0), 0);
         const typeRatio = totalFbOrders > 0 ? orders / totalFbOrders : 0;
         
         wcAgg[country][ptype].orders += orders;
-        wcAgg[country][ptype].revenueGross += (cd.revenue_gross_eur || 0) * typeRatio;
-        wcAgg[country][ptype].profit += (cd.profit || 0) * typeRatio;
+        wcAgg[country][ptype].revenueGross += fbRevenueGross * typeRatio;
+        wcAgg[country][ptype].profit += fbProfit * typeRatio;
       }
     }
   }
