@@ -114,7 +114,7 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
       const cd = dayData[country];
       if (!cd) continue;
       
-      if (!countryAgg[country]) countryAgg[country] = { effectiveNet: 0, productCost: 0, shipping: 0, totalOrders: 0, revenueGross: 0, profit: 0, fbOrdersByType: {} };
+      if (!countryAgg[country]) countryAgg[country] = { effectiveNet: 0, productCost: 0, shipping: 0, totalOrders: 0, revenueGross: 0, profit: 0, spend: 0, fbOrdersByType: {} };
       const ca = countryAgg[country];
       
       ca.effectiveNet += cd.effective_net_eur || 0;
@@ -123,6 +123,7 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
       ca.totalOrders += cd.orders || 0;
       ca.revenueGross += cd.revenue_gross_eur || 0;
       ca.profit += cd.profit || 0;
+      ca.spend += cd.spend || 0;
       
       // FB orders by product type from origin data
       const originDay = originData?.daily?.[ds]?.[country];
@@ -198,21 +199,33 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
   // This ensures: SUM(campaign_profit) = SUM(country_profit × attrRatio) = Advertiser total
   
   // Pre-calculate per-country per-order values (BEFORE ad spend)
+  // Also calculate FB-attributed spend per country (same as Advertiser)
   for (const [country, ca] of Object.entries(countryAgg)) {
     if (ca.totalOrders === 0) continue;
-    // marginPerOrder = revenue value per order BEFORE ad spend
-    // = (effectiveNet - productCost - shipping) / totalOrders
     ca.marginPerOrder = (ca.effectiveNet - ca.productCost - ca.shipping) / ca.totalOrders;
     ca.revenuePerOrder = ca.revenueGross / ca.totalOrders;
+    const attrRatio = ca.totalFbOrders / ca.totalOrders;
+    ca.fbSpend = ca.spend * attrRatio; // FB-attributed spend from dash (same as Advertiser)
+  }
+  
+  // Calculate total campaign spend per country (from Meta API) for proportional distribution
+  const campaignSpendByCountry = {}; // country -> total campaign spend
+  for (const c of campaigns) {
+    const spend = parseFloat(c.insights?.spend || 0);
+    if (!c._parsed?.countries?.length || spend === 0) continue;
+    for (const country of c._parsed.countries) {
+      campaignSpendByCountry[country] = (campaignSpendByCountry[country] || 0) + spend / c._parsed.countries.length;
+    }
   }
   
   for (const c of campaigns) {
-    const spend = parseFloat(c.insights?.spend || 0);
+    const metaSpend = parseFloat(c.insights?.spend || 0);
     if (!c.wc) c.wc = { orders: 0, revenueGross: 0, profit: 0 };
     
     if (c.wc.orders > 0 && c._countryOrders) {
       let totalRevenue = 0;
       let totalMargin = 0;
+      let totalAllocSpend = 0;
       
       // Per-country order allocations → actual margin from those orders
       for (const [country, countryOrders] of Object.entries(c._countryOrders)) {
@@ -222,20 +235,39 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
         totalMargin += (ca.marginPerOrder || 0) * countryOrders;
       }
       
+      // Allocate spend proportionally from dash FB spend (so total matches Advertiser)
+      for (const country of c._parsed.countries) {
+        const ca = countryAgg[country];
+        if (!ca) continue;
+        const countryTotal = campaignSpendByCountry[country] || 1;
+        const campShareInCountry = (metaSpend / c._parsed.countries.length) / countryTotal;
+        totalAllocSpend += (ca.fbSpend || 0) * campShareInCountry;
+      }
+      
       c.wc.revenueGross = totalRevenue;
-      // Actual campaign profit = margin from its orders - its own ad spend
-      c.wc.profit = totalMargin - spend;
+      c.wc.profit = totalMargin - totalAllocSpend;
+    } else if (metaSpend > 0 && c._parsed?.countries?.length) {
+      // No orders — allocate proportional FB spend as loss
+      let totalAllocSpend = 0;
+      for (const country of c._parsed.countries) {
+        const ca = countryAgg[country];
+        if (!ca) continue;
+        const countryTotal = campaignSpendByCountry[country] || 1;
+        const campShareInCountry = (metaSpend / c._parsed.countries.length) / countryTotal;
+        totalAllocSpend += (ca.fbSpend || 0) * campShareInCountry;
+      }
+      c.wc.revenueGross = 0;
+      c.wc.profit = -totalAllocSpend;
     } else {
       c.wc.revenueGross = 0;
-      // No orders = pure loss (all spend wasted)
-      c.wc.profit = spend > 0 ? -spend : 0;
+      c.wc.profit = 0;
     }
     
     // Round
     c.wc.orders = Math.round(c.wc.orders);
     c.wc.revenueGross = Math.round(c.wc.revenueGross * 100) / 100;
     c.wc.profit = Math.round(c.wc.profit * 100) / 100;
-    c.wc.roas = spend > 0 ? Math.round(c.wc.revenueGross / spend * 100) / 100 : 0;
+    c.wc.roas = metaSpend > 0 ? Math.round(c.wc.revenueGross / metaSpend * 100) / 100 : 0;
   }
 
   return campaigns;
