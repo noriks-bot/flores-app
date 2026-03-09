@@ -14,6 +14,7 @@ const DASH_CACHE_FILE = path.join(CACHE_DIR, 'dash-cache.json');
 const ORIGIN_CACHE_FILE = path.join(CACHE_DIR, 'origin-data.json');
 
 const PRODUCT_COSTS = { tshirt: 3.5, boxers: 2.25 };
+const EUR_RATES = { HR: 1, CZ: 0.041, PL: 0.232, GR: 1, IT: 1, HU: 0.00256, SK: 1 };
 
 // WooCommerce API keys per country store
 const WC_STORES = {
@@ -680,10 +681,12 @@ const server = http.createServer(async (req, res) => {
               if (!isCatalog && parsed.productType && orderType !== parsed.productType) continue;
               
               // Calculate order profit
+              const eurRate = EUR_RATES[country] || 1;
               const grossTotal = parseFloat(order.total || 0);
+              const grossTotalEur = grossTotal * eurRate;
               const vatRate = VAT_RATES[country] || 0;
               const rejRate = 0.1; // approximate
-              const netRevenue = grossTotal * (1 - rejRate) / (1 + vatRate);
+              const netRevenue = grossTotalEur * (1 - rejRate) / (1 + vatRate);
               let productCost = 0;
               let totalQty = 0;
               const products = items.map(i => {
@@ -692,7 +695,7 @@ const server = http.createServer(async (req, res) => {
                 const isShirt = (i.name||'').toLowerCase().includes('shirt') || (i.name||'').toLowerCase().includes('majic');
                 const cost = isShirt ? PRODUCT_COSTS.tshirt * qty : PRODUCT_COSTS.boxers * qty;
                 productCost += cost;
-                return { name: i.name, qty, price: parseFloat(i.total || 0), sku: i.sku || '' };
+                return { name: i.name, qty, price: Math.round(parseFloat(i.total || 0) * eurRate * 100) / 100, sku: i.sku || '' };
               });
               
               const shippingCost = parseFloat(order.shipping_total || 0) > 0 ? 3.5 : 0; // avg shipping cost
@@ -705,8 +708,8 @@ const server = http.createServer(async (req, res) => {
                 customer: (order.billing?.first_name || '') + ' ' + (order.billing?.last_name || ''),
                 email: order.billing?.email || '',
                 country,
-                total: grossTotal,
-                currency: order.currency || 'EUR',
+                total: Math.round(grossTotalEur * 100) / 100,
+                currency: 'EUR',
                 products,
                 productCost: Math.round(productCost * 100) / 100,
                 profit: Math.round(profit * 100) / 100,
