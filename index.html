@@ -567,7 +567,7 @@ function updateSummary() {
   document.getElementById('campaignCount').textContent=campaigns.length+' campaign'+(campaigns.length!==1?'s':'');
 }
 
-function profitClass(wc) { if(!wc||wc.profit===undefined) return ''; return wc.profit>=0?'campaign-profit':'campaign-loss'; }
+function profitClass(wc) { if(!wc||wc.profit===undefined) return ''; if(wc.profit===0) return ''; return wc.profit>0?'campaign-profit':'campaign-loss'; }
 
 function parseCampTags(name) {
   if(!name) return {countries:[],type:null,cleanName:name};
