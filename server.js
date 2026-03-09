@@ -194,36 +194,39 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
     }
     if (countryRevenue === 0 && countryProfit === 0) continue;
     
-    // Only campaigns with orders participate in revenue/profit distribution
-    const withOrders = group.filter(g => g.campaign.wc && g.campaign.wc.orders > 0);
-    const totalSpend = withOrders.reduce((s, g) => s + g.spend, 0);
+    // Distribute revenue only to campaigns with orders, profit to ALL by spend ratio
+    // (dash profit already has country spend deducted, so all campaigns share in the P&L)
+    const totalSpend = group.reduce((s, g) => s + g.spend, 0);
     if (totalSpend === 0) continue;
     
-    for (const g of withOrders) {
+    // Revenue: only to campaigns with orders
+    const withOrders = group.filter(g => g.campaign.wc && g.campaign.wc.orders > 0);
+    const ordersSpend = withOrders.reduce((s, g) => s + g.spend, 0);
+    if (ordersSpend > 0) {
+      for (const g of withOrders) {
+        g.campaign.wc.revenueGross += countryRevenue * (g.spend / ordersSpend);
+      }
+    }
+    
+    // Profit: to ALL campaigns by spend ratio (spend already included in dash profit)
+    for (const g of group) {
       const ratio = g.spend / totalSpend;
-      g.campaign.wc.revenueGross += countryRevenue * ratio;
+      if (!g.campaign.wc) g.campaign.wc = { orders: 0, revenueGross: 0, profit: 0 };
       g.campaign.wc.profit += countryProfit * ratio;
     }
   }
 
-  // Round WC values + pure loss for 0-order campaigns
+  // Round WC values
   for (const c of campaigns) {
     const spend = parseFloat(c.insights?.spend || 0);
     if (spend > 0 && !c.wc) {
-      c.wc = { orders: 0, revenueGross: 0, profit: -spend, roas: 0 };
+      c.wc = { orders: 0, revenueGross: 0, profit: 0, roas: 0 };
     }
     if (c.wc) {
       c.wc.orders = Math.round(c.wc.orders);
-      if (c.wc.orders === 0) {
-        // Pure loss: no orders = no revenue, profit = -spend
-        c.wc.revenueGross = 0;
-        c.wc.profit = spend > 0 ? -spend : 0;
-        c.wc.roas = 0;
-      } else {
-        c.wc.revenueGross = Math.round(c.wc.revenueGross * 100) / 100;
-        c.wc.profit = Math.round(c.wc.profit * 100) / 100;
-        c.wc.roas = spend > 0 ? Math.round(c.wc.revenueGross / spend * 100) / 100 : 0;
-      }
+      c.wc.revenueGross = Math.round(c.wc.revenueGross * 100) / 100;
+      c.wc.profit = Math.round(c.wc.profit * 100) / 100;
+      c.wc.roas = spend > 0 ? Math.round(c.wc.revenueGross / spend * 100) / 100 : 0;
     }
   }
 
