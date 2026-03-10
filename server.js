@@ -673,9 +673,66 @@ function getToday() {
   return new Date().toISOString().slice(0, 10);
 }
 
+// --- Auth ---
+const crypto = require('crypto');
+const USERS = { noriks: 'noriks' };
+const sessions = new Set();
+
+function parseCookies(req) {
+  const c = {}; (req.headers.cookie || '').split(';').forEach(p => { const [k,v] = p.trim().split('='); if(k) c[k]=v; }); return c;
+}
+
+function isAuthed(req) {
+  return sessions.has(parseCookies(req).flores_session);
+}
+
 const server = http.createServer(async (req, res) => {
   const urlPath = req.url.split('?')[0].replace(/^\/flores/, '') || '/';
   const query = parseQuery(req.url);
+
+  // Login API
+  if (urlPath === '/api/login' && req.method === 'POST') {
+    let body = ''; req.on('data', c => body += c); req.on('end', () => {
+      try {
+        const { username, password } = JSON.parse(body);
+        if (USERS[username] && USERS[username] === password) {
+          const token = crypto.randomBytes(32).toString('hex');
+          sessions.add(token);
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': `flores_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400` });
+          res.end(JSON.stringify({ ok: true }));
+        } else {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid credentials' }));
+        }
+      } catch(e) { res.writeHead(400); res.end('Bad request'); }
+    });
+    return;
+  }
+
+  if (urlPath === '/api/logout') {
+    sessions.delete(parseCookies(req).flores_session);
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': 'flores_session=; Path=/; Max-Age=0' });
+    res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
+  // Serve login page without auth
+  if (urlPath === '/login' || urlPath === '/login.html') {
+    const loginHtml = fs.readFileSync(path.join(__dirname, 'login.html'));
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(loginHtml);
+    return;
+  }
+
+  // Auth check for everything else
+  if (!isAuthed(req)) {
+    if (urlPath.startsWith('/api/')) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: 'Unauthorized' }));
+    }
+    res.writeHead(302, { 'Location': '/flores/login' });
+    return res.end();
+  }
 
   // API routes
   if (urlPath.startsWith('/api/')) {

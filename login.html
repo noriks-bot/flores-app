@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flores — Login</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✿</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#f0f2f5;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.login-card{background:#fff;border-radius:16px;padding:48px 40px;width:380px;box-shadow:0 4px 24px rgba(0,0,0,0.08)}
+.logo{text-align:center;margin-bottom:32px}
+.logo span{font-size:48px}
+.logo h1{font-size:22px;color:#1a1a2e;margin-top:8px;font-weight:700}
+.logo p{color:#6b7280;font-size:13px;margin-top:4px}
+label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
+input{width:100%;padding:12px 14px;border:1.5px solid #d1d5db;border-radius:10px;font-size:14px;font-family:inherit;outline:none;transition:border .2s}
+input:focus{border-color:#6366f1}
+.field{margin-bottom:20px}
+button{width:100%;padding:14px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:background .2s}
+button:hover{background:#4f46e5}
+.error{color:#ef4444;font-size:13px;text-align:center;margin-top:16px;display:none}
+</style>
+</head>
+<body>
+<div class="login-card">
+  <div class="logo">
+    <span>✿</span>
+    <h1>Flores</h1>
+    <p>Ad Intelligence</p>
+  </div>
+  <form id="loginForm">
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="username" autocomplete="username" autofocus>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" autocomplete="current-password">
+    </div>
+    <button type="submit">Sign In</button>
+    <div class="error" id="error">Invalid username or password</div>
+  </form>
+</div>
+<script>
+document.getElementById('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  document.getElementById('error').style.display='none';
+  const res = await fetch('/flores/api/login', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      username: document.getElementById('username').value,
+      password: document.getElementById('password').value
+    })
+  });
+  if (res.ok) {
+    window.location.href = '/flores/';
+  } else {
+    document.getElementById('error').style.display='block';
+  }
+});
+</script>
+</body>
+</html>
