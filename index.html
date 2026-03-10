@@ -333,6 +333,27 @@ tr.campaign-loss:hover td { background: rgba(239,68,68,0.15) !important; }
 ::-webkit-scrollbar-track { background: var(--content-bg); }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 
+/* ═══ LEVEL TABS ═══ */
+.level-tabs {
+  display: flex; background: var(--card-bg); border-bottom: 1px solid var(--border-color);
+  padding: 0 24px; gap: 0;
+}
+.level-tab {
+  padding: 12px 20px; font-size: 13px; font-weight: 600; color: var(--text-muted);
+  background: none; border: none; border-bottom: 3px solid transparent;
+  cursor: pointer; font-family: inherit; transition: all .15s; display: flex; align-items: center; gap: 6px;
+}
+.level-tab:hover { color: var(--text-secondary); background: rgba(59,130,246,0.03); }
+.level-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.level-tab .tab-count {
+  font-size: 10px; font-weight: 700; background: var(--content-bg); color: var(--text-muted);
+  padding: 1px 7px; border-radius: 100px; border: 1px solid var(--border-color);
+}
+.level-tab.active .tab-count { background: rgba(59,130,246,0.1); color: var(--primary); border-color: rgba(59,130,246,0.2); }
+
+/* Adset/Ad name sub-info */
+.sub-info { font-size: 10px; color: var(--text-light); font-weight: 400; margin-left: 4px; }
+
 @media (max-width: 768px) { .brand-text, .brand-sub { display: none; } .filters-bar { padding: 10px 12px; } .content { padding: 12px; } }
 </style>
 </head>
@@ -349,12 +370,19 @@ tr.campaign-loss:hover td { background: rgba(239,68,68,0.15) !important; }
         <div class="brand-sub">Ad Intelligence</div>
       </div>
       <span style="width:1px;height:28px;background:var(--border-color);margin:0 8px"></span>
-      <h1 class="page-title">Campaigns</h1>
+      <h1 class="page-title" id="pageTitle">Campaigns</h1>
     </div>
     <div class="topbar-right">
       <span id="campaignCount" style="font-size:11px;color:var(--text-muted)"></span>
       <span id="lastUpdated" style="font-size:11px;color:var(--text-muted)"></span>
     </div>
+  </div>
+
+  <!-- LEVEL TABS -->
+  <div class="level-tabs">
+    <button class="level-tab active" data-level="campaigns" onclick="switchTab('campaigns')">🔷 Campaigns <span class="tab-count" id="tab-count-campaigns">—</span></button>
+    <button class="level-tab" data-level="adsets" onclick="switchTab('adsets')">📦 Ad Sets <span class="tab-count" id="tab-count-adsets">—</span></button>
+    <button class="level-tab" data-level="ads" onclick="switchTab('ads')">📋 Ads <span class="tab-count" id="tab-count-ads">—</span></button>
   </div>
 
   <!-- FILTERS -->
@@ -429,6 +457,9 @@ let expandedAdsets = {};
 let adsetCache = {};
 let adCache = {};
 let multiProfitData = {};
+let allAdsets = [];
+let allAds = [];
+let activeTab = 'campaigns'; // 'campaigns' | 'adsets' | 'ads'
 
 function fmtDate(d) { return d.toISOString().slice(0,10); }
 function addDays(d,n) { const r=new Date(d); r.setDate(r.getDate()+n); return r; }
@@ -529,10 +560,21 @@ async function loadData() {
     if(campaigns.error){document.getElementById('tableBody').innerHTML=`<tr><td colspan="22"><div class="loading-state">Error: ${campaigns.error}</div></td></tr>`;return;}
     campaigns.sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0));
     expandedCampaigns={}; expandedAdsets={}; adsetCache={}; adCache={};
+    allAdsets=[]; allAds=[];
+    document.getElementById('tab-count-campaigns').textContent=campaigns.length;
+    document.getElementById('tab-count-adsets').textContent='—';
+    document.getElementById('tab-count-ads').textContent='—';
     if(sortKey) sortCampaigns();
-    updateSummary(); updateSortHeaders(); renderTable();
-    // Load multi-period profit in background
-    fetch('/flores/api/multi-profit').then(r=>r.json()).then(d=>{if(!d.error){multiProfitData=d;renderTable();}}).catch(()=>{});
+    if(activeTab==='campaigns') {
+      renderCampaignHeaders();
+      updateSummary(); updateSortHeaders(); renderTable();
+      // Load multi-period profit in background
+      fetch('/flores/api/multi-profit').then(r=>r.json()).then(d=>{if(!d.error){multiProfitData=d;renderTable();}}).catch(()=>{});
+    } else if(activeTab==='adsets') {
+      renderAdsetHeaders(); loadAdsets();
+    } else {
+      renderAdHeaders(); loadAds();
+    }
   } catch(e){ document.getElementById('tableBody').innerHTML=`<tr><td colspan="22"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
 }
 
@@ -931,9 +973,220 @@ async function showCampaignOrders(campaignId) {
 // Close modal on Escape
 document.addEventListener('keydown', e => { if(e.key==='Escape') { closeModal(); closePopover(); } });
 
+// === TAB SWITCHING ===
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.level-tab').forEach(t => t.classList.toggle('active', t.dataset.level === tab));
+  const titles = { campaigns: 'Campaigns', adsets: 'Ad Sets', ads: 'Ads' };
+  document.getElementById('pageTitle').textContent = titles[tab];
+  
+  if (tab === 'campaigns') {
+    renderCampaignHeaders();
+    renderTable();
+    updateSummary();
+  } else if (tab === 'adsets') {
+    renderAdsetHeaders();
+    if (allAdsets.length) { renderAdsetTable(); updateAdsetSummary(); }
+    else loadAdsets();
+  } else {
+    renderAdHeaders();
+    if (allAds.length) { renderAdTable(); updateAdSummary(); }
+    else loadAds();
+  }
+}
+
+function renderCampaignHeaders() {
+  document.querySelector('thead tr').innerHTML = `
+    <th style="width:32px;cursor:default"></th>
+    <th data-sort="name">Campaign</th>
+    <th data-sort="status">Status</th>
+    <th data-sort="spend">Spend</th>
+    <th class="wc-col sep" data-sort="wc_orders">Orders</th>
+    <th class="wc-col" data-sort="wc_revenue">Revenue</th>
+    <th class="wc-col" data-sort="wc_profit">Profit</th>
+    <th class="wc-col" data-sort="wc_ppo">P/Order</th>
+    <th class="wc-col" data-sort="wc_cpa">Real CPA</th>
+    <th class="wc-col" data-sort="wc_roas">ROAS</th>
+    <th class="sep" data-sort="purchases">FB_Purchases</th>
+    <th data-sort="cpa">FB_CPA</th>
+    <th data-sort="cr">FB_CR</th>
+    <th class="sep" data-sort="clicks">FB_Clicks</th>
+    <th data-sort="ctr">FB_CTR</th>
+    <th data-sort="cpm">FB_CPM</th>
+    <th data-sort="cpc">FB_CPC</th>
+    <th class="sep profit-col" data-sort="p_yesterday">Yest. P/L</th>
+    <th class="profit-col" data-sort="p_d3">3D P/L</th>
+    <th class="profit-col" data-sort="p_d7">7D P/L</th>
+    <th class="profit-col" data-sort="p_d14">14D P/L</th>
+    <th class="profit-col" data-sort="p_lifetime">Lifetime P/L</th>`;
+}
+
+const FLAT_HEADERS = `
+    <th style="width:32px;cursor:default"></th>
+    <th data-sort="name">Name</th>
+    <th data-sort="campaign_name">Campaign</th>
+    <th data-sort="status">Status</th>
+    <th data-sort="spend">Spend</th>
+    <th class="wc-col sep" data-sort="wc_orders">Orders</th>
+    <th class="wc-col" data-sort="wc_revenue">Revenue</th>
+    <th class="wc-col" data-sort="wc_profit">Profit</th>
+    <th class="wc-col" data-sort="wc_ppo">P/Order</th>
+    <th class="wc-col" data-sort="wc_cpa">Real CPA</th>
+    <th class="wc-col" data-sort="wc_roas">ROAS</th>
+    <th class="sep" data-sort="purchases">FB_Purchases</th>
+    <th data-sort="cpa">FB_CPA</th>
+    <th data-sort="cr">FB_CR</th>
+    <th class="sep" data-sort="clicks">FB_Clicks</th>
+    <th data-sort="ctr">FB_CTR</th>
+    <th data-sort="cpm">FB_CPM</th>
+    <th data-sort="cpc">FB_CPC</th>`;
+
+function renderAdsetHeaders() { document.querySelector('thead tr').innerHTML = FLAT_HEADERS.replace('Name', 'Ad Set'); }
+function renderAdHeaders() { document.querySelector('thead tr').innerHTML = FLAT_HEADERS.replace('Name', 'Ad') + '\n    <th data-sort="adset_name">Ad Set</th>'; }
+
+function makeFlatRow(item, level) {
+  const ins = item.insights;
+  const spend = ins ? parseFloat(ins.spend || 0) : 0;
+  const clicks = ins ? parseInt(ins.clicks || 0) : 0;
+  const ctr = ins ? parseFloat(ins.ctr || 0) : 0;
+  const cpm = ins ? parseFloat(ins.cpm || 0) : 0;
+  const cpc = ins ? parseFloat(ins.cpc || 0) : 0;
+  const purchases = getPurchases(ins);
+  const cpp = getCostPerPurchase(ins);
+  const cr = clicks > 0 && purchases > 0 ? purchases / clicks * 100 : 0;
+  const isActive = item.status === 'ACTIVE';
+  const statusHtml = `<label class="toggle"><input type="checkbox" ${isActive ? 'checked' : ''} disabled><span class="slider"></span></label>`;
+  const wc = item.wc;
+  const rowClass = profitClass(item);
+  const campTags = parseCampTags(item.campaign_name);
+  let campLabel = (item.campaign_name || '').slice(0, 40);
+  let campTagsHtml = '';
+  campTags.countries.forEach(c => { campTagsHtml += `<span class="country-tag">${c}</span> `; });
+
+  let fbEditUrl = level === 'adset'
+    ? `https://adsmanager.facebook.com/adsmanager/manage/adsets/edit?act=1922887421998222&selected_adset_ids=${item.id}`
+    : `https://adsmanager.facebook.com/adsmanager/manage/ads/edit?act=1922887421998222&selected_ad_ids=${item.id}`;
+  const editSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+  const editBtn = `<a class="edit-btn" href="${fbEditUrl}" target="_blank" title="Open in FB Ads Manager">${editSvg}</a>`;
+
+  let extra = '';
+  if (level === 'ad') {
+    extra = `<td style="font-size:11px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(item.adset_name||'').replace(/"/g,'&quot;')}">${item.adset_name || '—'}</td>`;
+  }
+
+  return `<tr class="${rowClass}" data-id="${item.id}">
+    <td></td>
+    <td><div class="name-cell"><span class="name-text" title="${(item.name||'').replace(/"/g,'&quot;')}">${item.name || '—'}</span>${editBtn}</div></td>
+    <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(item.campaign_name||'').replace(/"/g,'&quot;')}">${campTagsHtml}${campLabel}</td>
+    <td>${statusHtml}</td>
+    <td>${spend > 0 ? fmtEur(spend) : '<span class="muted">—</span>'}</td>
+    <td class="cell-wc">${wc?.orders ? fmtNum(wc.orders) : '<span class="muted">—</span>'}</td>
+    <td class="cell-wc">${wc?.revenueGross ? fmtEur(wc.revenueGross) : '<span class="muted">—</span>'}</td>
+    <td>${wc?.profit !== undefined ? (wc.profit === 0 ? '<span class="badge-neutral">— €0.00</span>' : wc.profit > 0 ? `<span class="badge-profit">▲ ${fmtEur(wc.profit)}</span>` : `<span class="badge-loss">▼ ${fmtEur(Math.abs(wc.profit))}</span>`) : '<span class="muted">—</span>'}</td>
+    <td class="${wc?.orders > 0 ? (wc.profit / wc.orders >= 0 ? 'cell-profit' : 'cell-loss') : 'muted'}">${wc?.orders > 0 ? fmtEur(wc.profit / wc.orders) : '<span class="muted">—</span>'}</td>
+    <td class="cell-wc">${wc?.orders > 0 ? fmtEur(spend / wc.orders) : '<span class="muted">—</span>'}</td>
+    <td>${wc?.roas ? `<span class="badge-roas">${wc.roas.toFixed(2)}x</span>` : '<span class="muted">—</span>'}</td>
+    <td>${purchases > 0 ? fmtInt(purchases) : '<span class="muted">—</span>'}</td>
+    <td>${cpp > 0 ? fmtEur(cpp) : '<span class="muted">—</span>'}</td>
+    <td>${cr > 0 ? fmtPct(cr) : '<span class="muted">—</span>'}</td>
+    <td>${clicks > 0 ? fmtInt(clicks) : '<span class="muted">—</span>'}</td>
+    <td>${ctr > 0 ? fmtPct(ctr) : '<span class="muted">—</span>'}</td>
+    <td>${cpm > 0 ? fmtEur(cpm) : '<span class="muted">—</span>'}</td>
+    <td>${cpc > 0 ? fmtEur(cpc) : '<span class="muted">—</span>'}</td>
+    ${extra}
+  </tr>`;
+}
+
+function makeFlatTotals(items, colSpan) {
+  let spend = 0, clicks = 0, purchases = 0, wcOrders = 0, wcRevenue = 0, wcProfit = 0, active = 0, impr = 0;
+  items.forEach(c => {
+    if (c.insights) { spend += parseFloat(c.insights.spend || 0); clicks += parseInt(c.insights.clicks || 0); impr += parseInt(c.insights.impressions || 0); purchases += getPurchases(c.insights); }
+    if (c.wc) { wcOrders += c.wc.orders || 0; wcRevenue += c.wc.revenueGross || 0; wcProfit += c.wc.profit || 0; }
+    if (c.status === 'ACTIVE') active++;
+  });
+  const cpa = purchases > 0 ? fmtEur(spend / purchases) : '—';
+  const cr = clicks > 0 ? fmtPct(purchases / clicks * 100) : '—';
+  const ctr = impr > 0 ? fmtPct(clicks / impr * 100) : '—';
+  const cpm = impr > 0 ? fmtEur(spend / impr * 1000) : '—';
+  const cpc = clicks > 0 ? fmtEur(spend / clicks) : '—';
+  const roas = spend > 0 ? (wcRevenue / spend).toFixed(2) + 'x' : '—';
+  const profitBadge = wcProfit === 0 ? '<span class="badge-neutral">— €0.00</span>' : wcProfit > 0 ? `<span class="badge-profit">▲ ${fmtEur(wcProfit)}</span>` : `<span class="badge-loss">▼ ${fmtEur(Math.abs(wcProfit))}</span>`;
+  return `<tr class="totals-row">
+    <td></td><td style="text-align:left" colspan="2"><strong>TOTAL (${items.length})</strong></td>
+    <td>${active}/${items.length}</td>
+    <td>${fmtEur(spend)}</td><td>${fmtInt(wcOrders)}</td><td>${fmtEur(wcRevenue)}</td>
+    <td>${profitBadge}</td><td>${wcOrders > 0 ? fmtEur(wcProfit / wcOrders) : '—'}</td><td>${wcOrders > 0 ? fmtEur(spend / wcOrders) : '—'}</td><td>${roas}</td>
+    <td>${fmtInt(purchases)}</td><td>${cpa}</td><td>${cr}</td>
+    <td>${fmtCompact(clicks)}</td><td>${ctr}</td><td>${cpm}</td><td>${cpc}</td>
+    ${colSpan ? '<td></td>' : ''}
+  </tr>`;
+}
+
+async function loadAdsets() {
+  const { from, to } = getDateRange();
+  document.getElementById('tableBody').innerHTML = '<tr><td colspan="19"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading ad sets...</div></div></td></tr>';
+  document.getElementById('tableTotals').innerHTML = '';
+  document.getElementById('tableTotalsBottom').innerHTML = '';
+  try {
+    const res = await fetch(`/flores/api/all-adsets?date_from=${from}&date_to=${to}`);
+    allAdsets = await res.json();
+    if (allAdsets.error) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="19"><div class="loading-state">Error: ${allAdsets.error}</div></td></tr>`; allAdsets = []; return; }
+    document.getElementById('tab-count-adsets').textContent = allAdsets.length;
+    renderAdsetTable();
+    updateAdsetSummary();
+  } catch (e) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="19"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
+}
+
+async function loadAds() {
+  const { from, to } = getDateRange();
+  document.getElementById('tableBody').innerHTML = '<tr><td colspan="20"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading ads...</div></div></td></tr>';
+  document.getElementById('tableTotals').innerHTML = '';
+  document.getElementById('tableTotalsBottom').innerHTML = '';
+  try {
+    const res = await fetch(`/flores/api/all-ads?date_from=${from}&date_to=${to}`);
+    allAds = await res.json();
+    if (allAds.error) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="20"><div class="loading-state">Error: ${allAds.error}</div></td></tr>`; allAds = []; return; }
+    document.getElementById('tab-count-ads').textContent = allAds.length;
+    renderAdTable();
+    updateAdSummary();
+  } catch (e) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="20"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
+}
+
+function renderAdsetTable() {
+  let html = '';
+  allAdsets.forEach(as => { html += makeFlatRow(as, 'adset'); });
+  if (!html) html = '<tr><td colspan="19"><div class="loading-state">No ad sets found</div></td></tr>';
+  document.getElementById('tableBody').innerHTML = html;
+}
+
+function renderAdTable() {
+  let html = '';
+  allAds.forEach(ad => { html += makeFlatRow(ad, 'ad'); });
+  if (!html) html = '<tr><td colspan="20"><div class="loading-state">No ads found</div></td></tr>';
+  document.getElementById('tableBody').innerHTML = html;
+}
+
+function updateAdsetSummary() {
+  const totals = makeFlatTotals(allAdsets, false);
+  document.getElementById('tableTotals').innerHTML = totals;
+  document.getElementById('tableTotalsBottom').innerHTML = totals;
+  document.getElementById('campaignCount').textContent = allAdsets.length + ' ad set' + (allAdsets.length !== 1 ? 's' : '');
+  document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' });
+}
+
+function updateAdSummary() {
+  const totals = makeFlatTotals(allAds, true);
+  document.getElementById('tableTotals').innerHTML = totals;
+  document.getElementById('tableTotalsBottom').innerHTML = totals;
+  document.getElementById('campaignCount').textContent = allAds.length + ' ad' + (allAds.length !== 1 ? 's' : '');
+  document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' });
+}
+
 async function clearCacheAndReload() {
   const btn=document.querySelector('.refresh-btn'); btn.classList.add('spinning');
-  await fetch('/flores/api/clear-cache'); await loadData();
+  await fetch('/flores/api/clear-cache');
+  allAdsets=[]; allAds=[];
+  await loadData();
   btn.classList.remove('spinning');
 }
 
