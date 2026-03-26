@@ -1281,7 +1281,6 @@ function updateSummary() {
   const mpTotals={yesterday:0,d3:0,d7:0,d14:0,lifetime:0};
   campaigns.forEach(c=>{const mp=multiProfitData[c.id];if(mp){for(const k of Object.keys(mpTotals)) mpTotals[k]+=(mp[k]?.profit||0);}});
   document.getElementById('tableTotals').innerHTML=`<tr class="totals-row">
-  document.getElementById('tableTotalsBottom').innerHTML=`<tr class="totals-row">
     <td></td><td style="text-align:left"><strong>TOTAL (${campaigns.length})</strong></td>
     <td>${active}/${campaigns.length}</td>
     <td>${fmtEur(spend)}</td><td>${fmtInt(wcOrders)}</td><td>${fmtEur(wcRevenue)}</td>
@@ -1290,6 +1289,7 @@ function updateSummary() {
     <td>${fmtCompact(clicks)}</td><td>${ctr}</td><td>${cpm}</td><td>${cpc}</td>
     <td>${profitPill(mpTotals.yesterday)}</td><td>${profitPill(mpTotals.d3)}</td><td>${profitPill(mpTotals.d7)}</td><td>${profitPill(mpTotals.d14)}</td><td>${profitPill(mpTotals.lifetime)}</td>
   </tr>`;
+  document.getElementById('tableTotalsBottom').innerHTML = document.getElementById('tableTotals').innerHTML;
   document.getElementById('lastUpdated').textContent='Updated '+new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('campaignCount').textContent=campaigns.length+' campaign'+(campaigns.length!==1?'s':'');
 }
