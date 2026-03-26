@@ -1326,17 +1326,23 @@ function updateSelectionBar() {
 
 function filterBySelected() {
   if(selectedCampaigns.size === 0) return;
-  const rows = document.querySelectorAll('#tableBody tr.level-campaign');
-  rows.forEach(row => {
-    const id = row.getAttribute('data-id');
-    const show = selectedCampaigns.has(id);
-    row.style.display = show ? '' : 'none';
-    let next = row.nextElementSibling;
-    while(next && !next.classList.contains('level-campaign')) {
-      next.style.display = show ? '' : 'none';
-      next = next.nextElementSibling;
-    }
-  });
+  if(activeTab === 'campaigns') {
+    const rows = document.querySelectorAll('#tableBody tr.level-campaign');
+    rows.forEach(row => {
+      const id = row.getAttribute('data-id');
+      const show = selectedCampaigns.has(id);
+      row.style.display = show ? '' : 'none';
+      let next = row.nextElementSibling;
+      while(next && !next.classList.contains('level-campaign')) {
+        next.style.display = show ? '' : 'none';
+        next = next.nextElementSibling;
+      }
+    });
+  } else if(activeTab === 'adsets') {
+    renderAdsetTable(); updateAdsetSummary();
+  } else {
+    renderAdTable(); updateAdSummary();
+  }
 }
 
 function clearSelection() {
@@ -1345,7 +1351,9 @@ function clearSelection() {
   const master = document.querySelector('.master-select');
   if(master) master.checked = false;
   updateSelectionBar();
-  applySearchFilter();
+  if(activeTab === 'campaigns') applySearchFilter();
+  else if(activeTab === 'adsets') { renderAdsetTable(); updateAdsetSummary(); }
+  else { renderAdTable(); updateAdSummary(); }
 }
 
 function renderTable() {
@@ -1706,6 +1714,7 @@ function makeFlatRow(item, level) {
   const statusHtml = `<label class="toggle"><input type="checkbox" ${isActive ? 'checked' : ''} disabled><span class="slider"></span></label>`;
   const wc = item.wc;
   const rowClass = profitClass(item);
+  const campCid = item.campaign_id || '';
   const campTags = parseCampTags(item.campaign_name);
   let campLabel = (item.campaign_name || '').slice(0, 40);
   let campTagsHtml = '';
@@ -1800,7 +1809,11 @@ async function loadAds() {
 
 function renderAdsetTable() {
   let html = '';
-  allAdsets.forEach(as => { html += makeFlatRow(as, 'adset'); });
+  const filterBySelection = selectedCampaigns.size > 0 && document.getElementById('selectionBar').style.display !== 'none';
+  allAdsets.forEach(as => {
+    if (filterBySelection && !selectedCampaigns.has(as.campaign_id)) return;
+    html += makeFlatRow(as, 'adset');
+  });
   if (!html) html = '<tr><td colspan="19"><div class="loading-state">No ad sets found</div></td></tr>';
   document.getElementById('tableBody').innerHTML = html;
   if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL') setTimeout(applySearchFilter, 50);
@@ -1808,7 +1821,11 @@ function renderAdsetTable() {
 
 function renderAdTable() {
   let html = '';
-  allAds.forEach(ad => { html += makeFlatRow(ad, 'ad'); });
+  const filterBySelection = selectedCampaigns.size > 0 && document.getElementById('selectionBar').style.display !== 'none';
+  allAds.forEach(ad => {
+    if (filterBySelection && !selectedCampaigns.has(ad.campaign_id)) return;
+    html += makeFlatRow(ad, 'ad');
+  });
   if (!html) html = '<tr><td colspan="20"><div class="loading-state">No ads found</div></td></tr>';
   document.getElementById('tableBody').innerHTML = html;
   if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL') setTimeout(applySearchFilter, 50);
