@@ -140,7 +140,7 @@ db.exec(`
     utm_campaign TEXT,
     is_fb_attributed INTEGER DEFAULT 0,
     raw_meta TEXT,
-    created_at TEXT DEFAULT (datetime('now')),
+    created_at TEXT,
     UNIQUE(country, wc_order_id)
   );
   CREATE INDEX IF NOT EXISTS idx_orders_date ON wc_orders(order_date);
@@ -157,8 +157,8 @@ db.exec(`
 
 // Prepared statements for WC sync
 const upsertOrder = db.prepare(`
-  INSERT INTO wc_orders (country, wc_order_id, order_date, status, gross_total, gross_eur, net_revenue, product_cost, shipping_cost, profit, product_type, utm_source, utm_campaign, is_fb_attributed, raw_meta)
-  VALUES (@country, @wc_order_id, @order_date, @status, @gross_total, @gross_eur, @net_revenue, @product_cost, @shipping_cost, @profit, @product_type, @utm_source, @utm_campaign, @is_fb_attributed, @raw_meta)
+  INSERT INTO wc_orders (country, wc_order_id, order_date, status, gross_total, gross_eur, net_revenue, product_cost, shipping_cost, profit, product_type, utm_source, utm_campaign, is_fb_attributed, raw_meta, created_at)
+  VALUES (@country, @wc_order_id, @order_date, @status, @gross_total, @gross_eur, @net_revenue, @product_cost, @shipping_cost, @profit, @product_type, @utm_source, @utm_campaign, @is_fb_attributed, @raw_meta, datetime('now'))
   ON CONFLICT(country, wc_order_id) DO UPDATE SET
     order_date=excluded.order_date, status=excluded.status, gross_total=excluded.gross_total,
     gross_eur=excluded.gross_eur, net_revenue=excluded.net_revenue, product_cost=excluded.product_cost,
