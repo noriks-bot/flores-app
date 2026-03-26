@@ -930,6 +930,8 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
                 <th class="cr-th" data-sort="id" style="text-align:left">Creative ID</th>
                 <th class="cr-th" data-sort="adCount">Ads</th>
                 <th class="cr-th" data-sort="totalSpend">Spend ▾</th>
+                <th class="cr-th" data-sort="totalPurchases">Purchases</th>
+                <th class="cr-th" data-sort="cpa">CPA</th>
                 <th class="cr-th cr-country-th" data-sort="HR">🇭🇷 HR</th>
                 <th class="cr-th cr-country-th" data-sort="CZ">🇨🇿 CZ</th>
                 <th class="cr-th cr-country-th" data-sort="PL">🇵🇱 PL</th>
@@ -940,8 +942,6 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
                 <th class="cr-th" data-sort="totalClicks">Clicks</th>
                 <th class="cr-th" data-sort="ctr">CTR</th>
                 <th class="cr-th" data-sort="cpc">CPC</th>
-                <th class="cr-th" data-sort="totalPurchases">Purchases</th>
-                <th class="cr-th" data-sort="cpa">CPA</th>
               </tr>
             </thead>
             <tbody id="crBody">
@@ -2458,12 +2458,12 @@ function renderCreativeTable() {
       <td><span class="cr-id-pill">${c.id}</span></td>
       <td>${c.adCount}</td>
       <td style="font-weight:600">${c.totalSpend.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} €</td>
+      <td${c.totalPurchases >= 3 ? ' style="font-weight:700"' : ''}>${c.totalPurchases > 0 ? c.totalPurchases : '<span class="cr-country-zero">—</span>'}</td>
+      <td style="${c.cpa > 0 ? (c.cpa <= 15 ? 'background:#4caf50;color:#fff;font-weight:600' : c.cpa <= 25 ? 'background:#f59e0b;color:#fff;font-weight:600' : 'background:#ef5350;color:#fff;font-weight:600') : ''}">${c.cpa > 0 ? c.cpa.toFixed(2) + ' €' : '<span class="cr-country-zero">—</span>'}</td>
       ${countryCells}
       <td>${c.totalClicks > 0 ? fmtCompact(c.totalClicks) : '<span class="cr-country-zero">—</span>'}</td>
       <td>${c.ctr > 0 ? c.ctr.toFixed(2) + '%' : '<span class="cr-country-zero">—</span>'}</td>
       <td>${c.cpc > 0 ? c.cpc.toFixed(2) + ' €' : '<span class="cr-country-zero">—</span>'}</td>
-      <td${c.totalPurchases >= 3 ? ' style="font-weight:700"' : ''}>${c.totalPurchases > 0 ? c.totalPurchases : '<span class="cr-country-zero">—</span>'}</td>
-      <td style="${c.cpa > 0 ? (c.cpa <= 15 ? 'background:#4caf50;color:#fff;font-weight:600' : c.cpa <= 25 ? 'background:#f59e0b;color:#fff;font-weight:600' : 'background:#ef5350;color:#fff;font-weight:600') : ''}">${c.cpa > 0 ? c.cpa.toFixed(2) + ' €' : '<span class="cr-country-zero">—</span>'}</td>
     </tr>`;
   }).join('');
 
