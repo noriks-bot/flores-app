@@ -1,5 +1,8 @@
 {
   "name": "flores",
   "version": "1.0.0",
-  "main": "server.js"
+  "main": "server.js",
+  "dependencies": {
+    "better-sqlite3": "^12.8.0"
+  }
 }

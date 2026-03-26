@@ -108,6 +108,18 @@ body {
 .refresh-btn.spinning svg { animation: spin .6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ═══ TOAST ═══ */
+.toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+  background: #1e293b; color: #fff; padding: 12px 20px; border-radius: 8px;
+  font-size: 13px; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  transform: translateY(80px); opacity: 0; transition: all .3s ease;
+  pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.toast-success { border-left: 4px solid var(--success); }
+.toast.toast-error { border-left: 4px solid var(--danger); }
+
 /* ═══ CONTENT ═══ */
 .content { flex: 1; padding: 20px 24px; }
 
@@ -644,11 +656,65 @@ tr.campaign-loss:hover td { background: rgba(239,68,68,0.15) !important; }
 
   <!-- BASE REPORT -->
   <div id="section-base-report" class="content-section">
-    <div class="content">
-      <div class="placeholder-section">
-        <i class="fas fa-chart-bar"></i>
-        <h2>Base Report</h2>
-        <p>Comprehensive reporting dashboard with key performance metrics across all campaigns.</p>
+    <!-- Date picker for base report -->
+    <div class="filters-bar" id="brFilters">
+      <span class="filter-label">Period</span>
+      <div class="preset-tabs" id="brPresetTabs">
+        <button class="preset-tab active" data-range="today">Today</button>
+        <button class="preset-tab" data-range="yesterday">Yesterday</button>
+        <button class="preset-tab" data-range="3d">3D</button>
+        <button class="preset-tab" data-range="7d">7D</button>
+        <button class="preset-tab" data-range="14d">14D</button>
+        <button class="preset-tab" data-range="30d">30D</button>
+        <button class="preset-tab" data-range="custom">Custom</button>
+      </div>
+      <input type="date" id="brDateFrom" class="date-input" style="display:none">
+      <span class="date-sep br-date-sep" style="display:none">→</span>
+      <input type="date" id="brDateTo" class="date-input" style="display:none">
+      <button class="refresh-btn" onclick="loadBaseReport()" style="margin-left:8px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+        Refresh
+      </button>
+    </div>
+    <div class="content" style="padding:20px 24px">
+      <!-- Results by Country -->
+      <div class="table-card" style="margin-bottom:20px">
+        <div style="padding:14px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border-color)">📊 Results by Country</div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th>Country</th><th>Spend</th><th>Orders</th><th>Revenue</th><th>Profit</th><th>CPA</th><th>ROAS</th>
+            </tr></thead>
+            <tbody id="brCountryBody"><tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">Select a date range and click Refresh</td></tr></tbody>
+            <tbody id="brCountryTotals"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Results by Campaign Type -->
+      <div class="table-card" style="margin-bottom:20px">
+        <div style="padding:14px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border-color)">📈 Results by Campaign Type</div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th>Type</th><th>Spend</th><th>Orders</th><th>Revenue</th><th>Profit</th><th>CPA</th><th>ROAS</th>
+            </tr></thead>
+            <tbody id="brTypeBody"><tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">—</td></tr></tbody>
+            <tbody id="brTypeTotals"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Results by Country + Type -->
+      <div class="table-card">
+        <div style="padding:14px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border-color)">🗂️ Results by Country + Type</div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th>Country</th><th>Type</th><th>Spend</th><th>Orders</th><th>Revenue</th><th>Profit</th><th>CPA</th><th>ROAS</th>
+            </tr></thead>
+            <tbody id="brCTBody"><tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted)">—</td></tr></tbody>
+            <tbody id="brCTTotals"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -920,8 +986,11 @@ function parseCampTags(name) {
   if(!name) return {countries:[],type:null,cleanName:name};
   const n=name.toUpperCase();
   let countries=[];
-  const cm=n.match(/^([A-Z+_]+)__/);
-  if(cm) countries=cm[1].split(/[+_]/).filter(c=>['HR','CZ','PL','GR','SK','IT','HU'].includes(c));
+  // New format: cc:HR or cc:GR+IT+SK
+  const ccMatch=n.match(/CC:([A-Z+]+)/);
+  if(ccMatch) countries=ccMatch[1].split('+').filter(c=>['HR','CZ','PL','GR','SK','IT','HU'].includes(c));
+  // Old format fallback
+  if(!countries.length){ const cm=n.match(/^([A-Z+_]+)__/); if(cm) countries=cm[1].split(/[+_]/).filter(c=>['HR','CZ','PL','GR','SK','IT','HU'].includes(c)); }
   let type=null;
   if(/MAJICE|SHIRT/i.test(n)) type='shirts';
   else if(/BOXERS|BOXER/i.test(n)) type='boxers';
@@ -1488,11 +1557,146 @@ function updateAdSummary() {
 }
 
 async function clearCacheAndReload() {
-  const btn=document.querySelector('.refresh-btn'); btn.classList.add('spinning');
+  const btn=document.querySelector('#section-ads-manager .refresh-btn'); 
+  if(btn) btn.classList.add('spinning');
+  // Sync WC orders first, then clear Meta cache and reload
+  try {
+    const syncRes = await fetch('/api/sync');
+    const syncData = await syncRes.json();
+    if (syncData.totalNew > 0) showToast(`Synced ${syncData.totalNew} new orders`, 'success');
+  } catch(e) { console.error('Sync error:', e); }
   await fetch('/api/clear-cache');
   allAdsets=[]; allAds=[];
   await loadData();
-  btn.classList.remove('spinning');
+  if(btn) btn.classList.remove('spinning');
+}
+
+// ═══ TOAST ═══
+function showToast(msg, type='success') {
+  let t = document.getElementById('appToast');
+  if (!t) { t = document.createElement('div'); t.id='appToast'; t.className='toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.className = 'toast toast-' + type + ' show';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ═══ BASE REPORT ═══
+(function initBaseReport() {
+  const today = new Date();
+  const brFrom = document.getElementById('brDateFrom');
+  const brTo = document.getElementById('brDateTo');
+  brFrom.value = fmtDate(today);
+  brTo.value = fmtDate(today);
+
+  document.querySelectorAll('#brPresetTabs .preset-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#brPresetTabs .preset-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const t = new Date(), range = btn.dataset.range;
+      if (range === 'custom') {
+        document.querySelectorAll('#brFilters .date-input, #brFilters .br-date-sep').forEach(el => el.style.display = '');
+        return;
+      }
+      document.querySelectorAll('#brFilters .date-input, #brFilters .br-date-sep').forEach(el => el.style.display = 'none');
+      if (range === 'today') { brFrom.value = fmtDate(t); brTo.value = fmtDate(t); }
+      else if (range === 'yesterday') { const y = addDays(t, -1); brFrom.value = fmtDate(y); brTo.value = fmtDate(y); }
+      else if (range === '3d') { brFrom.value = fmtDate(addDays(t, -2)); brTo.value = fmtDate(t); }
+      else if (range === '7d') { brFrom.value = fmtDate(addDays(t, -6)); brTo.value = fmtDate(t); }
+      else if (range === '14d') { brFrom.value = fmtDate(addDays(t, -13)); brTo.value = fmtDate(t); }
+      else if (range === '30d') { brFrom.value = fmtDate(addDays(t, -29)); brTo.value = fmtDate(t); }
+      loadBaseReport();
+    });
+  });
+  brFrom.addEventListener('change', () => { if(brTo.value) loadBaseReport(); });
+  brTo.addEventListener('change', () => { if(brFrom.value) loadBaseReport(); });
+})();
+
+async function loadBaseReport() {
+  const start = document.getElementById('brDateFrom').value;
+  const end = document.getElementById('brDateTo').value;
+  if (!start || !end) return;
+
+  // Show loading
+  ['brCountryBody','brTypeBody','brCTBody'].forEach(id => {
+    document.getElementById(id).innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted)"><div class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading...</td></tr>';
+  });
+  ['brCountryTotals','brTypeTotals','brCTTotals'].forEach(id => { document.getElementById(id).innerHTML = ''; });
+
+  try {
+    const res = await fetch(`/api/base-report?start=${start}&end=${end}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    renderBaseReport(data);
+  } catch(e) {
+    ['brCountryBody','brTypeBody','brCTBody'].forEach(id => {
+      document.getElementById(id).innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--danger)">Error: ${e.message}</td></tr>`;
+    });
+  }
+}
+
+function brProfitCell(val) {
+  if (!val && val !== 0) return '<td><span class="muted">—</span></td>';
+  const color = val >= 0 ? 'var(--success)' : 'var(--danger)';
+  const sign = val >= 0 ? '+' : '';
+  return `<td style="color:${color};font-weight:600">${sign}${fmtEur(val)}</td>`;
+}
+
+function brRow(label, d, extraCol) {
+  const prefix = extraCol ? `<td><strong>${extraCol}</strong></td>` : '';
+  return `<tr>
+    ${prefix}
+    <td><strong>${label}</strong></td>
+    <td>${fmtEur(d.spend)}</td>
+    <td>${fmtInt(d.orders)}</td>
+    <td>${fmtEur(d.revenue)}</td>
+    ${brProfitCell(d.profit)}
+    <td>${d.cpa > 0 ? fmtEur(d.cpa) : '<span class="muted">—</span>'}</td>
+    <td>${d.roas > 0 ? d.roas.toFixed(2) + 'x' : '<span class="muted">—</span>'}</td>
+  </tr>`;
+}
+
+function brTotalsRow(items, cols) {
+  let spend=0, orders=0, revenue=0, profit=0;
+  for (const d of items) { spend += d.spend||0; orders += d.orders||0; revenue += d.revenue||0; profit += d.profit||0; }
+  const cpa = orders > 0 ? spend / orders : 0;
+  const roas = spend > 0 ? revenue / spend : 0;
+  const profitColor = profit >= 0 ? 'var(--success)' : 'var(--danger)';
+  const sign = profit >= 0 ? '+' : '';
+  return `<tr class="totals-row">
+    <td colspan="${cols - 6}"><strong>TOTAL</strong></td>
+    <td>${fmtEur(spend)}</td><td>${fmtInt(orders)}</td><td>${fmtEur(revenue)}</td>
+    <td style="color:${profitColor};font-weight:700">${sign}${fmtEur(profit)}</td>
+    <td>${cpa > 0 ? fmtEur(cpa) : '—'}</td><td>${roas > 0 ? roas.toFixed(2) + 'x' : '—'}</td>
+  </tr>`;
+}
+
+function renderBaseReport(data) {
+  // By Country - sort by spend desc
+  const countries = Object.entries(data.byCountry)
+    .map(([k, v]) => ({ label: k, ...v }))
+    .sort((a, b) => b.spend - a.spend);
+  document.getElementById('brCountryBody').innerHTML = countries.length
+    ? countries.map(c => brRow(c.label, c)).join('')
+    : '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted)">No data</td></tr>';
+  document.getElementById('brCountryTotals').innerHTML = countries.length ? brTotalsRow(countries, 7) : '';
+
+  // By Type - sort by spend desc
+  const types = Object.entries(data.byType)
+    .map(([k, v]) => ({ label: k, ...v }))
+    .sort((a, b) => b.spend - a.spend);
+  document.getElementById('brTypeBody').innerHTML = types.length
+    ? types.map(t => brRow(t.label, t)).join('')
+    : '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted)">No data</td></tr>';
+  document.getElementById('brTypeTotals').innerHTML = types.length ? brTotalsRow(types, 7) : '';
+
+  // By Country + Type - sort by spend desc
+  const ct = Object.values(data.byCountryAndType)
+    .sort((a, b) => b.spend - a.spend);
+  document.getElementById('brCTBody').innerHTML = ct.length
+    ? ct.map(c => brRow(c.type, c, c.country)).join('')
+    : '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted)">No data</td></tr>';
+  document.getElementById('brCTTotals').innerHTML = ct.length ? brTotalsRow(ct, 8) : '';
 }
 
 loadData();
