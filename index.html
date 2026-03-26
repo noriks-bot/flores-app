@@ -1205,7 +1205,7 @@ function nameHtml(name,level) {
   if(level!=='campaign') return `<span class="name-text" title="${(name||'').replace(/"/g,'&quot;')}">${name||'—'}</span>`;
   const t=parseCampTags(name);
   let tags='';
-  t.countries.forEach(c=>{tags+=`<span class="country-tag country-tag-${c}">${c}</span>`;});
+  const flags={HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'}; t.countries.forEach(c=>{tags+=`<span class="country-tag country-tag-${c}">${flags[c]||''} ${c}</span>`;});
   if(t.type) tags+=`<span class="type-tag ${t.type}">${t.typeLabel}</span>`;
   return `${tags}<span class="name-text" title="${(name||'').replace(/"/g,'&quot;')}">${name||'—'}</span>`;
 }
