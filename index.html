@@ -593,6 +593,52 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 600; }
   background: var(--card-bg); border-radius: 8px; cursor: pointer;
   color: var(--text-secondary); font-size: 16px;
 }
+
+/* ═══ CREATIVE REPORTING TABLE ═══ */
+.cr-table-wrap {
+  background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  overflow: hidden; border: 1px solid #e5e7eb;
+}
+.cr-table-scroll { overflow-x: auto; max-height: calc(100vh - 200px); }
+.cr-table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+.cr-table thead { position: sticky; top: 0; z-index: 10; }
+.cr-th {
+  padding: 10px 14px; text-align: right; font-size: 12px; font-weight: 500;
+  color: #64748b; background: #f8f9fa; border-bottom: 2px solid #e5e7eb;
+  cursor: pointer; white-space: nowrap; user-select: none;
+  border-right: 1px solid #eee; transition: background .15s;
+}
+.cr-th:first-child { text-align: left; }
+.cr-th:last-child { border-right: none; }
+.cr-th:hover { background: #eef2f7; }
+.cr-th.cr-sorted { color: #1e293b; font-weight: 600; }
+
+.cr-table tbody tr { border-bottom: 1px solid #f1f5f9; transition: background .1s; }
+.cr-table tbody tr:nth-child(even) { background: #f8f9fa; }
+.cr-table tbody tr:hover { background: #eff6ff; }
+.cr-table tbody td {
+  padding: 9px 14px; font-size: 13px; color: #334155; text-align: right;
+  white-space: nowrap; border-right: 1px solid #f1f5f9;
+}
+.cr-table tbody td:first-child { text-align: left; font-weight: 600; border-right: 1px solid #eee; }
+.cr-table tbody td:last-child { border-right: none; }
+.cr-table tbody tr.cr-hidden { display: none; }
+
+.cr-id-pill {
+  display: inline-block; font-weight: 700; font-size: 13px; color: #1e293b;
+}
+.cr-country-val { color: #334155; }
+.cr-country-zero { color: #cbd5e1; }
+
+/* Totals bar at bottom */
+.cr-table tfoot td {
+  padding: 11px 14px; font-size: 13px; font-weight: 600; color: #fff;
+  text-align: right; white-space: nowrap;
+  background: linear-gradient(135deg, #1a5276, #2e86c1);
+  border-right: 1px solid rgba(255,255,255,0.12);
+}
+.cr-table tfoot td:first-child { text-align: left; border-right: 1px solid rgba(255,255,255,0.12); }
+.cr-table tfoot td:last-child { border-right: none; }
 </style>
 </head>
 <body>
@@ -847,11 +893,56 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 600; }
 
   <!-- CREATIVE REPORTING -->
   <div id="section-creative-reporting" class="content-section">
+    <div class="filters-bar" id="crFilters">
+      <span class="filter-label">Period</span>
+      <div class="preset-tabs" id="crPresetTabs">
+        <button class="preset-tab" data-range="7d">7D</button>
+        <button class="preset-tab" data-range="14d">14D</button>
+        <button class="preset-tab" data-range="30d">30D</button>
+        <button class="preset-tab active" data-range="2026">2026</button>
+        <button class="preset-tab" data-range="custom">Custom</button>
+      </div>
+      <input type="date" id="crDateFrom" class="date-input" style="display:none">
+      <span class="date-sep cr-date-sep" style="display:none">→</span>
+      <input type="date" id="crDateTo" class="date-input" style="display:none">
+      <div style="margin-left:12px;position:relative">
+        <input type="text" id="crSearch" placeholder="Search creative ID..." oninput="filterCreativeTable()" style="padding:7px 12px 7px 32px;background:var(--content-bg);border:1px solid var(--border-color);border-radius:6px;font-family:inherit;font-size:12px;width:200px;color:var(--text-primary)">
+        <i class="fas fa-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-light);font-size:11px"></i>
+      </div>
+      <button class="refresh-btn" onclick="loadCreativeReport()" style="margin-left:auto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+        Load
+      </button>
+    </div>
     <div class="content">
-      <div class="placeholder-section">
-        <i class="fas fa-palette"></i>
-        <h2>Creative Reporting</h2>
-        <p>Analyze creative performance, compare ad variations, and identify top-performing visuals.</p>
+      <div class="cr-table-wrap">
+        <div class="cr-table-scroll">
+          <table class="cr-table" id="crTable">
+            <thead>
+              <tr>
+                <th class="cr-th" data-sort="id" style="text-align:left">Creative ID ↕</th>
+                <th class="cr-th" data-sort="adCount">Ads ↕</th>
+                <th class="cr-th" data-sort="totalSpend">Total Spend ↕</th>
+                <th class="cr-th cr-country-th" data-sort="HR">🇭🇷 HR ↕</th>
+                <th class="cr-th cr-country-th" data-sort="CZ">🇨🇿 CZ ↕</th>
+                <th class="cr-th cr-country-th" data-sort="PL">🇵🇱 PL ↕</th>
+                <th class="cr-th cr-country-th" data-sort="GR">🇬🇷 GR ↕</th>
+                <th class="cr-th cr-country-th" data-sort="SK">🇸🇰 SK ↕</th>
+                <th class="cr-th cr-country-th" data-sort="IT">🇮🇹 IT ↕</th>
+                <th class="cr-th cr-country-th" data-sort="HU">🇭🇺 HU ↕</th>
+                <th class="cr-th" data-sort="totalClicks">Clicks ↕</th>
+                <th class="cr-th" data-sort="ctr">CTR ↕</th>
+                <th class="cr-th" data-sort="cpc">CPC ↕</th>
+                <th class="cr-th" data-sort="totalPurchases">Purchases ↕</th>
+                <th class="cr-th" data-sort="cpa">CPA ↕</th>
+              </tr>
+            </thead>
+            <tbody id="crBody">
+              <tr><td colspan="15" style="text-align:center;padding:60px;color:var(--text-muted)">Select a date range and click Load</td></tr>
+            </tbody>
+            <tfoot id="crTotals"></tfoot>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -2234,6 +2325,167 @@ function applySearchFilter() {
 }
 
 loadData();
+
+/* ═══ CREATIVE REPORTING ═══ */
+let crData = null;
+let crSortKey = 'totalSpend';
+let crSortDir = 'desc';
+const CR_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU'];
+
+(function initCreativeReport() {
+  const crFrom = document.getElementById('crDateFrom');
+  const crTo = document.getElementById('crDateTo');
+  crFrom.value = '2026-01-01';
+  crTo.value = fmtDate(new Date());
+
+  document.querySelectorAll('#crPresetTabs .preset-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#crPresetTabs .preset-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const t = new Date(), range = btn.dataset.range;
+      if (range === 'custom') {
+        document.querySelectorAll('#crFilters .date-input, #crFilters .cr-date-sep').forEach(el => el.style.display = '');
+        return;
+      }
+      document.querySelectorAll('#crFilters .date-input, #crFilters .cr-date-sep').forEach(el => el.style.display = 'none');
+      if (range === '7d') { crFrom.value = fmtDate(addDays(t, -6)); crTo.value = fmtDate(t); }
+      else if (range === '14d') { crFrom.value = fmtDate(addDays(t, -13)); crTo.value = fmtDate(t); }
+      else if (range === '30d') { crFrom.value = fmtDate(addDays(t, -29)); crTo.value = fmtDate(t); }
+      else if (range === '2026') { crFrom.value = '2026-01-01'; crTo.value = fmtDate(t); }
+      loadCreativeReport();
+    });
+  });
+  crFrom.addEventListener('change', () => { if(crTo.value) loadCreativeReport(); });
+  crTo.addEventListener('change', () => { if(crFrom.value) loadCreativeReport(); });
+
+  // Sort headers
+  document.getElementById('crTable').addEventListener('click', e => {
+    const th = e.target.closest('.cr-th[data-sort]');
+    if (!th) return;
+    const key = th.dataset.sort;
+    if (crSortKey === key) crSortDir = crSortDir === 'desc' ? 'asc' : 'desc';
+    else { crSortKey = key; crSortDir = 'desc'; }
+    if (crData) { sortCreativeData(); renderCreativeTable(); }
+  });
+})();
+
+function crGetSortVal(c, key) {
+  if (key === 'id') return c.id === 'Other' ? 'ZZZZ' : c.id;
+  if (CR_COUNTRIES.includes(key)) return c.countries[key]?.spend || 0;
+  return c[key] || 0;
+}
+
+function sortCreativeData() {
+  if (!crData) return;
+  crData.creatives.sort((a, b) => {
+    const va = crGetSortVal(a, crSortKey);
+    const vb = crGetSortVal(b, crSortKey);
+    const isStr = typeof va === 'string';
+    let cmp = isStr ? va.localeCompare(vb) : va - vb;
+    return crSortDir === 'asc' ? cmp : -cmp;
+  });
+}
+
+async function loadCreativeReport() {
+  const start = document.getElementById('crDateFrom').value;
+  const end = document.getElementById('crDateTo').value;
+  if (!start || !end) return;
+
+  document.getElementById('crBody').innerHTML = '<tr><td colspan="15" style="text-align:center;padding:60px;color:var(--text-muted)"><div class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading creative data...</td></tr>';
+  document.getElementById('crTotals').innerHTML = '';
+
+  try {
+    const res = await fetch(`/api/creative-report?start=${start}&end=${end}`);
+    crData = await res.json();
+    if (crData.error) throw new Error(crData.error);
+    sortCreativeData();
+    renderCreativeTable();
+  } catch(e) {
+    document.getElementById('crBody').innerHTML = `<tr><td colspan="15" style="text-align:center;padding:60px;color:var(--danger)">Error: ${e.message}</td></tr>`;
+  }
+}
+
+function crFmtSpend(val) {
+  if (!val || val === 0) return '<span class="cr-country-zero">—</span>';
+  return '<span class="cr-country-val">€' + val.toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span>';
+}
+
+function renderCreativeTable() {
+  if (!crData || !crData.creatives.length) {
+    document.getElementById('crBody').innerHTML = '<tr><td colspan="15" style="text-align:center;padding:40px;color:var(--text-muted)">No creative data found</td></tr>';
+    document.getElementById('crTotals').innerHTML = '';
+    return;
+  }
+
+  // Update sort indicators
+  document.querySelectorAll('.cr-th').forEach(th => {
+    th.classList.remove('cr-sorted');
+    const key = th.dataset.sort;
+    const base = th.textContent.replace(/ [↑↓↕]$/, '');
+    if (key === crSortKey) {
+      th.classList.add('cr-sorted');
+      th.textContent = base + (crSortDir === 'asc' ? ' ↑' : ' ↓');
+    } else {
+      th.textContent = base.replace(/ [↑↓]$/, '') + ' ↕';
+    }
+  });
+
+  const rows = crData.creatives.map(c => {
+    const countryCells = CR_COUNTRIES.map(cc => `<td>${crFmtSpend(c.countries[cc]?.spend)}</td>`).join('');
+    return `<tr data-cr-id="${c.id.toLowerCase()}">
+      <td><span class="cr-id-pill">${c.id}</span></td>
+      <td>${c.adCount}</td>
+      <td style="font-weight:600">€${c.totalSpend.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      ${countryCells}
+      <td>${c.totalClicks > 0 ? fmtCompact(c.totalClicks) : '<span class="cr-country-zero">—</span>'}</td>
+      <td>${c.ctr > 0 ? c.ctr.toFixed(2) + '%' : '<span class="cr-country-zero">—</span>'}</td>
+      <td>${c.cpc > 0 ? '€' + c.cpc.toFixed(2) : '<span class="cr-country-zero">—</span>'}</td>
+      <td style="font-weight:600">${c.totalPurchases > 0 ? c.totalPurchases : '<span class="cr-country-zero">—</span>'}</td>
+      <td>${c.cpa > 0 ? '€' + c.cpa.toFixed(2) : '<span class="cr-country-zero">—</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('crBody').innerHTML = rows;
+
+  // Totals footer
+  const t = crData.totals;
+  const ctr = t.impressions > 0 ? (t.clicks / t.impressions * 100).toFixed(2) + '%' : '—';
+  const cpc = t.clicks > 0 ? '€' + (t.spend / t.clicks).toFixed(2) : '—';
+  const cpa = t.purchases > 0 ? '€' + (t.spend / t.purchases).toFixed(2) : '—';
+
+  // Aggregate country totals
+  const countryTotals = {};
+  CR_COUNTRIES.forEach(cc => { countryTotals[cc] = 0; });
+  crData.creatives.forEach(c => {
+    CR_COUNTRIES.forEach(cc => { countryTotals[cc] += (c.countries[cc]?.spend || 0); });
+  });
+  const countryTotalCells = CR_COUNTRIES.map(cc => `<td>${countryTotals[cc] > 0 ? '€' + countryTotals[cc].toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—'}</td>`).join('');
+
+  document.getElementById('crTotals').innerHTML = `<tr>
+    <td>Total (${crData.creatives.length})</td>
+    <td>${crData.creatives.reduce((s,c) => s + c.adCount, 0)}</td>
+    <td>€${t.spend.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+    ${countryTotalCells}
+    <td>${fmtCompact(t.clicks)}</td>
+    <td>${ctr}</td>
+    <td>${cpc}</td>
+    <td>${t.purchases}</td>
+    <td>${cpa}</td>
+  </tr>`;
+
+  // Re-apply search filter
+  filterCreativeTable();
+}
+
+function filterCreativeTable() {
+  const query = (document.getElementById('crSearch').value || '').toLowerCase().trim();
+  document.querySelectorAll('#crBody tr[data-cr-id]').forEach(row => {
+    if (!query) { row.classList.remove('cr-hidden'); return; }
+    const id = row.getAttribute('data-cr-id');
+    const text = row.textContent.toLowerCase();
+    row.classList.toggle('cr-hidden', !id.includes(query) && !text.includes(query));
+  });
+}
 </script>
 </body>
 </html>

@@ -1389,6 +1389,95 @@ const server = http.createServer(async (req, res) => {
           byOrigin
         });
       }
+      if (urlPath === '/api/creative-report') {
+        const start = query.start || dateFrom;
+        const end = query.end || dateTo;
+
+        // Fetch all ads with insights for date range
+        const allAdsData = await getAllAds(start, end);
+
+        const COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU'];
+        const creativeMap = {};
+
+        for (const ad of allAdsData) {
+          const name = ad.name || '';
+          const ins = ad.insights;
+          if (!ins) continue;
+
+          // Parse creative ID
+          const idMatch = name.match(/^(ID\d+)/i);
+          const creativeId = idMatch ? idMatch[1].toUpperCase() : 'Other';
+
+          // Parse country from ad name (after ID and date)
+          let adCountry = null;
+          const parts = name.split('_');
+          for (const p of parts) {
+            const upper = p.toUpperCase();
+            if (COUNTRIES.includes(upper)) { adCountry = upper; break; }
+          }
+
+          if (!creativeMap[creativeId]) {
+            creativeMap[creativeId] = {
+              id: creativeId,
+              name: name, // first ad name as representative
+              totalSpend: 0,
+              totalClicks: 0,
+              totalPurchases: 0,
+              totalImpressions: 0,
+              adCount: 0,
+              countries: {}
+            };
+          }
+
+          const c = creativeMap[creativeId];
+          const spend = parseFloat(ins.spend || 0);
+          const clicks = parseInt(ins.clicks || 0);
+          const impressions = parseInt(ins.impressions || 0);
+          const purchases = getPurchases(ins);
+
+          c.totalSpend += spend;
+          c.totalClicks += clicks;
+          c.totalPurchases += purchases;
+          c.totalImpressions += impressions;
+          c.adCount++;
+
+          // Use first name only if shorter / more representative
+          if (name.length < c.name.length && creativeId !== 'Other') c.name = name;
+
+          if (adCountry) {
+            if (!c.countries[adCountry]) c.countries[adCountry] = { spend: 0, clicks: 0, purchases: 0 };
+            c.countries[adCountry].spend += spend;
+            c.countries[adCountry].clicks += clicks;
+            c.countries[adCountry].purchases += purchases;
+          }
+        }
+
+        // Calculate derived metrics and round
+        const creatives = Object.values(creativeMap).map(c => {
+          c.totalSpend = Math.round(c.totalSpend * 100) / 100;
+          c.ctr = c.totalImpressions > 0 ? Math.round(c.totalClicks / c.totalImpressions * 10000) / 100 : 0;
+          c.cpc = c.totalClicks > 0 ? Math.round(c.totalSpend / c.totalClicks * 100) / 100 : 0;
+          c.cpa = c.totalPurchases > 0 ? Math.round(c.totalSpend / c.totalPurchases * 100) / 100 : 0;
+          // Round country values
+          for (const cc of Object.keys(c.countries)) {
+            c.countries[cc].spend = Math.round(c.countries[cc].spend * 100) / 100;
+          }
+          return c;
+        });
+
+        // Sort by totalSpend descending
+        creatives.sort((a, b) => b.totalSpend - a.totalSpend);
+
+        // Totals
+        const totals = {
+          spend: Math.round(creatives.reduce((s, c) => s + c.totalSpend, 0) * 100) / 100,
+          clicks: creatives.reduce((s, c) => s + c.totalClicks, 0),
+          purchases: creatives.reduce((s, c) => s + c.totalPurchases, 0),
+          impressions: creatives.reduce((s, c) => s + c.totalImpressions, 0)
+        };
+
+        return sendJSON(res, { creatives, totals });
+      }
       if (urlPath === '/api/clear-cache') {
         const files = fs.readdirSync(CACHE_DIR).filter(f => !f.startsWith('dash-') && f !== 'origin-data.json');
         files.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
