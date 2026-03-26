@@ -606,7 +606,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 600; }
   padding: 6px 10px; text-align: right; font-size: 11px; font-weight: 500;
   color: #64748b; background: #f5f7fa; border-bottom: 1px solid #eee;
   cursor: pointer; white-space: nowrap; user-select: none;
-  border-right: 1px solid #eee; transition: background .15s;
+  border-right: 1px solid #eee;
 }
 .cr-th:first-child { text-align: left; }
 .cr-th:last-child { border-right: none; }
@@ -619,7 +619,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 600; }
   padding: 6px 10px; font-size: 12px; color: #334155; text-align: right;
   white-space: nowrap; border-right: 1px solid #eee;
 }
-.cr-table tbody td:first-child { text-align: left; font-weight: 600; border-right: 1px solid #eee; }
+.cr-table tbody td:first-child { text-align: left; font-weight: 600; }
 .cr-table tbody td:last-child { border-right: none; }
 .cr-table tbody tr.cr-hidden { display: none; }
 
@@ -2405,7 +2405,7 @@ async function loadCreativeReport() {
 
 function crFmtSpend(val) {
   if (!val || val === 0) return '<span class="cr-country-zero">—</span>';
-  return '<span class="cr-country-val">' + val.toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €</span>';
+  return val.toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
 }
 
 function renderCreativeTable() {
