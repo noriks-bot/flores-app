@@ -142,16 +142,16 @@ body { overflow-x: hidden;
 }
 
 .table-scroll { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 280px); width: 100%; }
-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1250px; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1800px; }
 
 thead th {
   position: sticky; top: 0; z-index: 10;
-  padding: 8px 12px; text-align: right;
-  font-size: 12px; font-weight: 600; color: #6b6f75;
+  padding: 6px 8px; text-align: right;
+  font-size: 10px; font-weight: 600; color: #6b6f75;
   text-transform: none; letter-spacing: 0; white-space: nowrap;
   background: #f6f7f8; border-bottom: 1px solid #e6e8ea;
   border-right: 1px solid #e6e8ea;
-  height: 40px;
+  height: 34px;
   cursor: pointer; user-select: none; transition: color .15s;
 }
 thead th:hover { color: var(--text-secondary); }
@@ -174,11 +174,11 @@ tbody td.sep { border-left: 1px solid #e6e8ea; }
 .sort-arrow { font-size: 9px; margin-left: 3px; opacity: 0.6; }
 
 tbody td {
-  padding: 8px 12px; border-bottom: 1px solid #efefef;
+  padding: 6px 10px; border-bottom: 1px solid #efefef;
   border-right: 1px solid #e6e8ea;
   text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums;
-  font-size: 13px; color: var(--text-primary); transition: background .1s;
-  height: 40px;
+  font-size: 11px; color: var(--text-primary); transition: background .1s;
+  height: 34px;
 }
 tbody td:nth-child(1), tbody td:nth-child(2) { text-align: left; }
 tbody tr:last-child td { border-bottom: none; }
@@ -337,8 +337,8 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 .badge-neutral { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; background: #FEF3C7; color: #92400E; border-radius: 4px; font-size: 11px; font-weight: 700; }
 .badge-loss { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; background: var(--danger-soft); color: var(--danger); border-radius: 4px; font-size: 11px; font-weight: 700; }
 .badge-roas { display: inline-block; padding: 0; background: transparent; color: var(--text-primary); border-radius: 0; font-size: 13px; font-weight: 400; text-align: right; }
-.pill-green { display: block; padding: 3px 6px; background: #4caf50; color: #fff; border-radius: 3px; font-size: 12px; font-weight: 600; white-space: nowrap; text-align: right; }
-.pill-red { display: block; padding: 3px 6px; background: #ef5350; color: #fff; border-radius: 3px; font-size: 12px; font-weight: 600; white-space: nowrap; text-align: right; }
+.pill-green { display: block; padding: 2px 5px; background: #4caf50; color: #fff; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; text-align: right; }
+.pill-red { display: block; padding: 2px 5px; background: #ef5350; color: #fff; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; text-align: right; }
 .pill-neutral { display: block; padding: 3px 6px; background: #f0f0f0; color: #666; border-radius: 3px; font-size: 12px; font-weight: 400; text-align: right; }
 
 /* Edit btn */
