@@ -251,6 +251,10 @@ tr.level-campaign.row-expanded td:first-child { box-shadow: inset 4px 0 0 var(--
   cursor: pointer; display: none; padding: 2px 4px; border-radius: 4px;
 }
 .search-clear:hover { color: var(--text-primary); background: var(--content-bg); }
+.fpill { padding:4px 10px; font-size:12px; font-weight:500; border:1px solid var(--border-color); border-radius:6px; background:var(--content-bg); color:var(--text-secondary); cursor:pointer; transition:all .15s; font-family:inherit; }
+.fpill:hover { border-color:var(--primary); color:var(--primary); }
+.fpill-active { background:var(--primary); color:#fff; border-color:var(--primary); font-weight:600; }
+.fpill-active:hover { background:#2563eb; }
 .search-count { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
 
 /* Hover action icons */
@@ -697,6 +701,25 @@ tbody td:nth-child(1), tbody td:nth-child(2) { background: var(--card-bg); }
       <button class="search-clear" id="searchClear" onclick="clearSearch()">×</button>
     </div>
     <span class="search-count" id="searchCount"></span>
+  </div>
+
+  <!-- FILTER PILLS -->
+  <div class="filter-pills-bar" style="padding:8px 24px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:var(--card-bg);border-bottom:1px solid var(--border-color)">
+    <span style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-right:4px">Country:</span>
+    <button class="fpill fpill-active" data-ft="country" data-fv="ALL" onclick="toggleFilterPill(this)">All</button>
+    <button class="fpill" data-ft="country" data-fv="HR" onclick="toggleFilterPill(this)">🇭🇷 HR</button>
+    <button class="fpill" data-ft="country" data-fv="CZ" onclick="toggleFilterPill(this)">🇨🇿 CZ</button>
+    <button class="fpill" data-ft="country" data-fv="PL" onclick="toggleFilterPill(this)">🇵🇱 PL</button>
+    <button class="fpill" data-ft="country" data-fv="GR" onclick="toggleFilterPill(this)">🇬🇷 GR</button>
+    <button class="fpill" data-ft="country" data-fv="SK" onclick="toggleFilterPill(this)">🇸🇰 SK</button>
+    <button class="fpill" data-ft="country" data-fv="IT" onclick="toggleFilterPill(this)">🇮🇹 IT</button>
+    <button class="fpill" data-ft="country" data-fv="HU" onclick="toggleFilterPill(this)">🇭🇺 HU</button>
+    <span style="width:1px;height:20px;background:var(--border-color);margin:0 8px"></span>
+    <span style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-right:4px">Type:</span>
+    <button class="fpill fpill-active" data-ft="type" data-fv="ALL" onclick="toggleFilterPill(this)">All</button>
+    <button class="fpill" data-ft="type" data-fv="CBO" onclick="toggleFilterPill(this)">CBO</button>
+    <button class="fpill" data-ft="type" data-fv="ABO" onclick="toggleFilterPill(this)">ABO</button>
+    <button class="fpill" data-ft="type" data-fv="SOFI" onclick="toggleFilterPill(this)">SOFI</button>
   </div>
 
   <div class="content">
@@ -2040,6 +2063,20 @@ function renderOriginReport(data) {
 // ═══ CAMPAIGN SEARCH/FILTER ═══
 let searchFilter = '';
 
+let activeCountryFilter = 'ALL';
+let activeTypeFilter = 'ALL';
+
+function toggleFilterPill(btn) {
+  const ft = btn.getAttribute('data-ft');
+  const fv = btn.getAttribute('data-fv');
+  // Deactivate siblings of same filter type
+  document.querySelectorAll(`.fpill[data-ft="${ft}"]`).forEach(b => b.classList.remove('fpill-active'));
+  btn.classList.add('fpill-active');
+  if (ft === 'country') activeCountryFilter = fv;
+  if (ft === 'type') activeTypeFilter = fv;
+  applySearchFilter();
+}
+
 function filterCampaigns() {
   const input = document.getElementById('campaignSearch');
   const clearBtn = document.getElementById('searchClear');
@@ -2062,7 +2099,19 @@ function applySearchFilter() {
     if (!row.classList.contains('level-campaign')) return;
     total++;
     const name = (row.querySelector('.name-text')?.textContent || '').toLowerCase();
-    const match = !searchFilter || name.includes(searchFilter);
+    const nameUpper = (row.querySelector('.name-text')?.textContent || '').toUpperCase();
+    // Country filter
+    let countryMatch = activeCountryFilter === 'ALL';
+    if (!countryMatch) {
+      const ccMatch = nameUpper.match(/CC:([A-Z+]+)/);
+      if (ccMatch) countryMatch = ccMatch[1].split('+').includes(activeCountryFilter);
+    }
+    // Type filter
+    let typeMatch = activeTypeFilter === 'ALL';
+    if (!typeMatch) {
+      typeMatch = nameUpper.includes('| ' + activeTypeFilter + ' ') || nameUpper.includes('| ' + activeTypeFilter + '|') || nameUpper.includes('| ' + activeTypeFilter + '\t');
+    }
+    const match = (!searchFilter || name.includes(searchFilter)) && countryMatch && typeMatch;
     row.style.display = match ? '' : 'none';
     if (match) shown++;
     // Also hide/show child rows
