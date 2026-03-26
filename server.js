@@ -158,16 +158,33 @@ db.exec(`
   );
 `);
 
+// Add new columns for flores plugin fields (safe - ignores if already exists)
+const newColumns = [
+  'adset_id TEXT DEFAULT ""',
+  'ad_id TEXT DEFAULT ""',
+  'campaign_name TEXT DEFAULT ""',
+  'adset_name TEXT DEFAULT ""',
+  'ad_name TEXT DEFAULT ""',
+  'utm_medium TEXT DEFAULT ""',
+  'landing_page TEXT DEFAULT ""',
+  'placement TEXT DEFAULT ""'
+];
+for (const col of newColumns) {
+  try { db.exec(`ALTER TABLE wc_orders ADD COLUMN ${col}`); } catch(e) { /* column exists */ }
+}
+
 // Prepared statements for WC sync
 const upsertOrder = db.prepare(`
-  INSERT INTO wc_orders (country, wc_order_id, order_date, status, gross_total, gross_eur, net_revenue, product_cost, shipping_cost, profit, product_type, utm_source, utm_campaign, is_fb_attributed, raw_meta, created_at)
-  VALUES (@country, @wc_order_id, @order_date, @status, @gross_total, @gross_eur, @net_revenue, @product_cost, @shipping_cost, @profit, @product_type, @utm_source, @utm_campaign, @is_fb_attributed, @raw_meta, datetime('now'))
+  INSERT INTO wc_orders (country, wc_order_id, order_date, status, gross_total, gross_eur, net_revenue, product_cost, shipping_cost, profit, product_type, utm_source, utm_campaign, is_fb_attributed, raw_meta, created_at, adset_id, ad_id, campaign_name, adset_name, ad_name, utm_medium, landing_page, placement)
+  VALUES (@country, @wc_order_id, @order_date, @status, @gross_total, @gross_eur, @net_revenue, @product_cost, @shipping_cost, @profit, @product_type, @utm_source, @utm_campaign, @is_fb_attributed, @raw_meta, datetime('now'), @adset_id, @ad_id, @campaign_name, @adset_name, @ad_name, @utm_medium, @landing_page, @placement)
   ON CONFLICT(country, wc_order_id) DO UPDATE SET
     order_date=excluded.order_date, status=excluded.status, gross_total=excluded.gross_total,
     gross_eur=excluded.gross_eur, net_revenue=excluded.net_revenue, product_cost=excluded.product_cost,
     shipping_cost=excluded.shipping_cost, profit=excluded.profit, product_type=excluded.product_type,
     utm_source=excluded.utm_source, utm_campaign=excluded.utm_campaign, is_fb_attributed=excluded.is_fb_attributed,
-    raw_meta=excluded.raw_meta
+    raw_meta=excluded.raw_meta, adset_id=excluded.adset_id, ad_id=excluded.ad_id,
+    campaign_name=excluded.campaign_name, adset_name=excluded.adset_name, ad_name=excluded.ad_name,
+    utm_medium=excluded.utm_medium, landing_page=excluded.landing_page, placement=excluded.placement
 `);
 
 const updateSyncState = db.prepare(`
@@ -276,30 +293,52 @@ async function syncCountry(country) {
   const insertMany = db.transaction((orders) => {
     for (const order of orders) {
       const meta = order.meta_data || [];
-      const utmSource = (meta.find(m => m.key === '_wc_order_attribution_utm_source')?.value || '');
-      const utmCampaign = meta.find(m => m.key === '_wc_order_attribution_utm_campaign')?.value || '';
-      const referrer = (meta.find(m => m.key === '_wc_order_attribution_referrer')?.value || '').toLowerCase();
-      const sessionEntry = (meta.find(m => m.key === '_wc_order_attribution_session_entry')?.value || '').toLowerCase();
 
-      const isFB = utmSource.toLowerCase().includes('facebook') || utmSource.toLowerCase().includes('fb') ||
-                   utmSource.toLowerCase().includes('ig') || utmSource.toLowerCase().includes('meta') ||
-                   referrer.includes('facebook.com') || referrer.includes('fb.com') || referrer.includes('instagram.com') ||
-                   referrer.includes('fbclid') || sessionEntry.includes('fbclid') || sessionEntry.includes('campaignid');
+      // Priority: flores plugin fields > WC attribution fields
+      const floresCampaignId = meta.find(m => m.key === '_flores_campaign_id')?.value || '';
+      const floresAdsetId = meta.find(m => m.key === '_flores_adset_id')?.value || '';
+      const floresAdId = meta.find(m => m.key === '_flores_ad_id')?.value || '';
+      const floresCampaignName = meta.find(m => m.key === '_flores_campaign_name')?.value || '';
+      const floresAdsetName = meta.find(m => m.key === '_flores_adset_name')?.value || '';
+      const floresAdName = meta.find(m => m.key === '_flores_ad_name')?.value || '';
+      const floresUtmSource = meta.find(m => m.key === '_flores_utm_source')?.value || '';
+      const floresUtmMedium = meta.find(m => m.key === '_flores_utm_medium')?.value || '';
+      const floresLanding = meta.find(m => m.key === '_flores_landing_page')?.value || '';
+      const floresPlacement = meta.find(m => m.key === '_flores_placement')?.value || '';
+
+      // WC attribution fallbacks
+      const wcUtmSource = meta.find(m => m.key === '_wc_order_attribution_utm_source')?.value || '';
+      const wcUtmCampaign = meta.find(m => m.key === '_wc_order_attribution_utm_campaign')?.value || '';
+      const wcReferrer = (meta.find(m => m.key === '_wc_order_attribution_referrer')?.value || '').toLowerCase();
+      const wcSessionEntry = (meta.find(m => m.key === '_wc_order_attribution_session_entry')?.value || '').toLowerCase();
+
+      // Best values (flores plugin takes priority)
+      const utmSource = floresUtmSource || wcUtmSource;
+      const utmMedium = floresUtmMedium || '';
+
+      // Campaign ID: flores plugin > WC utm_campaign > session entry extraction
+      let campaignId = floresCampaignId || wcUtmCampaign;
+      if (!campaignId) {
+        const match = wcSessionEntry.match(/campaignid=(\d+)/i);
+        if (match) campaignId = match[1];
+      }
+
+      // FB attribution: check all sources
+      const srcLower = utmSource.toLowerCase();
+      const isFB = srcLower.includes('facebook') || srcLower.includes('fb') ||
+                   srcLower.includes('ig') || srcLower.includes('meta') ||
+                   wcReferrer.includes('facebook.com') || wcReferrer.includes('fb.com') ||
+                   wcReferrer.includes('instagram.com') || wcReferrer.includes('fbclid') ||
+                   wcSessionEntry.includes('fbclid') || wcSessionEntry.includes('campaignid') ||
+                   !!floresCampaignId;  // If flores plugin captured a campaign ID, it's from FB
 
       const calc = calculateOrderProfit(order, country);
       const ptype = detectProductType(order.line_items || []);
       const orderDate = (order.date_created || '').slice(0, 10);
 
-      // Extract campaign ID from utm_campaign or session entry
-      let campaignId = utmCampaign;
-      if (!campaignId) {
-        const match = sessionEntry.match(/campaignid=(\d+)/i);
-        if (match) campaignId = match[1];
-      }
-
       const relevantMeta = {};
       for (const m of meta) {
-        if (m.key && m.key.startsWith('_wc_order_attribution_')) {
+        if (m.key && (m.key.startsWith('_wc_order_attribution_') || m.key.startsWith('_flores_'))) {
           relevantMeta[m.key] = m.value;
         }
       }
@@ -319,7 +358,15 @@ async function syncCountry(country) {
         utm_source: utmSource,
         utm_campaign: campaignId,
         is_fb_attributed: isFB ? 1 : 0,
-        raw_meta: JSON.stringify(relevantMeta)
+        raw_meta: JSON.stringify(relevantMeta),
+        adset_id: floresAdsetId,
+        ad_id: floresAdId,
+        campaign_name: floresCampaignName,
+        adset_name: floresAdsetName,
+        ad_name: floresAdName,
+        utm_medium: utmMedium,
+        landing_page: floresLanding,
+        placement: floresPlacement
       });
       count++;
     }
@@ -466,7 +513,7 @@ function fetchActualWcOrders(dateFrom, dateTo) {
 // Returns: { campaignId: [{ orderId, country, grossEur, profit, ... }] }
 function fetchWcOrdersByCampaign(dateFrom, dateTo) {
   const rows = db.prepare(`
-    SELECT wc_order_id, country, gross_eur, net_revenue, product_cost, shipping_cost, profit, utm_campaign
+    SELECT wc_order_id, country, gross_eur, net_revenue, product_cost, shipping_cost, profit, utm_campaign, adset_id, ad_id
     FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''
   `).all(dateFrom, dateTo);
 
@@ -480,7 +527,9 @@ function fetchWcOrdersByCampaign(dateFrom, dateTo) {
       netEur: r.net_revenue,
       productCost: r.product_cost,
       shipping: r.shipping_cost,
-      profit: r.profit
+      profit: r.profit,
+      adsetId: r.adset_id || '',
+      adId: r.ad_id || ''
     });
   }
   return byCampaign;
@@ -1060,7 +1109,7 @@ const server = http.createServer(async (req, res) => {
         
         // Query DB for orders matching this campaign
         const rows = db.prepare(`
-          SELECT wc_order_id, country, order_date, gross_eur, product_cost, shipping_cost, profit, product_type
+          SELECT wc_order_id, country, order_date, gross_eur, product_cost, shipping_cost, profit, product_type, adset_id, ad_id, adset_name, ad_name
           FROM wc_orders WHERE utm_campaign = ? AND order_date >= ? AND order_date <= ?
           ORDER BY order_date DESC
         `).all(campaignId, dateFrom, dateTo);
@@ -1072,7 +1121,11 @@ const server = http.createServer(async (req, res) => {
           country: r.country, total: r.gross_eur, currency: 'EUR',
           products: [{ name: r.product_type || 'unknown', qty: 1, price: r.gross_eur, sku: '' }],
           productCost: r.product_cost,
-          profit: r.profit, qty: 1
+          profit: r.profit, qty: 1,
+          adsetId: r.adset_id || '',
+          adId: r.ad_id || '',
+          adsetName: r.adset_name || '',
+          adName: r.ad_name || ''
         }));
         
         return sendJSON(res, allOrders);
