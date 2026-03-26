@@ -6,6 +6,7 @@
 <title>Flores — Ad Intelligence</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✿</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root {
@@ -354,22 +355,212 @@ tr.campaign-loss:hover td { background: rgba(239,68,68,0.15) !important; }
 /* Adset/Ad name sub-info */
 .sub-info { font-size: 10px; color: var(--text-light); font-weight: 400; margin-left: 4px; }
 
-@media (max-width: 768px) { .brand-text, .brand-sub { display: none; } .filters-bar { padding: 10px 12px; } .content { padding: 12px; } }
+@media (max-width: 768px) { .filters-bar { padding: 10px 12px; } .content { padding: 12px; } }
+
+/* ═══ SIDEBAR ═══ */
+:root {
+  --sidebar-bg: #1E3A5F;
+  --sidebar-hover: #2a4a70;
+  --sidebar-active: rgba(96, 165, 250, 0.15);
+  --sidebar-text: rgba(255, 255, 255, 0.7);
+  --sidebar-text-active: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-width: 260px;
+  --sidebar-collapsed: 70px;
+}
+
+.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: var(--sidebar-width); background: var(--sidebar-bg);
+  display: flex; flex-direction: column; z-index: 100;
+  transition: width 0.25s cubic-bezier(0.4,0,0.2,1);
+  overflow: hidden;
+}
+.sidebar.collapsed { width: var(--sidebar-collapsed); }
+
+.sidebar-header {
+  padding: 20px 18px; display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid var(--sidebar-border); flex-shrink: 0;
+}
+.sidebar-logo {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, #7c3aed, #db2777);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: #fff; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(124,58,237,0.3);
+}
+.sidebar-brand { overflow: hidden; white-space: nowrap; transition: opacity 0.2s; }
+.sidebar.collapsed .sidebar-brand { opacity: 0; width: 0; }
+.sidebar-brand-name { font-size: 17px; font-weight: 800; color: #fff; letter-spacing: -0.3px; }
+.sidebar-brand-sub { font-size: 10px; color: rgba(255,255,255,0.45); font-weight: 500; margin-top: -1px; }
+
+.sidebar-nav { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 10px; }
+.sidebar-nav::-webkit-scrollbar { width: 3px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+.nav-section { margin-bottom: 8px; }
+.nav-section-label {
+  padding: 8px 10px 6px; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: rgba(255,255,255,0.3); white-space: nowrap;
+  overflow: hidden; transition: opacity 0.2s;
+}
+.sidebar.collapsed .nav-section-label { opacity: 0; height: 0; padding: 0; margin: 0; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: 8px; cursor: pointer;
+  color: var(--sidebar-text); text-decoration: none;
+  transition: all 0.15s; margin-bottom: 2px; position: relative;
+  white-space: nowrap; font-size: 13px; font-weight: 500;
+}
+.nav-item:hover { background: var(--sidebar-hover); color: var(--sidebar-text-active); }
+.nav-item.active { background: var(--sidebar-active); color: var(--sidebar-text-active); font-weight: 600; }
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 6px; bottom: 6px;
+  width: 3px; border-radius: 0 3px 3px 0; background: #60a5fa;
+}
+.nav-item i { width: 20px; text-align: center; font-size: 15px; flex-shrink: 0; }
+.nav-item-text { overflow: hidden; transition: opacity 0.2s; }
+.sidebar.collapsed .nav-item-text { opacity: 0; width: 0; }
+.sidebar.collapsed .nav-item { justify-content: center; padding: 10px 0; }
+
+.sidebar-footer {
+  border-top: 1px solid var(--sidebar-border); padding: 12px; flex-shrink: 0;
+}
+.sidebar-collapse-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 8px; border-radius: 8px;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--sidebar-border);
+  color: var(--sidebar-text); cursor: pointer; font-size: 13px;
+  font-family: inherit; transition: all 0.15s; margin-bottom: 10px;
+}
+.sidebar-collapse-btn:hover { background: var(--sidebar-hover); color: #fff; }
+.sidebar-collapse-btn .btn-text { overflow: hidden; white-space: nowrap; transition: opacity 0.2s; }
+.sidebar.collapsed .sidebar-collapse-btn .btn-text { opacity: 0; width: 0; }
+.sidebar-collapse-btn i { transition: transform 0.25s; }
+.sidebar.collapsed .sidebar-collapse-btn i { transform: rotate(180deg); }
+
+.sidebar-user {
+  display: flex; align-items: center; gap: 10px; padding: 10px 8px;
+  border-radius: 8px; transition: background 0.15s;
+}
+.sidebar-user:hover { background: rgba(255,255,255,0.05); }
+.sidebar-avatar {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+.sidebar-user-info { overflow: hidden; white-space: nowrap; transition: opacity 0.2s; flex: 1; }
+.sidebar.collapsed .sidebar-user-info { opacity: 0; width: 0; }
+.sidebar-user-name { font-size: 13px; font-weight: 600; color: #fff; }
+.sidebar-user-role { font-size: 10px; color: rgba(255,255,255,0.45); }
+.sidebar-logout {
+  background: none; border: none; color: rgba(255,255,255,0.4);
+  cursor: pointer; font-size: 14px; padding: 4px; border-radius: 4px;
+  transition: all 0.15s; flex-shrink: 0;
+}
+.sidebar-logout:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
+.sidebar.collapsed .sidebar-logout { display: none; }
+
+/* ═══ MAIN OFFSET ═══ */
+.main { margin-left: var(--sidebar-width); transition: margin-left 0.25s cubic-bezier(0.4,0,0.2,1); }
+.sidebar.collapsed ~ .main, .app.sidebar-collapsed .main { margin-left: var(--sidebar-collapsed); }
+
+/* ═══ SIDEBAR OVERLAY (mobile) ═══ */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  z-index: 99; animation: fadeIn .2s;
+}
+
+/* ═══ CONTENT SECTIONS ═══ */
+.content-section { display: none; }
+.content-section.active { display: block; }
+.placeholder-section {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: calc(100vh - 140px); color: var(--text-muted); text-align: center;
+}
+.placeholder-section i { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+.placeholder-section h2 { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+.placeholder-section p { font-size: 14px; max-width: 400px; }
+
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); width: var(--sidebar-width) !important; }
+  .sidebar.mobile-open { transform: translateX(0); }
+  .sidebar-overlay.show { display: block; }
+  .main { margin-left: 0 !important; }
+  .topbar .mobile-menu-btn { display: flex; }
+}
+.mobile-menu-btn {
+  display: none; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border: 1px solid var(--border-color);
+  background: var(--card-bg); border-radius: 8px; cursor: pointer;
+  color: var(--text-secondary); font-size: 16px;
+}
 </style>
 </head>
 <body>
 <div class="app">
 
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">✿</div>
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-name">Flores</div>
+      <div class="sidebar-brand-sub">Ad Intelligence</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Menu</div>
+      <a class="nav-item active" data-section="ads-manager" onclick="navigateTo('ads-manager')">
+        <i class="fas fa-bullhorn"></i><span class="nav-item-text">Ads Manager</span>
+      </a>
+      <a class="nav-item" data-section="base-report" onclick="navigateTo('base-report')">
+        <i class="fas fa-chart-bar"></i><span class="nav-item-text">Base Report</span>
+      </a>
+      <a class="nav-item" data-section="creative-reporting" onclick="navigateTo('creative-reporting')">
+        <i class="fas fa-palette"></i><span class="nav-item-text">Creative Reporting</span>
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">AI</div>
+      <a class="nav-item" data-section="ai-hints" onclick="navigateTo('ai-hints')">
+        <i class="fas fa-robot"></i><span class="nav-item-text">AI Hints</span>
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Data</div>
+      <a class="nav-item" data-section="upload" onclick="navigateTo('upload')">
+        <i class="fas fa-cloud-upload-alt"></i><span class="nav-item-text">Upload</span>
+      </a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="sidebar-collapse-btn" onclick="toggleSidebar()">
+      <i class="fas fa-chevron-left"></i><span class="btn-text">Collapse</span>
+    </button>
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="userAvatar">U</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="userName">User</div>
+        <div class="sidebar-user-role">Admin</div>
+      </div>
+      <button class="sidebar-logout" title="Logout" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i>
+      </button>
+    </div>
+  </div>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
+
 <!-- MAIN -->
 <div class="main">
   <div class="topbar">
     <div class="topbar-left">
-      <div class="brand-logo">✿</div>
-      <div>
-        <div class="brand-text">Flores</div>
-        <div class="brand-sub">Ad Intelligence</div>
-      </div>
-      <span style="width:1px;height:28px;background:var(--border-color);margin:0 8px"></span>
+      <button class="mobile-menu-btn" onclick="openMobileSidebar()"><i class="fas fa-bars"></i></button>
       <h1 class="page-title" id="pageTitle">Campaigns</h1>
     </div>
     <div class="topbar-right">
@@ -378,6 +569,8 @@ tr.campaign-loss:hover td { background: rgba(239,68,68,0.15) !important; }
     </div>
   </div>
 
+  <!-- === CONTENT SECTIONS === -->
+  <div id="section-ads-manager" class="content-section active">
   <!-- LEVEL TABS -->
   <div class="level-tabs">
     <button class="level-tab active" data-level="campaigns" onclick="switchTab('campaigns')">🔷 Campaigns <span class="tab-count" id="tab-count-campaigns">—</span></button>
@@ -447,10 +640,122 @@ tr.campaign-loss:hover td { background: rgba(239,68,68,0.15) !important; }
       </div>
     </div>
   </div>
+  </div><!-- /section-ads-manager -->
+
+  <!-- BASE REPORT -->
+  <div id="section-base-report" class="content-section">
+    <div class="content">
+      <div class="placeholder-section">
+        <i class="fas fa-chart-bar"></i>
+        <h2>Base Report</h2>
+        <p>Comprehensive reporting dashboard with key performance metrics across all campaigns.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATIVE REPORTING -->
+  <div id="section-creative-reporting" class="content-section">
+    <div class="content">
+      <div class="placeholder-section">
+        <i class="fas fa-palette"></i>
+        <h2>Creative Reporting</h2>
+        <p>Analyze creative performance, compare ad variations, and identify top-performing visuals.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI HINTS -->
+  <div id="section-ai-hints" class="content-section">
+    <div class="content">
+      <div class="placeholder-section">
+        <i class="fas fa-robot"></i>
+        <h2>AI Hints</h2>
+        <p>AI-powered recommendations to optimize your campaigns and improve performance.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div id="section-upload" class="content-section">
+    <div class="content">
+      <div class="placeholder-section">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <h2>Upload</h2>
+        <p>Import campaign data, creatives, and product feeds to enhance your reporting.</p>
+      </div>
+    </div>
+  </div>
+
 </div>
 </div>
 
 <script>
+/* ═══ SIDEBAR NAVIGATION ═══ */
+const sectionTitles = {
+  'ads-manager': 'Campaigns',
+  'base-report': 'Base Report',
+  'creative-reporting': 'Creative Reporting',
+  'ai-hints': 'AI Hints',
+  'upload': 'Upload'
+};
+
+function navigateTo(section) {
+  // Update hash
+  window.location.hash = section;
+  // Hide all sections, show target
+  document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById('section-' + section);
+  if (target) target.classList.add('active');
+  // Update nav active state
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navItem = document.querySelector(`.nav-item[data-section="${section}"]`);
+  if (navItem) navItem.classList.add('active');
+  // Update page title
+  document.getElementById('pageTitle').textContent = sectionTitles[section] || 'Flores';
+  // Close mobile sidebar
+  closeMobileSidebar();
+}
+
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.classList.toggle('collapsed');
+  const app = document.querySelector('.app');
+  app.classList.toggle('sidebar-collapsed');
+  localStorage.setItem('flores-sidebar-collapsed', sidebar.classList.contains('collapsed'));
+}
+
+function openMobileSidebar() {
+  document.getElementById('sidebar').classList.add('mobile-open');
+  document.getElementById('sidebarOverlay').classList.add('show');
+}
+
+function closeMobileSidebar() {
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+
+function logout() {
+  fetch('/api/logout', { method: 'POST' }).finally(() => {
+    window.location.href = '/login';
+  });
+}
+
+// Init sidebar state from localStorage
+(function initSidebar() {
+  if (localStorage.getItem('flores-sidebar-collapsed') === 'true') {
+    document.getElementById('sidebar').classList.add('collapsed');
+    document.querySelector('.app').classList.add('sidebar-collapsed');
+  }
+  // Handle hash navigation
+  const hash = window.location.hash.replace('#', '') || 'ads-manager';
+  if (hash !== 'ads-manager') navigateTo(hash);
+})();
+
+window.addEventListener('hashchange', () => {
+  const hash = window.location.hash.replace('#', '') || 'ads-manager';
+  navigateTo(hash);
+});
+
 let campaigns = [];
 let expandedCampaigns = {};
 let expandedAdsets = {};
@@ -555,7 +860,7 @@ async function loadData() {
   const {from,to}=getDateRange();
   document.getElementById('tableBody').innerHTML='<tr><td colspan="22"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>';
   try {
-    const res=await fetch(`/flores/api/campaigns?date_from=${from}&date_to=${to}`);
+    const res=await fetch(`/api/campaigns?date_from=${from}&date_to=${to}`);
     campaigns=await res.json();
     if(campaigns.error){document.getElementById('tableBody').innerHTML=`<tr><td colspan="22"><div class="loading-state">Error: ${campaigns.error}</div></td></tr>`;return;}
     campaigns.sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0));
@@ -569,7 +874,7 @@ async function loadData() {
       renderCampaignHeaders();
       updateSummary(); updateSortHeaders(); renderTable();
       // Load multi-period profit in background
-      fetch('/flores/api/multi-profit').then(r=>r.json()).then(d=>{if(!d.error){multiProfitData=d;renderTable();}}).catch(()=>{});
+      fetch('/api/multi-profit').then(r=>r.json()).then(d=>{if(!d.error){multiProfitData=d;renderTable();}}).catch(()=>{});
     } else if(activeTab==='adsets') {
       renderAdsetHeaders(); loadAdsets();
     } else {
@@ -753,7 +1058,7 @@ async function toggle(level,id) {
     expandedCampaigns[id]=true;
     renderTable(); // show loading state
     if(!adsetCache[id]){
-      try{const res=await fetch(`/flores/api/adsets?campaign_id=${id}&date_from=${from}&date_to=${to}`);adsetCache[id]=await res.json();if(adsetCache[id].error){console.error('Adset API error:',adsetCache[id].error);adsetCache[id]=[];}const c=campaigns.find(c=>c.id===id);if(c?.wc) distributeWC(c.wc,adsetCache[id]);}
+      try{const res=await fetch(`/api/adsets?campaign_id=${id}&date_from=${from}&date_to=${to}`);adsetCache[id]=await res.json();if(adsetCache[id].error){console.error('Adset API error:',adsetCache[id].error);adsetCache[id]=[];}const c=campaigns.find(c=>c.id===id);if(c?.wc) distributeWC(c.wc,adsetCache[id]);}
       catch(e){console.error('Adset fetch error:',e);adsetCache[id]=[];}
     }
   } else {
@@ -761,7 +1066,7 @@ async function toggle(level,id) {
     expandedAdsets[id]=true;
     renderTable(); // show loading state
     if(!adCache[id]){
-      try{const res=await fetch(`/flores/api/ads?adset_id=${id}&date_from=${from}&date_to=${to}`);adCache[id]=await res.json();if(adCache[id].error){console.error('Ad API error:',adCache[id].error);adCache[id]=[];}for(const cid of Object.keys(adsetCache)){const as=adsetCache[cid]?.find(a=>a.id===id);if(as?.wc){distributeWC(as.wc,adCache[id]);break;}}}
+      try{const res=await fetch(`/api/ads?adset_id=${id}&date_from=${from}&date_to=${to}`);adCache[id]=await res.json();if(adCache[id].error){console.error('Ad API error:',adCache[id].error);adCache[id]=[];}for(const cid of Object.keys(adsetCache)){const as=adsetCache[cid]?.find(a=>a.id===id);if(as?.wc){distributeWC(as.wc,adCache[id]);break;}}}
       catch(e){console.error('Ad fetch error:',e);adCache[id]=[];}
     }
   }
@@ -811,7 +1116,7 @@ async function showCampaignInfo(campaignId, btnEl) {
   }, 100);
 
   try {
-    const res = await fetch(`/flores/api/campaign-daily?campaign_id=${campaignId}&campaign_name=${encodeURIComponent(name)}`);
+    const res = await fetch(`/api/campaign-daily?campaign_id=${campaignId}&campaign_name=${encodeURIComponent(name)}`);
     const days = await res.json();
     if(days.error) throw new Error(days.error);
     
@@ -921,7 +1226,7 @@ async function showCampaignOrders(campaignId) {
   document.body.appendChild(overlay);
   
   try {
-    const res = await fetch(`/flores/api/campaign-orders?campaign_id=${campaignId}&campaign_name=${encodeURIComponent(name)}&date_from=${from}&date_to=${to}`);
+    const res = await fetch(`/api/campaign-orders?campaign_id=${campaignId}&campaign_name=${encodeURIComponent(name)}&date_from=${from}&date_to=${to}`);
     const orders = await res.json();
     if(orders.error) throw new Error(orders.error);
     
@@ -1128,7 +1433,7 @@ async function loadAdsets() {
   document.getElementById('tableTotals').innerHTML = '';
   document.getElementById('tableTotalsBottom').innerHTML = '';
   try {
-    const res = await fetch(`/flores/api/all-adsets?date_from=${from}&date_to=${to}`);
+    const res = await fetch(`/api/all-adsets?date_from=${from}&date_to=${to}`);
     allAdsets = await res.json();
     if (allAdsets.error) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="19"><div class="loading-state">Error: ${allAdsets.error}</div></td></tr>`; allAdsets = []; return; }
     document.getElementById('tab-count-adsets').textContent = allAdsets.length;
@@ -1143,7 +1448,7 @@ async function loadAds() {
   document.getElementById('tableTotals').innerHTML = '';
   document.getElementById('tableTotalsBottom').innerHTML = '';
   try {
-    const res = await fetch(`/flores/api/all-ads?date_from=${from}&date_to=${to}`);
+    const res = await fetch(`/api/all-ads?date_from=${from}&date_to=${to}`);
     allAds = await res.json();
     if (allAds.error) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="20"><div class="loading-state">Error: ${allAds.error}</div></td></tr>`; allAds = []; return; }
     document.getElementById('tab-count-ads').textContent = allAds.length;
@@ -1184,7 +1489,7 @@ function updateAdSummary() {
 
 async function clearCacheAndReload() {
   const btn=document.querySelector('.refresh-btn'); btn.classList.add('spinning');
-  await fetch('/flores/api/clear-cache');
+  await fetch('/api/clear-cache');
   allAdsets=[]; allAds=[];
   await loadData();
   btn.classList.remove('spinning');
