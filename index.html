@@ -147,64 +147,70 @@ table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 12
 
 thead th {
   position: sticky; top: 0; z-index: 10;
-  padding: 12px 16px; text-align: right;
-  font-size: 11px; font-weight: 600; color: var(--text-muted);
-  text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
-  background: #EBEDF2; border-bottom: 2px solid #D1D5DB;
+  padding: 8px 12px; text-align: right;
+  font-size: 10px; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap;
+  background: #f1f3f5; border-bottom: 2px solid #d1d5db;
   cursor: pointer; user-select: none; transition: color .15s;
 }
 thead th:hover { color: var(--text-secondary); }
 thead th.sorted-asc, thead th.sorted-desc { color: var(--primary); }
 thead th:nth-child(1), thead th:nth-child(2) { text-align: left; }
-tr.totals-row td { padding: 14px 16px; font-weight: 800; font-size: 13px; background: #1E3A5F !important; color: #fff !important; border: none; text-align: right; }
+tr.totals-row td { padding: 10px 12px; font-weight: 800; font-size: 12px; background: #1E3A5F !important; color: #fff !important; border: none; text-align: right; }
+tr.totals-row td:nth-child(2) { font-size: 11px; }
 tr.totals-row:hover td { background: #1E3A5F !important; }
 tr.totals-row .pill-green, tr.totals-row .pill-red, tr.totals-row .pill-neutral { color: #fff; background: rgba(255,255,255,0.15); }
 tr.totals-row .badge-profit, tr.totals-row .badge-loss, tr.totals-row .badge-neutral { color: #fff; background: rgba(255,255,255,0.15); }
 thead th:nth-child(1) { cursor: default; }
 thead th.wc-col { color: var(--wc-color); }
-thead th.profit-col { color: #d97706; background: #FFFBEB !important; }
+thead th.fb-col { color: #3b82f6; }
+thead th.fb-col.sorted-asc, thead th.fb-col.sorted-desc { color: #3b82f6; }
+thead th.profit-col { color: #d97706; background: #FFFBEB !important; border-bottom: 2px solid #d1d5db; }
 thead th.profit-col.sorted-asc, thead th.profit-col.sorted-desc { color: #b45309; }
 thead th.wc-col.sorted-asc, thead th.wc-col.sorted-desc { color: var(--wc-color); }
-thead th.sep { border-left: 2px solid var(--border-color); }
+thead th.sep { border-left: 1px solid #e5e7eb; }
+tbody td.sep { border-left: 1px solid #e5e7eb; }
 .sort-arrow { font-size: 8px; margin-left: 3px; }
 
 tbody td {
-  padding: 12px 16px; border-bottom: 1px solid var(--border-color);
+  padding: 8px 12px; border-bottom: 1px solid #f0f0f0;
   text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums;
-  font-size: 13px; color: var(--text-primary); transition: background .1s;
+  font-size: 12px; color: var(--text-primary); transition: background .1s;
 }
 tbody td:nth-child(1), tbody td:nth-child(2) { text-align: left; }
 tbody tr:last-child td { border-bottom: none; }
-tbody tr:hover td { background: rgba(59,130,246,0.04); }
-tbody tr.level-campaign:nth-child(even) td { background: rgba(0,0,0,0.015); }
+tbody tr:hover td { background: #EFF6FF !important; transition: background .1s; }
+tbody tr.level-campaign:nth-child(odd) td { background: #fff; }
+tbody tr.level-campaign:nth-child(even) td { background: #fafbfc; }
 
 /* Row levels */
-tr.level-campaign td { font-weight: 600; }
-tr.level-adset td { font-size: 12.5px; color: var(--text-secondary); background: #fafbfc; }
-tr.level-adset td:nth-child(2) { padding-left: 40px; }
-tr.level-adset:hover td { background: #f5f6f8 !important; }
-tr.level-ad td { font-size: 12px; color: var(--text-muted); background: var(--content-bg); }
-tr.level-ad td:nth-child(2) { padding-left: 58px; }
-tr.level-ad:hover td { background: #eef0f3 !important; }
+tr.level-campaign td { font-weight: 600; font-size: 12px; }
+tr.level-campaign td:nth-child(2) .name-text { font-size: 13px; font-weight: 600; }
+tr.level-adset td { font-size: 12px; color: #6b7280; background: #f8f9fb; }
+tr.level-adset td:nth-child(2) { padding-left: 36px; }
+tr.level-adset:hover td { background: #EFF6FF !important; }
+tr.level-ad td { font-size: 11.5px; color: #9ca3af; background: #f5f6f8; }
+tr.level-ad td:nth-child(2) { padding-left: 52px; }
+tr.level-ad:hover td { background: #EFF6FF !important; }
 
 /* Profit/loss — strong visual distinction */
 tr.campaign-profit td {
   background: #fff;
 }
 tr.campaign-profit td:first-child { box-shadow: inset 3px 0 0 var(--success); }
-tr.campaign-profit:hover td { background: #f8fafc !important; }
+tr.campaign-profit:hover td { background: #EFF6FF !important; }
 
 tr.campaign-loss td {
   background: #fff;
 }
 tr.campaign-loss td:first-child { box-shadow: inset 3px 0 0 var(--danger); }
-tr.campaign-loss:hover td { background: #f8fafc !important; }
+tr.campaign-loss:hover td { background: #EFF6FF !important; }
 
 /* Expand */
 .expand-btn {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 26px; height: 26px; border: 1px solid var(--border-color); background: var(--card-bg);
-  border-radius: 5px; cursor: pointer; font-size: 11px; color: var(--text-muted);
+  width: 22px; height: 22px; border: 1px solid var(--border-color); background: var(--card-bg);
+  border-radius: 4px; cursor: pointer; font-size: 10px; color: var(--text-muted);
   transition: all .15s; position: relative; z-index: 2;
 }
 .expand-btn:hover { background: var(--content-bg); border-color: #cbd5e1; color: var(--text-primary); }
@@ -213,16 +219,16 @@ tr.campaign-loss:hover td { background: #f8fafc !important; }
 tr.level-campaign.row-expanded td:first-child { box-shadow: inset 4px 0 0 var(--primary) !important; }
 
 /* Toggle - iOS style */
-.toggle { position: relative; width: 36px; height: 20px; display: inline-block; }
+.toggle { position: relative; width: 30px; height: 16px; display: inline-block; }
 .toggle input { display: none; }
-.toggle .slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 20px; cursor: default; transition: .2s; }
+.toggle .slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 16px; cursor: default; transition: .2s; }
 .toggle input:checked + .slider { background: var(--success); }
 .toggle .slider:before {
-  content: ''; position: absolute; width: 16px; height: 16px;
+  content: ''; position: absolute; width: 12px; height: 12px;
   border-radius: 50%; background: #fff; top: 2px; left: 2px; transition: .2s;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
-.toggle input:checked + .slider:before { left: 18px; }
+.toggle input:checked + .slider:before { left: 16px; }
 
 /* Search bar */
 .search-bar {
@@ -253,7 +259,7 @@ tr.level-campaign.row-expanded td:first-child { box-shadow: inset 4px 0 0 var(--
 .fpill:hover { border-color:var(--primary); color:var(--primary); }
 .fpill-active { background:var(--primary); color:#fff; border-color:var(--primary); font-weight:600; }
 .fpill-active:hover { background:#2563eb; }
-.camp-select { cursor:pointer; width:14px; height:14px; accent-color:#7c3aed; }
+.camp-select { cursor:pointer; width:12px; height:12px; accent-color:#7c3aed; }
 .search-count { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
 
 /* Hover action icons */
@@ -284,19 +290,20 @@ tr:hover .hover-actions { opacity: 0.6; }
 /* Ensure sticky cells inherit row background */
 tr.campaign-profit td:nth-child(1), tr.campaign-profit td:nth-child(2) { background: #fff !important; }
 tr.campaign-loss td:nth-child(1), tr.campaign-loss td:nth-child(2) { background: #fff !important; }
-tr.campaign-profit:hover td:nth-child(1), tr.campaign-profit:hover td:nth-child(2) { background: #f8fafc !important; }
-tr.campaign-loss:hover td:nth-child(1), tr.campaign-loss:hover td:nth-child(2) { background: #f8fafc !important; }
-tbody tr:hover td:nth-child(1), tbody tr:hover td:nth-child(2) { background: rgba(59,130,246,0.04); }
-tr.level-adset td:nth-child(1), tr.level-adset td:nth-child(2) { background: #fafbfc; }
-tr.level-ad td:nth-child(1), tr.level-ad td:nth-child(2) { background: var(--content-bg); }
+tr.campaign-profit:hover td:nth-child(1), tr.campaign-profit:hover td:nth-child(2) { background: #EFF6FF !important; }
+tr.campaign-loss:hover td:nth-child(1), tr.campaign-loss:hover td:nth-child(2) { background: #EFF6FF !important; }
+tbody tr:hover td:nth-child(1), tbody tr:hover td:nth-child(2) { background: #EFF6FF !important; }
+tr.level-adset td:nth-child(1), tr.level-adset td:nth-child(2) { background: #f8f9fb; }
+tr.level-ad td:nth-child(1), tr.level-ad td:nth-child(2) { background: #f5f6f8; }
 tr.totals-row td:nth-child(1), tr.totals-row td:nth-child(2) { background: #1E3A5F !important; }
-thead th:nth-child(1), thead th:nth-child(2) { background: #EBEDF2; }
-tbody td:nth-child(1), tbody td:nth-child(2) { background: var(--card-bg); }
+thead th:nth-child(1), thead th:nth-child(2) { background: #f1f3f5; }
+tbody td:nth-child(1), tbody td:nth-child(2) { background: inherit; }
 
 /* Name */
-.name-cell { display: flex; align-items: center; gap: 6px; max-width: 500px; }
-.name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.country-tag { display: inline-block; padding: 2px 6px; font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; flex-shrink: 0; }
+.name-cell { display: flex; align-items: center; gap: 5px; max-width: 350px; }
+.name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #374151; }
+tr.level-campaign .name-text { font-size: 13px; font-weight: 600; }
+.country-tag { display: inline-block; padding: 1px 5px; font-size: 9px; font-weight: 700; border-radius: 3px; letter-spacing: 0.3px; flex-shrink: 0; }
 .country-tag-HR { background: #dbeafe; color: #1e40af; }
 .country-tag-CZ { background: #e0e7ff; color: #3730a3; }
 .country-tag-PL { background: #fee2e2; color: #991b1b; }
@@ -304,7 +311,7 @@ tbody td:nth-child(1), tbody td:nth-child(2) { background: var(--card-bg); }
 .country-tag-IT { background: #dcfce7; color: #166534; }
 .country-tag-SK { background: #ffedd5; color: #9a3412; }
 .country-tag-HU { background: #f3e8ff; color: #6b21a8; }
-.type-tag { display: inline-block; padding: 2px 6px; font-size: 10px; font-weight: 600; border-radius: 4px; flex-shrink: 0; }
+.type-tag { display: inline-block; padding: 1px 5px; font-size: 9px; font-weight: 600; border-radius: 3px; flex-shrink: 0; }
 .type-tag.shirts { background: #ccfbf1; color: #0f766e; }
 .type-tag.boxers { background: #fce7f3; color: #9d174d; }
 .type-tag.starter { background: #dcfce7; color: #166534; }
@@ -316,13 +323,13 @@ tbody td:nth-child(1), tbody td:nth-child(2) { background: var(--card-bg); }
 .cell-loss { color: var(--danger); font-weight: 700; }
 .cell-wc { color: var(--wc-color); font-weight: 600; }
 .muted { color: var(--text-light); }
-.badge-profit { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--success-soft); color: var(--success); border-radius: 100px; font-size: 12px; font-weight: 700; }
-.badge-neutral { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: #FEF3C7; color: #92400E; border-radius: 100px; font-size: 12px; font-weight: 700; }
-.badge-loss { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--danger-soft); color: var(--danger); border-radius: 100px; font-size: 12px; font-weight: 700; }
-.badge-roas { display: inline-flex; padding: 3px 8px; background: var(--wc-soft); color: var(--wc-color); border-radius: 100px; font-size: 11px; font-weight: 700; }
-.pill-green { display: inline-block; padding: 3px 8px; background: rgba(34,197,94,0.12); color: #16a34a; border-radius: 100px; font-size: 11px; font-weight: 700; white-space: nowrap; }
-.pill-red { display: inline-block; padding: 3px 8px; background: rgba(239,68,68,0.1); color: #dc2626; border-radius: 100px; font-size: 11px; font-weight: 700; white-space: nowrap; }
-.pill-neutral { display: inline-block; padding: 3px 8px; background: #FEF3C7; color: #92400E; border-radius: 100px; font-size: 11px; font-weight: 700; }
+.badge-profit { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; background: var(--success-soft); color: var(--success); border-radius: 4px; font-size: 11px; font-weight: 700; }
+.badge-neutral { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; background: #FEF3C7; color: #92400E; border-radius: 4px; font-size: 11px; font-weight: 700; }
+.badge-loss { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; background: var(--danger-soft); color: var(--danger); border-radius: 4px; font-size: 11px; font-weight: 700; }
+.badge-roas { display: inline-flex; padding: 1px 6px; background: var(--wc-soft); color: var(--wc-color); border-radius: 4px; font-size: 11px; font-weight: 700; }
+.pill-green { display: inline-block; padding: 2px 6px; background: rgba(34,197,94,0.12); color: #16a34a; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.pill-red { display: inline-block; padding: 2px 6px; background: rgba(239,68,68,0.1); color: #dc2626; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.pill-neutral { display: inline-block; padding: 2px 6px; background: #FEF3C7; color: #92400E; border-radius: 4px; font-size: 11px; font-weight: 700; }
 
 /* Edit btn */
 .edit-btn {
@@ -342,9 +349,9 @@ tbody td:nth-child(1), tbody td:nth-child(2) { background: var(--card-bg); }
 .info-btn:hover { background: #f59e0b; border-color: #f59e0b; color: #fff; }
 .orders-btn {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
-  padding: 2px 8px; border: none; background: #ede9fe;
-  border-radius: 12px; cursor: pointer; color: #7c3aed;
-  transition: all .15s; margin-left: 2px; font-size: 11px; font-weight: 600; font-family: 'Inter',sans-serif;
+  padding: 1px 6px; border: none; background: #ede9fe;
+  border-radius: 8px; cursor: pointer; color: #7c3aed;
+  transition: all .15s; margin-left: 2px; font-size: 10px; font-weight: 600; font-family: 'Inter',sans-serif;
 }
 .orders-btn:hover { background: var(--wc-color); color: #fff; }
 
@@ -742,20 +749,20 @@ tbody td:nth-child(1), tbody td:nth-child(2) { background: var(--card-bg); }
               <th style="width:32px;cursor:default"><input type="checkbox" class="master-select" onchange="toggleSelectAll(this)" style="cursor:pointer"></th>
               <th data-sort="name">Campaign</th>
               <th data-sort="status">Status</th>
-              <th data-sort="spend">Spend</th>
+              <th class="sep" data-sort="spend">Spend</th>
               <th class="wc-col sep" data-sort="wc_orders">Orders</th>
               <th class="wc-col" data-sort="wc_revenue">Revenue</th>
               <th class="wc-col" data-sort="wc_profit">Profit</th>
               <th class="wc-col" data-sort="wc_ppo">P/Order</th>
               <th class="wc-col" data-sort="wc_cpa">Real CPA</th>
               <th class="wc-col" data-sort="wc_roas">ROAS</th>
-              <th class="sep" data-sort="purchases">FB_Purchases</th>
-              <th data-sort="cpa">FB_CPA</th>
-              <th data-sort="cr">FB_CR</th>
-              <th class="sep" data-sort="clicks">FB_Clicks</th>
-              <th data-sort="ctr">FB_CTR</th>
-              <th data-sort="cpm">FB_CPM</th>
-              <th data-sort="cpc">FB_CPC</th>
+              <th class="fb-col sep" data-sort="purchases">FB_Purchases</th>
+              <th class="fb-col" data-sort="cpa">FB_CPA</th>
+              <th class="fb-col" data-sort="cr">FB_CR</th>
+              <th class="fb-col sep" data-sort="clicks">FB_Clicks</th>
+              <th class="fb-col" data-sort="ctr">FB_CTR</th>
+              <th class="fb-col" data-sort="cpm">FB_CPM</th>
+              <th class="fb-col" data-sort="cpc">FB_CPC</th>
               <th class="sep profit-col" data-sort="p_yesterday">Yest. P/L</th>
               <th class="profit-col" data-sort="p_d3">3D P/L</th>
               <th class="profit-col" data-sort="p_d7">7D P/L</th>
@@ -1656,20 +1663,20 @@ function renderCampaignHeaders() {
     <th style="width:32px;cursor:default"></th>
     <th data-sort="name">Campaign</th>
     <th data-sort="status">Status</th>
-    <th data-sort="spend">Spend</th>
+    <th class="sep" data-sort="spend">Spend</th>
     <th class="wc-col sep" data-sort="wc_orders">Orders</th>
     <th class="wc-col" data-sort="wc_revenue">Revenue</th>
     <th class="wc-col" data-sort="wc_profit">Profit</th>
     <th class="wc-col" data-sort="wc_ppo">P/Order</th>
     <th class="wc-col" data-sort="wc_cpa">Real CPA</th>
     <th class="wc-col" data-sort="wc_roas">ROAS</th>
-    <th class="sep" data-sort="purchases">FB_Purchases</th>
-    <th data-sort="cpa">FB_CPA</th>
-    <th data-sort="cr">FB_CR</th>
-    <th class="sep" data-sort="clicks">FB_Clicks</th>
-    <th data-sort="ctr">FB_CTR</th>
-    <th data-sort="cpm">FB_CPM</th>
-    <th data-sort="cpc">FB_CPC</th>
+    <th class="fb-col sep" data-sort="purchases">FB_Purchases</th>
+    <th class="fb-col" data-sort="cpa">FB_CPA</th>
+    <th class="fb-col" data-sort="cr">FB_CR</th>
+    <th class="fb-col sep" data-sort="clicks">FB_Clicks</th>
+    <th class="fb-col" data-sort="ctr">FB_CTR</th>
+    <th class="fb-col" data-sort="cpm">FB_CPM</th>
+    <th class="fb-col" data-sort="cpc">FB_CPC</th>
     <th class="sep profit-col" data-sort="p_yesterday">Yest. P/L</th>
     <th class="profit-col" data-sort="p_d3">3D P/L</th>
     <th class="profit-col" data-sort="p_d7">7D P/L</th>
@@ -1682,20 +1689,20 @@ const FLAT_HEADERS = `
     <th data-sort="name">Name</th>
     <th data-sort="campaign_name">Campaign</th>
     <th data-sort="status">Status</th>
-    <th data-sort="spend">Spend</th>
+    <th class="sep" data-sort="spend">Spend</th>
     <th class="wc-col sep" data-sort="wc_orders">Orders</th>
     <th class="wc-col" data-sort="wc_revenue">Revenue</th>
     <th class="wc-col" data-sort="wc_profit">Profit</th>
     <th class="wc-col" data-sort="wc_ppo">P/Order</th>
     <th class="wc-col" data-sort="wc_cpa">Real CPA</th>
     <th class="wc-col" data-sort="wc_roas">ROAS</th>
-    <th class="sep" data-sort="purchases">FB_Purchases</th>
-    <th data-sort="cpa">FB_CPA</th>
-    <th data-sort="cr">FB_CR</th>
-    <th class="sep" data-sort="clicks">FB_Clicks</th>
-    <th data-sort="ctr">FB_CTR</th>
-    <th data-sort="cpm">FB_CPM</th>
-    <th data-sort="cpc">FB_CPC</th>`;
+    <th class="fb-col sep" data-sort="purchases">FB_Purchases</th>
+    <th class="fb-col" data-sort="cpa">FB_CPA</th>
+    <th class="fb-col" data-sort="cr">FB_CR</th>
+    <th class="fb-col sep" data-sort="clicks">FB_Clicks</th>
+    <th class="fb-col" data-sort="ctr">FB_CTR</th>
+    <th class="fb-col" data-sort="cpm">FB_CPM</th>
+    <th class="fb-col" data-sort="cpc">FB_CPC</th>`;
 
 function renderAdsetHeaders() { document.querySelector('thead tr').innerHTML = FLAT_HEADERS.replace('Name', 'Ad Set'); }
 function renderAdHeaders() { document.querySelector('thead tr').innerHTML = FLAT_HEADERS.replace('Name', 'Ad') + '\n    <th data-sort="adset_name">Ad Set</th>'; }
