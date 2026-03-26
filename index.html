@@ -211,29 +211,102 @@ tr.campaign-loss:hover td { background: rgba(239,68,68,0.15) !important; }
 }
 .expand-btn:hover { background: var(--content-bg); border-color: #cbd5e1; color: var(--text-primary); }
 .expand-btn.expanded { background: var(--primary); border-color: var(--primary); color: #fff; }
+/* Expanded campaign row gets blue left border */
+tr.level-campaign.row-expanded td:first-child { box-shadow: inset 4px 0 0 var(--primary) !important; }
 
-/* Toggle */
-.toggle { position: relative; width: 32px; height: 17px; display: inline-block; }
+/* Toggle - iOS style */
+.toggle { position: relative; width: 36px; height: 20px; display: inline-block; }
 .toggle input { display: none; }
-.toggle .slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 17px; cursor: default; transition: .2s; }
+.toggle .slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 20px; cursor: default; transition: .2s; }
 .toggle input:checked + .slider { background: var(--success); }
 .toggle .slider:before {
-  content: ''; position: absolute; width: 13px; height: 13px;
+  content: ''; position: absolute; width: 16px; height: 16px;
   border-radius: 50%; background: #fff; top: 2px; left: 2px; transition: .2s;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
-.toggle input:checked + .slider:before { left: 16px; }
+.toggle input:checked + .slider:before { left: 18px; }
+
+/* Search bar */
+.search-bar {
+  background: var(--card-bg); border-bottom: 1px solid var(--border-color);
+  padding: 10px 24px; display: flex; align-items: center; gap: 12px;
+}
+.search-wrap {
+  position: relative; flex: 1;
+}
+.search-wrap i.search-icon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--text-light); font-size: 13px; pointer-events: none;
+}
+.search-wrap input {
+  width: 100%; padding: 10px 36px 10px 36px; border: 1px solid var(--border-color);
+  border-radius: 8px; font-family: inherit; font-size: 13px; color: var(--text-primary);
+  background: var(--content-bg); transition: all .15s;
+}
+.search-wrap input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); background: #fff; }
+.search-wrap input::placeholder { color: var(--text-light); }
+.search-clear {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; font-size: 16px; color: var(--text-light);
+  cursor: pointer; display: none; padding: 2px 4px; border-radius: 4px;
+}
+.search-clear:hover { color: var(--text-primary); background: var(--content-bg); }
+.search-count { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+
+/* Hover action icons */
+.hover-actions {
+  display: inline-flex; gap: 2px; margin-left: 4px; opacity: 0; transition: opacity .15s;
+}
+tr:hover .hover-actions { opacity: 0.6; }
+.hover-actions:hover { opacity: 1 !important; }
+.hover-action {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border: none; background: transparent;
+  border-radius: 4px; cursor: pointer; font-size: 12px; color: var(--text-muted);
+  transition: all .1s; padding: 0;
+}
+.hover-action:hover { background: var(--content-bg); color: var(--text-primary); }
+
+/* Sticky first column (campaign name) */
+.table-scroll table tbody td:nth-child(2),
+.table-scroll table thead th:nth-child(2) {
+  position: sticky; left: 0; z-index: 3;
+}
+.table-scroll table thead th:nth-child(2) { z-index: 11; }
+.table-scroll table tbody td:nth-child(1),
+.table-scroll table thead th:nth-child(1) {
+  position: sticky; left: 0; z-index: 3;
+}
+.table-scroll table thead th:nth-child(1) { z-index: 11; }
+/* Ensure sticky cells inherit row background */
+tr.campaign-profit td:nth-child(1), tr.campaign-profit td:nth-child(2) { background: rgba(34,197,94,0.10) !important; }
+tr.campaign-loss td:nth-child(1), tr.campaign-loss td:nth-child(2) { background: rgba(239,68,68,0.08) !important; }
+tr.campaign-profit:hover td:nth-child(1), tr.campaign-profit:hover td:nth-child(2) { background: rgba(34,197,94,0.18) !important; }
+tr.campaign-loss:hover td:nth-child(1), tr.campaign-loss:hover td:nth-child(2) { background: rgba(239,68,68,0.15) !important; }
+tbody tr:hover td:nth-child(1), tbody tr:hover td:nth-child(2) { background: rgba(59,130,246,0.04); }
+tr.level-adset td:nth-child(1), tr.level-adset td:nth-child(2) { background: #fafbfc; }
+tr.level-ad td:nth-child(1), tr.level-ad td:nth-child(2) { background: var(--content-bg); }
+tr.totals-row td:nth-child(1), tr.totals-row td:nth-child(2) { background: #1E3A5F !important; }
+thead th:nth-child(1), thead th:nth-child(2) { background: #EBEDF2; }
+tbody td:nth-child(1), tbody td:nth-child(2) { background: var(--card-bg); }
 
 /* Name */
 .name-cell { display: flex; align-items: center; gap: 6px; max-width: 500px; }
 .name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.country-tag { display: inline-block; padding: 1px 5px; font-size: 9px; font-weight: 700; border-radius: 3px; background: var(--content-bg); color: var(--text-muted); letter-spacing: 0.3px; border: 1px solid var(--border-color); flex-shrink: 0; }
-.type-tag { display: inline-block; padding: 1px 5px; font-size: 9px; font-weight: 600; border-radius: 3px; flex-shrink: 0; }
-.type-tag.shirts { background: #EFF6FF; color: #2563eb; }
-.type-tag.boxers { background: #FEF3C7; color: #92400E; }
-.type-tag.starter { background: #F0FDF4; color: #16a34a; }
-.type-tag.kompleti { background: #FAE8FF; color: #9333ea; }
-.type-tag.catalog { background: #F1F5F9; color: #475569; }
+.country-tag { display: inline-block; padding: 2px 6px; font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; flex-shrink: 0; }
+.country-tag-HR { background: #dbeafe; color: #1e40af; }
+.country-tag-CZ { background: #e0e7ff; color: #3730a3; }
+.country-tag-PL { background: #fee2e2; color: #991b1b; }
+.country-tag-GR { background: #cffafe; color: #155e75; }
+.country-tag-IT { background: #dcfce7; color: #166534; }
+.country-tag-SK { background: #ffedd5; color: #9a3412; }
+.country-tag-HU { background: #f3e8ff; color: #6b21a8; }
+.type-tag { display: inline-block; padding: 2px 6px; font-size: 10px; font-weight: 600; border-radius: 4px; flex-shrink: 0; }
+.type-tag.shirts { background: #ccfbf1; color: #0f766e; }
+.type-tag.boxers { background: #fce7f3; color: #9d174d; }
+.type-tag.starter { background: #dcfce7; color: #166534; }
+.type-tag.kompleti { background: #fef3c7; color: #92400e; }
+.type-tag.catalog { background: #f1f5f9; color: #475569; }
 
 /* Cell */
 .cell-profit { color: var(--success); font-weight: 700; }
@@ -266,9 +339,9 @@ tr.campaign-loss:hover td { background: rgba(239,68,68,0.15) !important; }
 .info-btn:hover { background: #f59e0b; border-color: #f59e0b; color: #fff; }
 .orders-btn {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
-  padding: 2px 8px; border: 1px solid var(--wc-color); background: var(--wc-soft);
-  border-radius: 5px; cursor: pointer; color: var(--wc-color);
-  transition: all .15s; margin-left: 2px; font-size: 10px; font-weight: 700; font-family: 'Inter',sans-serif;
+  padding: 2px 8px; border: none; background: #ede9fe;
+  border-radius: 12px; cursor: pointer; color: #7c3aed;
+  transition: all .15s; margin-left: 2px; font-size: 11px; font-weight: 600; font-family: 'Inter',sans-serif;
 }
 .orders-btn:hover { background: var(--wc-color); color: #fff; }
 
@@ -584,6 +657,10 @@ tr.campaign-loss:hover td { background: rgba(239,68,68,0.15) !important; }
     <div class="topbar-right">
       <span id="campaignCount" style="font-size:11px;color:var(--text-muted)"></span>
       <span id="lastUpdated" style="font-size:11px;color:var(--text-muted)"></span>
+      <button class="refresh-btn" onclick="clearCacheAndReload()" style="margin-left:8px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+        Refresh
+      </button>
     </div>
   </div>
 
@@ -615,6 +692,16 @@ tr.campaign-loss:hover td { background: rgba(239,68,68,0.15) !important; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
       Refresh
     </button>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <div class="search-bar" id="campaignSearchBar">
+    <div class="search-wrap">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" id="campaignSearch" placeholder="Search campaigns..." oninput="filterCampaigns()">
+      <button class="search-clear" id="searchClear" onclick="clearSearch()">×</button>
+    </div>
+    <span class="search-count" id="searchCount"></span>
   </div>
 
   <div class="content">
@@ -1101,9 +1188,17 @@ function nameHtml(name,level) {
   if(level!=='campaign') return `<span class="name-text" title="${(name||'').replace(/"/g,'&quot;')}">${name||'—'}</span>`;
   const t=parseCampTags(name);
   let tags='';
-  t.countries.forEach(c=>{tags+=`<span class="country-tag">${c}</span>`;});
+  t.countries.forEach(c=>{tags+=`<span class="country-tag country-tag-${c}">${c}</span>`;});
   if(t.type) tags+=`<span class="type-tag ${t.type}">${t.typeLabel}</span>`;
   return `${tags}<span class="name-text" title="${(name||'').replace(/"/g,'&quot;')}">${name||'—'}</span>`;
+}
+
+function renderHoverActions(name, id) {
+  const escaped = (name||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+  return `<span class="hover-actions">
+    <button class="hover-action" onclick="event.stopPropagation();navigator.clipboard.writeText('${escaped}');showToast('Copied!')" title="Copy name">📋</button>
+    <a class="hover-action" href="https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=1922887421998222&selected_campaign_ids=${id}" target="_blank" title="Open in Facebook" onclick="event.stopPropagation()">🔗</a>
+  </span>`;
 }
 
 function profitPill(val) {
@@ -1146,10 +1241,12 @@ function makeRow(item,level) {
   else fbEditUrl=`https://adsmanager.facebook.com/adsmanager/manage/ads/edit?act=1922887421998222&selected_ad_ids=${item.id}`;
   const editBtn=`<a class="edit-btn" href="${fbEditUrl}" target="_blank" title="Open in FB Ads Manager">${editSvg}</a>`;
   const infoBtn=level==='campaign'?`<button class="info-btn" onclick="event.stopPropagation();showCampaignInfo('${item.id}',this)" title="Campaign Performance">ℹ</button>`:'';
-  const ordersBtn=level==='campaign'&&wcCount>0?`<button class="orders-btn" onclick="event.stopPropagation();showCampaignOrders('${item.id}')" title="View Orders">${wcCount} Orders</button>`:'';
-  const actionBtns=editBtn+infoBtn+ordersBtn;
+  const ordersBtn=level==='campaign'&&wcCount>0?`<button class="orders-btn" onclick="event.stopPropagation();showCampaignOrders('${item.id}')" title="View Orders">${wcCount} Order${wcCount!==1?'s':''}</button>`:'';
+  const hoverActs=level==='campaign'?renderHoverActions(item.name,item.id):'';
+  const actionBtns=editBtn+infoBtn+ordersBtn+hoverActs;
 
-  return `<tr class="level-${level} ${rowClass}" data-id="${item.id}">
+  const expandedClass = (level==='campaign' && expandedCampaigns[item.id]) ? 'row-expanded' : '';
+  return `<tr class="level-${level} ${rowClass} ${expandedClass}" data-id="${item.id}">
     <td>${expandHtml}</td>
     <td><div class="name-cell">${nameHtml(item.name,level)}${actionBtns}</div></td>
     <td>${statusHtml}</td>
@@ -1195,6 +1292,7 @@ function renderTable() {
   });
   if(!html) html='<tr><td colspan="22"><div class="loading-state">No campaigns found</div></td></tr>';
   document.getElementById('tableBody').innerHTML=html;
+  if(searchFilter) applySearchFilter();
 }
 
 function distributeWC(parentWC,children) {
@@ -1941,6 +2039,49 @@ function renderOriginReport(data) {
   } else {
     document.getElementById('orOriginBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">No data</td></tr>';
     document.getElementById('orOriginTotals').innerHTML = '';
+  }
+}
+
+// ═══ CAMPAIGN SEARCH/FILTER ═══
+let searchFilter = '';
+
+function filterCampaigns() {
+  const input = document.getElementById('campaignSearch');
+  const clearBtn = document.getElementById('searchClear');
+  searchFilter = (input.value || '').toLowerCase().trim();
+  clearBtn.style.display = searchFilter ? 'block' : 'none';
+  applySearchFilter();
+}
+
+function clearSearch() {
+  document.getElementById('campaignSearch').value = '';
+  document.getElementById('searchClear').style.display = 'none';
+  searchFilter = '';
+  applySearchFilter();
+}
+
+function applySearchFilter() {
+  const rows = document.querySelectorAll('#tableBody tr[data-id]');
+  let shown = 0, total = 0;
+  rows.forEach(row => {
+    if (!row.classList.contains('level-campaign')) return;
+    total++;
+    const name = (row.querySelector('.name-text')?.textContent || '').toLowerCase();
+    const match = !searchFilter || name.includes(searchFilter);
+    row.style.display = match ? '' : 'none';
+    if (match) shown++;
+    // Also hide/show child rows
+    let next = row.nextElementSibling;
+    while (next && !next.classList.contains('level-campaign')) {
+      next.style.display = match ? '' : 'none';
+      next = next.nextElementSibling;
+    }
+  });
+  const countEl = document.getElementById('searchCount');
+  if (searchFilter) {
+    countEl.textContent = `Showing ${shown} of ${total} campaigns`;
+  } else {
+    countEl.textContent = '';
   }
 }
 
