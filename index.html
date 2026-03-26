@@ -1803,6 +1803,7 @@ function renderAdsetTable() {
   allAdsets.forEach(as => { html += makeFlatRow(as, 'adset'); });
   if (!html) html = '<tr><td colspan="19"><div class="loading-state">No ad sets found</div></td></tr>';
   document.getElementById('tableBody').innerHTML = html;
+  if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL') setTimeout(applySearchFilter, 50);
 }
 
 function renderAdTable() {
@@ -1810,6 +1811,7 @@ function renderAdTable() {
   allAds.forEach(ad => { html += makeFlatRow(ad, 'ad'); });
   if (!html) html = '<tr><td colspan="20"><div class="loading-state">No ads found</div></td></tr>';
   document.getElementById('tableBody').innerHTML = html;
+  if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL') setTimeout(applySearchFilter, 50);
 }
 
 function updateAdsetSummary() {
@@ -2167,22 +2169,29 @@ function applySearchFilter() {
   const rows = document.querySelectorAll('#tableBody tr[data-id]');
   let shown = 0, total = 0;
   rows.forEach(row => {
-    if (!row.classList.contains('level-campaign')) return;
+    // Work on campaign rows AND flat rows (adsets/ads tabs)
+    const isCampaign = row.classList.contains('level-campaign');
+    const isFlat = row.classList.contains('flat-row') || row.querySelector('.name-text');
+    if (!isCampaign && !isFlat) return;
     total++;
     const name = (row.querySelector('.name-text')?.textContent || '').toLowerCase();
     const nameUpper = (row.querySelector('.name-text')?.textContent || '').toUpperCase();
+    // For adsets/ads, also check campaign_name in data attribute or visible text
+    const fullText = row.textContent.toUpperCase();
     // Country filter
     let countryMatch = activeCountryFilter === 'ALL';
     if (!countryMatch) {
-      const ccMatch = nameUpper.match(/CC:([A-Z+]+)/);
+      const ccMatch = (nameUpper + ' ' + fullText).match(/CC:([A-Z+]+)/);
       if (ccMatch) countryMatch = ccMatch[1].split('+').includes(activeCountryFilter);
+      // Also check country tags
+      if (!countryMatch) countryMatch = fullText.includes(activeCountryFilter);
     }
     // Type filter
     let typeMatch = activeTypeFilter === 'ALL';
     if (!typeMatch) {
-      typeMatch = nameUpper.includes('| ' + activeTypeFilter + ' ') || nameUpper.includes('| ' + activeTypeFilter + '|') || nameUpper.includes('| ' + activeTypeFilter + '\t');
+      typeMatch = fullText.includes('| ' + activeTypeFilter + ' ') || fullText.includes('| ' + activeTypeFilter + '|') || fullText.includes('| ' + activeTypeFilter + '\t') || fullText.includes(' ' + activeTypeFilter + ' ');
     }
-    const match = (!searchFilter || name.includes(searchFilter)) && countryMatch && typeMatch;
+    const match = (!searchFilter || name.includes(searchFilter) || row.textContent.toLowerCase().includes(searchFilter)) && countryMatch && typeMatch;
     row.style.display = match ? '' : 'none';
     if (match) shown++;
     // Also hide/show child rows
