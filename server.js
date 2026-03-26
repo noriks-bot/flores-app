@@ -470,7 +470,7 @@ async function fetchAdvertiserData(dateFrom, dateTo) {
   
   try {
     // Use SSH + curl to fetch from dash server (more reliable than direct HTTP)
-    const cmd = `ssh -i /home/ec2-user/.ssh/firma_appi.pem -o ConnectTimeout=10 ec2-user@18.185.109.219 'TOKEN=$(curl -s -X POST http://localhost:3000/api/login -H "Content-Type: application/json" -d "{\\"username\\":\\"noriks\\",\\"password\\":\\"noriks\\"}" -D - 2>/dev/null | grep -oP "session=\\\\K[^;]+") && curl -s -b "session=$TOKEN" "http://localhost:3000/api/advertiser-data?start=${dateFrom}&end=${dateTo}"'`;
+    const cmd = `curl -s -X POST http://localhost:3000/api/login -H "Content-Type: application/json" -d '{"username":"noriks","password":"noriks"}' -c /tmp/dash_cookies.txt -o /dev/null && curl -s -b /tmp/dash_cookies.txt "http://localhost:3000/api/advertiser-data?start=${dateFrom}&end=${dateTo}"`;
     const result = execSync(cmd, { timeout: 60000, maxBuffer: 10 * 1024 * 1024 }).toString();
     const data = JSON.parse(result);
     if (!data || data.error) return null;
