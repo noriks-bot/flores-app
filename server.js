@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = 3200;
-const META_TOKEN = 'EAAbve4r8sNoBQZBwFXNmYMwfat1w6XGsvLF0pRvjrYJig6JVhXZAMvRZA5Fz9qEThfygBnQrUiXUZBwNXv9SBIlMPp27zx3VMzfIXcGHY9TcIP9Uh93taCsk4tZAoK9vs5MrT2LP9ogFs9Jbuzj7ZBZBjGXIdpdgKvCWKUDgZAHiium8mceXs8lrvtYeKPBWuLQVSueZCeO7sSUg1';
+const META_TOKEN = 'EAAR1d7hDpEkBQxdtLk9xZBIPqpxFNV48ZA6FnqOumgzSSagyz3l720s5SI1Ev6YIWrZCTjLDxcEiPYwIxKfLmBr4AEoIf8SiusxRaSZAHX8DePLnFUajOSKI4ZAZA8sauiHEUVhsr2ZCIeZA8bhzak5qCZCfh0bVWm2ZAhZCJ8CYmbK0BNiTgHHgeKLD6pAWz5V';
 const AD_ACCOUNT = 'act_1922887421998222';
 const API_VERSION = 'v21.0';
 const CACHE_DIR = path.join(__dirname, 'cache');
