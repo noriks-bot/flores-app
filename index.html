@@ -157,9 +157,9 @@ thead th {
 thead th:hover { color: var(--text-secondary); }
 thead th.sorted-asc, thead th.sorted-desc { color: var(--primary); }
 thead th:nth-child(1), thead th:nth-child(2) { text-align: left; }
-tr.totals-row td { padding: 10px 12px; font-weight: 700; font-size: 13px; background: #1f2a36 !important; color: #fff !important; border: none; border-top: 2px solid #1a2430; text-align: right; }
-tr.totals-row td:nth-child(2) { font-size: 13px; }
-tr.totals-row:hover td { background: #1f2a36 !important; }
+tr.totals-row td { padding: 10px 12px; font-weight: 600; font-size: 12px; background: linear-gradient(135deg, #1a2332 0%, #1f3044 100%) !important; color: #fff !important; border: none; border-top: 2px solid #1a2430; text-align: right; }
+tr.totals-row td:nth-child(2) { font-size: 12px; font-weight: 700; }
+tr.totals-row:hover td { background: linear-gradient(135deg, #1a2332 0%, #1f3044 100%) !important; }
 tr.totals-row .pill-green { color: #fff; background: #4caf50; }
 tr.totals-row .pill-red { color: #fff; background: #ef5350; }
 tr.totals-row .pill-neutral { color: #fff; background: rgba(255,255,255,0.15); }
@@ -188,13 +188,20 @@ tbody tr.level-campaign:nth-child(even) td { background: #fff; }
 
 /* Row levels */
 tr.level-campaign td { font-weight: 400; font-size: 13px; }
-tr.level-campaign td:nth-child(2) .name-text { font-size: 13px; font-weight: 600; }
-tr.level-adset td { font-size: 13px; color: #6b7280; background: #fafbfc; }
-tr.level-adset td:nth-child(2) { padding-left: 36px; }
+tr.level-campaign td:nth-child(2) .name-text { font-size: 13px; font-weight: 500; color: #111827; }
+tr.level-adset td { font-size: 12px; color: #4b5563; font-weight: 400; background: #f9fafb; }
+tr.level-adset td:nth-child(2) { padding-left: 32px; border-left: 2px solid #e5e7eb; }
 tr.level-adset:hover td { background: #f3f4f6 !important; }
-tr.level-ad td { font-size: 13px; color: #9ca3af; background: #f5f6f8; }
-tr.level-ad td:nth-child(2) { padding-left: 52px; }
-tr.level-ad:hover td { background: #f3f4f6 !important; }
+tr.level-ad td { font-size: 11.5px; color: #6b7280; font-weight: 400; background: #f3f4f6; }
+tr.level-ad td:nth-child(2) { padding-left: 52px; border-left: 2px solid #d1d5db; }
+tr.level-ad:hover td { background: #e5e7eb !important; }
+tr.level-adset .name-text { font-weight: 400; color: #4b5563; }
+tr.level-ad .name-text { font-weight: 400; color: #6b7280; }
+
+/* Expanded campaign — bolder bottom border for group header effect */
+tr.level-campaign.row-expanded td { border-bottom: 2px solid #d1d5db; }
+/* Group separator — last child before next campaign */
+tr.group-last td { border-bottom: 2px solid #e5e7eb; }
 
 /* Profit/loss — no left border coloring */
 tr.campaign-profit td {
@@ -213,11 +220,11 @@ tr.campaign-loss:hover td { background: #f3f4f6 !important; }
 .expand-btn {
   display: inline-flex; align-items: center; justify-content: center;
   width: 18px; height: 18px; border: none; background: transparent;
-  border-radius: 2px; cursor: pointer; font-size: 12px; color: #9aa0a6;
+  border-radius: 2px; cursor: pointer; font-size: 13px; color: #9ca3af;
   transition: all .15s; position: relative; z-index: 2;
 }
-.expand-btn:hover { color: var(--text-primary); }
-.expand-btn.expanded { color: var(--primary); background: transparent; border: none; }
+.expand-btn:hover { color: #374151; }
+.expand-btn.expanded { color: #3b82f6; background: transparent; border: none; }
 /* Expanded campaign row — no left border */
 tr.level-campaign.row-expanded td:first-child { box-shadow: none !important; }
 
@@ -296,16 +303,16 @@ tr.campaign-loss td:nth-child(1), tr.campaign-loss td:nth-child(2) { background:
 tr.campaign-profit:hover td:nth-child(1), tr.campaign-profit:hover td:nth-child(2) { background: #f3f4f6 !important; }
 tr.campaign-loss:hover td:nth-child(1), tr.campaign-loss:hover td:nth-child(2) { background: #f3f4f6 !important; }
 tbody tr:hover td:nth-child(1), tbody tr:hover td:nth-child(2) { background: #f3f4f6 !important; }
-tr.level-adset td:nth-child(1), tr.level-adset td:nth-child(2) { background: #f8f9fb; }
-tr.level-ad td:nth-child(1), tr.level-ad td:nth-child(2) { background: #f5f6f8; }
-tr.totals-row td:nth-child(1), tr.totals-row td:nth-child(2) { background: #1f2a36 !important; }
+tr.level-adset td:nth-child(1), tr.level-adset td:nth-child(2) { background: #f9fafb; }
+tr.level-ad td:nth-child(1), tr.level-ad td:nth-child(2) { background: #f3f4f6; }
+tr.totals-row td:nth-child(1), tr.totals-row td:nth-child(2) { background: #1a2332 !important; }
 thead th:nth-child(1), thead th:nth-child(2) { background: #f6f7f8; }
 tbody td:nth-child(1), tbody td:nth-child(2) { background: inherit; }
 
 /* Name */
 .name-cell { display: flex; align-items: center; gap: 5px; max-width: 350px; overflow: hidden; }
 .name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #374151; }
-tr.level-campaign .name-text { font-size: 13px; font-weight: 600; }
+tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827; }
 .country-tag { display: inline-block; padding: 0px 3px; font-size: 9px; font-weight: 600; border-radius: 3px; letter-spacing: 0.2px; flex-shrink: 0; opacity: 0.7; }
 .country-tag-HR { background: #e8eef4; color: #5a6a7a; }
 .country-tag-CZ { background: #e8eaf4; color: #5a5e7a; }
@@ -330,9 +337,9 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 600; }
 .badge-neutral { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; background: #FEF3C7; color: #92400E; border-radius: 4px; font-size: 11px; font-weight: 700; }
 .badge-loss { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; background: var(--danger-soft); color: var(--danger); border-radius: 4px; font-size: 11px; font-weight: 700; }
 .badge-roas { display: inline-block; padding: 0; background: transparent; color: var(--text-primary); border-radius: 0; font-size: 13px; font-weight: 400; text-align: right; }
-.pill-green { display: block; padding: 4px 8px; background: #4caf50; color: #fff; border-radius: 3px; font-size: 12px; font-weight: 600; white-space: nowrap; text-align: right; }
-.pill-red { display: block; padding: 4px 8px; background: #ef5350; color: #fff; border-radius: 3px; font-size: 12px; font-weight: 600; white-space: nowrap; text-align: right; }
-.pill-neutral { display: block; padding: 4px 8px; background: #f0f0f0; color: #666; border-radius: 3px; font-size: 12px; font-weight: 400; text-align: right; }
+.pill-green { display: block; padding: 3px 6px; background: #4caf50; color: #fff; border-radius: 3px; font-size: 12px; font-weight: 600; white-space: nowrap; text-align: right; }
+.pill-red { display: block; padding: 3px 6px; background: #ef5350; color: #fff; border-radius: 3px; font-size: 12px; font-weight: 600; white-space: nowrap; text-align: right; }
+.pill-neutral { display: block; padding: 3px 6px; background: #f0f0f0; color: #666; border-radius: 3px; font-size: 12px; font-weight: 400; text-align: right; }
 
 /* Edit btn */
 .edit-btn {
@@ -1458,21 +1465,27 @@ function renderTable() {
   campaigns.forEach(c=>{
     html+=makeRow(c,'campaign');
     if(expandedCampaigns[c.id]){
+      let childRows=[];
       if(!adsetCache[c.id]){
-        html+='<tr class="level-adset"><td></td><td colspan="21" style="padding:12px 40px;color:var(--text-muted)"><div class="spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading adsets...</td></tr>';
+        childRows.push('<tr class="level-adset"><td></td><td colspan="21" style="padding:12px 40px;color:var(--text-muted)"><div class="spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading adsets...</td></tr>');
       } else {
         const adsets=adsetCache[c.id].filter(a=>a.insights||a.status==='ACTIVE').sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0));
         adsets.forEach(as=>{
-          html+=makeRow(as,'adset');
+          childRows.push(makeRow(as,'adset'));
           if(expandedAdsets[as.id]){
             if(!adCache[as.id]){
-              html+='<tr class="level-ad"><td></td><td colspan="21" style="padding:12px 58px;color:var(--text-muted)"><div class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading ads...</td></tr>';
+              childRows.push('<tr class="level-ad"><td></td><td colspan="21" style="padding:12px 58px;color:var(--text-muted)"><div class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading ads...</td></tr>');
             } else {
-              adCache[as.id].filter(a=>a.insights||a.status==='ACTIVE').sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0)).forEach(ad=>{html+=makeRow(ad,'ad');});
+              adCache[as.id].filter(a=>a.insights||a.status==='ACTIVE').sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0)).forEach(ad=>{childRows.push(makeRow(ad,'ad'));});
             }
           }
         });
       }
+      // Mark last child row with group-last for visual separator
+      if(childRows.length>0){
+        childRows[childRows.length-1]=childRows[childRows.length-1].replace('<tr class="','<tr class="group-last ');
+      }
+      html+=childRows.join('');
     }
   });
   if(!html) html='<tr><td colspan="22"><div class="loading-state">No campaigns found</div></td></tr>';
