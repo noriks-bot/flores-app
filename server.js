@@ -1390,6 +1390,10 @@ const server = http.createServer(async (req, res) => {
         });
       }
       if (urlPath === '/api/creative-report') {
+        function getPurchases(ins) {
+          const p = (ins.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
+          return p ? parseInt(p.value) : 0;
+        }
         const start = query.start || dateFrom;
         const end = query.end || dateTo;
 

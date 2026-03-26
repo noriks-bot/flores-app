@@ -596,15 +596,15 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 600; }
 
 /* ═══ CREATIVE REPORTING TABLE ═══ */
 .cr-table-wrap {
-  background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   overflow: hidden; border: 1px solid #e5e7eb;
 }
 .cr-table-scroll { overflow-x: auto; max-height: calc(100vh - 200px); }
 .cr-table { width: 100%; border-collapse: collapse; min-width: 1100px; }
 .cr-table thead { position: sticky; top: 0; z-index: 10; }
 .cr-th {
-  padding: 10px 14px; text-align: right; font-size: 12px; font-weight: 500;
-  color: #64748b; background: #f8f9fa; border-bottom: 2px solid #e5e7eb;
+  padding: 6px 10px; text-align: right; font-size: 11px; font-weight: 500;
+  color: #64748b; background: #f5f7fa; border-bottom: 1px solid #eee;
   cursor: pointer; white-space: nowrap; user-select: none;
   border-right: 1px solid #eee; transition: background .15s;
 }
@@ -613,26 +613,24 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 600; }
 .cr-th:hover { background: #eef2f7; }
 .cr-th.cr-sorted { color: #1e293b; font-weight: 600; }
 
-.cr-table tbody tr { border-bottom: 1px solid #f1f5f9; transition: background .1s; }
-.cr-table tbody tr:nth-child(even) { background: #f8f9fa; }
-.cr-table tbody tr:hover { background: #eff6ff; }
+.cr-table tbody tr { border-bottom: 1px solid #eee; }
+.cr-table tbody tr:hover { background: #f8fafc; }
 .cr-table tbody td {
-  padding: 9px 14px; font-size: 13px; color: #334155; text-align: right;
-  white-space: nowrap; border-right: 1px solid #f1f5f9;
+  padding: 6px 10px; font-size: 12px; color: #334155; text-align: right;
+  white-space: nowrap; border-right: 1px solid #eee;
 }
 .cr-table tbody td:first-child { text-align: left; font-weight: 600; border-right: 1px solid #eee; }
 .cr-table tbody td:last-child { border-right: none; }
 .cr-table tbody tr.cr-hidden { display: none; }
 
-.cr-id-pill {
-  display: inline-block; font-weight: 700; font-size: 13px; color: #1e293b;
-}
-.cr-country-val { color: #334155; }
+.cr-id-pill { font-weight: 700; font-size: 12px; color: #1e293b; }
 .cr-country-zero { color: #cbd5e1; }
+.cr-cell-profit { background: #22c55e; color: #fff; font-weight: 600; }
+.cr-cell-loss { background: #ef4444; color: #fff; font-weight: 600; }
 
 /* Totals bar at bottom */
 .cr-table tfoot td {
-  padding: 11px 14px; font-size: 13px; font-weight: 600; color: #fff;
+  padding: 8px 10px; font-size: 12px; font-weight: 600; color: #fff;
   text-align: right; white-space: nowrap;
   background: linear-gradient(135deg, #1a5276, #2e86c1);
   border-right: 1px solid rgba(255,255,255,0.12);
@@ -920,21 +918,21 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 600; }
           <table class="cr-table" id="crTable">
             <thead>
               <tr>
-                <th class="cr-th" data-sort="id" style="text-align:left">Creative ID ↕</th>
-                <th class="cr-th" data-sort="adCount">Ads ↕</th>
-                <th class="cr-th" data-sort="totalSpend">Total Spend ↕</th>
-                <th class="cr-th cr-country-th" data-sort="HR">🇭🇷 HR ↕</th>
-                <th class="cr-th cr-country-th" data-sort="CZ">🇨🇿 CZ ↕</th>
-                <th class="cr-th cr-country-th" data-sort="PL">🇵🇱 PL ↕</th>
-                <th class="cr-th cr-country-th" data-sort="GR">🇬🇷 GR ↕</th>
-                <th class="cr-th cr-country-th" data-sort="SK">🇸🇰 SK ↕</th>
-                <th class="cr-th cr-country-th" data-sort="IT">🇮🇹 IT ↕</th>
-                <th class="cr-th cr-country-th" data-sort="HU">🇭🇺 HU ↕</th>
-                <th class="cr-th" data-sort="totalClicks">Clicks ↕</th>
-                <th class="cr-th" data-sort="ctr">CTR ↕</th>
-                <th class="cr-th" data-sort="cpc">CPC ↕</th>
-                <th class="cr-th" data-sort="totalPurchases">Purchases ↕</th>
-                <th class="cr-th" data-sort="cpa">CPA ↕</th>
+                <th class="cr-th" data-sort="id" style="text-align:left">Creative ID</th>
+                <th class="cr-th" data-sort="adCount">Ads</th>
+                <th class="cr-th" data-sort="totalSpend">Spend ▾</th>
+                <th class="cr-th cr-country-th" data-sort="HR">🇭🇷 HR</th>
+                <th class="cr-th cr-country-th" data-sort="CZ">🇨🇿 CZ</th>
+                <th class="cr-th cr-country-th" data-sort="PL">🇵🇱 PL</th>
+                <th class="cr-th cr-country-th" data-sort="GR">🇬🇷 GR</th>
+                <th class="cr-th cr-country-th" data-sort="SK">🇸🇰 SK</th>
+                <th class="cr-th cr-country-th" data-sort="IT">🇮🇹 IT</th>
+                <th class="cr-th cr-country-th" data-sort="HU">🇭🇺 HU</th>
+                <th class="cr-th" data-sort="totalClicks">Clicks</th>
+                <th class="cr-th" data-sort="ctr">CTR</th>
+                <th class="cr-th" data-sort="cpc">CPC</th>
+                <th class="cr-th" data-sort="totalPurchases">Purchases</th>
+                <th class="cr-th" data-sort="cpa">CPA</th>
               </tr>
             </thead>
             <tbody id="crBody">
@@ -2407,7 +2405,7 @@ async function loadCreativeReport() {
 
 function crFmtSpend(val) {
   if (!val || val === 0) return '<span class="cr-country-zero">—</span>';
-  return '<span class="cr-country-val">€' + val.toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span>';
+  return '<span class="cr-country-val">' + val.toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €</span>';
 }
 
 function renderCreativeTable() {
@@ -2421,12 +2419,12 @@ function renderCreativeTable() {
   document.querySelectorAll('.cr-th').forEach(th => {
     th.classList.remove('cr-sorted');
     const key = th.dataset.sort;
-    const base = th.textContent.replace(/ [↑↓↕]$/, '');
+    const base = th.textContent.replace(/ [▾▴]$/, '');
     if (key === crSortKey) {
       th.classList.add('cr-sorted');
-      th.textContent = base + (crSortDir === 'asc' ? ' ↑' : ' ↓');
+      th.textContent = base + (crSortDir === 'asc' ? ' ▴' : ' ▾');
     } else {
-      th.textContent = base.replace(/ [↑↓]$/, '') + ' ↕';
+      th.textContent = base;
     }
   });
 
@@ -2435,13 +2433,13 @@ function renderCreativeTable() {
     return `<tr data-cr-id="${c.id.toLowerCase()}">
       <td><span class="cr-id-pill">${c.id}</span></td>
       <td>${c.adCount}</td>
-      <td style="font-weight:600">€${c.totalSpend.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td style="font-weight:600">${c.totalSpend.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} €</td>
       ${countryCells}
       <td>${c.totalClicks > 0 ? fmtCompact(c.totalClicks) : '<span class="cr-country-zero">—</span>'}</td>
       <td>${c.ctr > 0 ? c.ctr.toFixed(2) + '%' : '<span class="cr-country-zero">—</span>'}</td>
-      <td>${c.cpc > 0 ? '€' + c.cpc.toFixed(2) : '<span class="cr-country-zero">—</span>'}</td>
+      <td>${c.cpc > 0 ? c.cpc.toFixed(2) + ' €' : '<span class="cr-country-zero">—</span>'}</td>
       <td style="font-weight:600">${c.totalPurchases > 0 ? c.totalPurchases : '<span class="cr-country-zero">—</span>'}</td>
-      <td>${c.cpa > 0 ? '€' + c.cpa.toFixed(2) : '<span class="cr-country-zero">—</span>'}</td>
+      <td>${c.cpa > 0 ? c.cpa.toFixed(2) + ' €' : '<span class="cr-country-zero">—</span>'}</td>
     </tr>`;
   }).join('');
 
@@ -2450,8 +2448,8 @@ function renderCreativeTable() {
   // Totals footer
   const t = crData.totals;
   const ctr = t.impressions > 0 ? (t.clicks / t.impressions * 100).toFixed(2) + '%' : '—';
-  const cpc = t.clicks > 0 ? '€' + (t.spend / t.clicks).toFixed(2) : '—';
-  const cpa = t.purchases > 0 ? '€' + (t.spend / t.purchases).toFixed(2) : '—';
+  const cpc = t.clicks > 0 ? (t.spend / t.clicks).toFixed(2) + ' €' : '—';
+  const cpa = t.purchases > 0 ? (t.spend / t.purchases).toFixed(2) + ' €' : '—';
 
   // Aggregate country totals
   const countryTotals = {};
@@ -2459,12 +2457,12 @@ function renderCreativeTable() {
   crData.creatives.forEach(c => {
     CR_COUNTRIES.forEach(cc => { countryTotals[cc] += (c.countries[cc]?.spend || 0); });
   });
-  const countryTotalCells = CR_COUNTRIES.map(cc => `<td>${countryTotals[cc] > 0 ? '€' + countryTotals[cc].toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—'}</td>`).join('');
+  const countryTotalCells = CR_COUNTRIES.map(cc => `<td>${countryTotals[cc] > 0 ? countryTotals[cc].toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €' : '—'}</td>`).join('');
 
   document.getElementById('crTotals').innerHTML = `<tr>
     <td>Total (${crData.creatives.length})</td>
     <td>${crData.creatives.reduce((s,c) => s + c.adCount, 0)}</td>
-    <td>€${t.spend.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+    <td>${t.spend.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} €</td>
     ${countryTotalCells}
     <td>${fmtCompact(t.clicks)}</td>
     <td>${ctr}</td>
