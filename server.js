@@ -1316,6 +1316,79 @@ const server = http.createServer(async (req, res) => {
 
         return sendJSON(res, { byCountry, byType, byCountryAndType });
       }
+      if (urlPath === '/api/origin-report') {
+        const start = query.start || dateFrom;
+        const end = query.end || dateTo;
+
+        // Classify each order into an origin category
+        const rows = db.prepare(`
+          SELECT order_date, gross_eur, profit, is_fb_attributed, utm_source, utm_medium, utm_campaign
+          FROM wc_orders WHERE order_date >= ? AND order_date <= ?
+        `).all(start, end);
+
+        function classifyOrigin(r) {
+          const src = (r.utm_source || '').toLowerCase();
+          const med = (r.utm_medium || '').toLowerCase();
+          const camp = (r.utm_campaign || '').trim();
+
+          if (r.is_fb_attributed === 1 && camp !== '') return 'FB Measured';
+          if (r.is_fb_attributed === 1) return 'FB Unmeasured';
+          if (src.includes('google') && (med.includes('cpc') || med.includes('paid') || med.includes('ppc'))) return 'Google Ads';
+          if (src.includes('google') && (med === '' || med.includes('organic') || med.includes('referral'))) return 'Google Organic';
+          if (src.includes('klaviyo') || src.includes('email') || src.includes('newsletter')) return 'Klaviyo';
+          if (src.includes('callcenter') || src.includes('call_center') || src.includes('call-center') || src.includes('phone')) return 'Call Center';
+          if (src === '' || src === 'direct' || src === '(direct)') return 'Direct';
+          return 'Other';
+        }
+
+        // Build daily and byOrigin
+        const dailyMap = {};
+        const originMap = {};
+        let totalOrders = 0, totalFB = 0, fbMeasured = 0, fbUnmeasured = 0;
+
+        for (const r of rows) {
+          const origin = classifyOrigin(r);
+          totalOrders++;
+          if (origin === 'FB Measured') { totalFB++; fbMeasured++; }
+          else if (origin === 'FB Unmeasured') { totalFB++; fbUnmeasured++; }
+
+          // Daily
+          const d = r.order_date;
+          if (!dailyMap[d]) {
+            dailyMap[d] = { date: d, totalOrders: 0, fbTotal: 0, fbMeasured: 0, fbUnmeasured: 0, assignedInAdsManager: 0, googleAds: 0, googleOrganic: 0, klaviyo: 0, callCenter: 0, direct: 0, other: 0 };
+          }
+          dailyMap[d].totalOrders++;
+          if (origin === 'FB Measured') { dailyMap[d].fbTotal++; dailyMap[d].fbMeasured++; dailyMap[d].assignedInAdsManager++; }
+          else if (origin === 'FB Unmeasured') { dailyMap[d].fbTotal++; dailyMap[d].fbUnmeasured++; }
+          else if (origin === 'Google Ads') dailyMap[d].googleAds++;
+          else if (origin === 'Google Organic') dailyMap[d].googleOrganic++;
+          else if (origin === 'Klaviyo') dailyMap[d].klaviyo++;
+          else if (origin === 'Call Center') dailyMap[d].callCenter++;
+          else if (origin === 'Direct') dailyMap[d].direct++;
+          else dailyMap[d].other++;
+
+          // By Origin
+          if (!originMap[origin]) originMap[origin] = { origin, orders: 0, revenue: 0, profit: 0 };
+          originMap[origin].orders++;
+          originMap[origin].revenue += (r.gross_eur || 0);
+          originMap[origin].profit += (r.profit || 0);
+        }
+
+        // Round origin values
+        for (const o of Object.values(originMap)) {
+          o.revenue = Math.round(o.revenue * 100) / 100;
+          o.profit = Math.round(o.profit * 100) / 100;
+        }
+
+        const daily = Object.values(dailyMap).sort((a, b) => b.date.localeCompare(a.date));
+        const byOrigin = Object.values(originMap).sort((a, b) => b.orders - a.orders);
+
+        return sendJSON(res, {
+          summary: { totalOrders, totalFB, fbMeasured, fbUnmeasured, assignedInAdsManager: fbMeasured },
+          daily,
+          byOrigin
+        });
+      }
       if (urlPath === '/api/clear-cache') {
         const files = fs.readdirSync(CACHE_DIR).filter(f => !f.startsWith('dash-') && f !== 'origin-data.json');
         files.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));

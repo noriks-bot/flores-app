@@ -367,7 +367,7 @@ tr.campaign-loss:hover td { background: rgba(239,68,68,0.15) !important; }
 /* Adset/Ad name sub-info */
 .sub-info { font-size: 10px; color: var(--text-light); font-weight: 400; margin-left: 4px; }
 
-@media (max-width: 768px) { .filters-bar { padding: 10px 12px; } .content { padding: 12px; } }
+@media (max-width: 768px) { .filters-bar { padding: 10px 12px; } .content { padding: 12px; } .or-summary-cards { grid-template-columns: repeat(2, 1fr) !important; } }
 
 /* ═══ SIDEBAR ═══ */
 :root {
@@ -535,6 +535,12 @@ tr.campaign-loss:hover td { background: rgba(239,68,68,0.15) !important; }
       </a>
       <a class="nav-item" data-section="creative-reporting" onclick="navigateTo('creative-reporting')">
         <i class="fas fa-palette"></i><span class="nav-item-text">Creative Reporting</span>
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Analytics</div>
+      <a class="nav-item" data-section="origin-report" onclick="navigateTo('origin-report')">
+        <i class="fas fa-sitemap"></i><span class="nav-item-text">Origin Report</span>
       </a>
     </div>
     <div class="nav-section">
@@ -752,6 +758,95 @@ tr.campaign-loss:hover td { background: rgba(239,68,68,0.15) !important; }
     </div>
   </div>
 
+  <!-- ORIGIN REPORT -->
+  <div id="section-origin-report" class="content-section">
+    <div class="filters-bar" id="orFilters">
+      <span class="filter-label">Period</span>
+      <div class="preset-tabs" id="orPresetTabs">
+        <button class="preset-tab active" data-range="today">Today</button>
+        <button class="preset-tab" data-range="yesterday">Yesterday</button>
+        <button class="preset-tab" data-range="3d">3D</button>
+        <button class="preset-tab" data-range="7d">7D</button>
+        <button class="preset-tab" data-range="14d">14D</button>
+        <button class="preset-tab" data-range="30d">30D</button>
+        <button class="preset-tab" data-range="custom">Custom</button>
+      </div>
+      <input type="date" id="orDateFrom" class="date-input" style="display:none">
+      <span class="date-sep or-date-sep" style="display:none">→</span>
+      <input type="date" id="orDateTo" class="date-input" style="display:none">
+      <button class="refresh-btn" onclick="loadOriginReport()" style="margin-left:8px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+        Refresh
+      </button>
+    </div>
+    <div class="content" style="padding:20px 24px">
+      <!-- Summary Cards -->
+      <div class="or-summary-cards" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px">
+        <div class="or-card" style="background:var(--card-bg);border-radius:var(--card-radius);box-shadow:var(--card-shadow);padding:20px">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:8px">Total Orders</div>
+          <div id="orTotalOrders" style="font-size:28px;font-weight:800;color:var(--text-primary)">—</div>
+        </div>
+        <div class="or-card" style="background:var(--card-bg);border-radius:var(--card-radius);box-shadow:var(--card-shadow);padding:20px;border-left:3px solid #3b82f6">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:8px">FB Total</div>
+          <div id="orFBTotal" style="font-size:28px;font-weight:800;color:#3b82f6">—</div>
+          <div id="orFBSub" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
+        </div>
+        <div class="or-card" style="background:var(--card-bg);border-radius:var(--card-radius);box-shadow:var(--card-shadow);padding:20px;border-left:3px solid #7c3aed">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:8px">Assigned in Ads Manager</div>
+          <div id="orAssigned" style="font-size:28px;font-weight:800;color:#7c3aed">—</div>
+        </div>
+        <div class="or-card" style="background:var(--card-bg);border-radius:var(--card-radius);box-shadow:var(--card-shadow);padding:20px;border-left:3px solid #64748b">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:8px">Non-FB Orders</div>
+          <div id="orNonFB" style="font-size:28px;font-weight:800;color:#64748b">—</div>
+        </div>
+      </div>
+
+      <!-- Daily Breakdown -->
+      <div class="table-card" style="margin-bottom:20px">
+        <div style="padding:14px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border-color)">📅 Daily Breakdown</div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th style="text-align:left">Date</th>
+              <th>Total</th>
+              <th style="background:rgba(59,130,246,0.06)">FB Total</th>
+              <th style="background:rgba(59,130,246,0.06)">FB Measured</th>
+              <th style="background:rgba(59,130,246,0.06)">FB Unmeasured</th>
+              <th style="background:rgba(124,58,237,0.06)">Assigned</th>
+              <th>Google Ads</th>
+              <th>Google Organic</th>
+              <th>Klaviyo</th>
+              <th>Call Center</th>
+              <th>Direct</th>
+              <th>Other</th>
+            </tr></thead>
+            <tbody id="orDailyBody"><tr><td colspan="12" style="text-align:center;padding:30px;color:var(--text-muted)">Select a date range and click Refresh</td></tr></tbody>
+            <tbody id="orDailyTotals"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Origin Breakdown -->
+      <div class="table-card">
+        <div style="padding:14px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border-color)">🔍 Origin Breakdown</div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th style="text-align:left">Origin</th>
+              <th>Orders</th>
+              <th>Revenue (EUR)</th>
+              <th>Profit (EUR)</th>
+              <th>Avg Order Value</th>
+              <th>% of Total</th>
+            </tr></thead>
+            <tbody id="orOriginBody"><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">—</td></tr></tbody>
+            <tbody id="orOriginTotals"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 </div>
 
@@ -762,7 +857,8 @@ const sectionTitles = {
   'base-report': 'Base Report',
   'creative-reporting': 'Creative Reporting',
   'ai-hints': 'AI Hints',
-  'upload': 'Upload'
+  'upload': 'Upload',
+  'origin-report': 'Origin Report'
 };
 
 function navigateTo(section) {
@@ -1697,6 +1793,155 @@ function renderBaseReport(data) {
     ? ct.map(c => brRow(c.type, c, c.country)).join('')
     : '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted)">No data</td></tr>';
   document.getElementById('brCTTotals').innerHTML = ct.length ? brTotalsRow(ct, 8) : '';
+}
+
+/* ═══ ORIGIN REPORT ═══ */
+(function initOriginReport() {
+  const today = new Date();
+  const orFrom = document.getElementById('orDateFrom');
+  const orTo = document.getElementById('orDateTo');
+  orFrom.value = fmtDate(today);
+  orTo.value = fmtDate(today);
+
+  document.querySelectorAll('#orPresetTabs .preset-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#orPresetTabs .preset-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const t = new Date(), range = btn.dataset.range;
+      if (range === 'custom') {
+        document.querySelectorAll('#orFilters .date-input, #orFilters .or-date-sep').forEach(el => el.style.display = '');
+        return;
+      }
+      document.querySelectorAll('#orFilters .date-input, #orFilters .or-date-sep').forEach(el => el.style.display = 'none');
+      if (range === 'today') { orFrom.value = fmtDate(t); orTo.value = fmtDate(t); }
+      else if (range === 'yesterday') { const y = addDays(t, -1); orFrom.value = fmtDate(y); orTo.value = fmtDate(y); }
+      else if (range === '3d') { orFrom.value = fmtDate(addDays(t, -2)); orTo.value = fmtDate(t); }
+      else if (range === '7d') { orFrom.value = fmtDate(addDays(t, -6)); orTo.value = fmtDate(t); }
+      else if (range === '14d') { orFrom.value = fmtDate(addDays(t, -13)); orTo.value = fmtDate(t); }
+      else if (range === '30d') { orFrom.value = fmtDate(addDays(t, -29)); orTo.value = fmtDate(t); }
+      loadOriginReport();
+    });
+  });
+  orFrom.addEventListener('change', () => { if(orTo.value) loadOriginReport(); });
+  orTo.addEventListener('change', () => { if(orFrom.value) loadOriginReport(); });
+})();
+
+const originColors = {
+  'FB Measured': '#3b82f6',
+  'FB Unmeasured': '#60a5fa',
+  'Google Ads': '#22c55e',
+  'Google Organic': '#86efac',
+  'Klaviyo': '#a855f7',
+  'Call Center': '#f59e0b',
+  'Direct': '#94a3b8',
+  'Other': '#cbd5e1'
+};
+
+async function loadOriginReport() {
+  const start = document.getElementById('orDateFrom').value;
+  const end = document.getElementById('orDateTo').value;
+  if (!start || !end) return;
+
+  document.getElementById('orDailyBody').innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:var(--text-muted)"><div class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading...</td></tr>';
+  document.getElementById('orOriginBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)"><div class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading...</td></tr>';
+  document.getElementById('orDailyTotals').innerHTML = '';
+  document.getElementById('orOriginTotals').innerHTML = '';
+
+  try {
+    const res = await fetch(`/api/origin-report?start=${start}&end=${end}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    renderOriginReport(data);
+  } catch(e) {
+    document.getElementById('orDailyBody').innerHTML = `<tr><td colspan="12" style="text-align:center;padding:30px;color:var(--danger)">Error: ${e.message}</td></tr>`;
+    document.getElementById('orOriginBody').innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--danger)">Error: ${e.message}</td></tr>`;
+  }
+}
+
+function renderOriginReport(data) {
+  const s = data.summary;
+  document.getElementById('orTotalOrders').textContent = fmtInt(s.totalOrders);
+  document.getElementById('orFBTotal').textContent = fmtInt(s.totalFB);
+  document.getElementById('orFBSub').textContent = s.fbMeasured + ' measured / ' + s.fbUnmeasured + ' unmeasured';
+  document.getElementById('orAssigned').textContent = fmtInt(s.assignedInAdsManager);
+  document.getElementById('orNonFB').textContent = fmtInt(s.totalOrders - s.totalFB);
+
+  // Daily table
+  if (data.daily.length) {
+    document.getElementById('orDailyBody').innerHTML = data.daily.map(d => `<tr>
+      <td style="text-align:left;font-weight:600">${d.date}</td>
+      <td><strong>${d.totalOrders}</strong></td>
+      <td style="background:rgba(59,130,246,0.06);font-weight:600;color:#3b82f6">${d.fbTotal}</td>
+      <td style="background:rgba(59,130,246,0.06)">${d.fbMeasured}</td>
+      <td style="background:rgba(59,130,246,0.06)">${d.fbUnmeasured}</td>
+      <td style="background:rgba(124,58,237,0.06);color:#7c3aed;font-weight:600">${d.assignedInAdsManager}</td>
+      <td>${d.googleAds}</td>
+      <td>${d.googleOrganic}</td>
+      <td>${d.klaviyo}</td>
+      <td>${d.callCenter}</td>
+      <td>${d.direct}</td>
+      <td>${d.other}</td>
+    </tr>`).join('');
+
+    // Totals row
+    const t = { totalOrders:0, fbTotal:0, fbMeasured:0, fbUnmeasured:0, assignedInAdsManager:0, googleAds:0, googleOrganic:0, klaviyo:0, callCenter:0, direct:0, other:0 };
+    data.daily.forEach(d => { for (const k in t) t[k] += d[k]; });
+    document.getElementById('orDailyTotals').innerHTML = `<tr class="totals-row">
+      <td style="text-align:left"><strong>TOTAL</strong></td>
+      <td><strong>${t.totalOrders}</strong></td>
+      <td style="background:rgba(59,130,246,0.06);font-weight:700;color:#3b82f6">${t.fbTotal}</td>
+      <td style="background:rgba(59,130,246,0.06);font-weight:600">${t.fbMeasured}</td>
+      <td style="background:rgba(59,130,246,0.06);font-weight:600">${t.fbUnmeasured}</td>
+      <td style="background:rgba(124,58,237,0.06);font-weight:700;color:#7c3aed">${t.assignedInAdsManager}</td>
+      <td><strong>${t.googleAds}</strong></td>
+      <td><strong>${t.googleOrganic}</strong></td>
+      <td><strong>${t.klaviyo}</strong></td>
+      <td><strong>${t.callCenter}</strong></td>
+      <td><strong>${t.direct}</strong></td>
+      <td><strong>${t.other}</strong></td>
+    </tr>`;
+  } else {
+    document.getElementById('orDailyBody').innerHTML = '<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--text-muted)">No data</td></tr>';
+    document.getElementById('orDailyTotals').innerHTML = '';
+  }
+
+  // Origin breakdown
+  if (data.byOrigin.length) {
+    const totalOrders = data.byOrigin.reduce((s, o) => s + o.orders, 0);
+    document.getElementById('orOriginBody').innerHTML = data.byOrigin.map(o => {
+      const color = originColors[o.origin] || '#94a3b8';
+      const pct = totalOrders > 0 ? (o.orders / totalOrders * 100).toFixed(1) : '0.0';
+      const aov = o.orders > 0 ? (o.revenue / o.orders) : 0;
+      const profitColor = o.profit >= 0 ? 'var(--success)' : 'var(--danger)';
+      const profitSign = o.profit >= 0 ? '+' : '';
+      return `<tr>
+        <td style="text-align:left"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};margin-right:8px;vertical-align:middle"></span><strong>${o.origin}</strong></td>
+        <td>${fmtInt(o.orders)}</td>
+        <td>${fmtEur(o.revenue)}</td>
+        <td style="color:${profitColor};font-weight:600">${profitSign}${fmtEur(o.profit)}</td>
+        <td>${fmtEur(aov)}</td>
+        <td><div style="display:flex;align-items:center;gap:8px;justify-content:flex-end"><div style="flex:1;max-width:80px;height:6px;background:var(--content-bg);border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${color};border-radius:3px"></div></div><span style="font-weight:600;min-width:45px;text-align:right">${pct}%</span></div></td>
+      </tr>`;
+    }).join('');
+
+    // Totals
+    const totRev = data.byOrigin.reduce((s, o) => s + o.revenue, 0);
+    const totProfit = data.byOrigin.reduce((s, o) => s + o.profit, 0);
+    const totAov = totalOrders > 0 ? totRev / totalOrders : 0;
+    const pColor = totProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+    const pSign = totProfit >= 0 ? '+' : '';
+    document.getElementById('orOriginTotals').innerHTML = `<tr class="totals-row">
+      <td style="text-align:left"><strong>TOTAL</strong></td>
+      <td><strong>${fmtInt(totalOrders)}</strong></td>
+      <td><strong>${fmtEur(totRev)}</strong></td>
+      <td style="color:${pColor};font-weight:700">${pSign}${fmtEur(totProfit)}</td>
+      <td><strong>${fmtEur(totAov)}</strong></td>
+      <td style="font-weight:700;text-align:right">100%</td>
+    </tr>`;
+  } else {
+    document.getElementById('orOriginBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">No data</td></tr>';
+    document.getElementById('orOriginTotals').innerHTML = '';
+  }
 }
 
 loadData();
