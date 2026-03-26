@@ -79,7 +79,7 @@ function parseCampaignType(name) {
   return 'OTHER';
 }
 
-// Fetch dash cache.json via SSH (cached locally for 1 hour)
+// Load dash cache.json (synced locally)
 function loadDashData() {
   try {
     if (fs.existsSync(DASH_CACHE_FILE)) {
@@ -450,7 +450,7 @@ setInterval(() => {
   syncAllCountries().catch(e => console.error('[FLORES] Periodic sync error:', e.message));
 }, 15 * 60 * 1000);
 
-// Fetch Advertiser profit data directly from dash server via SSH
+// Fetch Advertiser profit data from local dash server
 let advCache = { data: null, ts: 0, key: '' };
 async function fetchAdvertiserData(dateFrom, dateTo) {
   const cacheKey = dateFrom + '_' + dateTo;
@@ -469,7 +469,7 @@ async function fetchAdvertiserData(dateFrom, dateTo) {
   }
   
   try {
-    // Use SSH + curl to fetch from dash server (more reliable than direct HTTP)
+    // Direct local HTTP fetch from dash server
     const cmd = `curl -s -X POST http://localhost:3000/api/login -H "Content-Type: application/json" -d '{"username":"noriks","password":"noriks"}' -c /tmp/dash_cookies.txt -o /dev/null && curl -s -b /tmp/dash_cookies.txt "http://localhost:3000/api/advertiser-data?start=${dateFrom}&end=${dateTo}"`;
     const result = execSync(cmd, { timeout: 60000, maxBuffer: 10 * 1024 * 1024 }).toString();
     const data = JSON.parse(result);

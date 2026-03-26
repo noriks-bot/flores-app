@@ -759,7 +759,6 @@ tbody td:nth-child(1), tbody td:nth-child(2) { background: var(--card-bg); }
           <tbody id="tableBody">
             <tr><td colspan="22"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>
           </tbody>
-          <tbody id="tableTotalsBottom"></tbody>
         </table>
       </div>
     </div>
@@ -1177,7 +1176,6 @@ function updateSummary() {
     <td>${fmtCompact(clicks)}</td><td>${ctr}</td><td>${cpm}</td><td>${cpc}</td>
     <td>${profitPill(mpTotals.yesterday)}</td><td>${profitPill(mpTotals.d3)}</td><td>${profitPill(mpTotals.d7)}</td><td>${profitPill(mpTotals.d14)}</td><td>${profitPill(mpTotals.lifetime)}</td>
   </tr>`;
-  document.getElementById('tableTotalsBottom').innerHTML=document.getElementById('tableTotals').innerHTML;
   document.getElementById('lastUpdated').textContent='Updated '+new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('campaignCount').textContent=campaigns.length+' campaign'+(campaigns.length!==1?'s':'');
 }
@@ -1713,7 +1711,6 @@ async function loadAdsets() {
   const { from, to } = getDateRange();
   document.getElementById('tableBody').innerHTML = '<tr><td colspan="19"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading ad sets...</div></div></td></tr>';
   document.getElementById('tableTotals').innerHTML = '';
-  document.getElementById('tableTotalsBottom').innerHTML = '';
   try {
     const res = await fetch(`/api/all-adsets?date_from=${from}&date_to=${to}`);
     allAdsets = await res.json();
@@ -1728,7 +1725,6 @@ async function loadAds() {
   const { from, to } = getDateRange();
   document.getElementById('tableBody').innerHTML = '<tr><td colspan="20"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading ads...</div></div></td></tr>';
   document.getElementById('tableTotals').innerHTML = '';
-  document.getElementById('tableTotalsBottom').innerHTML = '';
   try {
     const res = await fetch(`/api/all-ads?date_from=${from}&date_to=${to}`);
     allAds = await res.json();
@@ -1756,7 +1752,6 @@ function renderAdTable() {
 function updateAdsetSummary() {
   const totals = makeFlatTotals(allAdsets, false);
   document.getElementById('tableTotals').innerHTML = totals;
-  document.getElementById('tableTotalsBottom').innerHTML = totals;
   document.getElementById('campaignCount').textContent = allAdsets.length + ' ad set' + (allAdsets.length !== 1 ? 's' : '');
   document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' });
 }
@@ -1764,7 +1759,6 @@ function updateAdsetSummary() {
 function updateAdSummary() {
   const totals = makeFlatTotals(allAds, true);
   document.getElementById('tableTotals').innerHTML = totals;
-  document.getElementById('tableTotalsBottom').innerHTML = totals;
   document.getElementById('campaignCount').textContent = allAds.length + ' ad' + (allAds.length !== 1 ? 's' : '');
   document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' });
 }
