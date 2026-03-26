@@ -633,6 +633,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 
 .cr-id-pill { font-weight: 700; font-size: 12px; color: #1e293b; }
 .cr-country-zero { color: #cbd5e1; }
+.cr-table tbody td { vertical-align: top; }
 .cr-cell-profit { background: #22c55e; color: #fff; font-weight: 600; }
 .cr-cell-loss { background: #ef4444; color: #fff; font-weight: 600; }
 
@@ -930,8 +931,6 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
                 <th class="cr-th" data-sort="id" style="text-align:left">Creative ID</th>
                 <th class="cr-th" data-sort="adCount">Ads</th>
                 <th class="cr-th" data-sort="totalSpend">Spend ▾</th>
-                <th class="cr-th" data-sort="totalPurchases">Purchases</th>
-                <th class="cr-th" data-sort="cpa">CPA</th>
                 <th class="cr-th cr-country-th" data-sort="HR">🇭🇷 HR</th>
                 <th class="cr-th cr-country-th" data-sort="CZ">🇨🇿 CZ</th>
                 <th class="cr-th cr-country-th" data-sort="PL">🇵🇱 PL</th>
@@ -2453,13 +2452,20 @@ function renderCreativeTable() {
   });
 
   const rows = crData.creatives.map(c => {
-    const countryCells = CR_COUNTRIES.map(cc => `<td>${crFmtSpend(c.countries[cc]?.spend)}</td>`).join('');
+    const countryCells = CR_COUNTRIES.map(cc => {
+      const cs = c.countries[cc];
+      if (!cs || cs.spend === 0) return '<td><span class="cr-country-zero">—</span></td>';
+      const cpa = cs.purchases > 0 ? (cs.spend / cs.purchases).toFixed(0) : '';
+      const cpaCls = cs.purchases > 0 ? (cs.spend/cs.purchases <= 15 ? 'color:#16a34a' : cs.spend/cs.purchases <= 25 ? 'color:#d97706' : 'color:#dc2626') : '';
+      return '<td style="white-space:normal;line-height:1.4"><div>' + cs.spend.toFixed(2) + ' €</div>' + (cs.purchases > 0 ? '<div style="font-size:10px;margin-top:1px;'+cpaCls+'">' + cs.purchases + 'p · ' + cpa + '€</div>' : '') + '</td>';
+    }).join('');
     return `<tr data-cr-id="${c.id.toLowerCase()}">
       <td><span class="cr-id-pill">${c.id}</span></td>
       <td>${c.adCount}</td>
-      <td style="font-weight:600">${c.totalSpend.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} €</td>
-      <td${c.totalPurchases >= 3 ? ' style="font-weight:700"' : ''}>${c.totalPurchases > 0 ? c.totalPurchases : '<span class="cr-country-zero">—</span>'}</td>
-      <td style="${c.cpa > 0 ? (c.cpa <= 15 ? 'background:#4caf50;color:#fff;font-weight:600' : c.cpa <= 25 ? 'background:#f59e0b;color:#fff;font-weight:600' : 'background:#ef5350;color:#fff;font-weight:600') : ''}">${c.cpa > 0 ? c.cpa.toFixed(2) + ' €' : '<span class="cr-country-zero">—</span>'}</td>
+      <td style="font-weight:600;white-space:normal;line-height:1.4">
+        <div>${c.totalSpend.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} €</div>
+        ${c.totalPurchases > 0 ? '<div style="font-size:10px;margin-top:2px;'+(c.cpa<=15?'color:#16a34a':c.cpa<=25?'color:#d97706':'color:#dc2626')+'">' + c.totalPurchases + ' purch · ' + c.cpa.toFixed(2) + ' CPA</div>' : ''}
+      </td>
       ${countryCells}
       <td>${c.totalClicks > 0 ? fmtCompact(c.totalClicks) : '<span class="cr-country-zero">—</span>'}</td>
       <td>${c.ctr > 0 ? c.ctr.toFixed(2) + '%' : '<span class="cr-country-zero">—</span>'}</td>
