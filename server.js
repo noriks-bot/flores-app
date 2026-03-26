@@ -9,6 +9,7 @@ const META_TOKEN = 'EAAR1d7hDpEkBQxdtLk9xZBIPqpxFNV48ZA6FnqOumgzSSagyz3l720s5SI1
 const AD_ACCOUNT = 'act_1922887421998222';
 const API_VERSION = 'v21.0';
 const CACHE_DIR = path.join(__dirname, 'cache');
+if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
 
 // --- WooCommerce profit data from dash.noriks.com ---
 const DASH_CACHE_FILE = path.join(CACHE_DIR, 'dash-cache.json');
@@ -501,8 +502,6 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
   return campaigns;
 }
 const CACHE_TTL = 3600000; // 1 hour
-
-if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
 
 // --- Meta API helper ---
 function metaGet(endpoint, params = {}) {
