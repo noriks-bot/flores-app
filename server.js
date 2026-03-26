@@ -107,9 +107,11 @@ function loadOriginData() {
 // Sync data from dash server (called on startup + hourly)
 const { execSync } = require('child_process');
 function syncDashData() {
+  const SRC_DASH = "/home/ec2-user/apps/raketa/dashboard/cache.json";
+  const SRC_ORIGIN = "/home/ec2-user/apps/raketa/dashboard/origin-data.json";
   try {
-    execSync('scp -i /home/ec2-user/.ssh/firma_appi.pem ec2-user@18.185.109.219:/home/ec2-user/apps/raketa/dashboard/cache.json ' + DASH_CACHE_FILE, { timeout: 30000 });
-    execSync('scp -i /home/ec2-user/.ssh/firma_appi.pem ec2-user@18.185.109.219:/home/ec2-user/apps/raketa/dashboard/origin-data.json ' + ORIGIN_CACHE_FILE, { timeout: 30000 });
+    try { fs.copyFileSync(SRC_DASH, DASH_CACHE_FILE); } catch(e) {}
+    try { fs.copyFileSync(SRC_ORIGIN, ORIGIN_CACHE_FILE); } catch(e) {}
     console.log('[FLORES] Synced dash data');
   } catch(e) { console.error('[FLORES] Dash sync failed:', e.message); }
 }
