@@ -608,7 +608,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
   overflow: hidden; border: 1px solid #e5e7eb;
 }
 .cr-table-scroll { overflow-x: auto; max-height: calc(100vh - 200px); }
-.cr-table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+.cr-table { width: 100%; border-collapse: collapse; min-width: 900px; }
 .cr-table thead { position: sticky; top: 0; z-index: 10; }
 .cr-th {
   padding: 6px 10px; text-align: right; font-size: 11px; font-weight: 500;
@@ -621,31 +621,40 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 .cr-th:hover { background: #eef2f7; }
 .cr-th.cr-sorted { color: #1e293b; font-weight: 600; }
 
-.cr-table tbody tr { border-bottom: 1px solid #eee; }
+.cr-table tbody tr { border-bottom: 1px solid #f0f0f0; }
 .cr-table tbody tr:hover { background: #f8fafc; }
 .cr-table tbody td {
-  padding: 6px 10px; font-size: 12px; color: #334155; text-align: right;
+  padding: 5px 10px; font-size: 12px; color: #334155; text-align: right;
   white-space: nowrap; border-right: 1px solid #eee;
 }
 .cr-table tbody td:first-child { text-align: left; font-weight: 600; }
 .cr-table tbody td:last-child { border-right: none; }
 .cr-table tbody tr.cr-hidden { display: none; }
 
+/* 3-row group styling */
+.cr-spend-row td { border-bottom: 1px solid #f0f0f0; }
+.cr-purch-row td { border-bottom: none; }
+.cr-cpa-row td { border-bottom: 2px solid #ddd; }
+.cr-spend-row td[rowspan] { vertical-align: middle; }
+.cr-metric-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; }
+.cr-cpa-cell { font-weight: 600; }
+
 .cr-id-pill { font-weight: 700; font-size: 12px; color: #1e293b; }
 .cr-country-zero { color: #cbd5e1; }
-.cr-table tbody td { vertical-align: top; }
-.cr-cell-profit { background: #22c55e; color: #fff; font-weight: 600; }
-.cr-cell-loss { background: #ef4444; color: #fff; font-weight: 600; }
+.cr-table tbody td { vertical-align: middle; }
 
 /* Totals bar at bottom */
 .cr-table tfoot td {
-  padding: 8px 10px; font-size: 12px; font-weight: 600; color: #fff;
+  padding: 6px 10px; font-size: 12px; font-weight: 600; color: #fff;
   text-align: right; white-space: nowrap;
   background: linear-gradient(135deg, #1a5276, #2e86c1);
   border-right: 1px solid rgba(255,255,255,0.12);
 }
 .cr-table tfoot td:first-child { text-align: left; border-right: 1px solid rgba(255,255,255,0.12); }
 .cr-table tfoot td:last-child { border-right: none; }
+.cr-table tfoot .cr-totals-spend td { background: linear-gradient(135deg, #1a5276, #2e86c1); }
+.cr-table tfoot .cr-totals-purch td { background: linear-gradient(135deg, #1b5a80, #3090cb); }
+.cr-table tfoot .cr-totals-cpa td { background: linear-gradient(135deg, #1e6490, #34a0dd); }
 </style>
 </head>
 <body>
@@ -930,7 +939,8 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
               <tr>
                 <th class="cr-th" data-sort="id" style="text-align:left">Creative ID</th>
                 <th class="cr-th" data-sort="adCount">Ads</th>
-                <th class="cr-th" data-sort="totalSpend">Spend ▾</th>
+                <th class="cr-th">Metric</th>
+                <th class="cr-th" data-sort="totalSpend">Total ▾</th>
                 <th class="cr-th cr-country-th" data-sort="HR">🇭🇷 HR</th>
                 <th class="cr-th cr-country-th" data-sort="CZ">🇨🇿 CZ</th>
                 <th class="cr-th cr-country-th" data-sort="PL">🇵🇱 PL</th>
@@ -938,13 +948,10 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
                 <th class="cr-th cr-country-th" data-sort="SK">🇸🇰 SK</th>
                 <th class="cr-th cr-country-th" data-sort="IT">🇮🇹 IT</th>
                 <th class="cr-th cr-country-th" data-sort="HU">🇭🇺 HU</th>
-                <th class="cr-th" data-sort="totalClicks">Clicks</th>
-                <th class="cr-th" data-sort="ctr">CTR</th>
-                <th class="cr-th" data-sort="cpc">CPC</th>
               </tr>
             </thead>
             <tbody id="crBody">
-              <tr><td colspan="15" style="text-align:center;padding:60px;color:var(--text-muted)">Select a date range and click Load</td></tr>
+              <tr><td colspan="11" style="text-align:center;padding:60px;color:var(--text-muted)">Select a date range and click Load</td></tr>
             </tbody>
             <tfoot id="crTotals"></tfoot>
           </table>
@@ -2412,7 +2419,7 @@ async function loadCreativeReport() {
   const end = document.getElementById('crDateTo').value;
   if (!start || !end) return;
 
-  document.getElementById('crBody').innerHTML = '<tr><td colspan="15" style="text-align:center;padding:60px;color:var(--text-muted)"><div class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading creative data...</td></tr>';
+  document.getElementById('crBody').innerHTML = '<tr><td colspan="11" style="text-align:center;padding:60px;color:var(--text-muted)"><div class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading creative data...</td></tr>';
   document.getElementById('crTotals').innerHTML = '';
 
   try {
@@ -2422,18 +2429,26 @@ async function loadCreativeReport() {
     sortCreativeData();
     renderCreativeTable();
   } catch(e) {
-    document.getElementById('crBody').innerHTML = `<tr><td colspan="15" style="text-align:center;padding:60px;color:var(--danger)">Error: ${e.message}</td></tr>`;
+    document.getElementById('crBody').innerHTML = `<tr><td colspan="11" style="text-align:center;padding:60px;color:var(--danger)">Error: ${e.message}</td></tr>`;
   }
 }
 
-function crFmtSpend(val) {
-  if (!val || val === 0) return '<span class="cr-country-zero">—</span>';
-  return val.toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+function crCpaStyle(spend, purchases) {
+  if (!purchases || purchases === 0) return '';
+  const cpa = spend / purchases;
+  if (cpa <= 15) return 'background:#4caf50;color:#fff;font-weight:600';
+  if (cpa <= 25) return 'background:#f59e0b;color:#fff;font-weight:600';
+  return 'background:#ef5350;color:#fff;font-weight:600';
+}
+
+function crFmtCpa(spend, purchases) {
+  if (!purchases || purchases === 0) return '<span class="cr-country-zero">—</span>';
+  return (spend / purchases).toFixed(2) + ' €';
 }
 
 function renderCreativeTable() {
   if (!crData || !crData.creatives.length) {
-    document.getElementById('crBody').innerHTML = '<tr><td colspan="15" style="text-align:center;padding:40px;color:var(--text-muted)">No creative data found</td></tr>';
+    document.getElementById('crBody').innerHTML = '<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text-muted)">No creative data found</td></tr>';
     document.getElementById('crTotals').innerHTML = '';
     return;
   }
@@ -2442,6 +2457,7 @@ function renderCreativeTable() {
   document.querySelectorAll('.cr-th').forEach(th => {
     th.classList.remove('cr-sorted');
     const key = th.dataset.sort;
+    if (!key) return;
     const base = th.textContent.replace(/ [▾▴]$/, '');
     if (key === crSortKey) {
       th.classList.add('cr-sorted');
@@ -2452,55 +2468,90 @@ function renderCreativeTable() {
   });
 
   const rows = crData.creatives.map(c => {
-    const countryCells = CR_COUNTRIES.map(cc => {
+    // Spend row
+    const spendCells = CR_COUNTRIES.map(cc => {
       const cs = c.countries[cc];
       if (!cs || cs.spend === 0) return '<td><span class="cr-country-zero">—</span></td>';
-      const cpa = cs.purchases > 0 ? (cs.spend / cs.purchases).toFixed(0) : '';
-      const cpaCls = cs.purchases > 0 ? (cs.spend/cs.purchases <= 15 ? 'color:#16a34a' : cs.spend/cs.purchases <= 25 ? 'color:#d97706' : 'color:#dc2626') : '';
-      return '<td style="white-space:normal;line-height:1.4"><div>' + cs.spend.toFixed(2) + ' €</div>' + (cs.purchases > 0 ? '<div style="font-size:10px;margin-top:1px;'+cpaCls+'">' + cs.purchases + 'p · ' + cpa + '€</div>' : '') + '</td>';
+      return '<td>' + cs.spend.toFixed(2) + ' €</td>';
     }).join('');
-    return `<tr data-cr-id="${c.id.toLowerCase()}">
-      <td><span class="cr-id-pill">${c.id}</span></td>
-      <td>${c.adCount}</td>
-      <td style="font-weight:600;white-space:normal;line-height:1.4">
-        <div>${c.totalSpend.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} €</div>
-        ${c.totalPurchases > 0 ? '<div style="font-size:10px;margin-top:2px;'+(c.cpa<=15?'color:#16a34a':c.cpa<=25?'color:#d97706':'color:#dc2626')+'">' + c.totalPurchases + ' purch · ' + c.cpa.toFixed(2) + ' CPA</div>' : ''}
-      </td>
-      ${countryCells}
-      <td>${c.totalClicks > 0 ? fmtCompact(c.totalClicks) : '<span class="cr-country-zero">—</span>'}</td>
-      <td>${c.ctr > 0 ? c.ctr.toFixed(2) + '%' : '<span class="cr-country-zero">—</span>'}</td>
-      <td>${c.cpc > 0 ? c.cpc.toFixed(2) + ' €' : '<span class="cr-country-zero">—</span>'}</td>
+
+    // Purchases row
+    const purchCells = CR_COUNTRIES.map(cc => {
+      const cs = c.countries[cc];
+      if (!cs || !cs.purchases) return '<td><span class="cr-country-zero">—</span></td>';
+      return '<td>' + cs.purchases + '</td>';
+    }).join('');
+
+    // CPA row — each cell colored individually
+    const cpaCells = CR_COUNTRIES.map(cc => {
+      const cs = c.countries[cc];
+      if (!cs || !cs.purchases || cs.purchases === 0) return '<td><span class="cr-country-zero">—</span></td>';
+      const style = crCpaStyle(cs.spend, cs.purchases);
+      return '<td class="cr-cpa-cell" style="' + style + '">' + (cs.spend / cs.purchases).toFixed(2) + ' €</td>';
+    }).join('');
+
+    const totalCpaStyle = crCpaStyle(c.totalSpend, c.totalPurchases);
+
+    return `<tr class="cr-spend-row" data-cr-id="${c.id.toLowerCase()}">
+      <td rowspan="3"><span class="cr-id-pill">${c.id}</span></td>
+      <td rowspan="3">${c.adCount}</td>
+      <td><span class="cr-metric-label">Spend</span></td>
+      <td style="font-weight:600">${c.totalSpend.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} €</td>
+      ${spendCells}
+    </tr>
+    <tr class="cr-purch-row" data-cr-group="${c.id.toLowerCase()}">
+      <td><span class="cr-metric-label">Purchases</span></td>
+      <td style="font-weight:600">${c.totalPurchases > 0 ? c.totalPurchases : '<span class="cr-country-zero">—</span>'}</td>
+      ${purchCells}
+    </tr>
+    <tr class="cr-cpa-row" data-cr-group="${c.id.toLowerCase()}">
+      <td><span class="cr-metric-label">CPA</span></td>
+      <td class="cr-cpa-cell" style="${totalCpaStyle}">${crFmtCpa(c.totalSpend, c.totalPurchases)}</td>
+      ${cpaCells}
     </tr>`;
   }).join('');
 
   document.getElementById('crBody').innerHTML = rows;
 
-  // Totals footer
+  // Totals footer — also 3 rows
   const t = crData.totals;
-  const ctr = t.impressions > 0 ? (t.clicks / t.impressions * 100).toFixed(2) + '%' : '—';
-  const cpc = t.clicks > 0 ? (t.spend / t.clicks).toFixed(2) + ' €' : '—';
-  const cpaVal = t.purchases > 0 ? t.spend / t.purchases : 0;
-  const cpa = t.purchases > 0 ? cpaVal.toFixed(2) + ' €' : '—';
-  const cpaStyle = cpaVal > 0 ? (cpaVal <= 15 ? 'background:#4caf50;color:#fff;font-weight:600' : cpaVal <= 25 ? 'background:#f59e0b;color:#fff;font-weight:600' : 'background:#ef5350;color:#fff;font-weight:600') : '';
-
-  // Aggregate country totals
-  const countryTotals = {};
-  CR_COUNTRIES.forEach(cc => { countryTotals[cc] = 0; });
+  const countryData = {};
+  CR_COUNTRIES.forEach(cc => { countryData[cc] = { spend: 0, purchases: 0 }; });
   crData.creatives.forEach(c => {
-    CR_COUNTRIES.forEach(cc => { countryTotals[cc] += (c.countries[cc]?.spend || 0); });
+    CR_COUNTRIES.forEach(cc => {
+      countryData[cc].spend += (c.countries[cc]?.spend || 0);
+      countryData[cc].purchases += (c.countries[cc]?.purchases || 0);
+    });
   });
-  const countryTotalCells = CR_COUNTRIES.map(cc => `<td>${countryTotals[cc] > 0 ? countryTotals[cc].toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €' : '—'}</td>`).join('');
 
-  document.getElementById('crTotals').innerHTML = `<tr>
-    <td>Total (${crData.creatives.length})</td>
-    <td>${crData.creatives.reduce((s,c) => s + c.adCount, 0)}</td>
+  const totalSpendCells = CR_COUNTRIES.map(cc => `<td>${countryData[cc].spend > 0 ? countryData[cc].spend.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €' : '—'}</td>`).join('');
+  const totalPurchCells = CR_COUNTRIES.map(cc => `<td>${countryData[cc].purchases > 0 ? countryData[cc].purchases : '—'}</td>`).join('');
+  const totalCpaCells = CR_COUNTRIES.map(cc => {
+    const d = countryData[cc];
+    if (!d.purchases) return '<td>—</td>';
+    const style = crCpaStyle(d.spend, d.purchases);
+    return `<td style="${style}">${(d.spend / d.purchases).toFixed(2)} €</td>`;
+  }).join('');
+
+  const overallCpaStyle = crCpaStyle(t.spend, t.purchases);
+  const totalAds = crData.creatives.reduce((s,c) => s + c.adCount, 0);
+
+  document.getElementById('crTotals').innerHTML = `<tr class="cr-totals-spend">
+    <td rowspan="3">Total (${crData.creatives.length})</td>
+    <td rowspan="3">${totalAds}</td>
+    <td>Spend</td>
     <td>${t.spend.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} €</td>
-    ${countryTotalCells}
-    <td>${fmtCompact(t.clicks)}</td>
-    <td>${ctr}</td>
-    <td>${cpc}</td>
-    <td style="font-weight:700">${t.purchases > 0 ? t.purchases : '—'}</td>
-    <td style="${cpaStyle}">${cpa}</td>
+    ${totalSpendCells}
+  </tr>
+  <tr class="cr-totals-purch">
+    <td>Purchases</td>
+    <td>${t.purchases > 0 ? t.purchases : '—'}</td>
+    ${totalPurchCells}
+  </tr>
+  <tr class="cr-totals-cpa">
+    <td>CPA</td>
+    <td style="${overallCpaStyle}">${t.purchases > 0 ? (t.spend / t.purchases).toFixed(2) + ' €' : '—'}</td>
+    ${totalCpaCells}
   </tr>`;
 
   // Re-apply search filter
@@ -2509,11 +2560,16 @@ function renderCreativeTable() {
 
 function filterCreativeTable() {
   const query = (document.getElementById('crSearch').value || '').toLowerCase().trim();
+  // For 3-row groups: the spend row has data-cr-id, the other two have data-cr-group
   document.querySelectorAll('#crBody tr[data-cr-id]').forEach(row => {
-    if (!query) { row.classList.remove('cr-hidden'); return; }
     const id = row.getAttribute('data-cr-id');
     const text = row.textContent.toLowerCase();
-    row.classList.toggle('cr-hidden', !id.includes(query) && !text.includes(query));
+    const hidden = query && !id.includes(query) && !text.includes(query);
+    row.classList.toggle('cr-hidden', hidden);
+    // Also hide/show the sibling rows
+    document.querySelectorAll(`#crBody tr[data-cr-group="${id}"]`).forEach(r => {
+      r.classList.toggle('cr-hidden', hidden);
+    });
   });
 }
 </script>
