@@ -1397,6 +1397,11 @@ const server = http.createServer(async (req, res) => {
         const start = query.start || dateFrom;
         const end = query.end || dateTo;
 
+        // Check cache first
+        const crCacheKey = 'creative_report_' + start + '_' + end;
+        const crCached = getCached(crCacheKey);
+        if (crCached) { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify(crCached)); }
+
         // Fetch all ads with insights for date range
         const allAdsData = await getAllAds(start, end);
 
@@ -1480,7 +1485,9 @@ const server = http.createServer(async (req, res) => {
           impressions: creatives.reduce((s, c) => s + c.totalImpressions, 0)
         };
 
-        return sendJSON(res, { creatives, totals });
+        const crResult = { creatives, totals };
+        setCache(crCacheKey, crResult);
+        return sendJSON(res, crResult);
       }
       if (urlPath === '/api/clear-cache') {
         const files = fs.readdirSync(CACHE_DIR).filter(f => !f.startsWith('dash-') && f !== 'origin-data.json');
