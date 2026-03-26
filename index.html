@@ -255,6 +255,7 @@ tr.level-campaign.row-expanded td:first-child { box-shadow: inset 4px 0 0 var(--
 .fpill:hover { border-color:var(--primary); color:var(--primary); }
 .fpill-active { background:var(--primary); color:#fff; border-color:var(--primary); font-weight:600; }
 .fpill-active:hover { background:#2563eb; }
+.camp-select { cursor:pointer; width:14px; height:14px; accent-color:#7c3aed; }
 .search-count { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
 
 /* Hover action icons */
@@ -725,6 +726,13 @@ tbody td:nth-child(1), tbody td:nth-child(2) { background: var(--card-bg); }
     <button class="fpill" style="background:#fee2e2;color:#dc2626;border-color:#fca5a5" onclick="resetAllFilters()">✕ Reset</button>
   </div>
 
+  <!-- SELECTION BAR -->
+  <div id="selectionBar" style="display:none;padding:8px 24px;background:#ede9fe;border-bottom:1px solid #c4b5fd;align-items:center;gap:12px">
+    <span id="selectedCount" style="font-size:13px;font-weight:600;color:#7c3aed"></span>
+    <button onclick="filterBySelected()" style="padding:4px 12px;font-size:12px;font-weight:600;border:1px solid #7c3aed;border-radius:6px;background:#7c3aed;color:#fff;cursor:pointer">Show only selected</button>
+    <button onclick="clearSelection()" style="padding:4px 12px;font-size:12px;font-weight:500;border:1px solid #c4b5fd;border-radius:6px;background:#fff;color:#7c3aed;cursor:pointer">Clear selection</button>
+  </div>
+
   <div class="content">
     <!-- TABLE -->
     <div class="table-card">
@@ -733,7 +741,7 @@ tbody td:nth-child(1), tbody td:nth-child(2) { background: var(--card-bg); }
         <table>
           <thead>
             <tr>
-              <th style="width:32px;cursor:default"></th>
+              <th style="width:32px;cursor:default"><input type="checkbox" class="master-select" onchange="toggleSelectAll(this)" style="cursor:pointer"></th>
               <th data-sort="name">Campaign</th>
               <th data-sort="status">Status</th>
               <th data-sort="spend">Spend</th>
@@ -1248,6 +1256,7 @@ function makeRow(item,level) {
   const statusHtml=`<label class="toggle"><input type="checkbox" ${isActive?'checked':''} disabled><span class="slider"></span></label>`;
   const hasChildren=level!=='ad';
   const isExpanded=level==='campaign'?expandedCampaigns[item.id]:expandedAdsets[item.id];
+  const selectCb=level==='campaign'?`<input type="checkbox" class="camp-select" onclick="event.stopPropagation();toggleCampaignSelect('${item.id}',this)" ${selectedCampaigns.has(item.id)?'checked':''}>`:'';
   const expandHtml=hasChildren?`<button class="expand-btn ${isExpanded?'expanded':''}" onclick="event.stopPropagation();toggle('${level}','${item.id}')">${isExpanded?'▾':'▸'}</button>`:'<span style="width:24px;display:inline-block"></span>';
   const rowClass=profitClass(item.wc);
   const wc=item.wc;
@@ -1266,7 +1275,7 @@ function makeRow(item,level) {
 
   const expandedClass = (level==='campaign' && expandedCampaigns[item.id]) ? 'row-expanded' : '';
   return `<tr class="level-${level} ${rowClass} ${expandedClass}" data-id="${item.id}">
-    <td>${expandHtml}</td>
+    <td>${selectCb}${expandHtml}</td>
     <td><div class="name-cell">${nameHtml(item.name,level)}${actionBtns}</div></td>
     <td>${statusHtml}</td>
     <td>${spend>0?fmtEur(spend):'<span class="muted">—</span>'}</td>
@@ -1285,6 +1294,60 @@ function makeRow(item,level) {
     <td>${cpc>0?fmtEur(cpc):'<span class="muted">—</span>'}</td>
     ${profitPeriodCells(item,level)}
   </tr>`;
+}
+
+const selectedCampaigns = new Set();
+
+function toggleCampaignSelect(id, cb) {
+  if(cb.checked) selectedCampaigns.add(id);
+  else selectedCampaigns.delete(id);
+  updateSelectionBar();
+}
+
+function toggleSelectAll(masterCb) {
+  const rows = document.querySelectorAll('#tableBody tr.level-campaign');
+  rows.forEach(row => {
+    if(row.style.display === 'none') return;
+    const id = row.getAttribute('data-id');
+    const cb = row.querySelector('.camp-select');
+    if(masterCb.checked) { selectedCampaigns.add(id); if(cb) cb.checked = true; }
+    else { selectedCampaigns.delete(id); if(cb) cb.checked = false; }
+  });
+  updateSelectionBar();
+}
+
+function updateSelectionBar() {
+  const bar = document.getElementById('selectionBar');
+  if(selectedCampaigns.size > 0) {
+    bar.style.display = 'flex';
+    document.getElementById('selectedCount').textContent = selectedCampaigns.size + ' selected';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function filterBySelected() {
+  if(selectedCampaigns.size === 0) return;
+  const rows = document.querySelectorAll('#tableBody tr.level-campaign');
+  rows.forEach(row => {
+    const id = row.getAttribute('data-id');
+    const show = selectedCampaigns.has(id);
+    row.style.display = show ? '' : 'none';
+    let next = row.nextElementSibling;
+    while(next && !next.classList.contains('level-campaign')) {
+      next.style.display = show ? '' : 'none';
+      next = next.nextElementSibling;
+    }
+  });
+}
+
+function clearSelection() {
+  selectedCampaigns.clear();
+  document.querySelectorAll('.camp-select').forEach(cb => cb.checked = false);
+  const master = document.querySelector('.master-select');
+  if(master) master.checked = false;
+  updateSelectionBar();
+  applySearchFilter();
 }
 
 function renderTable() {
@@ -1311,7 +1374,7 @@ function renderTable() {
   });
   if(!html) html='<tr><td colspan="22"><div class="loading-state">No campaigns found</div></td></tr>';
   document.getElementById('tableBody').innerHTML=html;
-  if(searchFilter) applySearchFilter();
+  if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL') applySearchFilter();
 }
 
 function distributeWC(parentWC,children) {
