@@ -1011,9 +1011,9 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
     <div class="content" style="padding:20px 24px">
       <!-- Mode tabs -->
       <div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--border-color)">
-        <button class="ah-mode-tab active" onclick="switchAHMode('campaign')" id="ahModeCampaign" style="padding:10px 24px;font-size:14px;font-weight:700;background:#1E3A5F;border:none;border-radius:8px 8px 0 0;border-bottom:2px solid #1E3A5F;margin-bottom:-2px;color:#fff;cursor:pointer">🎯 Campaign Analysis</button>
-        <button class="ah-mode-tab" onclick="switchAHMode('general')" id="ahModeGeneral" style="padding:10px 24px;font-size:14px;font-weight:700;background:#f1f3f5;border:none;border-radius:8px 8px 0 0;border-bottom:2px solid transparent;margin-bottom:-2px;color:#868e96;cursor:pointer">📊 General Analysis</button>
-        <button class="ah-mode-tab" onclick="switchAHMode('fatigue')" id="ahModeFatigue" style="padding:10px 24px;font-size:14px;font-weight:700;background:#f1f3f5;border:none;border-radius:8px 8px 0 0;border-bottom:2px solid transparent;margin-bottom:-2px;color:#868e96;cursor:pointer">📉 Creative Fatigue</button>
+        <button class="ah-mode-tab active" onclick="switchAHMode('campaign')" id="ahModeCampaign" style="padding:12px 28px;font-size:14px;font-weight:700;background:linear-gradient(135deg,#1E3A5F,#2563eb);border:none;border-radius:10px;color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(30,58,95,0.25);transition:all .2s;margin-right:8px">🎯 Campaign Analysis</button>
+        <button class="ah-mode-tab" onclick="switchAHMode('general')" id="ahModeGeneral" style="padding:12px 28px;font-size:14px;font-weight:600;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;color:#6b7280;cursor:pointer;transition:all .2s;margin-right:8px">📊 General Analysis</button>
+        <button class="ah-mode-tab" onclick="switchAHMode('fatigue')" id="ahModeFatigue" style="padding:12px 28px;font-size:14px;font-weight:600;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;color:#6b7280;cursor:pointer;transition:all .2s">📉 Creative Fatigue</button>
       </div>
 
       <!-- Campaign Analysis mode -->
@@ -2917,6 +2917,31 @@ function initAIHintsIfNeeded() {
 }
 
 function switchAHMode(mode) {
+  // Update tab styles
+  document.querySelectorAll('.ah-mode-tab').forEach(t => {
+    t.style.background = '#fff';
+    t.style.color = '#6b7280';
+    t.style.border = '1.5px solid #e5e7eb';
+    t.style.boxShadow = 'none';
+    t.style.fontWeight = '600';
+  });
+  const active = document.getElementById(mode === 'campaign' ? 'ahModeCampaign' : mode === 'general' ? 'ahModeGeneral' : 'ahModeFatigue');
+  if (active) {
+    active.style.background = 'linear-gradient(135deg,#1E3A5F,#2563eb)';
+    active.style.color = '#fff';
+    active.style.border = 'none';
+    active.style.boxShadow = '0 3px 10px rgba(30,58,95,0.25)';
+    active.style.fontWeight = '700';
+  }
+  // Show/hide mode panels
+  document.getElementById('ahCampaignMode').style.display = mode === 'campaign' ? 'block' : 'none';
+  document.getElementById('ahGeneralMode').style.display = mode === 'general' ? 'block' : 'none';
+  document.getElementById('ahFatigueMode').style.display = mode === 'fatigue' ? 'block' : 'none';
+  // Auto-load general analysis
+  if (mode === 'general' && !document.getElementById('ahResults').innerHTML.trim()) { runGeneralAnalysis(); }
+  // Auto-load fatigue
+  if (mode === 'fatigue' && !document.getElementById('fatigueResults')?.innerHTML.trim()) { runFatigueAnalysis(); }
+}function switchAHMode(mode) {
   ahCurrentMode = mode;
   document.getElementById('ahCampaignMode').style.display = mode === 'campaign' ? 'block' : 'none';
   document.getElementById('ahGeneralMode').style.display = mode === 'general' ? 'block' : 'none';
