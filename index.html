@@ -1123,7 +1123,26 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
         <div style="font-size:13px">Analyzing creative performance across all countries...</div>
       </div>
       <!-- Card-based expansion results -->
-      <div id="uploadCards" style="display:none"></div>
+      <div id="uploadTable" style="display:none">
+        <div class="table-card">
+          <div style="padding:14px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border-color)">📋 Expansion Opportunities</div>
+          <div class="table-scroll" style="max-height:calc(100vh - 320px)">
+            <table class="cr-table">
+              <thead><tr>
+                <th class="cr-th" style="text-align:left">Creative ID</th>
+                <th class="cr-th">Total Spend</th>
+                <th class="cr-th">Purchases</th>
+                <th class="cr-th">Overall CPA</th>
+                <th class="cr-th" style="text-align:left">Winning in</th>
+                <th class="cr-th">Best CPA</th>
+                <th class="cr-th" style="text-align:left">Expand to</th>
+                <th class="cr-th">Priority</th>
+              </tr></thead>
+              <tbody id="uploadBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2771,147 +2790,69 @@ const COUNTRY_FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',S
 async function generateUploadPlan() {
   document.getElementById('uploadInitial').style.display = 'none';
   document.getElementById('uploadLoading').style.display = 'block';
-  document.getElementById('uploadCards').style.display = 'none';
+  document.getElementById('uploadTable').style.display = 'none';
   document.getElementById('uploadSummary').style.display = 'none';
-
   try {
-    const todayStr = fmtDate(new Date());
-    const res = await fetch(`/api/creative-report?start=2026-01-01&end=${todayStr}`);
+    const todayStr = new Date().toISOString().slice(0,10);
+    const res = await fetch('/api/creative-report?start=2026-01-01&end='+todayStr);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
-
     const ALL_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU'];
-    const CPA_THRESHOLD = 17;
-    const LOW_SPEND = 10;
+    const FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
+    const MARKET_MAP = {HR:['GR','IT','SK'],GR:['IT','HR','CZ'],IT:['GR','HR'],HU:['CZ','SK','PL'],CZ:['SK','HU','PL'],SK:['CZ','HU','PL'],PL:['CZ','SK','HU']};
+    const CPA_THRESH = 17, LOW_SPEND = 10;
     const winners = [];
-
-    for (const creative of data.creatives) {
-      if (creative.id === 'Other') continue;
-      const winningCountries = [];
-      let totalSpend = 0, totalPurchases = 0;
-
+    for (const cr of data.creatives) {
+      if (cr.id === 'Other') continue;
+      const winCountries = [];
+      let bestCpa = Infinity;
       for (const cc of ALL_COUNTRIES) {
-        const cs = creative.countries[cc];
-        if (cs) {
-          totalSpend += cs.spend || 0;
-          totalPurchases += cs.purchases || 0;
-          if (cs.purchases > 0) {
-            const cpa = cs.spend / cs.purchases;
-            if (cpa <= CPA_THRESHOLD) {
-              winningCountries.push({ country: cc, cpa: Math.round(cpa * 100) / 100, spend: cs.spend, purchases: cs.purchases });
-            }
-          }
+        const cs = cr.countries[cc];
+        if (cs && cs.purchases > 0) {
+          const cpa = cs.spend / cs.purchases;
+          if (cpa <= CPA_THRESH) { winCountries.push({country:cc,cpa:Math.round(cpa*100)/100,spend:cs.spend,purchases:cs.purchases}); if(cpa<bestCpa)bestCpa=cpa; }
         }
       }
-
-      if (winningCountries.length === 0) continue;
-
-      const overallCpa = totalPurchases > 0 ? Math.round(totalSpend / totalPurchases * 100) / 100 : Infinity;
-      const bestCpa = Math.min(...winningCountries.map(wc => wc.cpa));
-
-      // Find expansion opportunities
-      const testedCountries = new Set();
-      for (const cc of ALL_COUNTRIES) {
-        const cs = creative.countries[cc];
-        if (cs && cs.spend >= LOW_SPEND) testedCountries.add(cc);
-      }
-
+      if (!winCountries.length) continue;
+      const tested = new Set();
+      for (const cc of ALL_COUNTRIES) { const cs=cr.countries[cc]; if(cs&&cs.spend>=LOW_SPEND) tested.add(cc); }
       const expandTo = new Set();
-      for (const wc of winningCountries) {
-        const suggestions = MARKET_SUGGESTIONS[wc.country] || [];
-        for (const s of suggestions) {
-          if (!testedCountries.has(s)) expandTo.add(s);
-        }
-      }
-
-      if (expandTo.size === 0) continue;
-
-      let priority, priorityColor, priorityLabel, priorityBg;
-      if (bestCpa <= 10) { priority = 1; priorityColor = '#4caf50'; priorityLabel = '🟢 HIGH'; priorityBg = '#4caf5015'; }
-      else if (bestCpa <= 15) { priority = 2; priorityColor = '#f59e0b'; priorityLabel = '🟡 MEDIUM'; priorityBg = '#f59e0b15'; }
-      else { priority = 3; priorityColor = '#fb923c'; priorityLabel = '🟠 LOW'; priorityBg = '#fb923c15'; }
-
-      winners.push({
-        id: creative.id,
-        winningCountries: winningCountries.sort((a, b) => a.cpa - b.cpa),
-        bestCpa,
-        overallCpa,
-        totalSpend: Math.round(totalSpend * 100) / 100,
-        totalPurchases,
-        expandTo: [...expandTo],
-        priority, priorityColor, priorityLabel, priorityBg,
-        adCount: creative.adCount
-      });
+      for (const wc of winCountries) { (MARKET_MAP[wc.country]||[]).forEach(s => { if(!tested.has(s)) expandTo.add(s); }); }
+      if (!expandTo.size) continue;
+      let priority,pColor,pLabel;
+      if(bestCpa<=10){priority='High';pColor='#4caf50';pLabel='🟢 High';}
+      else if(bestCpa<=15){priority='Medium';pColor='#f59e0b';pLabel='🟡 Medium';}
+      else{priority='Low';pColor='#fb923c';pLabel='🟠 Low';}
+      winners.push({id:cr.id,winCountries,bestCpa,expandTo:[...expandTo],priority,pColor,pLabel,adCount:cr.adCount,totalSpend:cr.totalSpend,totalPurchases:cr.totalPurchases,overallCpa:cr.cpa});
     }
-
-    // Sort by best overall CPA
-    winners.sort((a, b) => a.overallCpa - b.overallCpa);
-
-    const totalExpansions = winners.reduce((s, w) => s + w.expandTo.length, 0);
-
-    // Render summary
-    document.getElementById('uploadSummary').style.display = 'block';
-    document.getElementById('uploadSummaryTitle').textContent = `${winners.length} winning creatives found`;
-    document.getElementById('uploadSummarySubtitle').textContent = `${totalExpansions} expansion opportunities across ${ALL_COUNTRIES.length} countries`;
-
-    // Render cards
-    if (winners.length > 0) {
-      const cardsHtml = winners.map((w, idx) => {
-        const winBadges = w.winningCountries.map(wc =>
-          `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:rgba(76,175,80,0.1);border:1px solid rgba(76,175,80,0.2);border-radius:6px;font-size:12px;margin:2px">` +
-          `${COUNTRY_FLAGS[wc.country]} <strong>${wc.country}</strong>` +
-          `<span style="color:#4caf50;font-weight:700">€${wc.cpa.toFixed(0)}</span>` +
-          `<span style="color:var(--text-muted);font-size:10px">€${wc.spend.toFixed(0)} / ${wc.purchases}p</span>` +
-          `</span>`
-        ).join('');
-
-        const expandBadges = w.expandTo.map(cc =>
-          `<span style="display:inline-flex;align-items:center;gap:3px;padding:4px 10px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);border-radius:6px;font-size:12px;margin:2px">` +
-          `${COUNTRY_FLAGS[cc]} ${cc}</span>`
-        ).join('');
-
-        return `<div style="background:var(--card-bg);border-radius:var(--card-radius);border:1px solid var(--border-color);padding:20px;margin-bottom:16px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div style="display:flex;align-items:center;gap:12px">
-              <span style="font-size:11px;font-weight:700;color:var(--text-muted);background:var(--content-bg);border-radius:4px;padding:2px 8px">#${idx+1}</span>
-              <span style="font-size:18px;font-weight:800;color:var(--text-primary)">${w.id}</span>
-              <span style="font-size:11px;color:var(--text-muted)">${w.adCount} ads</span>
-            </div>
-            <span style="display:inline-block;padding:4px 14px;border-radius:100px;font-size:11px;font-weight:700;background:${w.priorityBg};color:${w.priorityColor};border:1px solid ${w.priorityColor}30">${w.priorityLabel}</span>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
-            <div style="background:var(--content-bg);border-radius:8px;padding:12px;text-align:center">
-              <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px">Total Spend</div>
-              <div style="font-size:18px;font-weight:800;margin-top:4px">€${w.totalSpend.toFixed(0)}</div>
-            </div>
-            <div style="background:var(--content-bg);border-radius:8px;padding:12px;text-align:center">
-              <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px">Total Purchases</div>
-              <div style="font-size:18px;font-weight:800;margin-top:4px">${w.totalPurchases}</div>
-            </div>
-            <div style="background:var(--content-bg);border-radius:8px;padding:12px;text-align:center">
-              <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px">Overall CPA</div>
-              <div style="font-size:18px;font-weight:800;margin-top:4px;color:${w.overallCpa <= 15 ? '#4caf50' : '#f59e0b'}">€${w.overallCpa.toFixed(2)}</div>
-            </div>
-          </div>
-          <div style="margin-bottom:12px">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:8px">✅ Winning Markets</div>
-            <div style="display:flex;flex-wrap:wrap;gap:4px">${winBadges}</div>
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:8px">🚀 Expand To</div>
-            <div style="display:flex;flex-wrap:wrap;gap:4px">${expandBadges}</div>
-          </div>
-        </div>`;
+    winners.sort((a,b)=>a.bestCpa-b.bestCpa);
+    const totalExp = winners.reduce((s,w)=>s+w.expandTo.length,0);
+    document.getElementById('uploadSummary').style.display='block';
+    document.getElementById('uploadSummaryTitle').textContent=winners.length+' winning creatives found';
+    document.getElementById('uploadSummarySubtitle').textContent=totalExp+' expansion opportunities across '+ALL_COUNTRIES.length+' countries';
+    if(winners.length>0){
+      document.getElementById('uploadBody').innerHTML=winners.map(w=>{
+        const winFlags=w.winCountries.map(wc=>'<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;background:rgba(76,175,80,0.1);border-radius:4px;font-size:11px;margin:1px">'+FLAGS[wc.country]+' '+wc.country+' <span style="color:#4caf50;font-weight:600">'+wc.cpa.toFixed(0)+'€</span> <span style="color:#9ca3af;font-size:9px">'+wc.purchases+'p/'+wc.spend.toFixed(0)+'€</span></span>').join('');
+        const expandFlags=w.expandTo.map(cc=>'<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;background:rgba(59,130,246,0.1);border-radius:4px;font-size:11px;margin:1px">'+FLAGS[cc]+' '+cc+'</span>').join('');
+        const cpaStyle=w.overallCpa>0?(w.overallCpa<=15?'background:#4caf50;color:#fff':w.overallCpa<=25?'background:#f59e0b;color:#fff':'background:#ef5350;color:#fff'):'';
+        return '<tr>'+
+          '<td style="text-align:left"><span style="font-weight:700;font-size:13px">'+w.id+'</span><span style="font-size:10px;color:#9ca3af;margin-left:6px">'+w.adCount+' ads</span></td>'+
+          '<td style="text-align:right;font-weight:600">'+w.totalSpend.toFixed(0)+' €</td>'+
+          '<td style="text-align:right">'+w.totalPurchases+'</td>'+
+          '<td style="text-align:right;'+cpaStyle+';font-weight:600;padding:4px 8px;border-radius:3px">'+(w.overallCpa>0?w.overallCpa.toFixed(2)+' €':'—')+'</td>'+
+          '<td style="text-align:left">'+winFlags+'</td>'+
+          '<td style="font-weight:600;color:'+(w.bestCpa<=15?'#4caf50':'#f59e0b')+'">'+w.bestCpa.toFixed(2)+' €</td>'+
+          '<td style="text-align:left">'+expandFlags+'</td>'+
+          '<td><span style="display:inline-block;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;background:'+w.pColor+'20;color:'+w.pColor+'">'+w.pLabel+'</span></td>'+
+        '</tr>';
       }).join('');
-
-      document.getElementById('uploadCards').innerHTML = cardsHtml;
-      document.getElementById('uploadCards').style.display = 'block';
+      document.getElementById('uploadTable').style.display='block';
     }
   } catch(e) {
-    document.getElementById('uploadInitial').style.display = 'block';
-    document.getElementById('uploadInitial').innerHTML = `<div style="color:var(--danger)">Error: ${e.message}</div>`;
+    document.getElementById('uploadInitial').style.display='block';
+    document.getElementById('uploadInitial').innerHTML='<div style="color:var(--danger)">Error: '+e.message+'</div>';
   }
-  document.getElementById('uploadLoading').style.display = 'none';
+  document.getElementById('uploadLoading').style.display='none';
 }
 
 /* ═══ AI HINTS ═══ */
