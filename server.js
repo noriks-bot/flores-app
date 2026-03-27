@@ -1745,6 +1745,21 @@ const server = http.createServer(async (req, res) => {
             }
           }
 
+          // Daily breakdown
+          let dailyData = [];
+          try {
+            const dailyInsights = await metaGetAll(campaign.id + '/insights', {
+              fields: 'spend,actions',
+              time_range: JSON.stringify({ since: aiStart, until: aiEnd }),
+              time_increment: 1
+            });
+            dailyData = dailyInsights.map(d => ({
+              date: d.date_start,
+              spend: parseFloat(d.spend || 0),
+              purchases: ((d.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase')?.value || 0) * 1
+            }));
+          } catch(e) { console.error('Daily insights error:', e.message); }
+
           return sendJSON(res, {
             summary: {
               campaignName: campaign.name,
@@ -1757,6 +1772,7 @@ const server = http.createServer(async (req, res) => {
               totalPurchases: purch,
               adsets: adsetList,
               recommendations,
+              dailyData,
               dateRange: { start: aiStart, end: aiEnd }
             }
           });

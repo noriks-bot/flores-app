@@ -1083,6 +1083,8 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
       <div id="ahResults" style="display:none">
         <!-- Summary cards -->
         <div id="ahSummaryCards" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px"></div>
+        <!-- Daily chart -->
+        <div id="ahChartArea" style="display:none;background:#fff;border:1px solid #e6e8ea;border-radius:8px;padding:20px;margin-bottom:16px"></div>
         <!-- Recommendations -->
         <div id="ahRecommendations" style="background:var(--card-bg);border-radius:var(--card-radius);border:1px solid var(--border-color);padding:20px;margin-bottom:20px"></div>
         <!-- Campaign-specific: Adset breakdown -->
@@ -1179,6 +1181,27 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
                 <th class="cr-th">Priority</th>
               </tr></thead>
               <tbody id="uploadBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="uploadWaitingTable" style="display:none;margin-top:16px">
+        <div class="table-card">
+          <div style="padding:14px 18px;font-weight:700;font-size:14px;border-bottom:1px solid #e6e8ea">
+            <span style="margin-right:8px">🇨🇿</span> Creatives waiting for CZ
+            <span id="waitingCZCount" style="font-size:11px;color:#9ca3af;margin-left:8px"></span>
+          </div>
+          <div class="table-scroll" style="max-height:400px">
+            <table class="cr-table">
+              <thead><tr>
+                <th class="cr-th" style="text-align:left">Creative ID</th>
+                <th class="cr-th">Best Country</th>
+                <th class="cr-th">Best CPA</th>
+                <th class="cr-th">Spend (other)</th>
+                <th class="cr-th">CZ Spend</th>
+                <th class="cr-th">Status</th>
+              </tr></thead>
+              <tbody id="waitingCZBody"></tbody>
             </table>
           </div>
         </div>
@@ -2903,6 +2926,46 @@ async function generateUploadPlan() {
         '</tr>';
       }).join('');
       document.getElementById('uploadTable').style.display='block';
+
+      // Creatives waiting for CZ
+      const FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
+      const waitingCZ = [];
+      for (const cr of data.creatives) {
+        if (cr.id === 'Other') continue;
+        const czSpend = cr.countries['CZ']?.spend || 0;
+        if (czSpend >= 15) continue; // already tested in CZ
+        // Find best performing country
+        let bestCC = null, bestCPA = Infinity, bestSpend = 0;
+        for (const cc of ['HR','GR','HU','SK','IT','PL']) {
+          const cs = cr.countries[cc];
+          if (cs && cs.spend > 15 && cs.purchases > 0) {
+            const cpa = cs.spend / cs.purchases;
+            if (cpa < bestCPA) { bestCC = cc; bestCPA = cpa; bestSpend = cs.spend; }
+          }
+        }
+        if (!bestCC) continue;
+        waitingCZ.push({ id: cr.id, bestCC, bestCPA, bestSpend, czSpend, adCount: cr.adCount });
+      }
+      waitingCZ.sort((a, b) => a.bestCPA - b.bestCPA);
+
+      if (waitingCZ.length > 0) {
+        document.getElementById('waitingCZCount').textContent = waitingCZ.length + ' creatives';
+        document.getElementById('waitingCZBody').innerHTML = waitingCZ.map(w => {
+          const cpaStyle = w.bestCPA <= 15 ? 'background:#4caf50;color:#fff;font-weight:600' : w.bestCPA <= 20 ? 'background:#84cc16;color:#fff;font-weight:600' : 'background:#f59e0b;color:#fff;font-weight:600';
+          const status = w.czSpend === 0 ? '<span style="color:#ef4444;font-weight:600">Not tested</span>' : '<span style="color:#f59e0b">Low spend (' + w.czSpend.toFixed(0) + '€)</span>';
+          return '<tr>' +
+            '<td style="text-align:left;font-weight:700">' + w.id + ' <span style="font-size:10px;color:#9ca3af">' + w.adCount + ' ads</span></td>' +
+            '<td>' + (FLAGS[w.bestCC]||'') + ' ' + w.bestCC + '</td>' +
+            '<td style="' + cpaStyle + ';padding:4px 8px;border-radius:3px">' + w.bestCPA.toFixed(2) + ' €</td>' +
+            '<td style="font-weight:600">' + w.bestSpend.toFixed(0) + ' €</td>' +
+            '<td>' + (w.czSpend > 0 ? w.czSpend.toFixed(2) + ' €' : '—') + '</td>' +
+            '<td>' + status + '</td>' +
+          '</tr>';
+        }).join('');
+        document.getElementById('uploadWaitingTable').style.display = 'block';
+      } else {
+        document.getElementById('uploadWaitingTable').style.display = 'none';
+      }
     }
   } catch(e) {
     document.getElementById('uploadInitial').style.display='block';
@@ -3215,6 +3278,25 @@ function renderAIHints(s, isCampaignMode) {
       <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted)">Total Profit</div>
       <div style="font-size:24px;font-weight:800;margin-top:6px;color:${profitColor}">${s.totalProfit >= 0 ? '+' : ''}${fmtEur(s.totalProfit)}</div>
     </div>`;
+
+  // Daily trend chart
+  const chartDiv = document.getElementById('ahChartArea');
+  if (isCampaignMode && s.dailyData && s.dailyData.length > 1) {
+    chartDiv.style.display = 'block';
+    chartDiv.innerHTML = '<div style="font-weight:700;font-size:14px;margin-bottom:12px">📈 Daily Trend</div><canvas id="ahCampChart" height="180"></canvas>';
+    if (window.ahChart) window.ahChart.destroy();
+    window.ahChart = new Chart(document.getElementById('ahCampChart'), {
+      type: 'line',
+      data: {
+        labels: s.dailyData.map(d => d.date.slice(5)),
+        datasets: [
+          { label: 'Spend €', data: s.dailyData.map(d => d.spend), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.3 },
+          { label: 'Purchases', data: s.dailyData.map(d => d.purchases), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', fill: true, tension: 0.3, yAxisID: 'y1' }
+        ]
+      },
+      options: { responsive: true, scales: { y: { beginAtZero: true }, y1: { position: 'right', beginAtZero: true, grid: { drawOnChartArea: false } } } }
+    });
+  } else { chartDiv.style.display = 'none'; }
 
   // Recommendations with color coding
   const recStyles = {
