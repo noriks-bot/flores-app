@@ -1135,7 +1135,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
           </div>
           <div>
             <div style="font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;margin-bottom:6px">Max CPA</div>
-            <input type="number" id="upMaxCpa" value="17" style="width:70px;padding:6px 8px;border:1px solid #e5e7eb;border-radius:4px;font-size:13px"> €
+            <input type="number" id="upMaxCpa" value="20" style="width:70px;padding:6px 8px;border:1px solid #e5e7eb;border-radius:4px;font-size:13px"> €
           </div>
           <div style="display:flex;align-items:flex-end">
             <button onclick="generateUploadPlan()" style="padding:8px 20px;background:#1E3A5F;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px">
@@ -2862,8 +2862,9 @@ async function generateUploadPlan() {
       for (const cc of [...expandTo]) { if (!selectedCountries.includes(cc)) expandTo.delete(cc); }
       if (!expandTo.size) continue;
       let priority,pColor,pLabel;
-      if(bestCpa<=10){priority='High';pColor='#4caf50';pLabel='🟢 High';}
-      else if(bestCpa<=15){priority='Medium';pColor='#f59e0b';pLabel='🟡 Medium';}
+      if(bestCpa<=10){priority='Excellent';pColor='#16a34a';pLabel='🟢 Excellent';}
+      else if(bestCpa<=15){priority='Strong';pColor='#4caf50';pLabel='🟢 Strong';}
+      else if(bestCpa<=20){priority='Good';pColor='#84cc16';pLabel='🟡 Good';}
       else{priority='Low';pColor='#fb923c';pLabel='🟠 Low';}
       winners.push({id:cr.id,winCountries,bestCpa,expandTo:[...expandTo],priority,pColor,pLabel,adCount:cr.adCount,totalSpend:cr.totalSpend,totalPurchases:cr.totalPurchases,overallCpa:cr.cpa});
     }
@@ -2876,14 +2877,14 @@ async function generateUploadPlan() {
       document.getElementById('uploadBody').innerHTML=winners.map(w=>{
         const winFlags=w.winCountries.map(wc=>'<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;background:rgba(76,175,80,0.1);border-radius:4px;font-size:11px;margin:1px">'+FLAGS[wc.country]+' '+wc.country+' <span style="color:#4caf50;font-weight:600">'+wc.cpa.toFixed(0)+'€</span> <span style="color:#9ca3af;font-size:9px">'+wc.purchases+'p/'+wc.spend.toFixed(0)+'€</span></span>').join('');
         const expandFlags=w.expandTo.map(cc=>'<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;background:rgba(59,130,246,0.1);border-radius:4px;font-size:11px;margin:1px">'+FLAGS[cc]+' '+cc+'</span>').join('');
-        const cpaStyle=w.overallCpa>0?(w.overallCpa<=15?'background:#4caf50;color:#fff':w.overallCpa<=25?'background:#f59e0b;color:#fff':'background:#ef5350;color:#fff'):'';
+        const cpaStyle=w.overallCpa>0?(w.overallCpa<=15?'background:#4caf50;color:#fff':w.overallCpa<=20?'background:#84cc16;color:#fff':w.overallCpa<=25?'background:#f59e0b;color:#fff':'background:#ef5350;color:#fff'):'';
         return '<tr>'+
           '<td style="text-align:left"><span style="font-weight:700;font-size:13px">'+w.id+'</span><span style="font-size:10px;color:#9ca3af;margin-left:6px">'+w.adCount+' ads</span></td>'+
           '<td style="text-align:right;font-weight:600">'+w.totalSpend.toFixed(0)+' €</td>'+
           '<td style="text-align:right">'+w.totalPurchases+'</td>'+
           '<td style="text-align:right;'+cpaStyle+';font-weight:600;padding:4px 8px;border-radius:3px">'+(w.overallCpa>0?w.overallCpa.toFixed(2)+' €':'—')+'</td>'+
           '<td style="text-align:left">'+winFlags+'</td>'+
-          '<td style="font-weight:600;color:'+(w.bestCpa<=15?'#4caf50':'#f59e0b')+'">'+w.bestCpa.toFixed(2)+' €</td>'+
+          '<td style="font-weight:600;color:'+(w.bestCpa<=15?'#4caf50':w.bestCpa<=20?'#84cc16':'#f59e0b')+'">'+w.bestCpa.toFixed(2)+' €</td>'+
           '<td style="text-align:left">'+expandFlags+'</td>'+
           '<td><span style="display:inline-block;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;background:'+w.pColor+'20;color:'+w.pColor+'">'+w.pLabel+'</span></td>'+
         '</tr>';
