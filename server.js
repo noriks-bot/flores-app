@@ -1079,7 +1079,7 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(401, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ error: 'Unauthorized' }));
     }
-    res.writeHead(302, { 'Location': '/flores/login' });
+    res.writeHead(302, { 'Location': '/login' });
     return res.end();
   }
 
@@ -1529,6 +1529,149 @@ const server = http.createServer(async (req, res) => {
         setCache(crCacheKey, crResult);
         return sendJSON(res, crResult);
       }
+
+      if (urlPath === '/api/creative-fatigue' && req.method === 'POST') {
+        let body = '';
+        await new Promise((resolve) => {
+          req.on('data', c => body += c);
+          req.on('end', resolve);
+        });
+        const { start, end } = JSON.parse(body || '{}');
+        
+        try {
+          const today = new Date();
+          const fmt = d => d.toISOString().slice(0, 10);
+          const d14 = fmt(new Date(today - 14 * 86400000));
+          const d3 = fmt(new Date(today - 3 * 86400000));
+          const dEnd = fmt(today);
+          
+          // Fetch ads for 14-day and 3-day windows
+          const [ads14d, ads3d] = await Promise.all([
+            getAllAds(d14, dEnd),
+            getAllAds(d3, dEnd)
+          ]);
+          
+          // Group by creative ID (extract ID prefix like "ID489" from ad name)
+          function extractCreativeId(name) {
+            const m = (name || '').match(/\b(ID\d+)\b/i);
+            return m ? m[1].toUpperCase() : null;
+          }
+          
+          function getMetrics(ads) {
+            const groups = {};
+            for (const ad of ads) {
+              const cid = extractCreativeId(ad.name);
+              if (!cid) continue;
+              if (!groups[cid]) groups[cid] = { spend: 0, clicks: 0, impressions: 0, purchases: 0, names: new Set() };
+              const g = groups[cid];
+              const ins = ad.insights || {};
+              g.spend += parseFloat(ins.spend || 0);
+              g.clicks += parseInt(ins.clicks || 0);
+              g.impressions += parseInt(ins.impressions || 0);
+              g.names.add(ad.name);
+              const purch = (ins.actions || []).find(a => 
+                a.action_type === 'offsite_conversion.fb_pixel_purchase' || 
+                a.action_type === 'purchase' || 
+                a.action_type === 'omni_purchase'
+              );
+              g.purchases += purch ? parseInt(purch.value) : 0;
+            }
+            // Compute CPA and CTR
+            for (const [id, g] of Object.entries(groups)) {
+              g.cpa = g.purchases > 0 ? g.spend / g.purchases : null;
+              g.ctr = g.impressions > 0 ? (g.clicks / g.impressions) * 100 : 0;
+              g.name = [...g.names][0] || id;
+            }
+            return groups;
+          }
+          
+          const metrics14 = getMetrics(ads14d);
+          const metrics3 = getMetrics(ads3d);
+          
+          const fatigued = [];
+          const healthy = [];
+          
+          for (const [id, m14] of Object.entries(metrics14)) {
+            // Only analyze creatives with meaningful spend
+            if (m14.spend < 5) continue;
+            
+            const m3 = metrics3[id];
+            const cpa14 = m14.cpa;
+            const cpa3 = m3?.cpa || null;
+            const ctr14 = m14.ctr;
+            const ctr3 = m3?.ctr || 0;
+            
+            let isFatigued = false;
+            let severity = 'low';
+            let reasons = [];
+            
+            // CPA increased > 30%
+            if (cpa14 && cpa14 > 0 && cpa3 && cpa3 > 0) {
+              const cpaChange = ((cpa3 - cpa14) / cpa14) * 100;
+              if (cpaChange > 30) {
+                isFatigued = true;
+                reasons.push('cpa');
+                if (cpaChange > 60) severity = 'high';
+                else if (cpaChange > 30) severity = 'medium';
+              }
+            }
+            
+            // CTR decreased > 20%
+            if (ctr14 > 0 && ctr3 >= 0) {
+              const ctrChange = ((ctr3 - ctr14) / ctr14) * 100;
+              if (ctrChange < -20) {
+                isFatigued = true;
+                reasons.push('ctr');
+                if (ctrChange < -40) severity = 'high';
+                else if (ctrChange < -20 && severity !== 'high') severity = 'medium';
+              }
+            }
+            
+            // Both fatigued = high
+            if (reasons.length === 2) severity = 'high';
+            
+            const entry = {
+              id,
+              name: m14.name,
+              cpa14d: cpa14 ? Math.round(cpa14 * 100) / 100 : null,
+              cpa3d: cpa3 ? Math.round(cpa3 * 100) / 100 : null,
+              cpaChange: (cpa14 && cpa3 && cpa14 > 0) ? (((cpa3 - cpa14) / cpa14) * 100).toFixed(0) + '%' : 'N/A',
+              ctr14d: Math.round(ctr14 * 100) / 100,
+              ctr3d: Math.round(ctr3 * 100) / 100,
+              ctrChange: ctr14 > 0 ? (((ctr3 - ctr14) / ctr14) * 100).toFixed(0) + '%' : 'N/A',
+              severity,
+              totalSpend14d: Math.round(m14.spend * 100) / 100,
+              purchases14d: m14.purchases,
+              purchases3d: m3?.purchases || 0
+            };
+            
+            if (isFatigued) {
+              fatigued.push(entry);
+            } else {
+              healthy.push(entry);
+            }
+          }
+          
+          // Sort fatigued by severity
+          const sevOrder = { high: 0, medium: 1, low: 2 };
+          fatigued.sort((a, b) => (sevOrder[a.severity] || 3) - (sevOrder[b.severity] || 3) || b.totalSpend14d - a.totalSpend14d);
+          healthy.sort((a, b) => b.totalSpend14d - a.totalSpend14d);
+          
+          return sendJSON(res, {
+            fatigued,
+            healthy,
+            summary: {
+              totalCreatives: fatigued.length + healthy.length,
+              fatigued: fatigued.length,
+              healthy: healthy.length
+            }
+          });
+        } catch (e) {
+          console.error('Creative fatigue error:', e);
+          return sendJSON(res, { error: e.message }, 500);
+        }
+      }
+
       if (urlPath === '/api/ai-hints' && req.method === 'POST') {
         let body = '';
         await new Promise((resolve) => {
