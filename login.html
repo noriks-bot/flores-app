@@ -3,209 +3,84 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Flores — Login</title>
+<title>Flores — Ad Intelligence</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✿</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;min-height:100vh;display:flex;-webkit-font-smoothing:antialiased}
-
-/* LEFT PANEL */
-.login-left{
-  flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;
-  background:linear-gradient(160deg,#1E3A5F 0%,#0f172a 100%);
-  padding:60px 48px;position:relative;overflow:hidden;
-}
-.login-left::before{
-  content:'';position:absolute;width:500px;height:500px;
-  background:radial-gradient(circle,rgba(96,165,250,0.08) 0%,transparent 70%);
-  top:-100px;right:-100px;
-}
-.login-left::after{
-  content:'';position:absolute;width:400px;height:400px;
-  background:radial-gradient(circle,rgba(124,58,237,0.06) 0%,transparent 70%);
-  bottom:-80px;left:-80px;
-}
-.left-content{position:relative;z-index:1;max-width:420px}
-.left-brand{display:flex;align-items:center;gap:14px;margin-bottom:48px}
-.left-logo{
-  width:48px;height:48px;border-radius:12px;
-  background:linear-gradient(135deg,#7c3aed,#db2777);
-  display:flex;align-items:center;justify-content:center;
-  font-size:22px;color:#fff;box-shadow:0 4px 16px rgba(124,58,237,0.35);
-}
-.left-brand-text h1{font-size:24px;font-weight:800;color:#fff;letter-spacing:-0.5px}
-.left-brand-text p{font-size:12px;color:rgba(255,255,255,0.5);font-weight:500;margin-top:2px}
-.left-tagline{font-size:28px;font-weight:700;color:#fff;line-height:1.35;margin-bottom:16px;letter-spacing:-0.5px}
-.left-desc{font-size:14px;color:rgba(255,255,255,0.55);line-height:1.7;margin-bottom:40px}
-.features{display:flex;flex-direction:column;gap:20px}
-.feature{display:flex;align-items:flex-start;gap:14px}
-.feature-icon{
-  width:40px;height:40px;border-radius:10px;
-  background:rgba(96,165,250,0.12);
-  display:flex;align-items:center;justify-content:center;
-  color:#60a5fa;font-size:16px;flex-shrink:0;
-}
-.feature h3{font-size:14px;font-weight:600;color:#fff;margin-bottom:3px}
-.feature p{font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5}
-
-/* RIGHT PANEL */
-.login-right{
-  width:480px;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:60px 56px;background:#fff;
-}
-.login-form-wrap{width:100%;max-width:360px}
-.form-header{margin-bottom:36px}
-.form-header h2{font-size:24px;font-weight:700;color:#1e293b;margin-bottom:6px}
-.form-header p{font-size:13px;color:#64748b}
-
+body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a 0%,#1E3A5F 50%,#1e40af 100%)}
+.login-container{display:flex;width:100%;max-width:480px;margin:20px}
+.login-card{background:#fff;border-radius:16px;padding:48px 40px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,0.15)}
+.logo-area{text-align:center;margin-bottom:32px}
+.logo-icon{width:56px;height:56px;background:linear-gradient(135deg,#7c3aed,#db2777);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;color:#fff;box-shadow:0 8px 24px rgba(124,58,237,0.3);margin-bottom:16px}
+.logo-title{font-size:24px;font-weight:800;color:#1e293b;letter-spacing:-0.5px}
+.logo-sub{font-size:12px;color:#94a3b8;font-weight:500;margin-top:2px;text-transform:uppercase;letter-spacing:1px}
+.welcome{text-align:center;margin-bottom:28px}
+.welcome h2{font-size:20px;font-weight:700;color:#1e293b;margin-bottom:4px}
+.welcome p{font-size:13px;color:#94a3b8}
 .form-group{margin-bottom:20px}
-.form-group label{display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:7px;text-transform:uppercase;letter-spacing:0.3px}
+.form-label{display:block;font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
 .input-wrap{position:relative}
-.input-wrap i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:14px;transition:color .2s}
-.input-wrap input{
-  width:100%;padding:12px 14px 12px 42px;
-  border:1.5px solid #e2e8f0;border-radius:10px;
-  font-size:14px;font-family:inherit;color:#1e293b;
-  outline:none;transition:all .2s;background:#f8fafc;
-}
-.input-wrap input:focus{border-color:#3b82f6;background:#fff;box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
-.input-wrap input:focus ~ i,.input-wrap input:focus + i{color:#3b82f6}
-
-.login-btn{
-  width:100%;padding:14px;border:none;border-radius:10px;
-  font-size:15px;font-weight:700;font-family:inherit;
-  color:#fff;cursor:pointer;transition:all .2s;
-  background:linear-gradient(135deg,#3b82f6,#2563eb);
-  box-shadow:0 4px 12px rgba(59,130,246,0.3);
-  margin-top:8px;
-}
-.login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(59,130,246,0.4)}
+.input-wrap i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:14px}
+.input-wrap input{width:100%;padding:13px 14px 13px 42px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:inherit;outline:none;transition:all .2s;background:#f8fafc}
+.input-wrap input:focus{border-color:#3b82f6;background:#fff;box-shadow:0 0 0 4px rgba(59,130,246,0.1)}
+.login-btn{width:100%;padding:14px;background:linear-gradient(135deg,#1E3A5F 0%,#2563eb 100%);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s;box-shadow:0 4px 14px rgba(37,99,235,0.3);margin-top:8px}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(37,99,235,0.4)}
 .login-btn:active{transform:translateY(0)}
-
-.error-msg{
-  color:#ef4444;font-size:13px;text-align:center;
-  margin-top:16px;display:none;
-  padding:10px;background:rgba(239,68,68,0.06);
-  border-radius:8px;
-}
-
-.form-footer{margin-top:32px;text-align:center;font-size:12px;color:#94a3b8}
-
-/* RESPONSIVE */
-@media(max-width:900px){
-  body{flex-direction:column}
-  .login-left{padding:40px 32px;min-height:auto}
-  .left-tagline{font-size:22px}
-  .features{display:none}
-  .login-right{width:100%;padding:40px 32px}
-}
-@media(max-width:480px){
-  .login-left{padding:32px 24px}
-  .login-right{padding:32px 24px}
-}
+.error{color:#ef4444;font-size:13px;text-align:center;margin-top:16px;display:none;padding:10px;background:#fef2f2;border-radius:8px}
+.footer{text-align:center;margin-top:24px;font-size:11px;color:#94a3b8}
+.features{display:flex;flex-direction:column;gap:12px;margin-top:24px;padding-top:24px;border-top:1px solid #f1f5f9}
+.feature{display:flex;align-items:center;gap:10px;font-size:12px;color:#64748b}
+.feature-icon{width:28px;height:28px;background:#f0f4ff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#3b82f6;flex-shrink:0}
 </style>
 </head>
 <body>
-
-<!-- LEFT -->
-<div class="login-left">
-  <div class="left-content">
-    <div class="left-brand">
-      <div class="left-logo">✿</div>
-      <div class="left-brand-text">
-        <h1>Flores</h1>
-        <p>Ad Intelligence</p>
-      </div>
+<div class="login-container">
+  <div class="login-card">
+    <div class="logo-area">
+      <div class="logo-icon">✿</div>
+      <div class="logo-title">Flores</div>
+      <div class="logo-sub">Ad Intelligence</div>
     </div>
-    <div class="left-tagline">Smarter ad management,<br>better results.</div>
-    <div class="left-desc">Track campaigns, analyze performance, and optimize your ad spend — all in one place.</div>
-    <div class="features">
-      <div class="feature">
-        <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
-        <div>
-          <h3>Real-time Analytics</h3>
-          <p>Live campaign data with profit tracking and ROAS calculations</p>
-        </div>
-      </div>
-      <div class="feature">
-        <div class="feature-icon"><i class="fas fa-robot"></i></div>
-        <div>
-          <h3>AI-Powered Hints</h3>
-          <p>Smart recommendations to optimize your campaigns automatically</p>
-        </div>
-      </div>
-      <div class="feature">
-        <div class="feature-icon"><i class="fas fa-layer-group"></i></div>
-        <div>
-          <h3>Multi-level Drill Down</h3>
-          <p>From campaigns to ad sets to individual ads — full visibility</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- RIGHT -->
-<div class="login-right">
-  <div class="login-form-wrap">
-    <div class="form-header">
+    <div class="welcome">
       <h2>Welcome back</h2>
-      <p>Sign in to your Flores account</p>
+      <p>Sign in to your account</p>
     </div>
     <form id="loginForm">
       <div class="form-group">
-        <label>Username</label>
-        <div class="input-wrap">
-          <i class="fas fa-user"></i>
-          <input type="text" id="username" placeholder="Enter your username" autocomplete="username" autofocus>
-        </div>
+        <label class="form-label">Username</label>
+        <div class="input-wrap"><i class="fas fa-user"></i><input type="text" id="username" placeholder="Enter your username" autocomplete="username" autofocus></div>
       </div>
       <div class="form-group">
-        <label>Password</label>
-        <div class="input-wrap">
-          <i class="fas fa-lock"></i>
-          <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password">
-        </div>
+        <label class="form-label">Password</label>
+        <div class="input-wrap"><i class="fas fa-lock"></i><input type="password" id="password" placeholder="Enter your password" autocomplete="current-password"></div>
       </div>
-      <button type="submit" class="login-btn">Sign In</button>
-      <div class="error-msg" id="error">Invalid username or password</div>
+      <button type="submit" class="login-btn"><i class="fas fa-sign-in-alt" style="margin-right:6px"></i> Sign In</button>
+      <div class="error" id="error">Invalid username or password</div>
     </form>
-    <div class="form-footer">Flores Ad Intelligence &copy; 2025</div>
+    <div class="features">
+      <div class="feature"><div class="feature-icon"><i class="fas fa-chart-line"></i></div>Real-time campaign analytics with profit tracking</div>
+      <div class="feature"><div class="feature-icon"><i class="fas fa-robot"></i></div>AI-powered optimization recommendations</div>
+      <div class="feature"><div class="feature-icon"><i class="fas fa-expand-arrows-alt"></i></div>Multi-level drill down to individual ads</div>
+    </div>
+    <div class="footer">Flores Ad Intelligence © 2026</div>
   </div>
 </div>
-
 <script>
 document.getElementById('loginForm').addEventListener('submit', async e => {
   e.preventDefault();
-  const btn = e.target.querySelector('button');
-  const err = document.getElementById('error');
-  err.style.display = 'none';
-  btn.textContent = 'Signing in...';
-  btn.disabled = true;
-  try {
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        username: document.getElementById('username').value,
-        password: document.getElementById('password').value
-      })
-    });
-    if (res.ok) {
-      window.location.href = '/';
-    } else {
-      err.style.display = 'block';
-      btn.textContent = 'Sign In';
-      btn.disabled = false;
-    }
-  } catch(e) {
-    err.textContent = 'Connection error. Please try again.';
-    err.style.display = 'block';
-    btn.textContent = 'Sign In';
-    btn.disabled = false;
-  }
+  document.getElementById('error').style.display='none';
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      username: document.getElementById('username').value,
+      password: document.getElementById('password').value
+    })
+  });
+  if (res.ok) { window.location.href = '/'; }
+  else { document.getElementById('error').style.display='block'; }
 });
 </script>
 </body>
