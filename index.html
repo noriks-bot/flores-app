@@ -3189,6 +3189,26 @@ function renderOptimizer() {
     document.getElementById('optBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#9ca3af">No campaigns found</td></tr>';
     return;
   }
+  // Auto-expand multi-country campaigns when country filter is active
+  if (optCountry !== 'ALL') {
+    for (const c of filtered) {
+      const name = (c.name||'').toUpperCase();
+      const ccMatch = name.match(/CC:([A-Z+]+)/);
+      if (ccMatch && ccMatch[1].includes('+') && !optExpanded[c.id]) {
+        // Multi-country campaign - auto expand
+        optExpanded[c.id] = { adsets: [], loading: true };
+        // Fetch adsets in background
+        const {from,to} = getOptDateRange();
+        fetch('/api/adsets?campaign_id='+c.id+'&date_from='+from+'&date_to='+to)
+          .then(r=>r.json()).then(adsets => {
+            if (!adsets.error && optExpanded[c.id]) {
+              optExpanded[c.id] = { adsets };
+              renderOptimizer();
+            }
+          }).catch(()=>{});
+      }
+    }
+  }
   let html = '';
   for (const c of filtered) {
     const spend = parseFloat(c.insights?.spend||0);
@@ -3219,7 +3239,15 @@ function renderOptimizer() {
         const asRevenue = as.wc?.revenueGross||0;
         const asProfit = as.wc?.profit||0;
         const asProfitStyle = asProfit > 0 ? 'background:#4caf50;color:#fff' : asProfit < 0 ? 'background:#ef5350;color:#fff' : '';
-        html += '<tr style="background:#f9fafb;border-bottom:1px solid #f0f0f0">';
+        // Check if this adset matches selected country
+        const asName = (as.name||'').toUpperCase();
+        let asMatchesCountry = optCountry === 'ALL';
+        if (!asMatchesCountry && optCountry !== 'SOFI') {
+          asMatchesCountry = asName.includes(optCountry) || asName.includes('CC:'+optCountry);
+        }
+        if (!asMatchesCountry && optCountry === 'SOFI') { asMatchesCountry = asName.includes('SOFI'); }
+        const grayStyle = (!asMatchesCountry && optCountry !== 'ALL') ? 'opacity:0.35;' : '';
+        html += '<tr style="background:#f9fafb;border-bottom:1px solid #f0f0f0;'+grayStyle+'">';
         html += '<td></td>';
         html += '<td style="text-align:left;padding-left:32px;font-size:11px;color:#4b5563;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">↳ '+as.name+'</td>';
         html += '<td style="font-size:11px;text-align:center">'+(as.status==='ACTIVE'?'<span style="color:#22c55e">●</span>':'<span style="color:#9ca3af">●</span>')+'</td>';
