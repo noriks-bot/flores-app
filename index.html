@@ -848,6 +848,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 
   <!-- BASE REPORT -->
   <div id="section-base-report" class="content-section">
+  <div style="background:linear-gradient(135deg,#fafbff,#f0f4ff);border:1px solid #c7d2fe;border-radius:12px;padding:20px 24px;margin:16px 24px;box-shadow:0 4px 16px rgba(30,58,95,0.06)"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:linear-gradient(135deg,#1E3A5F,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">📊</div><div><div style="font-size:18px;font-weight:800;color:#1E3A5F">Base Report</div><div style="font-size:11px;color:#6b7280;margin-top:1px">Campaign performance by country and type</div></div></div></div>
     <!-- Date picker for base report -->
     <div class="filters-bar" id="brFilters">
       <span class="filter-label">Period</span>
@@ -966,6 +967,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
   <!-- AI HINTS -->
 
   <div id="section-optimizer" class="content-section">
+  <div style="background:linear-gradient(135deg,#fafbff,#f0f4ff);border:1px solid #c7d2fe;border-radius:12px;padding:20px 24px;margin:16px 24px;box-shadow:0 4px 16px rgba(30,58,95,0.06)"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:linear-gradient(135deg,#1E3A5F,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">⚡</div><div><div style="font-size:18px;font-weight:800;color:#1E3A5F">Optimizer</div><div style="font-size:11px;color:#6b7280;margin-top:1px">Country-level campaign management</div></div></div></div>
   <div style="padding:8px 16px;display:flex;gap:6px;flex-wrap:wrap;background:#fff;border-bottom:1px solid #e6e8ea">
     <button class="fpill fpill-active" onclick="switchOptTab(this,'ALL')">All</button>
     <button class="fpill" onclick="switchOptTab(this,'HR')">🇭🇷 HR</button>
@@ -1008,6 +1010,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
   </div>
 
   <div id="section-ai-hints" class="content-section">
+  <div style="background:linear-gradient(135deg,#fafbff,#f0f4ff);border:1px solid #c7d2fe;border-radius:12px;padding:20px 24px;margin:16px 24px;box-shadow:0 4px 16px rgba(30,58,95,0.06)"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:linear-gradient(135deg,#1E3A5F,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">🤖</div><div><div style="font-size:18px;font-weight:800;color:#1E3A5F">AI Hints</div><div style="font-size:11px;color:#6b7280;margin-top:1px">AI-powered campaign optimization</div></div></div></div>
     <div class="content" style="padding:20px 24px">
       <!-- Mode tabs -->
       <div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--border-color)">
@@ -1185,6 +1188,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 
   <!-- ORIGIN REPORT -->
   <div id="section-origin-report" class="content-section">
+  <div style="background:linear-gradient(135deg,#fafbff,#f0f4ff);border:1px solid #c7d2fe;border-radius:12px;padding:20px 24px;margin:16px 24px;box-shadow:0 4px 16px rgba(30,58,95,0.06)"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:linear-gradient(135deg,#1E3A5F,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">🔍</div><div><div style="font-size:18px;font-weight:800;color:#1E3A5F">Origin Report</div><div style="font-size:11px;color:#6b7280;margin-top:1px">Track order attribution sources</div></div></div></div>
     <div class="filters-bar" id="orFilters">
       <span class="filter-label">Period</span>
       <div class="preset-tabs" id="orPresetTabs">
@@ -3253,15 +3257,14 @@ function renderAIHints(s, isCampaignMode) {
             <th style="text-align:left;padding:8px;font-weight:700">Status</th>
           </tr></thead>
           <tbody>${s.adsets.map(a => {
-            const cpaColor = !a.cpa ? 'var(--text-muted)' : a.cpa < 15 ? '#4caf50' : a.cpa < 30 ? '#f59e0b' : '#ef5350';
-            const statusColor = a.status === 'ACTIVE' ? '#4caf50' : '#ef5350';
-            return `<tr style="border-bottom:1px solid var(--border-color)">
-              <td style="padding:8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(a.name||'').replace(/"/g,'&quot;')}">${(a.name||'').slice(0,50)}</td>
-              <td style="text-align:right;padding:8px;font-weight:600">${fmtEur(a.spend)}</td>
-              <td style="text-align:right;padding:8px;font-weight:600">${a.purchases}</td>
-              <td style="text-align:right;padding:8px;font-weight:700;color:${cpaColor}">${a.cpa ? fmtEur(a.cpa) : '—'}</td>
-              <td style="padding:8px"><span style="display:inline-block;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:600;background:${statusColor}15;color:${statusColor}">${a.status}</span></td>
-            </tr>`;
+            const cpaStyle = a.cpa > 0 ? (a.cpa <= 15 ? 'background:#4caf50;color:#fff;font-weight:600' : a.cpa <= 20 ? 'background:#84cc16;color:#fff;font-weight:600' : a.cpa <= 25 ? 'background:#f59e0b;color:#fff;font-weight:600' : 'background:#ef5350;color:#fff;font-weight:600') : '';
+            return '<tr>' +
+              '<td style="text-align:left;font-size:12px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (a.name||'—') + '</td>' +
+              '<td style="text-align:center;font-size:11px">' + (a.status==='ACTIVE'?'<span style="color:#22c55e">● Active</span>':'<span style="color:#9ca3af">● Paused</span>') + '</td>' +
+              '<td style="text-align:right;font-weight:600">' + (a.spend||0).toFixed(2) + ' €</td>' +
+              '<td style="text-align:right">' + (a.purchases||0) + '</td>' +
+              '<td style="text-align:right;' + cpaStyle + ';padding:4px 8px;border-radius:3px">' + (a.cpa > 0 ? a.cpa.toFixed(2) + ' €' : '—') + '</td>' +
+            '</tr>';
           }).join('')}</tbody>
         </table>
       </div>`;
