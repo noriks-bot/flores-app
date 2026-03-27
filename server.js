@@ -1535,11 +1535,91 @@ const server = http.createServer(async (req, res) => {
           req.on('data', c => body += c);
           req.on('end', resolve);
         });
-        const { prompt, dateRange } = JSON.parse(body || '{}');
+        const { prompt, dateRange, campaignId } = JSON.parse(body || '{}');
         const aiStart = dateRange?.start || dateFrom;
         const aiEnd = dateRange?.end || dateTo;
 
-        // Gather campaign data
+        // Campaign-specific analysis mode
+        if (campaignId) {
+          const campaignData = await getCampaigns(aiStart, aiEnd);
+          // Find campaign by ID or name (partial match)
+          const searchLower = campaignId.toLowerCase();
+          const campaign = campaignData.find(c => c.id === campaignId || (c.name || '').toLowerCase().includes(searchLower));
+          if (!campaign) {
+            return sendJSON(res, { error: `Campaign not found: ${campaignId}` }, 404);
+          }
+
+          const spend = parseFloat(campaign.insights?.spend || 0);
+          const purchases = (campaign.insights?.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
+          const purch = purchases ? parseInt(purchases.value) : 0;
+          const orders = campaign.wc?.orders || 0;
+          const profit = campaign.wc?.profit || 0;
+          const cpa = purch > 0 ? Math.round(spend / purch * 100) / 100 : 0;
+
+          // Get adsets
+          let adsetList = [];
+          try {
+            const adsets = await getAdsets(campaign.id, aiStart, aiEnd);
+            adsetList = adsets.map(a => ({
+              name: a.name,
+              id: a.id,
+              status: a.status,
+              spend: Math.round(parseFloat(a.spend || 0) * 100) / 100,
+              purchases: parseInt(a.purchases || 0),
+              cpa: a.purchases > 0 ? Math.round(a.spend / a.purchases * 100) / 100 : null
+            }));
+            adsetList.sort((a, b) => b.spend - a.spend);
+          } catch(e) { console.error('Adset fetch error:', e.message); }
+
+          // Campaign-specific recommendations
+          const recommendations = [];
+          if (cpa > 30) {
+            recommendations.push({ type: 'pause', text: `Campaign CPA (€${cpa.toFixed(2)}) is well above target. Consider pausing.` });
+          } else if (cpa > 0 && cpa < 15) {
+            recommendations.push({ type: 'scale', text: `Campaign CPA (€${cpa.toFixed(2)}) is strong. Consider increasing budget.` });
+          } else if (cpa >= 15 && cpa <= 30) {
+            recommendations.push({ type: 'adjust', text: `Campaign CPA (€${cpa.toFixed(2)}) is moderate. Review adsets for optimization.` });
+          }
+          if (spend > 20 && purch === 0) {
+            recommendations.push({ type: 'pause', text: `€${spend.toFixed(2)} spent with 0 purchases. Consider pausing.` });
+          }
+
+          // Adset-level recommendations
+          for (const a of adsetList) {
+            if (a.cpa && a.cpa > 30) {
+              recommendations.push({ type: 'pause', text: `Pause adset "${(a.name||'').slice(0,40)}" (CPA €${a.cpa.toFixed(2)})` });
+            } else if (a.spend > 15 && a.purchases === 0) {
+              recommendations.push({ type: 'pause', text: `Pause adset "${(a.name||'').slice(0,40)}" (€${a.spend.toFixed(2)} spent, 0 purchases)` });
+            } else if (a.cpa && a.cpa < 12 && a.purchases >= 2) {
+              recommendations.push({ type: 'scale', text: `Scale adset "${(a.name||'').slice(0,40)}" (CPA €${a.cpa.toFixed(2)}, ${a.purchases} purchases)` });
+            }
+          }
+
+          // Check for new adsets (watch)
+          for (const a of adsetList) {
+            if (a.spend > 0 && a.spend < 10 && a.purchases === 0) {
+              recommendations.push({ type: 'watch', text: `Watch adset "${(a.name||'').slice(0,40)}" — low spend (€${a.spend.toFixed(2)}), needs more data` });
+            }
+          }
+
+          return sendJSON(res, {
+            summary: {
+              campaignName: campaign.name,
+              campaignId: campaign.id,
+              campaignStatus: campaign.status,
+              totalSpend: Math.round(spend * 100) / 100,
+              totalOrders: orders,
+              totalProfit: Math.round(profit * 100) / 100,
+              avgCPA: cpa,
+              totalPurchases: purch,
+              adsets: adsetList,
+              recommendations,
+              dateRange: { start: aiStart, end: aiEnd }
+            }
+          });
+        }
+
+        // General analysis (existing behavior)
         const campaignData = await getCampaigns(aiStart, aiEnd);
 
         let totalSpend = 0, totalOrders = 0, totalRevenue = 0, totalProfit = 0, totalPurchases = 0;
@@ -1589,6 +1669,8 @@ const server = http.createServer(async (req, res) => {
             recommendations.push({ type: 'pause', text: `Pause ${c.name} (€${c.spend.toFixed(2)} spent, 0 purchases)`, campaign: c.name });
           } else if (c.cpa && c.cpa >= 15 && c.cpa <= 30 && c.profit < 0) {
             recommendations.push({ type: 'adjust', text: `Adjust ${c.name} (CPA €${c.cpa.toFixed(2)}, negative profit €${c.profit.toFixed(2)})`, campaign: c.name });
+          } else if (c.spend > 0 && c.spend < 10 && c.purchases === 0) {
+            recommendations.push({ type: 'watch', text: `Watch ${c.name} — low spend (€${c.spend.toFixed(2)}), needs more data`, campaign: c.name });
           }
         }
 

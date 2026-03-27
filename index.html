@@ -1008,39 +1008,60 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
   </div>
 
   <div id="section-ai-hints" class="content-section">
-    <div class="filters-bar" id="ahFilters">
-      <span class="filter-label">Period</span>
-      <div class="preset-tabs" id="ahPresetTabs">
-        <button class="preset-tab" data-range="today">Today</button>
-        <button class="preset-tab" data-range="yesterday">Yesterday</button>
-        <button class="preset-tab" data-range="3d">3D</button>
-        <button class="preset-tab active" data-range="7d">7D</button>
-        <button class="preset-tab" data-range="14d">14D</button>
-        <button class="preset-tab" data-range="30d">30D</button>
-        <button class="preset-tab" data-range="custom">Custom</button>
-      </div>
-      <input type="date" id="ahDateFrom" class="date-input" style="display:none">
-      <span class="date-sep ah-date-sep" style="display:none">→</span>
-      <input type="date" id="ahDateTo" class="date-input" style="display:none">
-    </div>
     <div class="content" style="padding:20px 24px">
-      <!-- Prompt area -->
-      <div style="background:var(--card-bg);border-radius:var(--card-radius);border:1px solid var(--border-color);padding:20px;margin-bottom:20px">
-        <div style="font-weight:700;font-size:14px;margin-bottom:12px">💡 Ask AI for Campaign Advice</div>
-        <textarea id="ahPrompt" rows="3" style="width:100%;padding:12px;border:1px solid var(--border-color);border-radius:6px;font-family:inherit;font-size:13px;resize:vertical;color:var(--text-primary);background:var(--content-bg)">Analyze my current campaign performance and suggest optimizations</textarea>
-        <div style="margin-top:12px;display:flex;gap:12px;align-items:center">
-          <button class="refresh-btn" onclick="loadAIHints()" id="ahLoadBtn">
-            <i class="fas fa-magic"></i> Get AI Advice
-          </button>
-          <span id="ahLoading" style="display:none;color:var(--text-muted);font-size:12px"><div class="spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:6px"></div>Analyzing campaigns...</span>
+      <!-- Mode tabs -->
+      <div style="display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid var(--border-color)">
+        <button class="ah-mode-tab active" onclick="switchAHMode('campaign')" id="ahModeCampaign" style="padding:12px 24px;font-size:14px;font-weight:700;background:none;border:none;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--accent);cursor:pointer">🎯 Campaign Analysis</button>
+        <button class="ah-mode-tab" onclick="switchAHMode('general')" id="ahModeGeneral" style="padding:12px 24px;font-size:14px;font-weight:700;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-muted);cursor:pointer">📊 General Analysis</button>
+      </div>
+
+      <!-- Campaign Analysis mode -->
+      <div id="ahCampaignMode" style="margin-bottom:20px">
+        <div style="background:var(--card-bg);border-radius:var(--card-radius);border:1px solid var(--border-color);padding:20px">
+          <div style="font-weight:700;font-size:14px;margin-bottom:12px">🎯 Analyze a Specific Campaign</div>
+          <div style="display:flex;gap:12px;align-items:center">
+            <input type="text" id="ahCampaignInput" placeholder="Enter Campaign ID or name..." style="flex:1;padding:10px 14px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;color:var(--text-primary);background:var(--content-bg);font-family:inherit">
+            <button class="refresh-btn" onclick="loadCampaignAnalysis()" id="ahCampaignBtn">
+              <i class="fas fa-search"></i> Analyze Campaign
+            </button>
+          </div>
+          <div id="ahCampaignSuggestions" style="margin-top:8px;font-size:12px;color:var(--text-muted)"></div>
         </div>
       </div>
+
+      <!-- General Analysis mode -->
+      <div id="ahGeneralMode" style="display:none;margin-bottom:20px">
+        <div style="background:var(--card-bg);border-radius:var(--card-radius);border:1px solid var(--border-color);padding:20px">
+          <div style="font-weight:700;font-size:14px;margin-bottom:12px">📊 Overall Performance Analysis</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <div class="preset-tabs" id="ahGeneralPresetTabs">
+              <button class="preset-tab active" data-range="today" onclick="ahSelectGeneralRange(this)">Today</button>
+              <button class="preset-tab" data-range="yesterday" onclick="ahSelectGeneralRange(this)">Yesterday</button>
+              <button class="preset-tab" data-range="7d" onclick="ahSelectGeneralRange(this)">7D</button>
+              <button class="preset-tab" data-range="14d" onclick="ahSelectGeneralRange(this)">14D</button>
+              <button class="preset-tab" data-range="30d" onclick="ahSelectGeneralRange(this)">30D</button>
+            </div>
+            <button class="refresh-btn" onclick="loadGeneralAnalysis()" id="ahGeneralBtn" style="margin-left:8px">
+              <i class="fas fa-chart-line"></i> Analyze Performance
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div id="ahLoading" style="display:none;text-align:center;padding:40px;color:var(--text-muted)">
+        <div class="spinner" style="width:24px;height:24px;display:inline-block;margin-bottom:12px"></div>
+        <div style="font-size:13px">Analyzing campaigns...</div>
+      </div>
+
       <!-- Results -->
       <div id="ahResults" style="display:none">
         <!-- Summary cards -->
         <div id="ahSummaryCards" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px"></div>
         <!-- Recommendations -->
         <div id="ahRecommendations" style="background:var(--card-bg);border-radius:var(--card-radius);border:1px solid var(--border-color);padding:20px;margin-bottom:20px"></div>
+        <!-- Campaign-specific: Adset breakdown -->
+        <div id="ahAdsetBreakdown" style="display:none;background:var(--card-bg);border-radius:var(--card-radius);border:1px solid var(--border-color);padding:20px;margin-bottom:20px"></div>
         <!-- Top/Worst campaigns -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
           <div id="ahTopCampaigns" style="background:var(--card-bg);border-radius:var(--card-radius);border:1px solid var(--border-color);padding:20px"></div>
@@ -1079,24 +1100,8 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
         <div class="spinner" style="width:24px;height:24px;display:inline-block;margin-bottom:12px"></div>
         <div style="font-size:13px">Analyzing creative performance across all countries...</div>
       </div>
-      <!-- Expansion table -->
-      <div id="uploadTable" style="display:none">
-        <div class="table-card">
-          <div style="padding:14px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border-color)">📋 Expansion Opportunities</div>
-          <div class="table-scroll" style="max-height:calc(100vh - 320px)">
-            <table>
-              <thead><tr>
-                <th style="text-align:left">Creative ID</th>
-                <th style="text-align:left">Winning in</th>
-                <th>Best CPA</th>
-                <th style="text-align:left">Expand to</th>
-                <th>Priority</th>
-              </tr></thead>
-              <tbody id="uploadBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+      <!-- Card-based expansion results -->
+      <div id="uploadCards" style="display:none"></div>
     </div>
   </div>
 
@@ -2744,7 +2749,7 @@ const COUNTRY_FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',S
 async function generateUploadPlan() {
   document.getElementById('uploadInitial').style.display = 'none';
   document.getElementById('uploadLoading').style.display = 'block';
-  document.getElementById('uploadTable').style.display = 'none';
+  document.getElementById('uploadCards').style.display = 'none';
   document.getElementById('uploadSummary').style.display = 'none';
 
   try {
@@ -2761,20 +2766,26 @@ async function generateUploadPlan() {
     for (const creative of data.creatives) {
       if (creative.id === 'Other') continue;
       const winningCountries = [];
-      let bestCpa = Infinity;
+      let totalSpend = 0, totalPurchases = 0;
 
       for (const cc of ALL_COUNTRIES) {
         const cs = creative.countries[cc];
-        if (cs && cs.purchases > 0) {
-          const cpa = cs.spend / cs.purchases;
-          if (cpa <= CPA_THRESHOLD) {
-            winningCountries.push({ country: cc, cpa: Math.round(cpa * 100) / 100, spend: cs.spend, purchases: cs.purchases });
-            if (cpa < bestCpa) bestCpa = cpa;
+        if (cs) {
+          totalSpend += cs.spend || 0;
+          totalPurchases += cs.purchases || 0;
+          if (cs.purchases > 0) {
+            const cpa = cs.spend / cs.purchases;
+            if (cpa <= CPA_THRESHOLD) {
+              winningCountries.push({ country: cc, cpa: Math.round(cpa * 100) / 100, spend: cs.spend, purchases: cs.purchases });
+            }
           }
         }
       }
 
       if (winningCountries.length === 0) continue;
+
+      const overallCpa = totalPurchases > 0 ? Math.round(totalSpend / totalPurchases * 100) / 100 : Infinity;
+      const bestCpa = Math.min(...winningCountries.map(wc => wc.cpa));
 
       // Find expansion opportunities
       const testedCountries = new Set();
@@ -2783,7 +2794,6 @@ async function generateUploadPlan() {
         if (cs && cs.spend >= LOW_SPEND) testedCountries.add(cc);
       }
 
-      // Suggest countries based on market similarity
       const expandTo = new Set();
       for (const wc of winningCountries) {
         const suggestions = MARKET_SUGGESTIONS[wc.country] || [];
@@ -2794,26 +2804,26 @@ async function generateUploadPlan() {
 
       if (expandTo.size === 0) continue;
 
-      // Priority based on best CPA
-      let priority, priorityColor, priorityLabel;
-      if (bestCpa <= 10) { priority = 'High'; priorityColor = '#4caf50'; priorityLabel = '🟢 High'; }
-      else if (bestCpa <= 15) { priority = 'Medium'; priorityColor = '#f59e0b'; priorityLabel = '🟡 Medium'; }
-      else { priority = 'Low'; priorityColor = '#fb923c'; priorityLabel = '🟠 Low'; }
+      let priority, priorityColor, priorityLabel, priorityBg;
+      if (bestCpa <= 10) { priority = 1; priorityColor = '#4caf50'; priorityLabel = '🟢 HIGH'; priorityBg = '#4caf5015'; }
+      else if (bestCpa <= 15) { priority = 2; priorityColor = '#f59e0b'; priorityLabel = '🟡 MEDIUM'; priorityBg = '#f59e0b15'; }
+      else { priority = 3; priorityColor = '#fb923c'; priorityLabel = '🟠 LOW'; priorityBg = '#fb923c15'; }
 
       winners.push({
         id: creative.id,
-        winningCountries,
+        winningCountries: winningCountries.sort((a, b) => a.cpa - b.cpa),
         bestCpa,
+        overallCpa,
+        totalSpend: Math.round(totalSpend * 100) / 100,
+        totalPurchases,
         expandTo: [...expandTo],
-        priority,
-        priorityColor,
-        priorityLabel,
+        priority, priorityColor, priorityLabel, priorityBg,
         adCount: creative.adCount
       });
     }
 
-    // Sort by best CPA (best first)
-    winners.sort((a, b) => a.bestCpa - b.bestCpa);
+    // Sort by best overall CPA
+    winners.sort((a, b) => a.overallCpa - b.overallCpa);
 
     const totalExpansions = winners.reduce((s, w) => s + w.expandTo.length, 0);
 
@@ -2822,20 +2832,58 @@ async function generateUploadPlan() {
     document.getElementById('uploadSummaryTitle').textContent = `${winners.length} winning creatives found`;
     document.getElementById('uploadSummarySubtitle').textContent = `${totalExpansions} expansion opportunities across ${ALL_COUNTRIES.length} countries`;
 
-    // Render table
+    // Render cards
     if (winners.length > 0) {
-      document.getElementById('uploadBody').innerHTML = winners.map(w => {
-        const winFlags = w.winningCountries.map(wc => `<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;background:rgba(76,175,80,0.1);border-radius:4px;font-size:11px;margin:1px">${COUNTRY_FLAGS[wc.country]} ${wc.country} <span style="color:#4caf50;font-weight:600">€${wc.cpa.toFixed(0)}</span></span>`).join('');
-        const expandFlags = w.expandTo.map(cc => `<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;background:rgba(59,130,246,0.1);border-radius:4px;font-size:11px;margin:1px">${COUNTRY_FLAGS[cc]} ${cc}</span>`).join('');
-        return `<tr>
-          <td style="text-align:left"><span style="font-weight:700;font-size:13px">${w.id}</span><span style="font-size:10px;color:var(--text-muted);margin-left:6px">${w.adCount} ads</span></td>
-          <td style="text-align:left">${winFlags}</td>
-          <td style="font-weight:600;color:${w.bestCpa <= 15 ? '#4caf50' : '#f59e0b'}">€${w.bestCpa.toFixed(2)}</td>
-          <td style="text-align:left">${expandFlags}</td>
-          <td><span style="display:inline-block;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;background:${w.priorityColor}20;color:${w.priorityColor}">${w.priorityLabel}</span></td>
-        </tr>`;
+      const cardsHtml = winners.map((w, idx) => {
+        const winBadges = w.winningCountries.map(wc =>
+          `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:rgba(76,175,80,0.1);border:1px solid rgba(76,175,80,0.2);border-radius:6px;font-size:12px;margin:2px">` +
+          `${COUNTRY_FLAGS[wc.country]} <strong>${wc.country}</strong>` +
+          `<span style="color:#4caf50;font-weight:700">€${wc.cpa.toFixed(0)}</span>` +
+          `<span style="color:var(--text-muted);font-size:10px">€${wc.spend.toFixed(0)} / ${wc.purchases}p</span>` +
+          `</span>`
+        ).join('');
+
+        const expandBadges = w.expandTo.map(cc =>
+          `<span style="display:inline-flex;align-items:center;gap:3px;padding:4px 10px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);border-radius:6px;font-size:12px;margin:2px">` +
+          `${COUNTRY_FLAGS[cc]} ${cc}</span>`
+        ).join('');
+
+        return `<div style="background:var(--card-bg);border-radius:var(--card-radius);border:1px solid var(--border-color);padding:20px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <span style="font-size:11px;font-weight:700;color:var(--text-muted);background:var(--content-bg);border-radius:4px;padding:2px 8px">#${idx+1}</span>
+              <span style="font-size:18px;font-weight:800;color:var(--text-primary)">${w.id}</span>
+              <span style="font-size:11px;color:var(--text-muted)">${w.adCount} ads</span>
+            </div>
+            <span style="display:inline-block;padding:4px 14px;border-radius:100px;font-size:11px;font-weight:700;background:${w.priorityBg};color:${w.priorityColor};border:1px solid ${w.priorityColor}30">${w.priorityLabel}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+            <div style="background:var(--content-bg);border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px">Total Spend</div>
+              <div style="font-size:18px;font-weight:800;margin-top:4px">€${w.totalSpend.toFixed(0)}</div>
+            </div>
+            <div style="background:var(--content-bg);border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px">Total Purchases</div>
+              <div style="font-size:18px;font-weight:800;margin-top:4px">${w.totalPurchases}</div>
+            </div>
+            <div style="background:var(--content-bg);border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px">Overall CPA</div>
+              <div style="font-size:18px;font-weight:800;margin-top:4px;color:${w.overallCpa <= 15 ? '#4caf50' : '#f59e0b'}">€${w.overallCpa.toFixed(2)}</div>
+            </div>
+          </div>
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:8px">✅ Winning Markets</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">${winBadges}</div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:8px">🚀 Expand To</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">${expandBadges}</div>
+          </div>
+        </div>`;
       }).join('');
-      document.getElementById('uploadTable').style.display = 'block';
+
+      document.getElementById('uploadCards').innerHTML = cardsHtml;
+      document.getElementById('uploadCards').style.display = 'block';
     }
   } catch(e) {
     document.getElementById('uploadInitial').style.display = 'block';
@@ -2846,65 +2894,116 @@ async function generateUploadPlan() {
 
 /* ═══ AI HINTS ═══ */
 let ahInitialized = false;
+let ahCurrentMode = 'campaign';
+
 function initAIHintsIfNeeded() {
   if (ahInitialized) return;
   ahInitialized = true;
-  const ahFrom = document.getElementById('ahDateFrom');
-  const ahTo = document.getElementById('ahDateTo');
-  const t = new Date();
-  ahFrom.value = fmtDate(addDays(t, -6));
-  ahTo.value = fmtDate(t);
-
-  document.querySelectorAll('#ahPresetTabs .preset-tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#ahPresetTabs .preset-tab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const t2 = new Date(), range = btn.dataset.range;
-      if (range === 'custom') {
-        document.querySelectorAll('#ahFilters .date-input, #ahFilters .ah-date-sep').forEach(el => el.style.display = '');
-        return;
-      }
-      document.querySelectorAll('#ahFilters .date-input, #ahFilters .ah-date-sep').forEach(el => el.style.display = 'none');
-      if (range === 'today') { ahFrom.value = fmtDate(t2); ahTo.value = fmtDate(t2); }
-      else if (range === 'yesterday') { const y = addDays(t2, -1); ahFrom.value = fmtDate(y); ahTo.value = fmtDate(y); }
-      else if (range === '3d') { ahFrom.value = fmtDate(addDays(t2, -2)); ahTo.value = fmtDate(t2); }
-      else if (range === '7d') { ahFrom.value = fmtDate(addDays(t2, -6)); ahTo.value = fmtDate(t2); }
-      else if (range === '14d') { ahFrom.value = fmtDate(addDays(t2, -13)); ahTo.value = fmtDate(t2); }
-      else if (range === '30d') { ahFrom.value = fmtDate(addDays(t2, -29)); ahTo.value = fmtDate(t2); }
-    });
-  });
 }
 
-async function loadAIHints() {
-  const start = document.getElementById('ahDateFrom').value;
-  const end = document.getElementById('ahDateTo').value;
-  const prompt = document.getElementById('ahPrompt').value;
+function switchAHMode(mode) {
+  ahCurrentMode = mode;
+  document.getElementById('ahCampaignMode').style.display = mode === 'campaign' ? 'block' : 'none';
+  document.getElementById('ahGeneralMode').style.display = mode === 'general' ? 'block' : 'none';
+  document.getElementById('ahResults').style.display = 'none';
+  document.getElementById('ahAdsetBreakdown').style.display = 'none';
 
-  document.getElementById('ahLoading').style.display = 'inline-flex';
-  document.getElementById('ahLoadBtn').disabled = true;
+  const campTab = document.getElementById('ahModeCampaign');
+  const genTab = document.getElementById('ahModeGeneral');
+  if (mode === 'campaign') {
+    campTab.style.borderBottomColor = 'var(--accent)';
+    campTab.style.color = 'var(--accent)';
+    genTab.style.borderBottomColor = 'transparent';
+    genTab.style.color = 'var(--text-muted)';
+  } else {
+    genTab.style.borderBottomColor = 'var(--accent)';
+    genTab.style.color = 'var(--accent)';
+    campTab.style.borderBottomColor = 'transparent';
+    campTab.style.color = 'var(--text-muted)';
+    // Auto-load on first visit
+    if (!document.getElementById('ahResults').innerHTML.trim() || document.getElementById('ahResults').style.display === 'none') {
+      loadGeneralAnalysis();
+    }
+  }
+}
+
+function ahGetGeneralDateRange() {
+  const active = document.querySelector('#ahGeneralPresetTabs .preset-tab.active');
+  const range = active ? active.dataset.range : 'today';
+  const t = new Date();
+  let start, end = fmtDate(t);
+  if (range === 'today') { start = fmtDate(t); }
+  else if (range === 'yesterday') { const y = addDays(t, -1); start = fmtDate(y); end = fmtDate(y); }
+  else if (range === '7d') { start = fmtDate(addDays(t, -6)); }
+  else if (range === '14d') { start = fmtDate(addDays(t, -13)); }
+  else if (range === '30d') { start = fmtDate(addDays(t, -29)); }
+  return { start, end };
+}
+
+function ahSelectGeneralRange(btn) {
+  document.querySelectorAll('#ahGeneralPresetTabs .preset-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function loadCampaignAnalysis() {
+  const input = document.getElementById('ahCampaignInput').value.trim();
+  if (!input) { alert('Please enter a Campaign ID or name'); return; }
+
+  document.getElementById('ahLoading').style.display = 'block';
+  document.getElementById('ahCampaignBtn').disabled = true;
+  document.getElementById('ahResults').style.display = 'none';
+
+  try {
+    const t = new Date();
+    const res = await fetch('/api/ai-hints', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ campaignId: input, dateRange: { start: fmtDate(addDays(t, -6)), end: fmtDate(t) } })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    renderAIHints(data.summary, true);
+  } catch(e) {
+    document.getElementById('ahResults').style.display = 'block';
+    document.getElementById('ahSummaryCards').innerHTML = '<div style="grid-column:1/-1;color:var(--danger);padding:20px">Error: ' + e.message + '</div>';
+    document.getElementById('ahRecommendations').innerHTML = '';
+    document.getElementById('ahTopCampaigns').innerHTML = '';
+    document.getElementById('ahWorstCampaigns').innerHTML = '';
+  }
+  document.getElementById('ahLoading').style.display = 'none';
+  document.getElementById('ahCampaignBtn').disabled = false;
+}
+
+async function loadGeneralAnalysis() {
+  const { start, end } = ahGetGeneralDateRange();
+
+  document.getElementById('ahLoading').style.display = 'block';
+  document.getElementById('ahGeneralBtn').disabled = true;
   document.getElementById('ahResults').style.display = 'none';
 
   try {
     const res = await fetch('/api/ai-hints', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, dateRange: { start, end } })
+      body: JSON.stringify({ dateRange: { start, end } })
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error);
-    renderAIHints(data.summary);
+    renderAIHints(data.summary, false);
   } catch(e) {
     document.getElementById('ahResults').style.display = 'block';
-    document.getElementById('ahSummaryCards').innerHTML = `<div style="grid-column:1/-1;color:var(--danger);padding:20px">Error: ${e.message}</div>`;
+    document.getElementById('ahSummaryCards').innerHTML = '<div style="grid-column:1/-1;color:var(--danger);padding:20px">Error: ' + e.message + '</div>';
     document.getElementById('ahRecommendations').innerHTML = '';
     document.getElementById('ahTopCampaigns').innerHTML = '';
     document.getElementById('ahWorstCampaigns').innerHTML = '';
   }
   document.getElementById('ahLoading').style.display = 'none';
-  document.getElementById('ahLoadBtn').disabled = false;
+  document.getElementById('ahGeneralBtn').disabled = false;
 }
 
-function renderAIHints(s) {
+// loadAIHints replaced by loadCampaignAnalysis and loadGeneralAnalysis above
+
+function renderAIHints(s, isCampaignMode) {
   document.getElementById('ahResults').style.display = 'block';
 
   // Summary cards
@@ -2927,38 +3026,100 @@ function renderAIHints(s) {
       <div style="font-size:24px;font-weight:800;margin-top:6px;color:${profitColor}">${s.totalProfit >= 0 ? '+' : ''}${fmtEur(s.totalProfit)}</div>
     </div>`;
 
-  // Recommendations
-  const recColors = { pause: '#ef5350', scale: '#4caf50', adjust: '#f59e0b' };
-  const recIcons = { pause: '⏸️', scale: '🚀', adjust: '⚙️' };
-  if (s.recommendations.length > 0) {
+  // Recommendations with color coding
+  const recStyles = {
+    pause: { color: '#ef5350', icon: '🔴', label: 'PAUSE' },
+    scale: { color: '#4caf50', icon: '🟢', label: 'SCALE' },
+    adjust: { color: '#f59e0b', icon: '🟡', label: 'ADJUST' },
+    watch: { color: '#3b82f6', icon: '🔵', label: 'WATCH' }
+  };
+
+  if (s.recommendations && s.recommendations.length > 0) {
     document.getElementById('ahRecommendations').innerHTML = `
       <div style="font-weight:700;font-size:14px;margin-bottom:16px">🎯 Recommendations (${s.recommendations.length})</div>
-      ${s.recommendations.map(r => `<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-color)">
-        <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;background:${recColors[r.type]}15;font-size:14px;flex-shrink:0">${recIcons[r.type]}</span>
-        <div>
-          <span style="display:inline-block;padding:1px 8px;border-radius:100px;font-size:10px;font-weight:700;text-transform:uppercase;background:${recColors[r.type]}20;color:${recColors[r.type]};margin-bottom:4px">${r.type}</span>
-          <div style="font-size:13px;color:var(--text-primary)">${r.text}</div>
+      ${s.recommendations.map(r => {
+        const st = recStyles[r.type] || recStyles.adjust;
+        return `<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-color)">
+        <span style="font-size:16px;flex-shrink:0;margin-top:2px">${st.icon}</span>
+        <div style="flex:1">
+          <span style="display:inline-block;padding:2px 10px;border-radius:100px;font-size:10px;font-weight:700;text-transform:uppercase;background:${st.color}20;color:${st.color};margin-bottom:4px">${st.label}</span>
+          <div style="font-size:13px;color:var(--text-primary);margin-top:2px">${r.text}</div>
         </div>
-      </div>`).join('')}`;
+      </div>`;
+      }).join('')}`;
   } else {
     document.getElementById('ahRecommendations').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted)">No specific recommendations for this period</div>';
   }
 
-  // Top campaigns
-  document.getElementById('ahTopCampaigns').innerHTML = `
-    <div style="font-weight:700;font-size:14px;margin-bottom:12px">🏆 Top 5 Campaigns by Profit</div>
-    ${s.topCampaigns.map((c, i) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-color);font-size:12px">
-      <div style="display:flex;align-items:center;gap:8px;overflow:hidden"><span style="font-weight:700;color:var(--text-muted);width:18px">${i+1}.</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(c.name||'').replace(/"/g,'&quot;')}">${(c.name||'').slice(0,45)}</span></div>
-      <span style="font-weight:700;color:${c.profit>=0?'#4caf50':'#ef5350'};white-space:nowrap;margin-left:8px">${c.profit>=0?'+':''}€${c.profit.toFixed(2)}</span>
-    </div>`).join('')}`;
+  // Adset breakdown (campaign mode only)
+  const adsetDiv = document.getElementById('ahAdsetBreakdown');
+  if (isCampaignMode && s.adsets && s.adsets.length > 0) {
+    adsetDiv.style.display = 'block';
+    adsetDiv.innerHTML = `
+      <div style="font-weight:700;font-size:14px;margin-bottom:16px">📊 Adset Breakdown</div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="border-bottom:2px solid var(--border-color)">
+            <th style="text-align:left;padding:8px;font-weight:700">Adset</th>
+            <th style="text-align:right;padding:8px;font-weight:700">Spend</th>
+            <th style="text-align:right;padding:8px;font-weight:700">Purchases</th>
+            <th style="text-align:right;padding:8px;font-weight:700">CPA</th>
+            <th style="text-align:left;padding:8px;font-weight:700">Status</th>
+          </tr></thead>
+          <tbody>${s.adsets.map(a => {
+            const cpaColor = !a.cpa ? 'var(--text-muted)' : a.cpa < 15 ? '#4caf50' : a.cpa < 30 ? '#f59e0b' : '#ef5350';
+            const statusColor = a.status === 'ACTIVE' ? '#4caf50' : '#ef5350';
+            return `<tr style="border-bottom:1px solid var(--border-color)">
+              <td style="padding:8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(a.name||'').replace(/"/g,'&quot;')}">${(a.name||'').slice(0,50)}</td>
+              <td style="text-align:right;padding:8px;font-weight:600">${fmtEur(a.spend)}</td>
+              <td style="text-align:right;padding:8px;font-weight:600">${a.purchases}</td>
+              <td style="text-align:right;padding:8px;font-weight:700;color:${cpaColor}">${a.cpa ? fmtEur(a.cpa) : '—'}</td>
+              <td style="padding:8px"><span style="display:inline-block;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:600;background:${statusColor}15;color:${statusColor}">${a.status}</span></td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>`;
+  } else {
+    adsetDiv.style.display = 'none';
+  }
 
-  // Worst campaigns
-  document.getElementById('ahWorstCampaigns').innerHTML = `
-    <div style="font-weight:700;font-size:14px;margin-bottom:12px">⚠️ Bottom 5 Campaigns by Profit</div>
-    ${s.worstCampaigns.map((c, i) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-color);font-size:12px">
-      <div style="display:flex;align-items:center;gap:8px;overflow:hidden"><span style="font-weight:700;color:var(--text-muted);width:18px">${i+1}.</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(c.name||'').replace(/"/g,'&quot;')}">${(c.name||'').slice(0,45)}</span></div>
-      <span style="font-weight:700;color:${c.profit>=0?'#4caf50':'#ef5350'};white-space:nowrap;margin-left:8px">${c.profit>=0?'+':''}€${c.profit.toFixed(2)}</span>
-    </div>`).join('')}`;
+  // Top campaigns (general mode)
+  if (!isCampaignMode && s.topCampaigns && s.topCampaigns.length > 0) {
+    document.getElementById('ahTopCampaigns').innerHTML = `
+      <div style="font-weight:700;font-size:14px;margin-bottom:12px">🏆 Top 5 Campaigns by Profit</div>
+      ${s.topCampaigns.map((c, i) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-color);font-size:12px">
+        <div style="display:flex;align-items:center;gap:8px;overflow:hidden"><span style="font-weight:700;color:var(--text-muted);width:18px">${i+1}.</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(c.name||'').replace(/"/g,'&quot;')}">${(c.name||'').slice(0,45)}</span></div>
+        <span style="font-weight:700;color:${c.profit>=0?'#4caf50':'#ef5350'};white-space:nowrap;margin-left:8px">${c.profit>=0?'+':''}€${c.profit.toFixed(2)}</span>
+      </div>`).join('')}`;
+
+    document.getElementById('ahWorstCampaigns').innerHTML = `
+      <div style="font-weight:700;font-size:14px;margin-bottom:12px">⚠️ Bottom 5 Campaigns by Profit</div>
+      ${s.worstCampaigns.map((c, i) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-color);font-size:12px">
+        <div style="display:flex;align-items:center;gap:8px;overflow:hidden"><span style="font-weight:700;color:var(--text-muted);width:18px">${i+1}.</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(c.name||'').replace(/"/g,'&quot;')}">${(c.name||'').slice(0,45)}</span></div>
+        <span style="font-weight:700;color:${c.profit>=0?'#4caf50':'#ef5350'};white-space:nowrap;margin-left:8px">${c.profit>=0?'+':''}€${c.profit.toFixed(2)}</span>
+      </div>`).join('')}`;
+    document.getElementById('ahTopCampaigns').style.display = 'block';
+    document.getElementById('ahWorstCampaigns').style.display = 'block';
+  } else if (isCampaignMode) {
+    // Hide top/worst in campaign mode, show campaign-specific info
+    document.getElementById('ahTopCampaigns').style.display = 'none';
+    document.getElementById('ahWorstCampaigns').style.display = 'none';
+    if (s.campaignName) {
+      document.getElementById('ahTopCampaigns').style.display = 'block';
+      document.getElementById('ahTopCampaigns').innerHTML = `
+        <div style="font-weight:700;font-size:14px;margin-bottom:12px">📋 Campaign Details</div>
+        <div style="font-size:13px;color:var(--text-primary)">
+          <div style="padding:6px 0;border-bottom:1px solid var(--border-color)"><span style="color:var(--text-muted)">Name:</span> <span style="font-weight:600">${s.campaignName}</span></div>
+          <div style="padding:6px 0;border-bottom:1px solid var(--border-color)"><span style="color:var(--text-muted)">ID:</span> <span style="font-weight:600">${s.campaignId || '—'}</span></div>
+          <div style="padding:6px 0;border-bottom:1px solid var(--border-color)"><span style="color:var(--text-muted)">Status:</span> <span style="font-weight:600">${s.campaignStatus || '—'}</span></div>
+          <div style="padding:6px 0"><span style="color:var(--text-muted)">Period:</span> <span style="font-weight:600">${s.dateRange?.start || '—'} → ${s.dateRange?.end || '—'}</span></div>
+        </div>`;
+      document.getElementById('ahWorstCampaigns').style.display = 'none';
+    }
+  } else {
+    document.getElementById('ahTopCampaigns').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted)">No data</div>';
+    document.getElementById('ahWorstCampaigns').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted)">No data</div>';
+  }
 }
 
 // ═══ OPTIMIZER ═══
