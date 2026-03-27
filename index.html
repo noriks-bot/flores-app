@@ -675,6 +675,9 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
       <a class="nav-item active" data-section="ads-manager" onclick="navigateTo('ads-manager')">
         <i class="fas fa-bullhorn"></i><span class="nav-item-text">Ads Manager</span>
       </a>
+      <a class="nav-item" data-section="optimizer" onclick="navigateTo('optimizer')">
+        <i class="fas fa-sliders-h"></i><span class="nav-item-text">Optimizer</span>
+      </a>
       <a class="nav-item" data-section="base-report" onclick="navigateTo('base-report')">
         <i class="fas fa-chart-bar"></i><span class="nav-item-text">Base Report</span>
       </a>
@@ -961,6 +964,49 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
   </div>
 
   <!-- AI HINTS -->
+
+  <div id="section-optimizer" class="content-section">
+  <div style="padding:8px 16px;display:flex;gap:6px;flex-wrap:wrap;background:#fff;border-bottom:1px solid #e6e8ea">
+    <button class="fpill fpill-active" onclick="switchOptTab(this,'ALL')">All</button>
+    <button class="fpill" onclick="switchOptTab(this,'HR')">🇭🇷 HR</button>
+    <button class="fpill" onclick="switchOptTab(this,'CZ')">🇨🇿 CZ</button>
+    <button class="fpill" onclick="switchOptTab(this,'PL')">🇵🇱 PL</button>
+    <button class="fpill" onclick="switchOptTab(this,'GR')">🇬🇷 GR</button>
+    <button class="fpill" onclick="switchOptTab(this,'SK')">🇸🇰 SK</button>
+    <button class="fpill" onclick="switchOptTab(this,'IT')">🇮🇹 IT</button>
+    <button class="fpill" onclick="switchOptTab(this,'HU')">🇭🇺 HU</button>
+    <span style="width:1px;height:20px;background:#ddd;margin:0 4px"></span>
+    <button class="fpill" onclick="switchOptTab(this,'SOFI')">SOFI</button>
+  </div>
+  <div style="padding:8px 16px;display:flex;gap:8px;align-items:center;background:#fff;border-bottom:1px solid #e6e8ea">
+    <span style="font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase">Period</span>
+    <div style="display:flex;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:2px;gap:2px">
+      <button class="preset-tab active" onclick="setOptDate(this,'today')">Today</button>
+      <button class="preset-tab" onclick="setOptDate(this,'yesterday')">Yesterday</button>
+      <button class="preset-tab" onclick="setOptDate(this,'3d')">3D</button>
+      <button class="preset-tab" onclick="setOptDate(this,'7d')">7D</button>
+      <button class="preset-tab" onclick="setOptDate(this,'14d')">14D</button>
+      <button class="preset-tab" onclick="setOptDate(this,'30d')">30D</button>
+    </div>
+  </div>
+  <div style="padding:16px;overflow-x:auto">
+    <table class="cr-table" style="min-width:1200px" id="optTable">
+      <thead><tr>
+        <th class="cr-th" style="width:32px"></th>
+        <th class="cr-th" style="text-align:left;min-width:300px">Name</th>
+        <th class="cr-th">Status</th>
+        <th class="cr-th">Spend</th>
+        <th class="cr-th">Orders</th>
+        <th class="cr-th">Revenue</th>
+        <th class="cr-th">Profit</th>
+        <th class="cr-th">CPA</th>
+        <th class="cr-th">ROAS</th>
+      </tr></thead>
+      <tbody id="optBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
+    </table>
+  </div>
+  </div>
+
   <div id="section-ai-hints" class="content-section">
     <div class="filters-bar" id="ahFilters">
       <span class="filter-label">Period</span>
@@ -1154,7 +1200,8 @@ const sectionTitles = {
   'creative-reporting': 'Creative Reporting',
   'ai-hints': 'AI Hints',
   'upload': 'Upload',
-  'origin-report': 'Origin Report'
+  'origin-report': 'Origin Report',
+  'optimizer': 'Optimizer'
 };
 
 function navigateTo(section) {
@@ -1180,6 +1227,8 @@ function navigateTo(section) {
   if (section === 'base-report' && !document.getElementById('brCountryBody').querySelector('tr[data-loaded]')) {
     loadBaseReport();
   }
+  // Auto-load optimizer
+  if (section === 'optimizer' && !optLoaded) { loadOptimizer(); }
   // Auto-load AI hints section init
   if (section === 'ai-hints') {
     initAIHintsIfNeeded();
@@ -2909,6 +2958,139 @@ function renderAIHints(s) {
       <span style="font-weight:700;color:${c.profit>=0?'#4caf50':'#ef5350'};white-space:nowrap;margin-left:8px">${c.profit>=0?'+':''}€${c.profit.toFixed(2)}</span>
     </div>`).join('')}`;
 }
+
+// ═══ OPTIMIZER ═══
+let optCountry = 'ALL';
+let optDateRange = 'today';
+let optCampaigns = [];
+let optExpanded = {};
+let optLoaded = false;
+
+function switchOptTab(btn, country) {
+  document.querySelectorAll('#section-optimizer .fpill').forEach(b => b.classList.remove('fpill-active'));
+  btn.classList.add('fpill-active');
+  optCountry = country;
+  renderOptimizer();
+}
+
+function setOptDate(btn, range) {
+  document.querySelectorAll('#section-optimizer .preset-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  optDateRange = range;
+  loadOptimizer();
+}
+
+function getOptDateRange() {
+  const today = new Date().toISOString().slice(0,10);
+  const d = new Date();
+  switch(optDateRange) {
+    case 'yesterday': d.setDate(d.getDate()-1); return {from:d.toISOString().slice(0,10),to:d.toISOString().slice(0,10)};
+    case '3d': d.setDate(d.getDate()-2); return {from:d.toISOString().slice(0,10),to:today};
+    case '7d': d.setDate(d.getDate()-6); return {from:d.toISOString().slice(0,10),to:today};
+    case '14d': d.setDate(d.getDate()-13); return {from:d.toISOString().slice(0,10),to:today};
+    case '30d': d.setDate(d.getDate()-29); return {from:d.toISOString().slice(0,10),to:today};
+    default: return {from:today,to:today};
+  }
+}
+
+function optGetPurchases(ins) {
+  if (!ins || !ins.actions) return 0;
+  const p = ins.actions.find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
+  return p ? parseInt(p.value) : 0;
+}
+
+async function loadOptimizer() {
+  const {from,to} = getOptDateRange();
+  document.getElementById('optBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr>';
+  try {
+    const res = await fetch('/api/campaigns?date_from='+from+'&date_to='+to);
+    optCampaigns = await res.json();
+    if (optCampaigns.error) { optCampaigns = []; }
+    optCampaigns.sort((a,b) => parseFloat(b.insights?.spend||0) - parseFloat(a.insights?.spend||0));
+    optExpanded = {};
+    optLoaded = true;
+    renderOptimizer();
+  } catch(e) { document.getElementById('optBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#dc2626">Error: '+e.message+'</td></tr>'; }
+}
+
+function renderOptimizer() {
+  const filtered = optCampaigns.filter(c => {
+    const name = (c.name||'').toUpperCase();
+    if (optCountry === 'ALL') return true;
+    if (optCountry === 'SOFI') return name.includes('SOFI');
+    const ccMatch = name.match(/CC:([A-Z+]+)/);
+    if (ccMatch) return ccMatch[1].split('+').includes(optCountry);
+    return false;
+  });
+  if (!filtered.length) {
+    document.getElementById('optBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#9ca3af">No campaigns found</td></tr>';
+    return;
+  }
+  let html = '';
+  for (const c of filtered) {
+    const spend = parseFloat(c.insights?.spend||0);
+    const orders = c.wc?.orders||0;
+    const revenue = c.wc?.revenueGross||0;
+    const profit = c.wc?.profit||0;
+    const purchases = optGetPurchases(c.insights);
+    const cpaVal = purchases > 0 ? spend/purchases : 0;
+    const roas = c.wc?.roas||0;
+    const profitStyle = profit > 0 ? 'background:#4caf50;color:#fff;font-weight:600' : profit < 0 ? 'background:#ef5350;color:#fff;font-weight:600' : '';
+    const cpaStyle = cpaVal > 0 ? (cpaVal <= 15 ? 'background:#4caf50;color:#fff' : cpaVal <= 25 ? 'background:#f59e0b;color:#fff' : 'background:#ef5350;color:#fff') : '';
+    const isExp = optExpanded[c.id];
+    html += '<tr style="cursor:pointer;border-bottom:1px solid #eee" onclick="toggleOpt(this.dataset.cid)" data-cid="'+c.id+'">';
+    html += '<td style="text-align:center;font-size:13px;color:#9ca3af">'+(isExp?'▾':'▸')+'</td>';
+    html += '<td style="text-align:left;font-weight:500;font-size:11px;max-width:350px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+c.name.replace(/"/g,'&quot;')+'">'+c.name+'</td>';
+    html += '<td style="font-size:11px;text-align:center">'+(c.status==='ACTIVE'?'<span style="color:#22c55e">●</span>':'<span style="color:#9ca3af">●</span>')+'</td>';
+    html += '<td style="text-align:right">'+spend.toFixed(2)+' €</td>';
+    html += '<td style="text-align:right">'+(orders||'—')+'</td>';
+    html += '<td style="text-align:right">'+(revenue>0?revenue.toFixed(2)+' €':'—')+'</td>';
+    html += '<td style="text-align:right;'+profitStyle+'">'+profit.toFixed(2)+' €</td>';
+    html += '<td style="text-align:right;'+cpaStyle+'">'+(cpaVal>0?cpaVal.toFixed(2)+' €':'—')+'</td>';
+    html += '<td style="text-align:right">'+(roas>0?roas.toFixed(2)+'x':'—')+'</td>';
+    html += '</tr>';
+    if (isExp && optExpanded[c.id].adsets) {
+      for (const as of optExpanded[c.id].adsets) {
+        const asSpend = parseFloat(as.insights?.spend||0);
+        const asOrders = as.wc?.orders||0;
+        const asRevenue = as.wc?.revenueGross||0;
+        const asProfit = as.wc?.profit||0;
+        const asProfitStyle = asProfit > 0 ? 'background:#4caf50;color:#fff' : asProfit < 0 ? 'background:#ef5350;color:#fff' : '';
+        html += '<tr style="background:#f9fafb;border-bottom:1px solid #f0f0f0">';
+        html += '<td></td>';
+        html += '<td style="text-align:left;padding-left:32px;font-size:11px;color:#4b5563;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">↳ '+as.name+'</td>';
+        html += '<td style="font-size:11px;text-align:center">'+(as.status==='ACTIVE'?'<span style="color:#22c55e">●</span>':'<span style="color:#9ca3af">●</span>')+'</td>';
+        html += '<td style="text-align:right">'+asSpend.toFixed(2)+' €</td>';
+        html += '<td style="text-align:right">'+(asOrders||'—')+'</td>';
+        html += '<td style="text-align:right">'+(asRevenue>0?asRevenue.toFixed(2)+' €':'—')+'</td>';
+        html += '<td style="text-align:right;'+asProfitStyle+'">'+(asProfit!==0?asProfit.toFixed(2)+' €':'—')+'</td>';
+        html += '<td style="text-align:right">—</td><td style="text-align:right">—</td>';
+        html += '</tr>';
+      }
+    }
+  }
+  document.getElementById('optBody').innerHTML = html;
+}
+
+async function toggleOpt(campaignId) {
+  if (optExpanded[campaignId]) {
+    delete optExpanded[campaignId];
+    renderOptimizer();
+    return;
+  }
+  optExpanded[campaignId] = { adsets: [] };
+  renderOptimizer();
+  const {from,to} = getOptDateRange();
+  try {
+    const res = await fetch('/api/adsets?campaign_id='+campaignId+'&date_from='+from+'&date_to='+to);
+    const adsets = await res.json();
+    if (!adsets.error) {
+      optExpanded[campaignId].adsets = adsets;
+      renderOptimizer();
+    }
+  } catch(e) {}
+}
+
 </script>
 </body>
 </html>
