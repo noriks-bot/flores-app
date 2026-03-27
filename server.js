@@ -560,7 +560,15 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
 
   return campaigns;
 }
-const CACHE_TTL = 3600000; // 1 hour
+const CACHE_TTL = 3600000; // 1 hour default
+
+// Smart cache TTL: historical data cached much longer, today's data shorter
+function getSmartTTL(dateFrom, dateTo) {
+  const today = new Date().toISOString().slice(0, 10);
+  if (dateTo < today) return 86400000 * 7; // historical: 7 days cache
+  if (dateFrom === today && dateTo === today) return 600000; // today only: 10 min
+  return 1800000; // range including today: 30 min
+}
 
 // --- Meta API helper ---
 function metaGet(endpoint, params = {}) {
@@ -584,11 +592,11 @@ function metaGet(endpoint, params = {}) {
 }
 
 // --- Cache helper ---
-function getCached(key) {
+function getCached(key, ttl) {
   const file = path.join(CACHE_DIR, key + '.json');
   try {
     const stat = fs.statSync(file);
-    if (Date.now() - stat.mtimeMs < CACHE_TTL) {
+    if (Date.now() - stat.mtimeMs < (ttl || CACHE_TTL)) {
       return JSON.parse(fs.readFileSync(file, 'utf8'));
     }
   } catch (e) {}
