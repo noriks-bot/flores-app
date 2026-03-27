@@ -1213,6 +1213,17 @@ const server = http.createServer(async (req, res) => {
           totalOrdersAll += data.orders;
         }
 
+        // 2b. Get FB purchases per campaign from insights
+        const campaignPurchases = {};
+        for (const c of campaignData) {
+          if (c.insights && c.insights.actions) {
+            const pa = c.insights.actions.find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
+            campaignPurchases[c.id] = pa ? parseInt(pa.value) : 0;
+          } else {
+            campaignPurchases[c.id] = 0;
+          }
+        }
+
         // 3. Aggregate spend by country and type
         const byCountry = {};
         const byType = {};
@@ -1241,31 +1252,46 @@ const server = http.createServer(async (req, res) => {
               spendShare = spend / countries.length;
             }
 
+            // Distribute FB purchases proportionally
+            const fbPurchases = campaignPurchases[c.id] || 0;
+            let purchShare;
+            if (relevantOrders > 0) {
+              purchShare = fbPurchases * (ccOrders / relevantOrders);
+            } else {
+              purchShare = fbPurchases / countries.length;
+            }
+
             // By Country
-            if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0 };
+            if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
             byCountry[cc].spend += spendShare;
+            byCountry[cc].purchases += purchShare;
 
             // By Type
-            if (!byType[campType]) byType[campType] = { spend: 0, orders: 0, revenue: 0, profit: 0 };
+            if (!byType[campType]) byType[campType] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
             byType[campType].spend += spendShare;
+            byType[campType].purchases += purchShare;
 
             // By Country + Type
             const key = `${cc}_${campType}`;
-            if (!byCountryAndType[key]) byCountryAndType[key] = { country: cc, type: campType, spend: 0, orders: 0, revenue: 0, profit: 0 };
+            if (!byCountryAndType[key]) byCountryAndType[key] = { country: cc, type: campType, spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
             byCountryAndType[key].spend += spendShare;
+            byCountryAndType[key].purchases += purchShare;
           }
         }
 
         // Fill in orders/revenue/profit from DB
         for (const cc of Object.keys(WC_STORES)) {
           const dbData = dbOrdersByCountry[cc] || { orders: 0, revenue: 0, profit: 0 };
-          if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0 };
+          if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
           byCountry[cc].orders = dbData.orders;
           byCountry[cc].revenue = Math.round(dbData.revenue * 100) / 100;
           byCountry[cc].profit = Math.round(dbData.profit * 100) / 100;
           byCountry[cc].spend = Math.round(byCountry[cc].spend * 100) / 100;
-          byCountry[cc].cpa = byCountry[cc].orders > 0 ? Math.round(byCountry[cc].spend / byCountry[cc].orders * 100) / 100 : 0;
+          byCountry[cc].purchases = Math.round(byCountry[cc].purchases);
+          byCountry[cc].cpa = byCountry[cc].purchases > 0 ? Math.round(byCountry[cc].spend / byCountry[cc].purchases * 100) / 100 : 0;
           byCountry[cc].roas = byCountry[cc].spend > 0 ? Math.round(byCountry[cc].revenue / byCountry[cc].spend * 100) / 100 : 0;
+          byCountry[cc].netProfit = Math.round((dbData.profit - byCountry[cc].spend) * 100) / 100;
+          byCountry[cc].ppo = byCountry[cc].orders > 0 ? Math.round(byCountry[cc].netProfit / byCountry[cc].orders * 100) / 100 : 0;
         }
 
         // Orders/revenue/profit by type: get from DB grouped by type
@@ -1286,13 +1312,13 @@ const server = http.createServer(async (req, res) => {
 
         for (const row of dbOrdersByCampaign) {
           const campType = campaignTypeMap[row.utm_campaign] || 'OTHER';
-          if (!byType[campType]) byType[campType] = { spend: 0, orders: 0, revenue: 0, profit: 0 };
+          if (!byType[campType]) byType[campType] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
           byType[campType].orders += row.orders;
           byType[campType].revenue += row.revenue || 0;
           byType[campType].profit += row.profit || 0;
 
           const key = `${row.country}_${campType}`;
-          if (!byCountryAndType[key]) byCountryAndType[key] = { country: row.country, type: campType, spend: 0, orders: 0, revenue: 0, profit: 0 };
+          if (!byCountryAndType[key]) byCountryAndType[key] = { country: row.country, type: campType, spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
           byCountryAndType[key].orders += row.orders;
           byCountryAndType[key].revenue += row.revenue || 0;
           byCountryAndType[key].profit += row.profit || 0;
@@ -1303,15 +1329,21 @@ const server = http.createServer(async (req, res) => {
           v.spend = Math.round(v.spend * 100) / 100;
           v.revenue = Math.round(v.revenue * 100) / 100;
           v.profit = Math.round(v.profit * 100) / 100;
-          v.cpa = v.orders > 0 ? Math.round(v.spend / v.orders * 100) / 100 : 0;
+          v.purchases = Math.round(v.purchases);
+          v.cpa = v.purchases > 0 ? Math.round(v.spend / v.purchases * 100) / 100 : 0;
           v.roas = v.spend > 0 ? Math.round(v.revenue / v.spend * 100) / 100 : 0;
+          v.netProfit = Math.round((v.profit - v.spend) * 100) / 100;
+          v.ppo = v.orders > 0 ? Math.round(v.netProfit / v.orders * 100) / 100 : 0;
         }
         for (const v of Object.values(byCountryAndType)) {
           v.spend = Math.round(v.spend * 100) / 100;
           v.revenue = Math.round(v.revenue * 100) / 100;
           v.profit = Math.round(v.profit * 100) / 100;
-          v.cpa = v.orders > 0 ? Math.round(v.spend / v.orders * 100) / 100 : 0;
+          v.purchases = Math.round(v.purchases);
+          v.cpa = v.purchases > 0 ? Math.round(v.spend / v.purchases * 100) / 100 : 0;
           v.roas = v.spend > 0 ? Math.round(v.revenue / v.spend * 100) / 100 : 0;
+          v.netProfit = Math.round((v.profit - v.spend) * 100) / 100;
+          v.ppo = v.orders > 0 ? Math.round(v.netProfit / v.orders * 100) / 100 : 0;
         }
 
         return sendJSON(res, { byCountry, byType, byCountryAndType });
@@ -1488,6 +1520,110 @@ const server = http.createServer(async (req, res) => {
         const crResult = { creatives, totals };
         setCache(crCacheKey, crResult);
         return sendJSON(res, crResult);
+      }
+      if (urlPath === '/api/ai-hints' && req.method === 'POST') {
+        let body = '';
+        await new Promise((resolve) => {
+          req.on('data', c => body += c);
+          req.on('end', resolve);
+        });
+        const { prompt, dateRange } = JSON.parse(body || '{}');
+        const aiStart = dateRange?.start || dateFrom;
+        const aiEnd = dateRange?.end || dateTo;
+
+        // Gather campaign data
+        const campaignData = await getCampaigns(aiStart, aiEnd);
+
+        let totalSpend = 0, totalOrders = 0, totalRevenue = 0, totalProfit = 0, totalPurchases = 0;
+        const campDetails = [];
+
+        for (const c of campaignData) {
+          const spend = parseFloat(c.insights?.spend || 0);
+          const purchases = (c.insights?.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
+          const purch = purchases ? parseInt(purchases.value) : 0;
+          const orders = c.wc?.orders || 0;
+          const profit = c.wc?.profit || 0;
+          const revenue = c.wc?.revenueGross || 0;
+
+          totalSpend += spend;
+          totalOrders += orders;
+          totalRevenue += revenue;
+          totalProfit += profit;
+          totalPurchases += purch;
+
+          if (spend > 0) {
+            campDetails.push({
+              name: c.name,
+              id: c.id,
+              status: c.status,
+              spend: Math.round(spend * 100) / 100,
+              purchases: purch,
+              orders,
+              profit: Math.round(profit * 100) / 100,
+              cpa: purch > 0 ? Math.round(spend / purch * 100) / 100 : null
+            });
+          }
+        }
+
+        // Sort for top/worst
+        const byProfit = [...campDetails].sort((a, b) => b.profit - a.profit);
+        const topCampaigns = byProfit.slice(0, 5);
+        const worstCampaigns = byProfit.slice(-5).reverse();
+
+        // Generate recommendations
+        const recommendations = [];
+        for (const c of campDetails) {
+          if (c.cpa && c.cpa > 30) {
+            recommendations.push({ type: 'pause', text: `Pause ${c.name} (CPA €${c.cpa.toFixed(2)}, well above target)`, campaign: c.name });
+          } else if (c.cpa && c.cpa < 15) {
+            recommendations.push({ type: 'scale', text: `Scale ${c.name} (CPA €${c.cpa.toFixed(2)}, strong performer)`, campaign: c.name });
+          } else if (c.purchases === 0 && c.spend > 20) {
+            recommendations.push({ type: 'pause', text: `Pause ${c.name} (€${c.spend.toFixed(2)} spent, 0 purchases)`, campaign: c.name });
+          } else if (c.cpa && c.cpa >= 15 && c.cpa <= 30 && c.profit < 0) {
+            recommendations.push({ type: 'adjust', text: `Adjust ${c.name} (CPA €${c.cpa.toFixed(2)}, negative profit €${c.profit.toFixed(2)})`, campaign: c.name });
+          }
+        }
+
+        // Country performance comparison
+        const countryPerf = {};
+        for (const c of campDetails) {
+          const parsed = parseCampaignName(c.name);
+          for (const cc of parsed.countries) {
+            if (!countryPerf[cc]) countryPerf[cc] = { spend: 0, purchases: 0, profit: 0 };
+            countryPerf[cc].spend += c.spend;
+            countryPerf[cc].purchases += c.purchases;
+            countryPerf[cc].profit += c.profit;
+          }
+        }
+
+        // Country-level recommendations
+        for (const [cc, data] of Object.entries(countryPerf)) {
+          const cpa = data.purchases > 0 ? data.spend / data.purchases : null;
+          if (cpa && cpa > 30) {
+            recommendations.push({ type: 'adjust', text: `Consider reducing budget in ${cc} (country CPA €${cpa.toFixed(2)})`, campaign: cc });
+          } else if (cpa && cpa < 12 && data.spend > 50) {
+            recommendations.push({ type: 'scale', text: `Increase budget in ${cc} (country CPA €${cpa.toFixed(2)}, room to scale)`, campaign: cc });
+          }
+        }
+
+        const avgCPA = totalPurchases > 0 ? Math.round(totalSpend / totalPurchases * 100) / 100 : 0;
+
+        return sendJSON(res, {
+          summary: {
+            totalSpend: Math.round(totalSpend * 100) / 100,
+            totalOrders,
+            totalProfit: Math.round(totalProfit * 100) / 100,
+            totalRevenue: Math.round(totalRevenue * 100) / 100,
+            avgCPA,
+            totalPurchases,
+            topCampaigns,
+            worstCampaigns,
+            recommendations,
+            countryPerformance: countryPerf,
+            dateRange: { start: aiStart, end: aiEnd },
+            prompt: prompt || ''
+          }
+        });
       }
       if (urlPath === '/api/clear-cache') {
         const files = fs.readdirSync(CACHE_DIR).filter(f => !f.startsWith('dash-') && f !== 'origin-data.json');
