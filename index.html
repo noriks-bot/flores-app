@@ -1227,6 +1227,8 @@ function navigateTo(section) {
   if (section === 'base-report' && !document.getElementById('brCountryBody').querySelector('tr[data-loaded]')) {
     loadBaseReport();
   }
+  // Auto-load origin report
+  if (section === 'origin-report' && !document.getElementById('orDailyBody').querySelector('tr:not([style])')) { loadOriginReport(); }
   // Auto-load optimizer
   if (section === 'optimizer' && !optLoaded) { loadOptimizer(); }
   // Auto-load AI hints section init
