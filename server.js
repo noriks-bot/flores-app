@@ -206,7 +206,7 @@ function loadOriginData() {
 }
 
 // Sync data from dash server (called on startup + hourly)
-const { execSync } = require('child_process');
+const { execSync, execFile } = require('child_process');
 function syncDashData() {
   const SRC_DASH = "/home/ec2-user/apps/raketa/dashboard/cache.json";
   const SRC_ORIGIN = "/home/ec2-user/apps/raketa/dashboard/origin-data.json";
