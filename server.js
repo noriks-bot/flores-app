@@ -350,7 +350,8 @@ function detectProductType(items) {
 function calculateOrderProfit(order, country) {
   const eurRate = EUR_RATES[country] || 1;
   const vatRate = VAT_RATES[country] || 0;
-  const rejRate = 0.1;
+  const REJECTION_RATES = { HR: 0.15, CZ: 0.15, PL: 0.15, SK: 0.15, HU: 0.15, GR: 0.25, IT: 0.25 };
+  const rejRate = REJECTION_RATES[country] || 0.15;
   const grossTotal = parseFloat(order.total || 0);
   const grossEur = grossTotal * eurRate;
   const netRevenue = grossEur * (1 - rejRate) / (1 + vatRate);
@@ -362,10 +363,12 @@ function calculateOrderProfit(order, country) {
     const isShirt = shirtWords.test(item.name || '') || shirtWords.test(item.sku || '');
     productCost += (isShirt ? PRODUCT_COSTS.tshirt : PRODUCT_COSTS.boxers) * qty;
   }
-  const shippingCost = parseFloat(order.shipping_total || 0) > 0 ? 3.5 : 0;
-  const profit = netRevenue - productCost - shippingCost;
+  const SHIPPING_COSTS = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 5.5 };
+  const shippingCost = parseFloat(order.shipping_total || 0) > 0 ? (SHIPPING_COSTS[country] || 4) : 0;
+  const effectiveProductCost = productCost * (1 - rejRate);
+  const profit = netRevenue - effectiveProductCost - shippingCost;
 
-  return { grossTotal, grossEur, netRevenue, productCost, shippingCost, profit };
+  return { grossTotal, grossEur, netRevenue, productCost: effectiveProductCost, shippingCost, profit };
 }
 
 // Fetch WC orders for a single country with pagination
