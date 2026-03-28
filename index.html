@@ -5768,7 +5768,7 @@ async function loadOrganizations() {
         '<td style="text-align:center">'+o.userCount+'</td>'+
         '<td style="text-align:center;font-size:12px;color:var(--text-muted)">'+(o.created_at||'').slice(0,10)+'</td>'+
         '<td style="text-align:center"><span style="color:'+statusColor+'">\u25cf</span> '+(o.active?'Active':'Inactive')+'</td>'+
-        '<td style="text-align:center"><button onclick="alert('Coming soon: edit org')" style="padding:4px 10px;background:var(--content-bg);border:1px solid var(--border-color);border-radius:6px;font-size:11px;cursor:pointer">Edit</button></td>'+
+        '<td style="text-align:center"><button onclick="void(0)" style="padding:4px 10px;background:var(--content-bg);border:1px solid var(--border-color);border-radius:6px;font-size:11px;cursor:pointer">Edit</button></td>'+
       '</tr>';
     }).join('');
   } catch(e) {
