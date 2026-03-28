@@ -5819,12 +5819,8 @@ async function loadOrgTab(category, btn) {
 }
 
 // Auto-load organizations when navigating there
-var _origNavigateTo = typeof navigateTo === 'function' ? navigateTo : null;
-document.addEventListener('DOMContentLoaded', function() {
-  var origNav = window.navigateTo;
-  if (!origNav) return;
-  // We will check after navigation
-});
+// _origNavigateTo already declared above
+// navigation hook handled via initSaasAdminMode
 
 
 // SaaS Dashboard
