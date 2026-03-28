@@ -695,6 +695,11 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 .role-admin { background:rgba(239,68,68,0.15); color:#f87171; }
 .role-advertiser { background:rgba(59,130,246,0.15); color:#60a5fa; }
 .role-viewer { background:rgba(107,114,128,0.15); color:#9ca3af; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
 </style>
 </head>
 <body>
@@ -735,6 +740,9 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
       <div class="nav-section-label">AI</div>
       <a class="nav-item" data-section="ai-hints" onclick="navigateTo('ai-hints')">
         <i class="fas fa-robot"></i><span class="nav-item-text">AI Hints</span>
+      </a>
+      <a class="nav-item" data-section="dominik-chat" onclick="navigateTo('dominik-chat')">
+        <i class="fas fa-comments"></i><span class="nav-item-text">Chat Dominik</span>
       </a>
     </div>
     <div class="nav-section">
@@ -1193,7 +1201,47 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
     </div>
   </div>
 
-  <!-- UPLOAD -->
+  <!-- DOMINIK CHAT -->
+  <div id="section-dominik-chat" class="content-section">
+    <div style="display:flex;flex-direction:column;height:calc(100vh - 80px);padding:0">
+      <!-- Chat Header -->
+      <div style="background:linear-gradient(135deg,#1e1b4b,#312e81);padding:16px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid rgba(255,255,255,0.1)">
+        <div style="position:relative">
+          <div style="width:44px;height:44px;background:linear-gradient(135deg,#7c3aed,#a855f7);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 12px rgba(124,58,237,0.4)">🧠</div>
+          <div style="position:absolute;bottom:0;right:0;width:12px;height:12px;background:#10b981;border-radius:50%;border:2px solid #1e1b4b"></div>
+        </div>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#fff">Dominik</div>
+          <div style="font-size:12px;color:#a5b4fc">Facebook Ads Strategist · OpenClaw Agent</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button onclick="domChatContext('campaigns')" id="domCtxBtn" style="padding:6px 14px;background:rgba(124,58,237,0.3);border:1px solid rgba(124,58,237,0.5);border-radius:8px;color:#c4b5fd;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s" title="Attach campaign data to messages">📊 Campaign Context</button>
+          <button onclick="domChatClear()" style="padding:6px 14px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#a5b4fc;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s">🗑️ Clear</button>
+        </div>
+      </div>
+
+      <!-- Chat Messages -->
+      <div id="domChatMessages" style="flex:1;overflow-y:auto;padding:20px 24px;background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%);display:flex;flex-direction:column;gap:16px">
+        <!-- Welcome message -->
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:36px;height:36px;min-width:36px;background:linear-gradient(135deg,#7c3aed,#a855f7);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">🧠</div>
+          <div style="background:#fff;border:1px solid #e9d5ff;padding:14px 18px;border-radius:4px 16px 16px 16px;max-width:75%;font-size:14px;line-height:1.6;color:#1e1b4b;box-shadow:0 1px 4px rgba(0,0,0,0.04)">
+            <strong>Hey!</strong> Sem Dominik, tvoj FB Ads strateg. 🎯<br><br>
+            Vprašaj me karkoli o kampanjah — CPA analiza, scaling priporočila, creative insights, market expansion...<br><br>
+            <span style="font-size:12px;color:#7c3aed">💡 Tip: klikni "Campaign Context" da priložim aktualne podatke k sporočilom</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Input -->
+      <div style="padding:16px 24px;background:#fff;border-top:1px solid #e2e8f0;display:flex;gap:10px;align-items:flex-end">
+        <textarea id="domChatInput" rows="1" placeholder="Vprašaj Dominika karkoli..." style="flex:1;padding:12px 16px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:14px;font-family:inherit;resize:none;background:#f8fafc;color:#1e1b4b;line-height:1.5;max-height:120px;transition:border-color .2s" onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='#e2e8f0'" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();domChatSend()}"></textarea>
+        <button onclick="domChatSend()" id="domChatSendBtn" style="padding:12px 20px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 12px rgba(124,58,237,0.3);transition:all .15s;white-space:nowrap" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+
+    <!-- UPLOAD -->
   <div id="section-upload" class="content-section">
     <div class="content" style="padding:20px 24px">
       <!-- Summary card -->
@@ -1675,6 +1723,7 @@ const sectionTitles = {
   'base-report': 'Base Report',
   'creative-reporting': 'Creative Reporting',
   'ai-hints': 'AI Hints',
+  'dominik-chat': 'Chat Dominik',
   'upload': 'Upload',
   'origin-report': 'Origin Report',
   'optimizer': 'Optimizer',
@@ -4451,6 +4500,100 @@ function aiAgentQuick(type) {
   };
   document.getElementById('aiAgentInput').value = questions[type] || '';
   aiAgentAsk(questions[type]);
+}
+
+
+// Dominik Chat functions
+let domChatContextMode = null;
+
+function domChatContext(mode) {
+  const btn = document.getElementById('domCtxBtn');
+  if (domChatContextMode === mode) {
+    domChatContextMode = null;
+    btn.style.background = 'rgba(124,58,237,0.3)';
+    btn.style.borderColor = 'rgba(124,58,237,0.5)';
+  } else {
+    domChatContextMode = mode;
+    btn.style.background = 'rgba(16,185,129,0.3)';
+    btn.style.borderColor = 'rgba(16,185,129,0.6)';
+  }
+}
+
+function domChatClear() {
+  const msgs = document.getElementById('domChatMessages');
+  msgs.innerHTML = `<div style="display:flex;gap:12px;align-items:flex-start">
+    <div style="width:36px;height:36px;min-width:36px;background:linear-gradient(135deg,#7c3aed,#a855f7);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">\u{1F9E0}</div>
+    <div style="background:#fff;border:1px solid #e9d5ff;padding:14px 18px;border-radius:4px 16px 16px 16px;max-width:75%;font-size:14px;line-height:1.6;color:#1e1b4b;box-shadow:0 1px 4px rgba(0,0,0,0.04)">Chat cleared. Ask me anything!</div>
+  </div>`;
+}
+
+async function domChatSend() {
+  const input = document.getElementById('domChatInput');
+  const message = input.value.trim();
+  if (!message) return;
+  
+  const msgs = document.getElementById('domChatMessages');
+  const btn = document.getElementById('domChatSendBtn');
+  
+  // User message
+  msgs.innerHTML += `<div style="display:flex;justify-content:flex-end">
+    <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;padding:12px 18px;border-radius:16px 16px 4px 16px;max-width:70%;font-size:14px;line-height:1.5;box-shadow:0 2px 8px rgba(37,99,235,0.15)">${message.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+  </div>`;
+  
+  input.value = '';
+  input.style.height = 'auto';
+  btn.disabled = true;
+  
+  // Typing indicator
+  const typingId = 'typing-' + Date.now();
+  msgs.innerHTML += `<div id="${typingId}" style="display:flex;gap:12px;align-items:flex-start">
+    <div style="width:36px;height:36px;min-width:36px;background:linear-gradient(135deg,#7c3aed,#a855f7);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">\u{1F9E0}</div>
+    <div style="background:#fff;border:1px solid #e9d5ff;padding:14px 18px;border-radius:4px 16px 16px 16px;font-size:13px;color:#7c3aed;display:flex;align-items:center;gap:8px">
+      <span style="display:inline-flex;gap:3px"><span style="width:6px;height:6px;background:#7c3aed;border-radius:50%;animation:bounce 1.4s infinite ease-in-out;animation-delay:0s"></span><span style="width:6px;height:6px;background:#7c3aed;border-radius:50%;animation:bounce 1.4s infinite ease-in-out;animation-delay:0.2s"></span><span style="width:6px;height:6px;background:#7c3aed;border-radius:50%;animation:bounce 1.4s infinite ease-in-out;animation-delay:0.4s"></span></span>
+      Dominik is thinking...
+    </div>
+  </div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+  
+  try {
+    const res = await fetch('/api/chat-dominik', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, context: domChatContextMode })
+    });
+    const data = await res.json();
+    
+    // Remove typing indicator
+    const typing = document.getElementById(typingId);
+    if (typing) typing.remove();
+    
+    if (data.error) throw new Error(data.error);
+    
+    // Format reply
+    let html = (data.reply || '').replace(/</g, '&lt;')
+      .replace(/## (.*)/g, '<div style="font-size:15px;font-weight:700;color:#5b21b6;margin:14px 0 6px;border-bottom:1px solid #e9d5ff;padding-bottom:4px">$1</div>')
+      .replace(/### (.*)/g, '<div style="font-size:14px;font-weight:600;color:#6d28d9;margin:10px 0 4px">$1</div>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/`(.*?)`/g, '<code style="background:#f3e8ff;padding:1px 5px;border-radius:4px;font-size:12px;color:#7c3aed">$1</code>')
+      .replace(/^(\d+)\. (.*)/gm, '<div style="margin:3px 0;padding-left:8px">$1. $2</div>')
+      .replace(/^- (.*)/gm, '<div style="margin:2px 0;padding-left:12px">\u2022 $1</div>')
+      .replace(/\n/g, '<br>');
+    
+    msgs.innerHTML += `<div style="display:flex;gap:12px;align-items:flex-start">
+      <div style="width:36px;height:36px;min-width:36px;background:linear-gradient(135deg,#7c3aed,#a855f7);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">\u{1F9E0}</div>
+      <div style="background:#fff;border:1px solid #e9d5ff;padding:16px 20px;border-radius:4px 16px 16px 16px;max-width:80%;font-size:13px;line-height:1.7;color:#1e1b4b;box-shadow:0 1px 4px rgba(0,0,0,0.04)">${html}</div>
+    </div>`;
+  } catch(e) {
+    const typing = document.getElementById(typingId);
+    if (typing) typing.remove();
+    msgs.innerHTML += `<div style="display:flex;gap:12px;align-items:flex-start">
+      <div style="width:36px;height:36px;min-width:36px;background:#fee2e2;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">\u274C</div>
+      <div style="background:#fef2f2;border:1px solid #fecaca;padding:12px 16px;border-radius:4px 12px 12px 12px;font-size:13px;color:#991b1b">${e.message}</div>
+    </div>`;
+  }
+  
+  msgs.scrollTop = msgs.scrollHeight;
+  btn.disabled = false;
 }
 
 </script>

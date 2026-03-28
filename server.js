@@ -53,6 +53,33 @@ async function callLLM(systemPrompt, userMessage) {
   });
 }
 
+
+// Call Dominik agent via OpenClaw CLI
+async function callDominikAgent(message) {
+  return new Promise((resolve, reject) => {
+    const proc = execFile('openclaw', [
+      'agent',
+      '--agent', 'dominik',
+      '--message', message,
+      '--json',
+      '--timeout', '120'
+    ], { timeout: 130000, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Dominik agent error:', error.message);
+        // Fallback to OpenAI if openclaw agent fails
+        return callLLM(AI_SYSTEM_PROMPT, message).then(resolve).catch(reject);
+      }
+      try {
+        const result = JSON.parse(stdout);
+        resolve(result.reply || result.content || result.message || stdout);
+      } catch(e) {
+        // stdout might be plain text response
+        resolve(stdout.trim() || 'No response from Dominik');
+      }
+    });
+  });
+}
+
 const AI_SYSTEM_PROMPT = `You are Dominik, an elite Facebook Ads strategist for Noriks (fashion e-commerce: t-shirts, boxers, starter packs across HR, CZ, PL, GR, SK, IT, HU).
 
 Your analysis style:
@@ -1752,7 +1779,42 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, crResult);
       }
 
-      // LLM-Powered AI Analysis
+      // Dominik Chat - direct conversation via OpenClaw
+      if (urlPath === '/api/chat-dominik' && req.method === 'POST') {
+        const body = await readBody(req);
+        const { message, context } = JSON.parse(body || '{}');
+        if (!message) return sendJSON(res, { error: 'Message required' }, 400);
+
+        try {
+          // Build context-aware message for Dominik
+          let fullMessage = message;
+          if (context === 'campaigns') {
+            // Inject current campaign summary
+            const today = new Date().toISOString().slice(0, 10);
+            const d7 = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+            try {
+              const campaigns = await getCampaigns(d7, today);
+              const active = campaigns.filter(c => c.status === 'ACTIVE');
+              let ctxStr = `[Context: ${active.length} active campaigns, period ${d7} to ${today}]\n`;
+              for (const c of active.slice(0, 10)) {
+                const sp = parseFloat(c.insights?.spend || 0);
+                const pAct = (c.insights?.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'omni_purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase');
+                const p = pAct ? parseInt(pAct.value) : 0;
+                ctxStr += `  ${c.name}: ${sp.toFixed(0)}EUR, ${p}p, CPA ${p > 0 ? (sp/p).toFixed(2) : 'N/A'}EUR\n`;
+              }
+              fullMessage = ctxStr + '\nUser question: ' + message;
+            } catch(e) { /* proceed without context */ }
+          }
+
+          const reply = await callDominikAgent(fullMessage);
+          return sendJSON(res, { reply, timestamp: new Date().toISOString() });
+        } catch(e) {
+          console.error('Chat Dominik error:', e.message);
+          return sendJSON(res, { error: 'Chat failed: ' + e.message }, 500);
+        }
+      }
+
+            // LLM-Powered AI Analysis
       if (urlPath === '/api/ai-analyze' && req.method === 'POST') {
         const body = await readBody(req);
         const { mode, campaignId, dateRange, question } = JSON.parse(body || '{}');
@@ -1868,7 +1930,9 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             dataContext = question || 'Give me a quick overview of what I should focus on today for Noriks Facebook ads.';
           }
 
-          const llmResponse = await callLLM(AI_SYSTEM_PROMPT, dataContext);
+          // Call Dominik agent via OpenClaw
+          const agentPrompt = AI_SYSTEM_PROMPT + '\n\nDATA:\n' + dataContext;
+          const llmResponse = await callDominikAgent(agentPrompt);
           return sendJSON(res, { analysis: llmResponse, mode, timestamp: new Date().toISOString() });
         } catch(e) {
           console.error('AI Analyze error:', e.message);
