@@ -1323,6 +1323,14 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Serve landing page (public)
+  if (urlPath === '/landing' || urlPath === '/landing.html') {
+    const landingHtml = fs.readFileSync(path.join(__dirname, 'landing.html'));
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(landingHtml);
+    return;
+  }
+
   // Serve login page without auth
   if (urlPath === '/login' || urlPath === '/login.html') {
     const loginHtml = fs.readFileSync(path.join(__dirname, 'login.html'));
