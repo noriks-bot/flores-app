@@ -13,6 +13,62 @@ const NORIKS_PAGE_ID = '104695358812961';
 const NORIKS_PAGE_TOKEN = 'EAASl5P6z0UYBRBeMx5auFDmvdkLwZCm8AZAsaVWqcNvyTFZAZBggUFybXpimvtfceKJIjPijA0prRvgWBILLBtdANqShzEmf8PxVCR9Dg5ZACR8Xsx2ucpO19HNktZCbSCK68rd7shT4ZC1SCZC3WkTNuJysHRqvfHlHuF1WdB5Sd2TNB5fAGvVOfnNNZCFE2ZCPWXJRIaiOAZD';
 const AD_ACCOUNTS_MAP = { 'top_noriks_2': 'act_1922887421998222', 'top_noriks_4': 'act_1426869489183439' };
 const AD_ACCOUNT = 'act_1922887421998222';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
+
+// LLM-powered analysis
+async function callLLM(systemPrompt, userMessage) {
+  return new Promise((resolve, reject) => {
+    const payload = JSON.stringify({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+      ],
+      temperature: 0.7,
+      max_tokens: 2000
+    });
+    const req = https.request({
+      hostname: 'api.openai.com',
+      path: '/v1/chat/completions',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + OPENAI_API_KEY,
+        'Content-Length': Buffer.byteLength(payload)
+      }
+    }, res => {
+      let body = '';
+      res.on('data', c => body += c);
+      res.on('end', () => {
+        try {
+          const j = JSON.parse(body);
+          if (j.choices && j.choices[0]) resolve(j.choices[0].message.content);
+          else reject(new Error(j.error?.message || 'LLM call failed'));
+        } catch(e) { reject(e); }
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(30000, () => { req.destroy(); reject(new Error('LLM timeout')); });
+    req.end(payload);
+  });
+}
+
+const AI_SYSTEM_PROMPT = `You are Dominik, an elite Facebook Ads strategist for Noriks (fashion e-commerce: t-shirts, boxers, starter packs across HR, CZ, PL, GR, SK, IT, HU).
+
+Your analysis style:
+- Direct, actionable, no fluff
+- Always reference specific numbers
+- Prioritize by impact (highest spend/worst CPA first)
+- Use emojis sparingly for visual scanning: \u{1F534} critical, \u{1F7E1} warning, \u{1F7E2} good, \u{1F680} opportunity
+- Structure with clear headers (## sections)
+- Give SPECIFIC actions: "Pause adset X", "Scale campaign Y by 20%", "Test creative Z in country W"
+- Consider seasonality and market maturity
+- Compare CPA against benchmarks: Excellent <10\u20ac, Strong <15\u20ac, Good <20\u20ac, Weak >20\u20ac
+- Think about creative fatigue, audience saturation, scaling opportunities
+- When analyzing campaigns, consider the full funnel: spend > clicks > purchases > CPA > profit
+
+Always end with a prioritized action list (top 3-5 actions, numbered).
+Respond in English with Slovenian market terms where relevant.`;
 
 // Dropbox integration
 const DROPBOX_APP_KEY = 'h7gx1yglwenhrz2';
@@ -1696,7 +1752,131 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, crResult);
       }
 
-      if (urlPath === '/api/creative-fatigue' && req.method === 'POST') {
+      // LLM-Powered AI Analysis
+      if (urlPath === '/api/ai-analyze' && req.method === 'POST') {
+        const body = await readBody(req);
+        const { mode, campaignId, dateRange, question } = JSON.parse(body || '{}');
+        const aiStart = dateRange?.start || dateFrom;
+        const aiEnd = dateRange?.end || dateTo;
+
+        try {
+          let dataContext = '';
+
+          if (mode === 'campaign' && campaignId) {
+            // Single campaign deep analysis
+            const campaignData = await getCampaigns(aiStart, aiEnd);
+            const searchLower = campaignId.toLowerCase();
+            const campaign = campaignData.find(c => c.id === campaignId || (c.name || '').toLowerCase().includes(searchLower));
+            if (!campaign) return sendJSON(res, { error: 'Campaign not found: ' + campaignId }, 404);
+
+            const spend = parseFloat(campaign.insights?.spend || 0);
+            const pAct = (campaign.insights?.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
+            const purch = pAct ? parseInt(pAct.value) : 0;
+            const cpa = purch > 0 ? (spend / purch).toFixed(2) : 'N/A';
+
+            let adsetInfo = '';
+            try {
+              const adsets = await getAdsets(campaign.id, aiStart, aiEnd);
+              adsetInfo = adsets.map(a => {
+                const asp = parseFloat(a.spend || 0);
+                const ap = parseInt(a.purchases || 0);
+                return `  - ${a.name} | Status: ${a.status} | Spend: ${asp.toFixed(2)}EUR | Purchases: ${ap} | CPA: ${ap > 0 ? (asp/ap).toFixed(2) : 'N/A'}EUR`;
+              }).join('\n');
+            } catch(e) {}
+
+            dataContext = `CAMPAIGN ANALYSIS REQUEST
+Campaign: ${campaign.name}
+ID: ${campaign.id}
+Status: ${campaign.status}
+Period: ${aiStart} to ${aiEnd}
+Spend: ${spend.toFixed(2)} EUR
+Purchases (FB): ${purch}
+CPA: ${cpa} EUR
+WC Orders: ${campaign.wc?.orders || 0}
+WC Revenue: ${(campaign.wc?.revenue || 0).toFixed(2)} EUR
+WC Profit: ${(campaign.wc?.profit || 0).toFixed(2)} EUR
+
+ADSETS:
+${adsetInfo || 'No adset data available'}
+
+${question ? 'USER QUESTION: ' + question : 'Provide a comprehensive analysis with specific recommendations.'}`;
+
+          } else if (mode === 'general') {
+            // Overall account analysis
+            const campaignData = await getCampaigns(aiStart, aiEnd);
+            const active = campaignData.filter(c => c.status === 'ACTIVE');
+            let totalSpend = 0, totalPurch = 0, totalOrders = 0, totalProfit = 0;
+
+            const campaignSummaries = campaignData.slice(0, 30).map(c => {
+              const sp = parseFloat(c.insights?.spend || 0);
+              const pAct = (c.insights?.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
+              const p = pAct ? parseInt(pAct.value) : 0;
+              totalSpend += sp; totalPurch += p;
+              totalOrders += (c.wc?.orders || 0); totalProfit += (c.wc?.profit || 0);
+              return `${c.name} | ${c.status} | Spend: ${sp.toFixed(0)}EUR | Purch: ${p} | CPA: ${p > 0 ? (sp/p).toFixed(2) : 'N/A'}EUR | WC Orders: ${c.wc?.orders || 0} | Profit: ${(c.wc?.profit || 0).toFixed(0)}EUR`;
+            }).join('\n');
+
+            dataContext = `GENERAL ACCOUNT ANALYSIS
+Period: ${aiStart} to ${aiEnd}
+Total Campaigns: ${campaignData.length} (${active.length} active)
+Total Spend: ${totalSpend.toFixed(2)} EUR
+Total Purchases (FB): ${totalPurch}
+Overall CPA: ${totalPurch > 0 ? (totalSpend/totalPurch).toFixed(2) : 'N/A'} EUR
+Total WC Orders: ${totalOrders}
+Total Profit: ${totalProfit.toFixed(2)} EUR
+ROAS: ${totalSpend > 0 ? ((totalProfit + totalSpend) / totalSpend).toFixed(2) : 'N/A'}
+
+TOP CAMPAIGNS (by spend):
+${campaignSummaries}
+
+${question ? 'USER QUESTION: ' + question : 'Provide strategic analysis: what is working, what is not, and what should we do next. Focus on the highest-impact opportunities.'}`;
+
+          } else if (mode === 'creative') {
+            // Creative analysis
+            const allAds = await getAllAds(aiStart, aiEnd);
+            const creativeMap = {};
+            for (const ad of allAds) {
+              const idMatch = (ad.name || '').match(/^(ID\d+)/i);
+              const crId = idMatch ? idMatch[1].toUpperCase() : null;
+              if (!crId) continue;
+              if (!creativeMap[crId]) creativeMap[crId] = { spend: 0, purchases: 0, countries: {} };
+              const sp = parseFloat(ad.insights?.spend || 0);
+              const pAct = (ad.insights?.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
+              const p = pAct ? parseInt(pAct.value) : 0;
+              creativeMap[crId].spend += sp;
+              creativeMap[crId].purchases += p;
+            }
+
+            const creatives = Object.entries(creativeMap)
+              .map(([id, d]) => ({ id, ...d, cpa: d.purchases > 0 ? d.spend / d.purchases : null }))
+              .sort((a, b) => b.spend - a.spend)
+              .slice(0, 30);
+
+            const crSummary = creatives.map(c => `${c.id} | Spend: ${c.spend.toFixed(0)}EUR | Purchases: ${c.purchases} | CPA: ${c.cpa ? c.cpa.toFixed(2) : 'N/A'}EUR`).join('\n');
+
+            dataContext = `CREATIVE ANALYSIS
+Period: ${aiStart} to ${aiEnd}
+Total Unique Creatives: ${Object.keys(creativeMap).length}
+
+TOP CREATIVES (by spend):
+${crSummary}
+
+${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which creatives are winning, which should be killed, and what expansion opportunities exist. Identify patterns in what works.'}`;
+
+          } else {
+            // Free-form question with general context
+            dataContext = question || 'Give me a quick overview of what I should focus on today for Noriks Facebook ads.';
+          }
+
+          const llmResponse = await callLLM(AI_SYSTEM_PROMPT, dataContext);
+          return sendJSON(res, { analysis: llmResponse, mode, timestamp: new Date().toISOString() });
+        } catch(e) {
+          console.error('AI Analyze error:', e.message);
+          return sendJSON(res, { error: 'AI analysis failed: ' + e.message }, 500);
+        }
+      }
+
+            if (urlPath === '/api/creative-fatigue' && req.method === 'POST') {
         let body = '';
         await new Promise((resolve) => {
           req.on('data', c => body += c);

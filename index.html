@@ -1074,6 +1074,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
         <button class="ah-mode-tab active" onclick="switchAHMode('campaign')" id="ahModeCampaign" style="padding:12px 28px;font-size:14px;font-weight:700;background:linear-gradient(135deg,#1E3A5F,#2563eb);border:none;border-radius:10px;color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(30,58,95,0.25);transition:all .2s;margin-right:8px">🎯 Campaign Analysis</button>
         <button class="ah-mode-tab" onclick="switchAHMode('general')" id="ahModeGeneral" style="padding:12px 28px;font-size:14px;font-weight:600;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;color:#6b7280;cursor:pointer;transition:all .2s;margin-right:8px">📊 General Analysis</button>
         <button class="ah-mode-tab" onclick="switchAHMode('fatigue')" id="ahModeFatigue" style="padding:12px 28px;font-size:14px;font-weight:600;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;color:#6b7280;cursor:pointer;transition:all .2s">📉 Creative Fatigue</button>
+        <button class="ah-mode-tab" onclick="switchAHMode('agent')" id="ahModeAgent" style="padding:12px 28px;font-size:14px;font-weight:600;background:linear-gradient(135deg,#7c3aed,#a855f7);border:none;border-radius:10px;color:#fff;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(124,58,237,0.3)">🧠 Ask Dominik</button>
       </div>
 
       <!-- Campaign Analysis mode -->
@@ -1137,7 +1138,44 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
       </div>
 
       <!-- Results -->
-      <div id="ahResults" style="display:none">
+      <!-- Agent Chat Mode -->
+      <div id="ahAgentMode" style="display:none;margin-bottom:20px">
+        <div style="background:linear-gradient(135deg,#faf5ff,#f3e8ff);border:1.5px solid #c4b5fd;border-radius:16px;padding:24px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+            <div style="width:44px;height:44px;background:linear-gradient(135deg,#7c3aed,#a855f7);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 12px rgba(124,58,237,0.3)">🧠</div>
+            <div>
+              <div style="font-size:17px;font-weight:800;color:#5b21b6">Dominik — AI Media Buyer</div>
+              <div style="font-size:12px;color:#7c3aed;margin-top:2px">GPT-4o powered · Analyzes your real campaign data</div>
+            </div>
+          </div>
+          
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+            <button onclick="aiAgentQuick('general')" style="padding:8px 16px;background:#fff;border:1.5px solid #c4b5fd;border-radius:8px;font-size:12px;font-weight:600;color:#7c3aed;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#f3e8ff'" onmouseout="this.style.background='#fff'">📊 Full Account Analysis</button>
+            <button onclick="aiAgentQuick('creative')" style="padding:8px 16px;background:#fff;border:1.5px solid #c4b5fd;border-radius:8px;font-size:12px;font-weight:600;color:#7c3aed;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#f3e8ff'" onmouseout="this.style.background='#fff'">🎨 Creative Analysis</button>
+            <button onclick="aiAgentQuick('scale')" style="padding:8px 16px;background:#fff;border:1.5px solid #c4b5fd;border-radius:8px;font-size:12px;font-weight:600;color:#7c3aed;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#f3e8ff'" onmouseout="this.style.background='#fff'">🚀 What to Scale</button>
+            <button onclick="aiAgentQuick('kill')" style="padding:8px 16px;background:#fff;border:1.5px solid #c4b5fd;border-radius:8px;font-size:12px;font-weight:600;color:#7c3aed;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#f3e8ff'" onmouseout="this.style.background='#fff'">⛔ What to Kill</button>
+            <button onclick="aiAgentQuick('expansion')" style="padding:8px 16px;background:#fff;border:1.5px solid #c4b5fd;border-radius:8px;font-size:12px;font-weight:600;color:#7c3aed;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#f3e8ff'" onmouseout="this.style.background='#fff'">🌍 Expansion Opportunities</button>
+          </div>
+
+          <div style="display:flex;gap:10px;align-items:stretch">
+            <textarea id="aiAgentInput" rows="2" placeholder="Ask Dominik anything about your campaigns... e.g. 'Which creatives should I scale in GR?' or 'Why is CZ underperforming?'" style="flex:1;padding:12px 16px;border:1.5px solid #c4b5fd;border-radius:10px;font-size:14px;font-family:inherit;resize:vertical;background:#fff;color:#1e1b4b;line-height:1.5" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiAgentAsk()}"></textarea>
+            <button onclick="aiAgentAsk()" id="aiAgentBtn" style="padding:12px 24px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 12px rgba(124,58,237,0.3);transition:all .2s;white-space:nowrap" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'"><i class="fas fa-paper-plane"></i> Ask</button>
+          </div>
+        </div>
+
+        <div id="aiAgentChat" style="display:flex;flex-direction:column;gap:16px">
+          <!-- Chat messages will appear here -->
+        </div>
+        
+        <div id="aiAgentLoading" style="display:none;text-align:center;padding:32px">
+          <div style="display:inline-flex;align-items:center;gap:12px;background:linear-gradient(135deg,#faf5ff,#f3e8ff);border:1px solid #c4b5fd;border-radius:12px;padding:16px 24px">
+            <div style="width:24px;height:24px;border:3px solid #c4b5fd;border-top-color:#7c3aed;border-radius:50%;animation:spin 1s linear infinite"></div>
+            <span style="font-size:14px;font-weight:600;color:#5b21b6">Dominik is analyzing your data...</span>
+          </div>
+        </div>
+      </div>
+
+            <div id="ahResults" style="display:none">
         <!-- Summary cards -->
         <div id="ahSummaryCards" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px"></div>
         <!-- Daily chart -->
@@ -3330,6 +3368,7 @@ function switchAHMode(mode) {
   document.getElementById('ahCampaignMode').style.display = mode === 'campaign' ? 'block' : 'none';
   document.getElementById('ahGeneralMode').style.display = mode === 'general' ? 'block' : 'none';
   document.getElementById('ahFatigueMode').style.display = mode === 'fatigue' ? 'block' : 'none';
+  document.getElementById('ahAgentMode').style.display = mode === 'agent' ? 'block' : 'none';
   document.getElementById('ahResults').style.display = 'none';
   document.getElementById('ahAdsetBreakdown').style.display = 'none';
 
@@ -4321,6 +4360,97 @@ async function saveSettings() {
     if (data.error) throw new Error(data.error);
     alert('Settings saved!');
   } catch(e) { alert('Error: ' + e.message); }
+}
+
+
+// AI Agent (Dominik) functions
+async function aiAgentAsk(customQuestion) {
+  const input = document.getElementById('aiAgentInput');
+  const question = customQuestion || input.value.trim();
+  if (!question) return;
+  
+  const chatDiv = document.getElementById('aiAgentChat');
+  const loading = document.getElementById('aiAgentLoading');
+  const btn = document.getElementById('aiAgentBtn');
+  
+  // Add user message
+  chatDiv.innerHTML += `<div style="display:flex;justify-content:flex-end;margin-bottom:4px">
+    <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;padding:12px 18px;border-radius:16px 16px 4px 16px;max-width:70%;font-size:14px;line-height:1.5;box-shadow:0 2px 8px rgba(37,99,235,0.2)">${question.replace(/</g,'&lt;')}</div>
+  </div>`;
+  
+  input.value = '';
+  loading.style.display = 'block';
+  btn.disabled = true;
+  
+  // Determine mode from question
+  let mode = 'general';
+  let body = { mode: 'general', question, dateRange: { start: getAIDateStart(), end: getAIDateEnd() } };
+  
+  // If question mentions a specific campaign ID
+  const campMatch = question.match(/campaign\s+(\d+|[a-zA-Z0-9_]+)/i);
+  if (campMatch) {
+    body.mode = 'campaign';
+    body.campaignId = campMatch[1];
+  }
+  if (/creative|creativ/i.test(question)) {
+    body.mode = 'creative';
+  }
+
+  try {
+    const res = await fetch('/api/ai-analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    
+    if (data.error) throw new Error(data.error);
+    
+    // Convert markdown to basic HTML
+    let html = (data.analysis || '').replace(/</g, '&lt;')
+      .replace(/## (.*)/g, '<div style="font-size:15px;font-weight:700;color:#5b21b6;margin:16px 0 8px;border-bottom:1px solid #e9d5ff;padding-bottom:4px">$1</div>')
+      .replace(/### (.*)/g, '<div style="font-size:14px;font-weight:600;color:#6d28d9;margin:12px 0 6px">$1</div>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/`(.*?)`/g, '<code style="background:#f3e8ff;padding:1px 5px;border-radius:4px;font-size:12px;color:#7c3aed">$1</code>')
+      .replace(/^(\d+)\. (.*)/gm, '<div style="margin:4px 0;padding-left:8px">$1. $2</div>')
+      .replace(/^- (.*)/gm, '<div style="margin:3px 0;padding-left:12px">• $1</div>')
+      .replace(/\n/g, '<br>');
+    
+    chatDiv.innerHTML += `<div style="display:flex;gap:12px;margin-bottom:4px">
+      <div style="width:36px;height:36px;min-width:36px;background:linear-gradient(135deg,#7c3aed,#a855f7);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(124,58,237,0.2)">🧠</div>
+      <div style="background:linear-gradient(135deg,#faf5ff,#f5f3ff);border:1px solid #e9d5ff;padding:16px 20px;border-radius:4px 16px 16px 16px;max-width:85%;font-size:13px;line-height:1.7;color:#1e1b4b;box-shadow:0 2px 8px rgba(124,58,237,0.08)">${html}</div>
+    </div>`;
+    
+    chatDiv.scrollTop = chatDiv.scrollHeight;
+  } catch(e) {
+    chatDiv.innerHTML += `<div style="display:flex;gap:12px">
+      <div style="width:36px;height:36px;min-width:36px;background:#fee2e2;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">❌</div>
+      <div style="background:#fef2f2;border:1px solid #fecaca;padding:12px 16px;border-radius:4px 12px 12px 12px;font-size:13px;color:#991b1b">Error: ${e.message}</div>
+    </div>`;
+  }
+  
+  loading.style.display = 'none';
+  btn.disabled = false;
+}
+
+function getAIDateStart() {
+  const d = new Date(); d.setDate(d.getDate() - 14);
+  return d.toISOString().slice(0, 10);
+}
+function getAIDateEnd() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function aiAgentQuick(type) {
+  const questions = {
+    general: 'Give me a full analysis of all active campaigns. What is performing well and what needs attention?',
+    creative: 'Analyze all creative performance. Which creatives are winners, which should be killed, and what patterns do you see?',
+    scale: 'Which campaigns and creatives should I scale right now? Be specific about budget recommendations.',
+    kill: 'Which campaigns and adsets should I pause or kill immediately? Focus on wasted spend.',
+    expansion: 'What expansion opportunities exist? Which winning creatives should be tested in new countries?'
+  };
+  document.getElementById('aiAgentInput').value = questions[type] || '';
+  aiAgentAsk(questions[type]);
 }
 
 </script>
