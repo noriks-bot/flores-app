@@ -270,6 +270,12 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_users_username ON flores_users(username);
   CREATE INDEX IF NOT EXISTS idx_users_role ON flores_users(role);
 
+  CREATE TABLE IF NOT EXISTS fatigue_cache (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    computed_at TEXT DEFAULT (datetime('now')),
+    data TEXT NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS flores_settings (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL DEFAULT ''
@@ -1949,7 +1955,23 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           req.on('data', c => body += c);
           req.on('end', resolve);
         });
-        const { start, end } = JSON.parse(body || '{}');
+        const { start, end, refresh } = JSON.parse(body || '{}');
+        
+        // Check SQLite cache (15 min TTL) unless refresh forced
+        if (!refresh) {
+          try {
+            const cached = db.prepare("SELECT data, computed_at FROM fatigue_cache ORDER BY id DESC LIMIT 1").get();
+            if (cached) {
+              const age = Date.now() - new Date(cached.computed_at + 'Z').getTime();
+              if (age < 15 * 60 * 1000) {
+                const parsed = JSON.parse(cached.data);
+                parsed._cached = true;
+                parsed._cachedAt = cached.computed_at;
+                return sendJSON(res, parsed);
+              }
+            }
+          } catch(e) { /* cache miss, compute fresh */ }
+        }
         
         try {
           const today = new Date();
@@ -2094,7 +2116,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           fatigued.sort((a, b) => (sevOrder[a.severity] || 3) - (sevOrder[b.severity] || 3) || b.totalSpend14d - a.totalSpend14d);
           healthy.sort((a, b) => b.totalSpend14d - a.totalSpend14d);
           
-          return sendJSON(res, {
+          const fatigueResult = {
             fatigued,
             healthy,
             summary: {
@@ -2102,7 +2124,15 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
               fatigued: fatigued.length,
               healthy: healthy.length
             }
-          });
+          };
+          
+          // Save to SQLite cache
+          try {
+            db.prepare("DELETE FROM fatigue_cache WHERE id NOT IN (SELECT id FROM fatigue_cache ORDER BY id DESC LIMIT 5)").run();
+            db.prepare("INSERT INTO fatigue_cache (data) VALUES (?)").run(JSON.stringify(fatigueResult));
+          } catch(e) { console.error('Fatigue cache save error:', e.message); }
+          
+          return sendJSON(res, fatigueResult);
         } catch (e) {
           console.error('Creative fatigue error:', e);
           return sendJSON(res, { error: e.message }, 500);
