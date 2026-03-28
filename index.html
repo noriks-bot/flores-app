@@ -1943,7 +1943,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <button class="fpill" onclick="loadOrgTab('vat_rates',this)">VAT Rates</button>
       </div>
       <div id="orgSetupContent" style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px;min-height:200px">
-        <div style="text-align:center;color:var(--text-muted);padding:40px">Select a category above</div>
+        <div style="text-align:center;color:var(--text-muted);padding:40px">Loading...</div>
       </div>
     </div>
   </div>
@@ -2265,6 +2265,7 @@ function navigateTo(section) {
   // Auto-load optimizer
   if (section === 'optimizer' && !optLoaded) { loadOptimizer(); }
   if (section === 'organizations') { loadOrganizations(); }
+  if (section === 'org-setup') { loadOrgTab('countries', document.querySelector('#section-org-setup .fpill')); }
   // Auto-load AI hints section init
   if (section === 'ai-hints') {
     initAIHintsIfNeeded();
@@ -5646,7 +5647,8 @@ document.addEventListener('click', e => {
 // Organizations
 async function loadOrganizations() {
   try {
-    const res = await fetch('/api/admin/organizations');
+    const res = await fetch('/api/admin/organizations', {credentials:'same-origin'});
+    if (!res.ok) { document.getElementById('orgTableBody').innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:#ef4444">Access denied (super_admin required)</td></tr>'; return; }
     const data = await res.json();
     if (data.error) { document.getElementById('orgTableBody').innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:#ef4444">'+data.error+'</td></tr>'; return; }
     
@@ -5687,12 +5689,35 @@ async function loadOrgTab(category, btn) {
   var container = document.getElementById('orgSetupContent');
   container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted)"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
   try {
-    var res = await fetch('/api/org-settings/' + category);
+    var res = await fetch('/api/org-settings/' + category, {credentials:'same-origin'});
     var data = await res.json();
     if (data.error) throw new Error(data.error);
     
-    var html = '<div style="font-weight:700;font-size:16px;margin-bottom:16px;color:var(--text-primary)">' + category.replace(/_/g,' ').replace(/\b\w/g,function(l){return l.toUpperCase()}) + '</div>';
-    html += '<pre style="background:var(--content-bg);padding:16px;border-radius:8px;font-size:13px;overflow-x:auto;border:1px solid var(--border-color)">' + JSON.stringify(data, null, 2) + '</pre>';
+    var title = category.replace(/_/g,' ').replace(/\b\w/g,function(l){return l.toUpperCase()});
+    var html = '<div style="font-weight:700;font-size:16px;margin-bottom:16px;color:var(--text-primary)">' + title + '</div>';
+    
+    if (category === 'countries') {
+      var active = data.active || [];
+      var all = ['HR','CZ','PL','GR','SK','IT','HU','SI','DE','AT','RS','BA','RO','BG'];
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+      all.forEach(function(cc) {
+        var isActive = active.includes(cc);
+        html += '<div style="padding:8px 16px;border-radius:8px;border:2px solid '+(isActive?'#10b981':'var(--border-color)')+';background:'+(isActive?'rgba(16,185,129,0.1)':'var(--content-bg)')+';font-weight:600;font-size:13px;color:'+(isActive?'#10b981':'var(--text-muted)')+'">'+cc+(isActive?' \u2713':'')+'</div>';
+      });
+      html += '</div>';
+    } else {
+      // Table view for key-value data
+      html += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
+      html += '<thead><tr><th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--border-color);font-weight:700;color:var(--text-muted);font-size:11px;text-transform:uppercase">Key</th><th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--border-color);font-weight:700;color:var(--text-muted);font-size:11px;text-transform:uppercase">Value</th></tr></thead><tbody>';
+      Object.keys(data).forEach(function(k) {
+        var v = data[k];
+        if (typeof v === 'object') v = JSON.stringify(v);
+        var masked = (k.toLowerCase().includes('token') || k.toLowerCase().includes('secret') || k.toLowerCase().includes('key')) && v.length > 20;
+        var displayVal = masked ? v.slice(0,8) + '\u2022\u2022\u2022\u2022' + v.slice(-4) : v;
+        html += '<tr style="border-bottom:1px solid var(--border-color)"><td style="padding:10px 12px;font-weight:600">'+k+'</td><td style="padding:10px 12px;font-family:monospace;font-size:12px;color:var(--text-muted)">'+displayVal+'</td></tr>';
+      });
+      html += '</tbody></table>';
+    }
     container.innerHTML = html;
   } catch(e) {
     container.innerHTML = '<div style="color:#ef4444;padding:20px">Error: '+e.message+'</div>';
