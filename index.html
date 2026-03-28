@@ -1068,7 +1068,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     <div class="nav-section">
       <div class="nav-section-label">Data</div>
       <a class="nav-item" data-section="upload" onclick="navigateTo('upload')">
-        <i class="fas fa-cloud-upload-alt"></i><span class="nav-item-text">Upload</span>
+        <i class="fas fa-cloud-upload-alt"></i><span class="nav-item-text">Upload Planer</span>
       </a>
       <a class="nav-item" data-section="bulk-uploader" onclick="navigateTo('bulk-uploader')">
         <i class="fas fa-layer-group"></i><span class="nav-item-text">Bulk Uploader</span>
@@ -1328,7 +1328,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
             <thead><tr>
               <th>Country</th><th>Spend</th><th>Purchases</th><th>CPA</th><th>Orders</th><th>Revenue</th><th>ROAS</th><th>Profit</th><th>P/Order</th>
             </tr></thead>
-            <tbody id="brCountryBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-muted)">Loading...</td></tr></tbody>
+            <tbody id="brCountryBody"><tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text-muted)">Loading...</td></tr></tbody>
             <tbody id="brCountryTotals"></tbody>
           </table>
         </div>
@@ -1341,7 +1341,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
             <thead><tr>
               <th>Type</th><th>Spend</th><th>Purchases</th><th>CPA</th><th>Orders</th><th>Revenue</th><th>ROAS</th><th>Profit</th><th>P/Order</th>
             </tr></thead>
-            <tbody id="brTypeBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-muted)">—</td></tr></tbody>
+            <tbody id="brTypeBody"><tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text-muted)">—</td></tr></tbody>
             <tbody id="brTypeTotals"></tbody>
           </table>
         </div>
@@ -1446,6 +1446,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <th class="cr-th" style="width:32px"></th>
         <th class="cr-th" style="text-align:left;min-width:300px">Name</th>
         <th class="cr-th">Status</th>
+        <th class="cr-th">Budget</th>
         <th class="cr-th">Spend</th>
         <th class="cr-th">Orders</th>
         <th class="cr-th">Revenue</th>
@@ -1453,7 +1454,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <th class="cr-th">CPA</th>
         <th class="cr-th">ROAS</th>
       </tr></thead>
-      <tbody id="optBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
+      <tbody id="optBody"><tr><td colspan="10" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
     </table>
   </div>
   </div>
@@ -2223,7 +2224,7 @@ const sectionTitles = {
   'creative-reporting': 'Creative Reporting',
   'ai-hints': 'AI Hints',
   'dominik-chat': 'Chat Dominik',
-  'upload': 'Upload',
+  'upload': 'Upload Planer',
   'origin-report': 'Origin Report',
   'optimizer': 'Optimizer',
   'bulk-uploader': 'Bulk Uploader',
@@ -3206,7 +3207,7 @@ async function loadBaseReport() {
 
   // Show loading
   ['brCountryBody','brTypeBody'].forEach(id => {
-    document.getElementById(id).innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-muted)"><div class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading...</td></tr>';
+    document.getElementById(id).innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text-muted)"><div class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading...</td></tr>';
   });
   document.getElementById('brCTBody').innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text-muted)"><div class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading...</td></tr>';
   ['brCountryTotals','brTypeTotals','brCTTotals'].forEach(id => { document.getElementById(id).innerHTML = ''; });
@@ -3218,7 +3219,7 @@ async function loadBaseReport() {
     renderBaseReport(data);
   } catch(e) {
     ['brCountryBody','brTypeBody'].forEach(id => {
-      document.getElementById(id).innerHTML = `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--danger)">Error: ${e.message}</td></tr>`;
+      document.getElementById(id).innerHTML = `<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--danger)">Error: ${e.message}</td></tr>`;
     });
     document.getElementById('brCTBody').innerHTML = `<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--danger)">Error: ${e.message}</td></tr>`;
   }
@@ -4352,7 +4353,7 @@ function optGetPurchases(ins) {
 
 async function loadOptimizer() {
   const {from,to} = getOptDateRange();
-  document.getElementById('optBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr>';
+  document.getElementById('optBody').innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr>';
   try {
     const res = await fetch('/api/campaigns?date_from='+from+'&date_to='+to);
     optCampaigns = await res.json();
@@ -4361,7 +4362,7 @@ async function loadOptimizer() {
     optExpanded = {};
     optLoaded = true;
     renderOptimizer();
-  } catch(e) { document.getElementById('optBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#dc2626">Error: '+e.message+'</td></tr>'; }
+  } catch(e) { document.getElementById('optBody').innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#dc2626">Error: '+e.message+'</td></tr>'; }
 }
 
 function renderOptimizer() {
@@ -4374,7 +4375,7 @@ function renderOptimizer() {
     return false;
   });
   if (!filtered.length) {
-    document.getElementById('optBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#9ca3af">No campaigns found</td></tr>';
+    document.getElementById('optBody').innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#9ca3af">No campaigns found</td></tr>';
     return;
   }
   // Auto-expand multi-country campaigns when country filter is active
@@ -4460,6 +4461,7 @@ function renderOptimizer() {
             html += '<td></td>';
             html += '<td style="text-align:left;padding-left:56px;font-size:10px;color:#6b7280;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">\u2514 '+ad.name+'</td>';
             html += '<td style="font-size:11px;text-align:center">'+(ad.status==='ACTIVE'?'<span style="color:#22c55e">\u25cf</span>':'<span style="color:#9ca3af">\u25cf</span>')+'</td>';
+            html += '<td style="text-align:right;font-size:11px;color:var(--text-muted)">\u2014</td>';
             html += '<td style="text-align:right;font-size:11px">'+adSpend.toFixed(2)+' \u20ac</td>';
             html += '<td style="text-align:right;font-size:11px">\u2014</td>';
             html += '<td style="text-align:right;font-size:11px">\u2014</td>';
