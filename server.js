@@ -6,6 +6,8 @@ const crypto = require('crypto');
 const Database = require('better-sqlite3');
 
 const PORT = 3200;
+let _dashboardCache = null;
+let _dashboardCacheTime = 0;
 const META_TOKEN = 'EAASl5P6z0UYBRJrZCHWVQvMLmwwDu5jzdA5NEdl9t5K4ogCgH5Pi7acEEKhKSf5LYQKQcx9vd6S7euJRJWeICdZCHsVtUyQfVbF4lxAU25t9sRONxjhVZCBAv0nAnQJ7qiszzZBCR75JHzMXfSACfhxApcZBB0tMRngZAZBXQ3c0c4VeZC8OU6ltFc9YaCydW8Vg';
 const FB_APP_ID = '1308302851166534';
 const FB_APP_SECRET = '055332aa992f885134cf9cb6cd3ce5cf';
@@ -3055,6 +3057,10 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
 
       // ═══ DASHBOARD API ═══
       if (urlPath === '/api/dashboard') {
+        // Return cached if less than 5 minutes old
+        if (_dashboardCache && (Date.now() - _dashboardCacheTime) < 300000) {
+          return sendJSON(res, _dashboardCache);
+        }
         const today = getToday();
         const d7ago = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
         
@@ -3135,14 +3141,17 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           }
         } catch(e) {}
         
-        return sendJSON(res, {
+        const _dashData = {
           kpis: { spend: Math.round(totalSpend * 100) / 100, orders: totalOrders, revenue: Math.round(totalRevenue * 100) / 100, profit: Math.round(totalProfit * 100) / 100, cpa: Math.round(avgCPA * 100) / 100, activeCampaigns },
           topCampaigns,
           topCreatives,
           alerts,
           chartData,
           date: today
-        });
+        };
+        _dashboardCache = _dashData;
+        _dashboardCacheTime = Date.now();
+        return sendJSON(res, _dashData);
       }
 
       // ═══ ACTIVITY LOG API ═══
