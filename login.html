@@ -137,7 +137,7 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
       password: document.getElementById('password').value
     })
   });
-  if (res.ok) { window.location.href = '/'; }
+  if (res.ok) { const data = await res.json(); window.location.href = data.redirect || '/app'; }
   else { 
     document.getElementById('error').style.display='block';
     btn.innerHTML = '<i class="fas fa-arrow-right" style="margin-right:8px"></i> Sign In';

@@ -280,6 +280,32 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL DEFAULT ''
   );
+
+  CREATE TABLE IF NOT EXISTS activity_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    username TEXT,
+    action TEXT NOT NULL,
+    details TEXT,
+    entity_type TEXT,
+    entity_id TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_activity_log_user ON activity_log(user_id);
+  CREATE INDEX IF NOT EXISTS idx_activity_log_action ON activity_log(action);
+  CREATE INDEX IF NOT EXISTS idx_activity_log_date ON activity_log(created_at);
+
+  CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT,
+    read INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+  CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read);
 `);
 
 // Seed default admin user if no users exist
@@ -290,6 +316,12 @@ try {
     db.prepare('INSERT INTO flores_users (username, password_hash, role, display_name) VALUES (?, ?, ?, ?)').run('noriks', hash, 'admin', 'Noriks Admin');
   }
 } catch(e) { console.error('User seed error:', e.message); }
+
+// Add org_id column for multi-tenant prep
+try { db.exec("ALTER TABLE flores_users ADD COLUMN org_id INTEGER DEFAULT 1"); } catch(e) { /* exists */ }
+try { db.exec("ALTER TABLE flores_settings ADD COLUMN org_id INTEGER DEFAULT 1"); } catch(e) { /* exists */ }
+try { db.exec("ALTER TABLE activity_log ADD COLUMN org_id INTEGER DEFAULT 1"); } catch(e) { /* exists */ }
+try { db.exec("ALTER TABLE notifications ADD COLUMN org_id INTEGER DEFAULT 1"); } catch(e) { /* exists */ }
 
 // Add new columns for flores plugin fields (safe - ignores if already exists)
 const newColumns = [
@@ -1290,6 +1322,45 @@ function getSessionUser(req) {
   return sessionStore[token] || null;
 }
 
+// ═══ RATE LIMITING ═══
+const rateLimitMap = new Map(); // sessionToken -> [timestamps]
+const RATE_LIMIT_MAX = 100;
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+
+function checkRateLimit(req) {
+  const token = parseCookies(req).flores_session || req.socket.remoteAddress;
+  const now = Date.now();
+  let timestamps = rateLimitMap.get(token) || [];
+  timestamps = timestamps.filter(t => now - t < RATE_LIMIT_WINDOW);
+  timestamps.push(now);
+  rateLimitMap.set(token, timestamps);
+  return timestamps.length <= RATE_LIMIT_MAX;
+}
+
+// Cleanup rate limit map every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, timestamps] of rateLimitMap.entries()) {
+    const valid = timestamps.filter(t => now - t < RATE_LIMIT_WINDOW);
+    if (valid.length === 0) rateLimitMap.delete(key);
+    else rateLimitMap.set(key, valid);
+  }
+}, 300000);
+
+// ═══ ACTIVITY LOGGING ═══
+const logActivity = db.prepare(`INSERT INTO activity_log (user_id, username, action, details, entity_type, entity_id, org_id) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+
+function actLog(req, action, details, entityType, entityId) {
+  try {
+    const user = getSessionUser(req);
+    logActivity.run(user?.userId || null, user?.username || 'system', action, details || null, entityType || null, entityId || null, 1);
+  } catch(e) { console.error('Activity log error:', e.message); }
+}
+
+// ═══ APP VERSION ═══
+const APP_VERSION = '2.0.0';
+const APP_START_TIME = Date.now();
+
 const server = http.createServer(async (req, res) => {
   const urlPath = req.url.split('?')[0].replace(/^\/flores/, '') || '/';
   const query = parseQuery(req.url);
@@ -1305,8 +1376,10 @@ const server = http.createServer(async (req, res) => {
           const token = crypto.randomBytes(32).toString('hex');
           sessionStore[token] = { username: user.username, role: user.role, userId: user.id, displayName: user.display_name };
           db.prepare('UPDATE flores_users SET last_login = datetime(\'now\') WHERE id = ?').run(user.id);
+          // Log login activity
+          try { logActivity.run(user.id, user.username, 'login', 'User logged in', 'user', String(user.id), 1); } catch(e) {}
           res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': `flores_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400` });
-          res.end(JSON.stringify({ ok: true, role: user.role, username: user.username }));
+          res.end(JSON.stringify({ ok: true, role: user.role, username: user.username, redirect: '/app' }));
         } else {
           res.writeHead(401, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Invalid credentials' }));
@@ -1323,11 +1396,17 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Serve landing page (public)
-  if (urlPath === '/landing' || urlPath === '/landing.html') {
-    const landingHtml = fs.readFileSync(path.join(__dirname, 'landing.html'));
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(landingHtml);
+  // Serve landing page (public, no auth)
+  if (urlPath === '/' || urlPath === '/index' || urlPath === '/landing') {
+    try {
+      const landingHtml = fs.readFileSync(path.join(__dirname, 'landing.html'));
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(landingHtml);
+    } catch(e) {
+      // Fallback: redirect to /app if no landing page exists
+      res.writeHead(302, { 'Location': '/app' });
+      res.end();
+    }
     return;
   }
 
@@ -1339,14 +1418,61 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Health endpoint (no auth required)
+  if (urlPath === '/api/health') {
+    const memUsage = process.memoryUsage();
+    const dbTables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
+    const tableCounts = {};
+    for (const t of dbTables) {
+      try { tableCounts[t.name] = db.prepare(`SELECT COUNT(*) as c FROM ${t.name}`).get().c; } catch(e) { tableCounts[t.name] = -1; }
+    }
+    const lastSync = db.prepare('SELECT MAX(last_sync_at) as ls FROM sync_state').get();
+    return sendJSON(res, {
+      status: 'ok',
+      version: APP_VERSION,
+      uptime: Math.floor((Date.now() - APP_START_TIME) / 1000),
+      uptimeHuman: `${Math.floor((Date.now() - APP_START_TIME) / 3600000)}h ${Math.floor(((Date.now() - APP_START_TIME) % 3600000) / 60000)}m`,
+      db: { tables: tableCounts },
+      meta_token: META_TOKEN ? 'configured' : 'missing',
+      dropbox_token: DROPBOX_REFRESH_TOKEN ? 'configured' : 'missing',
+      memory: {
+        rss: Math.round(memUsage.rss / 1024 / 1024) + ' MB',
+        heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + ' MB',
+        heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + ' MB'
+      },
+      lastWcSync: lastSync?.ls || null,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // Rate limiting
+  if (urlPath.startsWith('/api/') && !checkRateLimit(req)) {
+    res.writeHead(429, { 'Content-Type': 'application/json', 'Retry-After': '60' });
+    return res.end(JSON.stringify({ error: 'Rate limit exceeded. Max 100 requests per minute.' }));
+  }
+
   // Auth check for everything else
   if (!isAuthed(req)) {
     if (urlPath.startsWith('/api/')) {
       res.writeHead(401, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ error: 'Unauthorized' }));
     }
+    // /app requires auth — redirect to login
+    if (urlPath === '/app' || urlPath === '/app/') {
+      res.writeHead(302, { 'Location': '/login' });
+      return res.end();
+    }
+    // Other pages — redirect to login
     res.writeHead(302, { 'Location': '/login' });
     return res.end();
+  }
+
+  // Serve the app (authenticated SPA)
+  if (urlPath === '/app' || urlPath === '/app/') {
+    const appHtml = fs.readFileSync(path.join(__dirname, 'index.html'));
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(appHtml);
+    return;
   }
 
   // API routes
@@ -2385,6 +2511,9 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         try {
           const hash = crypto.createHash('sha256').update(password).digest('hex');
           const result = db.prepare('INSERT INTO flores_users (username, password_hash, display_name, role) VALUES (?, ?, ?, ?)').run(username, hash, display_name || username, role);
+          actLog(req, 'user_created', `Created user ${username} (${role})`, 'user', String(result.lastInsertRowid));
+          // Create notification for new user
+          try { db.prepare('INSERT INTO notifications (user_id, type, title, message, org_id) VALUES (NULL, ?, ?, ?, 1)').run('user_created', 'New User Created', `User "${username}" was created with role ${role}`); } catch(e) {}
           return sendJSON(res, { ok: true, id: result.lastInsertRowid });
         } catch(e) {
           return sendJSON(res, { error: 'Username already exists' }, 400);
@@ -2430,6 +2559,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         db.transaction(() => {
           for (const [k, v] of Object.entries(settings)) upsert.run(k, String(v));
         })();
+        actLog(req, 'settings_changed', `Updated ${Object.keys(settings).length} settings`, 'settings', null);
         return sendJSON(res, { ok: true });
       }
 
@@ -2554,6 +2684,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           // Delay between campaigns
           if (i < campConfigs.length - 1) await new Promise(r => setTimeout(r, 1000));
         }
+        actLog(req, 'bulk_upload', `Bulk created ${results.filter(r=>r.success).length}/${results.length} campaigns`, 'campaign', null);
         return sendJSON(res, { results });
       }
 
@@ -2630,6 +2761,135 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         }
       }
 
+      // ═══ DASHBOARD API ═══
+      if (urlPath === '/api/dashboard') {
+        const today = getToday();
+        const d7ago = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
+        
+        // KPIs from campaigns
+        const campaignData = await getCampaigns(today, today);
+        let totalSpend = 0, totalPurchases = 0, totalOrders = 0, totalRevenue = 0, totalProfit = 0, activeCampaigns = 0;
+        for (const c of campaignData) {
+          const spend = parseFloat(c.insights?.spend || 0);
+          totalSpend += spend;
+          if (c.status === 'ACTIVE') activeCampaigns++;
+          const pAct = (c.insights?.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
+          totalPurchases += pAct ? parseInt(pAct.value) : 0;
+          totalOrders += c.wc?.orders || 0;
+          totalRevenue += c.wc?.revenueGross || 0;
+          totalProfit += c.wc?.profit || 0;
+        }
+        const avgCPA = totalPurchases > 0 ? totalSpend / totalPurchases : 0;
+        
+        // Top 5 campaigns by spend today
+        const topCampaigns = campaignData
+          .filter(c => parseFloat(c.insights?.spend || 0) > 0)
+          .sort((a, b) => parseFloat(b.insights?.spend || 0) - parseFloat(a.insights?.spend || 0))
+          .slice(0, 5)
+          .map(c => {
+            const sp = parseFloat(c.insights?.spend || 0);
+            const pAct = (c.insights?.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
+            const p = pAct ? parseInt(pAct.value) : 0;
+            return { name: c.name, spend: Math.round(sp * 100) / 100, purchases: p, cpa: p > 0 ? Math.round(sp / p * 100) / 100 : 0, profit: c.wc?.profit || 0 };
+          });
+        
+        // Top 5 creatives by purchases (from ads)
+        let topCreatives = [];
+        try {
+          const allAds = await getAllAds(today, today);
+          const crMap = {};
+          for (const ad of allAds) {
+            const idMatch = (ad.name || '').match(/^(ID\d+)/i);
+            const crId = idMatch ? idMatch[1].toUpperCase() : null;
+            if (!crId) continue;
+            if (!crMap[crId]) crMap[crId] = { id: crId, spend: 0, purchases: 0 };
+            crMap[crId].spend += parseFloat(ad.insights?.spend || 0);
+            const pAct = (ad.insights?.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
+            crMap[crId].purchases += pAct ? parseInt(pAct.value) : 0;
+          }
+          topCreatives = Object.values(crMap).sort((a, b) => b.purchases - a.purchases).slice(0, 5)
+            .map(c => ({ id: c.id, spend: Math.round(c.spend * 100) / 100, purchases: c.purchases, cpa: c.purchases > 0 ? Math.round(c.spend / c.purchases * 100) / 100 : 0 }));
+        } catch(e) {}
+        
+        // Alerts
+        const alerts = [];
+        for (const c of campaignData) {
+          if (c.status !== 'ACTIVE') continue;
+          const sp = parseFloat(c.insights?.spend || 0);
+          const pAct = (c.insights?.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
+          const p = pAct ? parseInt(pAct.value) : 0;
+          const cpa = p > 0 ? sp / p : 0;
+          if (cpa > 25 && p > 0) alerts.push({ type: 'high_cpa', message: `${c.name.slice(0, 50)} — CPA €${cpa.toFixed(2)}`, campaignId: c.id });
+          if (sp > 20 && p === 0) alerts.push({ type: 'zero_purchases', message: `${c.name.slice(0, 50)} — €${sp.toFixed(2)} spent, 0 purchases`, campaignId: c.id });
+        }
+        
+        // 7-day spend/profit chart data
+        let chartData = [];
+        try {
+          const weekCampaigns = await getCampaigns(d7ago, today);
+          // Get daily insights
+          const dailyInsights = await metaGetAll(`${AD_ACCOUNT}/insights`, {
+            fields: 'spend,actions',
+            time_increment: 1,
+            time_range: JSON.stringify({ since: d7ago, until: today }),
+            limit: 100
+          });
+          for (const d of dailyInsights) {
+            const day = d.date_start;
+            const spend = parseFloat(d.spend || 0);
+            // Get WC profit for the day
+            const dayOrders = db.prepare('SELECT SUM(profit) as p, COUNT(*) as c FROM wc_orders WHERE order_date = ? AND is_fb_attributed = 1').get(day);
+            chartData.push({ date: day, spend: Math.round(spend * 100) / 100, profit: Math.round((dayOrders?.p || 0) * 100) / 100 - Math.round(spend * 100) / 100, orders: dayOrders?.c || 0 });
+          }
+        } catch(e) {}
+        
+        return sendJSON(res, {
+          kpis: { spend: Math.round(totalSpend * 100) / 100, orders: totalOrders, revenue: Math.round(totalRevenue * 100) / 100, profit: Math.round(totalProfit * 100) / 100, cpa: Math.round(avgCPA * 100) / 100, activeCampaigns },
+          topCampaigns,
+          topCreatives,
+          alerts,
+          chartData,
+          date: today
+        });
+      }
+
+      // ═══ ACTIVITY LOG API ═══
+      if (urlPath === '/api/activity-log') {
+        const page = parseInt(query.page) || 1;
+        const limit = Math.min(parseInt(query.limit) || 50, 200);
+        const offset = (page - 1) * limit;
+        let where = 'WHERE org_id = 1';
+        const params = [];
+        if (query.user) { where += ' AND username = ?'; params.push(query.user); }
+        if (query.action) { where += ' AND action = ?'; params.push(query.action); }
+        if (query.from) { where += ' AND created_at >= ?'; params.push(query.from); }
+        if (query.to) { where += ' AND created_at <= ?'; params.push(query.to + ' 23:59:59'); }
+        const total = db.prepare(`SELECT COUNT(*) as cnt FROM activity_log ${where}`).get(...params).cnt;
+        const rows = db.prepare(`SELECT * FROM activity_log ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`).all(...params, limit, offset);
+        const users = db.prepare('SELECT DISTINCT username FROM activity_log WHERE org_id = 1').all().map(r => r.username);
+        const actions = db.prepare('SELECT DISTINCT action FROM activity_log WHERE org_id = 1').all().map(r => r.action);
+        return sendJSON(res, { data: rows, meta: { total, page, limit, pages: Math.ceil(total / limit) }, filters: { users, actions } });
+      }
+
+      // ═══ NOTIFICATIONS API ═══
+      if (urlPath === '/api/notifications') {
+        const user = getSessionUser(req);
+        const rows = db.prepare('SELECT * FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND org_id = 1 ORDER BY created_at DESC LIMIT 50').all(user?.userId || 0);
+        const unread = db.prepare('SELECT COUNT(*) as cnt FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND read = 0 AND org_id = 1').get(user?.userId || 0).cnt;
+        return sendJSON(res, { notifications: rows, unread });
+      }
+      if (urlPath === '/api/notifications/mark-read' && req.method === 'POST') {
+        const user = getSessionUser(req);
+        const body = await readBody(req);
+        const { id, all: markAll } = JSON.parse(body || '{}');
+        if (markAll) {
+          db.prepare('UPDATE notifications SET read = 1 WHERE (user_id = ? OR user_id IS NULL) AND org_id = 1').run(user?.userId || 0);
+        } else if (id) {
+          db.prepare('UPDATE notifications SET read = 1 WHERE id = ?').run(id);
+        }
+        return sendJSON(res, { ok: true });
+      }
+
       return sendJSON(res, { error: 'not found' }, 404);
     } catch (err) {
       console.error('API error:', err);
@@ -2637,8 +2897,8 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
     }
   }
 
-  // Static files
-  let filePath = urlPath === '/' ? '/index.html' : urlPath;
+  // Static files (CSS, JS, images, etc.)
+  let filePath = urlPath;
   filePath = path.join(__dirname, filePath);
   
   const ext = path.extname(filePath);
