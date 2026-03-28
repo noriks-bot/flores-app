@@ -5562,7 +5562,7 @@ function addExportButtons() {
 // Run after DOM is ready and after data loads
 setTimeout(addExportButtons, 1500);
 // Also re-add when navigating sections
-const _origNavigateTo = navigateTo;
+// export buttons handled by MutationObserver
 // We'll add export buttons via MutationObserver instead
 const exportObserver = new MutationObserver(() => setTimeout(addExportButtons, 500));
 document.querySelectorAll('.content-section').forEach(s => exportObserver.observe(s, { childList: true, subtree: true }));
