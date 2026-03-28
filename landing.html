@@ -3,280 +3,688 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Flores — Ad Intelligence Platform</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✿</text></svg>">
+<title>Flores — The Command Center for Facebook Ads</title>
+<meta name="description" content="Flores is the all-in-one platform for managing Facebook Ads across multiple markets. Real-time dashboards, AI-powered insights, creative management, and profit intelligence.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --primary:#2563eb;--primary-dark:#1d4ed8;
-  --bg:#0f172a;--surface:#1e293b;--surface-light:#334155;
-  --text:#f1f5f9;--text-muted:#94a3b8;--text-dim:#64748b;
-  --accent-purple:#7c3aed;--accent-pink:#db2777;--accent-green:#10b981;
+  --navy:#1E3A5F;--navy-light:#2A4F7F;--navy-dark:#152D4A;
+  --blue:#2563EB;--blue-light:#3B82F6;--blue-soft:rgba(37,99,235,0.08);
+  --gray-50:#F9FAFB;--gray-100:#F3F4F6;--gray-200:#E5E7EB;--gray-300:#D1D5DB;
+  --gray-400:#9CA3AF;--gray-500:#6B7280;--gray-600:#4B5563;--gray-700:#374151;
+  --gray-800:#1F2937;--gray-900:#111827;
+  --green:#059669;--green-light:#D1FAE5;
+  --orange:#F59E0B;--red:#EF4444;
+  --purple:#7C3AED;--pink:#EC4899;
+  --radius:12px;--radius-lg:16px;--radius-xl:24px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.05);
+  --shadow:0 1px 3px rgba(0,0,0,0.1),0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -2px rgba(0,0,0,0.1);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -4px rgba(0,0,0,0.1);
+  --shadow-xl:0 20px 25px -5px rgba(0,0,0,0.1),0 8px 10px -6px rgba(0,0,0,0.1);
 }
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--gray-800);background:#fff;line-height:1.6;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+img{max-width:100%;display:block}
 
-/* Grid background */
-body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);background-size:80px 80px;pointer-events:none;z-index:0}
-/* Glow orbs */
-body::after{content:'';position:fixed;top:-20%;left:-10%;width:60%;height:60%;background:radial-gradient(ellipse,rgba(37,99,235,.12) 0%,transparent 60%);pointer-events:none;z-index:0}
-
-.container{max-width:1200px;margin:0 auto;padding:0 32px;position:relative;z-index:1}
-
-/* ═══ NAV ═══ */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 0;transition:all .3s}
-nav.scrolled{background:rgba(15,23,42,.9);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.06);padding:14px 0}
-.nav-inner{display:flex;align-items:center;justify-content:space-between}
-.nav-brand{display:flex;align-items:center;gap:12px;text-decoration:none}
-.nav-logo{width:40px;height:40px;background:linear-gradient(135deg,var(--accent-purple),var(--accent-pink));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;box-shadow:0 4px 16px rgba(124,58,237,.3)}
-.nav-name{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.5px}
-.nav-links{display:flex;align-items:center;gap:8px}
-.nav-link{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;padding:8px 16px;border-radius:8px;transition:all .2s}
-.nav-link:hover{color:#fff;background:rgba(255,255,255,.06)}
-.nav-cta{background:var(--primary);color:#fff!important;font-weight:600;box-shadow:0 2px 12px rgba(37,99,235,.3)}
-.nav-cta:hover{background:var(--primary-dark)!important;transform:translateY(-1px);box-shadow:0 6px 20px rgba(37,99,235,.4)!important}
+/* ═══ NAVIGATION ═══ */
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--gray-200);transition:all .3s}
+.nav.scrolled{box-shadow:var(--shadow-md)}
+.nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:72px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-0.5px}
+.nav-logo span{font-size:26px}
+.nav-links{display:flex;align-items:center;gap:32px}
+.nav-links a{font-size:14px;font-weight:500;color:var(--gray-600);transition:color .2s}
+.nav-links a:hover{color:var(--navy)}
+.nav-actions{display:flex;align-items:center;gap:16px}
+.nav-login{font-size:14px;font-weight:600;color:var(--navy);padding:8px 16px;border-radius:8px;transition:all .2s}
+.nav-login:hover{background:var(--blue-soft)}
+.btn-primary{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;background:var(--navy);color:#fff;font-size:14px;font-weight:600;border-radius:10px;border:none;cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap}
+.btn-primary:hover{background:var(--navy-light);transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+.btn-secondary{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;background:#fff;color:var(--navy);font-size:14px;font-weight:600;border-radius:10px;border:2px solid var(--gray-200);cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap}
+.btn-secondary:hover{border-color:var(--navy);background:var(--blue-soft)}
+.btn-lg{padding:14px 32px;font-size:16px;border-radius:var(--radius)}
+.mobile-toggle{display:none;background:none;border:none;font-size:22px;color:var(--gray-700);cursor:pointer}
 
 /* ═══ HERO ═══ */
-.hero{padding:160px 0 100px;text-align:center;position:relative}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.2);color:var(--primary);padding:6px 16px;border-radius:100px;font-size:12px;font-weight:600;margin-bottom:28px;letter-spacing:.3px}
-.hero-badge i{font-size:10px}
-.hero h1{font-size:clamp(40px,6vw,72px);font-weight:900;letter-spacing:-2px;line-height:1.05;margin-bottom:24px;background:linear-gradient(135deg,#fff 30%,var(--text-muted) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hero p{font-size:20px;color:var(--text-muted);max-width:640px;margin:0 auto 44px;line-height:1.6;font-weight:400}
-.hero-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:14px;font-size:15px;font-weight:700;text-decoration:none;transition:all .25s cubic-bezier(.16,1,.3,1);font-family:inherit;border:none;cursor:pointer}
-.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 4px 24px rgba(37,99,235,.35)}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(37,99,235,.45)}
-.btn-secondary{background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.1)}
-.btn-secondary:hover{background:rgba(255,255,255,.1);transform:translateY(-1px)}
-.hero-stats{display:flex;justify-content:center;gap:48px;margin-top:72px;padding-top:48px;border-top:1px solid rgba(255,255,255,.06)}
+.hero{padding:160px 24px 80px;text-align:center;background:linear-gradient(180deg,#fff 0%,var(--gray-50) 100%);position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(37,99,235,0.06) 0%,transparent 70%);pointer-events:none}
+.hero::after{content:'';position:absolute;bottom:-100px;left:-200px;width:500px;height:500px;background:radial-gradient(circle,rgba(124,58,237,0.04) 0%,transparent 70%);pointer-events:none}
+.hero-inner{max-width:900px;margin:0 auto;position:relative;z-index:1}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;background:var(--blue-soft);border:1px solid rgba(37,99,235,0.15);border-radius:100px;font-size:13px;font-weight:600;color:var(--blue);margin-bottom:28px}
+.hero-badge i{font-size:11px}
+.hero h1{font-size:clamp(36px,5.5vw,64px);font-weight:900;color:var(--gray-900);letter-spacing:-1.5px;line-height:1.1;margin-bottom:24px}
+.hero h1 .highlight{background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-subtitle{font-size:clamp(16px,2vw,20px);color:var(--gray-500);max-width:680px;margin:0 auto 40px;line-height:1.7;font-weight:400}
+.hero-actions{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin-bottom:48px}
+.hero-stats{display:flex;align-items:center;justify-content:center;gap:40px;flex-wrap:wrap;padding:20px 32px;background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm)}
 .hero-stat{text-align:center}
-.hero-stat-value{font-size:36px;font-weight:800;letter-spacing:-1px;background:linear-gradient(135deg,var(--primary),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hero-stat-label{font-size:13px;color:var(--text-dim);margin-top:4px;font-weight:500}
+.hero-stat .val{font-size:20px;font-weight:800;color:var(--navy)}
+.hero-stat .label{font-size:12px;color:var(--gray-400);font-weight:500;margin-top:2px}
+.hero-stat+.hero-stat{border-left:1px solid var(--gray-200);padding-left:40px}
+
+/* Product Mockup */
+.product-mockup{max-width:1100px;margin:64px auto 0;position:relative}
+.mockup-window{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-xl);box-shadow:var(--shadow-xl);overflow:hidden}
+.mockup-toolbar{display:flex;align-items:center;gap:8px;padding:14px 20px;border-bottom:1px solid var(--gray-100);background:var(--gray-50)}
+.mockup-dot{width:12px;height:12px;border-radius:50%;background:var(--gray-300)}
+.mockup-dot.r{background:#EF4444}.mockup-dot.y{background:#F59E0B}.mockup-dot.g{background:#22C55E}
+.mockup-url{flex:1;margin-left:16px;padding:6px 12px;background:#fff;border-radius:6px;font-size:12px;color:var(--gray-400);border:1px solid var(--gray-200)}
+.mockup-body{padding:32px;min-height:400px;background:linear-gradient(135deg,var(--gray-50),#fff);display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.mock-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:8px}
+.mock-card-title{font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:0.8px}
+.mock-card-value{font-size:28px;font-weight:800;color:var(--navy)}
+.mock-card-sub{font-size:12px;color:var(--green);font-weight:600;display:flex;align-items:center;gap:4px}
+.mock-chart{grid-column:1/-1;background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);padding:20px;min-height:140px;position:relative;overflow:hidden}
+.mock-chart-title{font-size:12px;font-weight:600;color:var(--gray-500);margin-bottom:16px}
+.mock-bars{display:flex;align-items:flex-end;gap:6px;height:100px}
+.mock-bar{flex:1;border-radius:4px 4px 0 0;transition:height .6s cubic-bezier(.16,1,.3,1)}
+.mock-bar.blue{background:var(--blue)}
+.mock-bar.navy{background:var(--navy);opacity:.4}
+
+/* ═══ TRUSTED BY ═══ */
+.trusted{padding:64px 24px;text-align:center;background:#fff;border-top:1px solid var(--gray-100);border-bottom:1px solid var(--gray-100)}
+.trusted-label{font-size:13px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:32px}
+.trusted-flags{display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap;max-width:800px;margin:0 auto 24px}
+.flag-item{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:var(--gray-600)}
+.flag-item span{font-size:28px}
+.trusted-sub{font-size:14px;color:var(--gray-400);font-weight:400;margin-top:16px}
+
+/* ═══ SECTIONS ═══ */
+.section{padding:96px 24px}
+.section-alt{background:var(--gray-50)}
+.section-inner{max-width:1100px;margin:0 auto}
+.section-header{text-align:center;max-width:700px;margin:0 auto 64px}
+.section-label{font-size:13px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px}
+.section-title{font-size:clamp(28px,3.5vw,40px);font-weight:800;color:var(--gray-900);letter-spacing:-0.5px;line-height:1.2;margin-bottom:16px}
+.section-desc{font-size:17px;color:var(--gray-500);line-height:1.7}
 
 /* ═══ FEATURES ═══ */
-.features{padding:100px 0}
-.section-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--primary);text-align:center;margin-bottom:12px}
-.section-title{font-size:clamp(28px,4vw,42px);font-weight:800;text-align:center;letter-spacing:-1px;margin-bottom:16px}
-.section-sub{font-size:16px;color:var(--text-muted);text-align:center;max-width:560px;margin:0 auto 56px}
-.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px}
-.feature-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:36px;transition:all .3s cubic-bezier(.16,1,.3,1)}
-.feature-card:hover{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1);transform:translateY(-4px)}
-.feature-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:20px}
-.fi-blue{background:rgba(37,99,235,.12);color:var(--primary)}
-.fi-purple{background:rgba(124,58,237,.12);color:var(--accent-purple)}
-.fi-green{background:rgba(16,185,129,.12);color:var(--accent-green)}
-.fi-pink{background:rgba(219,39,119,.12);color:var(--accent-pink)}
-.feature-card h3{font-size:18px;font-weight:700;margin-bottom:10px;letter-spacing:-.3px}
-.feature-card p{font-size:14px;color:var(--text-muted);line-height:1.6}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:32px}
+.feature-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:32px;transition:all .3s}
+.feature-card:hover{border-color:var(--blue-light);box-shadow:var(--shadow-lg);transform:translateY(-4px)}
+.feature-icon{width:48px;height:48px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:20px}
+.feature-icon.blue{background:rgba(37,99,235,0.1);color:var(--blue)}
+.feature-icon.purple{background:rgba(124,58,237,0.1);color:var(--purple)}
+.feature-icon.green{background:rgba(5,150,105,0.1);color:var(--green)}
+.feature-icon.orange{background:rgba(245,158,11,0.1);color:var(--orange)}
+.feature-icon.pink{background:rgba(236,72,153,0.1);color:var(--pink)}
+.feature-icon.navy{background:rgba(30,58,95,0.1);color:var(--navy)}
+.feature-card h3{font-size:18px;font-weight:700;color:var(--gray-900);margin-bottom:10px}
+.feature-card p{font-size:15px;color:var(--gray-500);line-height:1.7}
 
-/* ═══ DASHBOARD PREVIEW ═══ */
-.preview{padding:80px 0;text-align:center}
-.preview-window{background:var(--surface);border:1px solid rgba(255,255,255,.08);border-radius:20px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.4);max-width:1000px;margin:0 auto}
-.preview-bar{display:flex;align-items:center;gap:8px;padding:14px 20px;background:rgba(0,0,0,.2);border-bottom:1px solid rgba(255,255,255,.06)}
-.preview-dot{width:12px;height:12px;border-radius:50%}
-.preview-dots{display:flex;gap:8px}
-.dot-red{background:#ef4444}.dot-yellow{background:#f59e0b}.dot-green{background:#10b981}
-.preview-url{flex:1;text-align:center;font-size:12px;color:var(--text-dim);font-weight:500}
-.preview-body{padding:32px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-.preview-kpi{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:20px;text-align:left}
-.preview-kpi-label{font-size:11px;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
-.preview-kpi-value{font-size:28px;font-weight:800;letter-spacing:-1px}
-.preview-kpi-change{font-size:12px;font-weight:600;margin-top:4px}
-.pk-green{color:var(--accent-green)}.pk-red{color:#ef4444}
+/* ═══ HOW IT WORKS ═══ */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:32px;counter-reset:step}
+.step{text-align:center;position:relative;counter-increment:step}
+.step-number{width:56px;height:56px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;margin:0 auto 20px}
+.step h3{font-size:17px;font-weight:700;color:var(--gray-900);margin-bottom:8px}
+.step p{font-size:14px;color:var(--gray-500);max-width:260px;margin:0 auto;line-height:1.6}
 
-/* ═══ CTA ═══ */
-.cta{padding:100px 0;text-align:center}
-.cta-box{background:linear-gradient(135deg,rgba(37,99,235,.15),rgba(124,58,237,.1));border:1px solid rgba(37,99,235,.2);border-radius:28px;padding:72px 48px;position:relative;overflow:hidden}
-.cta-box::before{content:'';position:absolute;top:-50%;right:-20%;width:60%;height:150%;background:radial-gradient(ellipse,rgba(37,99,235,.08) 0%,transparent 60%);pointer-events:none}
-.cta h2{font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-1px;margin-bottom:16px}
-.cta p{font-size:16px;color:var(--text-muted);max-width:480px;margin:0 auto 36px}
+/* ═══ INTEGRATIONS ═══ */
+.integrations-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+.integration-card{display:flex;align-items:center;gap:16px;padding:20px 24px;background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);transition:all .2s}
+.integration-card:hover{border-color:var(--blue-light);box-shadow:var(--shadow)}
+.integration-card.coming{opacity:.6}
+.integration-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.integration-card h4{font-size:14px;font-weight:600;color:var(--gray-800)}
+.integration-card span{font-size:12px;color:var(--gray-400)}
+.badge-coming{font-size:10px;font-weight:700;color:var(--orange);background:rgba(245,158,11,0.1);padding:2px 8px;border-radius:100px;margin-left:8px}
+
+/* ═══ PRICING ═══ */
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;max-width:1020px;margin:0 auto}
+.pricing-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-xl);padding:36px;position:relative;transition:all .3s}
+.pricing-card.popular{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue),var(--shadow-xl);transform:scale(1.02)}
+.pricing-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;font-size:12px;font-weight:700;padding:4px 16px;border-radius:100px;white-space:nowrap}
+.pricing-name{font-size:18px;font-weight:700;color:var(--gray-900);margin-bottom:4px}
+.pricing-price{margin:20px 0}
+.pricing-price .amount{font-size:48px;font-weight:900;color:var(--gray-900);letter-spacing:-1px}
+.pricing-price .period{font-size:16px;color:var(--gray-400);font-weight:400}
+.pricing-price .free{font-size:48px;font-weight:900;color:var(--green)}
+.pricing-features{list-style:none;margin:24px 0 32px}
+.pricing-features li{display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:14px;color:var(--gray-600)}
+.pricing-features li i{color:var(--green);font-size:14px;margin-top:3px;flex-shrink:0}
+.pricing-cta{width:100%;text-align:center;justify-content:center}
+.pricing-card.popular .pricing-cta{background:var(--blue);box-shadow:0 4px 14px rgba(37,99,235,0.3)}
+.pricing-card.popular .pricing-cta:hover{background:var(--blue-light)}
+
+/* ═══ COMPARISON TABLE ═══ */
+.comparison{overflow-x:auto;margin-top:64px}
+.comparison table{width:100%;border-collapse:collapse;min-width:600px}
+.comparison th{padding:14px 16px;text-align:left;font-size:14px;font-weight:700;color:var(--gray-900);border-bottom:2px solid var(--gray-200);background:var(--gray-50)}
+.comparison th:not(:first-child){text-align:center;min-width:120px}
+.comparison td{padding:12px 16px;font-size:14px;color:var(--gray-600);border-bottom:1px solid var(--gray-100)}
+.comparison td:not(:first-child){text-align:center}
+.comparison tr:hover td{background:var(--blue-soft)}
+.check{color:var(--green);font-weight:700;font-size:16px}
+.dash{color:var(--gray-300);font-size:16px}
+
+/* ═══ TESTIMONIAL ═══ */
+.testimonial{padding:80px 24px;text-align:center;background:var(--navy);color:#fff}
+.testimonial-inner{max-width:700px;margin:0 auto}
+.testimonial-quote{font-size:clamp(20px,2.5vw,26px);font-weight:500;line-height:1.6;margin-bottom:28px;font-style:italic;opacity:.95}
+.testimonial-author{font-size:15px;font-weight:600;opacity:.7}
+.testimonial-stars{margin-bottom:16px;font-size:20px;color:#FBBF24}
+
+/* ═══ FAQ ═══ */
+.faq-list{max-width:700px;margin:0 auto}
+.faq-item{border-bottom:1px solid var(--gray-200)}
+.faq-q{display:flex;align-items:center;justify-content:space-between;padding:20px 0;cursor:pointer;font-size:16px;font-weight:600;color:var(--gray-900);gap:16px;transition:color .2s}
+.faq-q:hover{color:var(--blue)}
+.faq-q i{font-size:14px;color:var(--gray-400);transition:transform .3s}
+.faq-item.open .faq-q i{transform:rotate(180deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s}
+.faq-item.open .faq-a{max-height:300px;padding-bottom:20px}
+.faq-a p{font-size:15px;color:var(--gray-500);line-height:1.7}
+
+/* ═══ CTA SECTION ═══ */
+.cta-section{padding:96px 24px;text-align:center;background:linear-gradient(135deg,var(--gray-50),#fff)}
+.cta-section h2{font-size:clamp(28px,4vw,40px);font-weight:800;color:var(--gray-900);letter-spacing:-0.5px;margin-bottom:16px}
+.cta-section p{font-size:17px;color:var(--gray-500);margin-bottom:36px}
+.cta-section .cta-note{font-size:13px;color:var(--gray-400);margin-top:16px}
 
 /* ═══ FOOTER ═══ */
-footer{padding:48px 0;border-top:1px solid rgba(255,255,255,.06);text-align:center}
-footer p{font-size:13px;color:var(--text-dim);font-weight:500}
-footer a{color:var(--text-muted);text-decoration:none}
-footer a:hover{color:#fff}
+.footer{background:var(--gray-900);color:#fff;padding:64px 24px 32px}
+.footer-inner{max-width:1100px;margin:0 auto}
+.footer-grid{display:grid;grid-template-columns:2fr repeat(3,1fr);gap:48px;margin-bottom:48px}
+.footer-brand .footer-logo{font-size:20px;font-weight:800;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.footer-brand p{font-size:14px;color:rgba(255,255,255,0.5);line-height:1.6;max-width:280px}
+.footer-col h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.4);margin-bottom:16px}
+.footer-col a{display:block;font-size:14px;color:rgba(255,255,255,0.7);padding:4px 0;transition:color .2s}
+.footer-col a:hover{color:#fff}
+.footer-bottom{display:flex;align-items:center;justify-content:space-between;padding-top:32px;border-top:1px solid rgba(255,255,255,0.1)}
+.footer-copyright{font-size:13px;color:rgba(255,255,255,0.4)}
+.footer-social{display:flex;gap:16px}
+.footer-social a{color:rgba(255,255,255,0.4);font-size:18px;transition:color .2s}
+.footer-social a:hover{color:#fff}
 
 /* ═══ RESPONSIVE ═══ */
 @media(max-width:768px){
-  .hero-stats{gap:24px;flex-wrap:wrap}
-  .hero-stat-value{font-size:28px}
-  .preview-body{grid-template-columns:1fr}
-  .nav-links .nav-link:not(.nav-cta){display:none}
+  .nav-links{display:none}
+  .mobile-toggle{display:block}
+  .hero{padding:120px 20px 60px}
+  .hero-stats{flex-direction:column;gap:16px}
+  .hero-stat+.hero-stat{border-left:none;padding-left:0;border-top:1px solid var(--gray-200);padding-top:16px}
+  .mockup-body{grid-template-columns:1fr}
   .features-grid{grid-template-columns:1fr}
-  .cta-box{padding:48px 24px}
+  .pricing-grid{grid-template-columns:1fr;max-width:400px;margin:0 auto}
+  .pricing-card.popular{transform:none}
+  .footer-grid{grid-template-columns:1fr 1fr;gap:32px}
+  .footer-bottom{flex-direction:column;gap:16px;text-align:center}
+  .steps{grid-template-columns:1fr 1fr}
 }
+@media(max-width:480px){
+  .steps{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr}
+}
+
+/* Animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.animate{opacity:0;animation:fadeUp .6s cubic-bezier(.16,1,.3,1) forwards}
+.animate.d1{animation-delay:.1s}.animate.d2{animation-delay:.2s}.animate.d3{animation-delay:.3s}.animate.d4{animation-delay:.4s}
 </style>
 </head>
 <body>
 
-<nav id="nav">
-  <div class="container">
-    <div class="nav-inner">
-      <a href="/" class="nav-brand">
-        <div class="nav-logo">✿</div>
-        <div class="nav-name">Flores</div>
-      </a>
-      <div class="nav-links">
-        <a href="#features" class="nav-link">Features</a>
-        <a href="#preview" class="nav-link">Preview</a>
-        <a href="/login" class="nav-link">Login</a>
-        <a href="/login" class="nav-link nav-cta">Start Free Trial</a>
-      </div>
+<!-- ═══ NAVIGATION ═══ -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo"><span>🌸</span> Flores</a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#integrations">Integrations</a>
+      <a href="#faq">Resources</a>
+      <a href="/login">Login</a>
     </div>
+    <div class="nav-actions">
+      <a href="/login" class="nav-login">Login</a>
+      <a href="/register" class="btn-primary">Start Free Trial</a>
+    </div>
+    <button class="mobile-toggle" id="mobileToggle"><i class="fas fa-bars"></i></button>
   </div>
 </nav>
 
+<!-- ═══ HERO ═══ -->
 <section class="hero">
-  <div class="container">
-    <div class="hero-badge"><i class="fas fa-bolt"></i> Now with AI-Powered Insights & Real Profit Tracking</div>
-    <h1>Your Facebook Ads<br>Command Center</h1>
-    <p>Flores connects your Meta Ads, WooCommerce stores, and creatives into one intelligent dashboard — so you see real profit, not vanity metrics.</p>
-    <div class="hero-actions">
-      <a href="/login" class="btn btn-primary"><i class="fas fa-rocket"></i> Start Free Trial</a>
-      <a href="#features" class="btn btn-secondary"><i class="fas fa-play"></i> See Features</a>
+  <div class="hero-inner">
+    <div class="hero-badge animate"><i class="fas fa-bolt"></i> Now with AI-Powered Analysis</div>
+    <h1 class="animate d1">The Command Center for <span class="highlight">Facebook Ads</span></h1>
+    <p class="hero-subtitle animate d2">
+      Stop guessing, start scaling. Flores connects your Facebook Ads, WooCommerce stores, and creative assets into one powerful dashboard — giving you real profit data, AI-driven insights, and the tools to manage campaigns across multiple markets in minutes, not hours.
+    </p>
+    <div class="hero-actions animate d3">
+      <a href="/register" class="btn-primary btn-lg"><i class="fas fa-rocket"></i> Start 30-Day Free Trial</a>
+      <a href="#demo" class="btn-secondary btn-lg"><i class="fas fa-play-circle"></i> Book a Demo</a>
     </div>
-    <div class="hero-stats">
-      <div class="hero-stat">
-        <div class="hero-stat-value">7</div>
-        <div class="hero-stat-label">Countries tracked</div>
+    <div class="hero-stats animate d4">
+      <div class="hero-stat"><div class="val">7</div><div class="label">Markets</div></div>
+      <div class="hero-stat"><div class="val">500+</div><div class="label">Campaigns Managed</div></div>
+      <div class="hero-stat"><div class="val">€35K+</div><div class="label">Monthly Spend Managed</div></div>
+      <div class="hero-stat"><div class="val">70%</div><div class="label">Time Saved</div></div>
+    </div>
+  </div>
+
+  <!-- Product Mockup -->
+  <div class="product-mockup animate d4">
+    <div class="mockup-window">
+      <div class="mockup-toolbar">
+        <div class="mockup-dot r"></div><div class="mockup-dot y"></div><div class="mockup-dot g"></div>
+        <div class="mockup-url">flores.noriks.com/app</div>
       </div>
-      <div class="hero-stat">
-        <div class="hero-stat-value">€2M+</div>
-        <div class="hero-stat-label">Ad spend managed</div>
-      </div>
-      <div class="hero-stat">
-        <div class="hero-stat-value">24/7</div>
-        <div class="hero-stat-label">Real-time sync</div>
-      </div>
-      <div class="hero-stat">
-        <div class="hero-stat-value">AI</div>
-        <div class="hero-stat-label">Strategy advisor</div>
+      <div class="mockup-body">
+        <div class="mock-card">
+          <div class="mock-card-title">Today's Spend</div>
+          <div class="mock-card-value">€847</div>
+          <div class="mock-card-sub"><i class="fas fa-arrow-up"></i> 12% vs yesterday</div>
+        </div>
+        <div class="mock-card">
+          <div class="mock-card-title">Orders (WooCommerce)</div>
+          <div class="mock-card-value">64</div>
+          <div class="mock-card-sub"><i class="fas fa-arrow-up"></i> 8 more than avg</div>
+        </div>
+        <div class="mock-card">
+          <div class="mock-card-title">Avg. CPA</div>
+          <div class="mock-card-value">€13.23</div>
+          <div class="mock-card-sub"><i class="fas fa-check-circle"></i> Below target</div>
+        </div>
+        <div class="mock-chart">
+          <div class="mock-chart-title">7-Day Spend vs Profit</div>
+          <div class="mock-bars">
+            <div class="mock-bar blue" style="height:60%"></div><div class="mock-bar navy" style="height:45%"></div>
+            <div class="mock-bar blue" style="height:75%"></div><div class="mock-bar navy" style="height:55%"></div>
+            <div class="mock-bar blue" style="height:55%"></div><div class="mock-bar navy" style="height:40%"></div>
+            <div class="mock-bar blue" style="height:80%"></div><div class="mock-bar navy" style="height:65%"></div>
+            <div class="mock-bar blue" style="height:70%"></div><div class="mock-bar navy" style="height:60%"></div>
+            <div class="mock-bar blue" style="height:90%"></div><div class="mock-bar navy" style="height:72%"></div>
+            <div class="mock-bar blue" style="height:85%"></div><div class="mock-bar navy" style="height:68%"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<section class="features" id="features">
-  <div class="container">
-    <div class="section-label">Features</div>
-    <div class="section-title">Everything you need to scale profitably</div>
-    <div class="section-sub">From campaign management to AI recommendations — all the tools an e-commerce advertiser needs in one place.</div>
+<!-- ═══ TRUSTED BY ═══ -->
+<section class="trusted">
+  <div class="trusted-label">Powering Performance Marketing Across Europe</div>
+  <div class="trusted-flags">
+    <div class="flag-item"><span>🇭🇷</span> Croatia</div>
+    <div class="flag-item"><span>🇨🇿</span> Czechia</div>
+    <div class="flag-item"><span>🇵🇱</span> Poland</div>
+    <div class="flag-item"><span>🇬🇷</span> Greece</div>
+    <div class="flag-item"><span>🇸🇰</span> Slovakia</div>
+    <div class="flag-item"><span>🇮🇹</span> Italy</div>
+    <div class="flag-item"><span>🇭🇺</span> Hungary</div>
+  </div>
+  <div class="trusted-sub">Expanding to 15+ markets in 2026</div>
+</section>
+
+<!-- ═══ FEATURES ═══ -->
+<section class="section" id="features">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-label">Features</div>
+      <h2 class="section-title">Everything you need to dominate paid advertising</h2>
+      <p class="section-desc">From real-time dashboards to AI-powered analysis — Flores gives performance marketers superpowers across every market they operate in.</p>
+    </div>
     <div class="features-grid">
       <div class="feature-card">
-        <div class="feature-icon fi-blue"><i class="fas fa-chart-line"></i></div>
-        <h3>Real Profit Tracking</h3>
-        <p>See actual WooCommerce profit per campaign, per creative, per country — not just ROAS guesswork. Every order attributed to its source.</p>
+        <div class="feature-icon blue"><i class="fas fa-chart-line"></i></div>
+        <h3>Real-Time Dashboard</h3>
+        <p>Monitor every KPI that matters — spend, CPA, ROAS, profit — all in real time. See daily trends, compare performance by country, and identify problems before they drain your budget. Designed for performance marketers who need answers fast.</p>
       </div>
       <div class="feature-card">
-        <div class="feature-icon fi-purple"><i class="fas fa-robot"></i></div>
-        <h3>AI Strategy Advisor</h3>
-        <p>Get instant recommendations: what to scale, what to pause, which creatives are fatigued. Powered by GPT-4 with your real data.</p>
+        <div class="feature-icon purple"><i class="fas fa-robot"></i></div>
+        <h3>AI Media Buyer — Dominik</h3>
+        <p>Chat with an AI analyst that actually knows your campaigns. Powered by Claude Sonnet, Dominik analyzes your data, suggests optimizations, and gives you specific actions: "Pause adset X", "Scale campaign Y by 20%". Like having a senior media buyer on call 24/7.</p>
       </div>
       <div class="feature-card">
-        <div class="feature-icon fi-green"><i class="fas fa-bullhorn"></i></div>
-        <h3>Ads Manager Pro</h3>
-        <p>Drill down from campaigns → ad sets → ads. Sort, filter, and compare with multi-period profit columns. Bulk create campaigns in seconds.</p>
+        <div class="feature-icon orange"><i class="fas fa-fire-flame-curved"></i></div>
+        <h3>Creative Fatigue Detection</h3>
+        <p>Creatives don't die suddenly — they fade. Flores monitors Facebook frequency metrics, CTR trends, and CPA spikes to detect fatigue before it kills your performance. Get automatic severity alerts (low, medium, high) so you always know when to rotate.</p>
       </div>
       <div class="feature-card">
-        <div class="feature-icon fi-pink"><i class="fas fa-palette"></i></div>
-        <h3>Creative Intelligence</h3>
-        <p>Track every creative ID across all countries. See which visuals drive the most profit and catch fatigue before it hurts performance.</p>
+        <div class="feature-icon green"><i class="fas fa-layer-group"></i></div>
+        <h3>Bulk Campaign Creator</h3>
+        <p>Launch campaigns across 7+ countries in minutes. Define your creative, targeting, and budget — Flores creates the full campaign structure (campaign → adset → ad) via the Meta API. What used to take half a day now takes 10 minutes.</p>
       </div>
       <div class="feature-card">
-        <div class="feature-icon fi-blue"><i class="fas fa-sitemap"></i></div>
-        <h3>Order Attribution</h3>
-        <p>See exactly where every order comes from: Facebook measured, FB unmeasured, Google, Klaviyo, direct, or call center.</p>
+        <div class="feature-icon pink"><i class="fas fa-film"></i></div>
+        <h3>Video Creative Library</h3>
+        <p>Browse your entire Dropbox creative library from within Flores. Preview videos inline, filter by country, product type, or creative ID. No more switching between tools — see which creatives are live and how they perform, all in one view.</p>
       </div>
       <div class="feature-card">
-        <div class="feature-icon fi-purple"><i class="fas fa-video"></i></div>
-        <h3>Video Library</h3>
-        <p>Browse all your creatives from Dropbox with instant preview, search by ID, country, or type. Never lose track of a creative again.</p>
+        <div class="feature-icon navy"><i class="fas fa-coins"></i></div>
+        <h3>Profit Intelligence</h3>
+        <p>Forget Facebook's vanity metrics. Flores pulls real WooCommerce order data, calculates true profit per country including product costs, shipping, VAT, and rejection rates. Know your actual CPA and ROAS — not what Meta wants you to believe.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon blue"><i class="fas fa-palette"></i></div>
+        <h3>Creative Reporting</h3>
+        <p>See how each creative ID performs across all markets. Compare spend, purchases, CPA, and CTR for every creative variant. Identify your top performers and your dead weight — broken down by country so you know where each creative works best.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon green"><i class="fas fa-sliders"></i></div>
+        <h3>Campaign Optimizer</h3>
+        <p>Drill down from campaign to adset to individual ad level. Country-level campaign management with full visibility into what's working and what isn't. One-click recommendations for pause, scale, or adjust decisions powered by your real data.</p>
       </div>
     </div>
   </div>
 </section>
 
-<section class="preview" id="preview">
-  <div class="container">
-    <div class="section-label">Dashboard</div>
-    <div class="section-title">Your daily command center</div>
-    <div class="section-sub">See everything that matters at a glance — spend, orders, profit, alerts, and top performers.</div>
-    <div class="preview-window">
-      <div class="preview-bar">
-        <div class="preview-dots">
-          <div class="preview-dot dot-red"></div>
-          <div class="preview-dot dot-yellow"></div>
-          <div class="preview-dot dot-green"></div>
-        </div>
-        <div class="preview-url">flores.noriks.com/app</div>
-        <div style="width:44px"></div>
+<!-- ═══ HOW IT WORKS ═══ -->
+<section class="section section-alt">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-label">How It Works</div>
+      <h2 class="section-title">Up and running in under 5 minutes</h2>
+      <p class="section-desc">No complex onboarding. No consultants. Connect your accounts and start making better decisions immediately.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>Connect Ad Accounts</h3>
+        <p>Link your Facebook Ad accounts with one click via OAuth. Takes less than 2 minutes to authenticate.</p>
       </div>
-      <div class="preview-body">
-        <div class="preview-kpi">
-          <div class="preview-kpi-label">Today's Spend</div>
-          <div class="preview-kpi-value">€1,247</div>
-          <div class="preview-kpi-change pk-green">↑ 12% vs yesterday</div>
-        </div>
-        <div class="preview-kpi">
-          <div class="preview-kpi-label">Today's Orders</div>
-          <div class="preview-kpi-value">87</div>
-          <div class="preview-kpi-change pk-green">↑ 8% vs yesterday</div>
-        </div>
-        <div class="preview-kpi">
-          <div class="preview-kpi-label">Today's Profit</div>
-          <div class="preview-kpi-value" style="color:#10b981">€412</div>
-          <div class="preview-kpi-change pk-green">↑ 23% vs yesterday</div>
-        </div>
-        <div class="preview-kpi">
-          <div class="preview-kpi-label">CPA</div>
-          <div class="preview-kpi-value">€14.33</div>
-          <div class="preview-kpi-change pk-green">↓ 5% vs yesterday</div>
-        </div>
-        <div class="preview-kpi">
-          <div class="preview-kpi-label">Active Campaigns</div>
-          <div class="preview-kpi-value">24</div>
-          <div class="preview-kpi-change" style="color:var(--text-dim)">across 7 countries</div>
-        </div>
-        <div class="preview-kpi">
-          <div class="preview-kpi-label">Alerts</div>
-          <div class="preview-kpi-value" style="color:#f59e0b">3</div>
-          <div class="preview-kpi-change pk-red">campaigns need attention</div>
-        </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>Sync Everything</h3>
+        <p>Flores automatically syncs your campaigns, creatives, and WooCommerce orders. Real data, real time.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>Get Insights</h3>
+        <p>See actionable insights immediately — scale winners, kill losers, and spot expansion opportunities across markets.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">4</div>
+        <h3>Ask the AI</h3>
+        <p>Use Dominik to analyze complex scenarios, generate reports, and get specific campaign recommendations in seconds.</p>
       </div>
     </div>
   </div>
 </section>
 
-<section class="cta">
-  <div class="container">
-    <div class="cta-box">
-      <h2>Ready to see your real profit?</h2>
-      <p>Stop guessing. Start knowing exactly which campaigns, creatives, and countries are making you money.</p>
-      <a href="/login" class="btn btn-primary" style="font-size:16px;padding:16px 40px"><i class="fas fa-rocket"></i> Start Free Trial</a>
+<!-- ═══ INTEGRATIONS ═══ -->
+<section class="section" id="integrations">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-label">Integrations</div>
+      <h2 class="section-title">Connects with your entire stack</h2>
+      <p class="section-desc">Flores integrates with the platforms you already use, pulling data together so you never have to tab-switch again.</p>
+    </div>
+    <div class="integrations-grid">
+      <div class="integration-card">
+        <div class="integration-icon" style="background:#1877F2;color:#fff;border-radius:10px"><i class="fab fa-facebook-f"></i></div>
+        <div><h4>Facebook Marketing API</h4><span>Campaigns, Adsets, Ads, Insights</span></div>
+      </div>
+      <div class="integration-card">
+        <div class="integration-icon" style="background:#7B2D8E;color:#fff;border-radius:10px"><i class="fab fa-wordpress"></i></div>
+        <div><h4>WooCommerce</h4><span>Orders, Revenue, Profit Tracking</span></div>
+      </div>
+      <div class="integration-card">
+        <div class="integration-icon" style="background:#0061FF;color:#fff;border-radius:10px"><i class="fab fa-dropbox"></i></div>
+        <div><h4>Dropbox</h4><span>Creative Storage & Preview</span></div>
+      </div>
+      <div class="integration-card">
+        <div class="integration-icon" style="background:var(--navy);color:#fff;border-radius:10px"><i class="fas fa-brain"></i></div>
+        <div><h4>OpenClaw AI</h4><span>Claude Sonnet — AI Analysis</span></div>
+      </div>
+      <div class="integration-card">
+        <div class="integration-icon" style="background:#1877F2;color:#fff;border-radius:10px"><i class="fab fa-facebook"></i></div>
+        <div><h4>Meta Business Suite</h4><span>Pages, Pixels, Business Manager</span></div>
+      </div>
+      <div class="integration-card coming">
+        <div class="integration-icon" style="background:#E37400;color:#fff;border-radius:10px"><i class="fas fa-chart-bar"></i></div>
+        <div><h4>Google Analytics <span class="badge-coming">Coming Soon</span></h4><span>Traffic Attribution</span></div>
+      </div>
+      <div class="integration-card coming">
+        <div class="integration-icon" style="background:#96BF48;color:#fff;border-radius:10px"><i class="fab fa-shopify"></i></div>
+        <div><h4>Shopify <span class="badge-coming">Coming Soon</span></h4><span>Orders & Revenue Sync</span></div>
+      </div>
+      <div class="integration-card coming">
+        <div class="integration-icon" style="background:#000;color:#fff;border-radius:10px"><i class="fab fa-tiktok"></i></div>
+        <div><h4>TikTok Ads <span class="badge-coming">Coming Soon</span></h4><span>Campaign Management</span></div>
+      </div>
     </div>
   </div>
 </section>
 
-<footer>
-  <div class="container">
-    <p>© 2026 <a href="/">Flores</a> by Noriks — Ad Intelligence Platform &nbsp;·&nbsp; <a href="/login">Login</a></p>
+<!-- ═══ PRICING ═══ -->
+<section class="section section-alt" id="pricing">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-label">Pricing</div>
+      <h2 class="section-title">Simple, transparent pricing</h2>
+      <p class="section-desc">Start free, upgrade when you're ready. No hidden fees, no surprises. Cancel anytime.</p>
+    </div>
+    <div class="pricing-grid">
+      <!-- Starter -->
+      <div class="pricing-card">
+        <div class="pricing-name">Starter</div>
+        <div style="font-size:14px;color:var(--gray-500)">For solo marketers getting started</div>
+        <div class="pricing-price"><span class="free">Free</span></div>
+        <ul class="pricing-features">
+          <li><i class="fas fa-check"></i> 1 ad account</li>
+          <li><i class="fas fa-check"></i> Basic dashboard</li>
+          <li><i class="fas fa-check"></i> Creative reporting</li>
+          <li><i class="fas fa-check"></i> 5 AI queries per day</li>
+          <li><i class="fas fa-check"></i> 1 WooCommerce store</li>
+          <li><i class="fas fa-check"></i> Community support</li>
+        </ul>
+        <a href="/register" class="btn-secondary pricing-cta">Get Started Free</a>
+      </div>
+      <!-- Pro -->
+      <div class="pricing-card popular">
+        <div class="pricing-badge">Most Popular</div>
+        <div class="pricing-name">Pro</div>
+        <div style="font-size:14px;color:var(--gray-500)">For growing brands & agencies</div>
+        <div class="pricing-price"><span class="amount">€49</span><span class="period">/month</span></div>
+        <ul class="pricing-features">
+          <li><i class="fas fa-check"></i> Unlimited ad accounts</li>
+          <li><i class="fas fa-check"></i> Full dashboard + optimizer</li>
+          <li><i class="fas fa-check"></i> Bulk campaign creator</li>
+          <li><i class="fas fa-check"></i> Video creative library</li>
+          <li><i class="fas fa-check"></i> Unlimited AI queries</li>
+          <li><i class="fas fa-check"></i> Creative fatigue alerts</li>
+          <li><i class="fas fa-check"></i> Unlimited WooCommerce stores</li>
+          <li><i class="fas fa-check"></i> CSV export</li>
+          <li><i class="fas fa-check"></i> Priority email support</li>
+        </ul>
+        <a href="/register" class="btn-primary pricing-cta">Start 30-Day Free Trial</a>
+      </div>
+      <!-- Enterprise -->
+      <div class="pricing-card">
+        <div class="pricing-name">Enterprise</div>
+        <div style="font-size:14px;color:var(--gray-500)">For large operations & agencies</div>
+        <div class="pricing-price"><span class="amount">€199</span><span class="period">/month</span></div>
+        <ul class="pricing-features">
+          <li><i class="fas fa-check"></i> Everything in Pro</li>
+          <li><i class="fas fa-check"></i> Multi-tenant / team management</li>
+          <li><i class="fas fa-check"></i> API access</li>
+          <li><i class="fas fa-check"></i> Custom integrations</li>
+          <li><i class="fas fa-check"></i> Dedicated account manager</li>
+          <li><i class="fas fa-check"></i> SLA guarantee</li>
+          <li><i class="fas fa-check"></i> Custom reporting</li>
+          <li><i class="fas fa-check"></i> White-label option</li>
+        </ul>
+        <a href="#demo" class="btn-secondary pricing-cta">Contact Sales</a>
+      </div>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="comparison">
+      <table>
+        <thead>
+          <tr><th>Feature</th><th>Starter</th><th>Pro</th><th>Enterprise</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Ad Accounts</td><td>1</td><td>Unlimited</td><td>Unlimited</td></tr>
+          <tr><td>Real-Time Dashboard</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Creative Reporting</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>AI Analyst (Dominik)</td><td>5/day</td><td>Unlimited</td><td>Unlimited</td></tr>
+          <tr><td>WooCommerce Integration</td><td>1 store</td><td>Unlimited</td><td>Unlimited</td></tr>
+          <tr><td>Campaign Optimizer</td><td><span class="dash">—</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Bulk Campaign Creator</td><td><span class="dash">—</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Video Creative Library</td><td><span class="dash">—</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Creative Fatigue Alerts</td><td><span class="dash">—</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>CSV Export</td><td><span class="dash">—</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Profit Intelligence</td><td>Basic</td><td>Full</td><td>Full + Custom</td></tr>
+          <tr><td>Team Management</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>API Access</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>White-Label</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Support</td><td>Community</td><td>Priority Email</td><td>Dedicated Manager</td></tr>
+          <tr><td>SLA</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td><span class="check">✓</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TESTIMONIAL ═══ -->
+<section class="testimonial">
+  <div class="testimonial-inner">
+    <div class="testimonial-stars">★★★★★</div>
+    <p class="testimonial-quote">"Flores reduced our campaign management time by 70% and improved ROAS by 40% across all markets. We went from spending half a day on reports to having everything in one dashboard with real profit data."</p>
+    <div class="testimonial-author">— Noriks Marketing Team</div>
+  </div>
+</section>
+
+<!-- ═══ FAQ ═══ -->
+<section class="section" id="faq">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-label">FAQ</div>
+      <h2 class="section-title">Frequently asked questions</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q">What is Flores? <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a"><p>Flores is an all-in-one Facebook Ads management platform designed for e-commerce brands running campaigns across multiple countries. It combines real-time campaign data, WooCommerce profit tracking, creative management, and AI-powered analysis into a single dashboard — replacing the need to jump between Facebook Ads Manager, spreadsheets, and analytics tools.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">How does the AI analyst (Dominik) work? <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a"><p>Dominik is an AI media buyer powered by Claude Sonnet. It has access to your real campaign data — spend, CPA, orders, profit — and can analyze performance, suggest optimizations, and answer questions about your campaigns. It's like having a senior strategist available 24/7 who knows every detail of your account.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Which countries are supported? <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a"><p>Flores supports any country where you run Facebook Ads and have a WooCommerce store. It's currently used across Croatia, Czech Republic, Poland, Greece, Slovakia, Italy, and Hungary — with easy expansion to any new market. Simply add your country configuration and you're ready to go.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Can I connect multiple ad accounts? <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a"><p>Yes — the Pro and Enterprise plans support unlimited ad accounts. You can connect all your Facebook Ad accounts and see aggregated data across your entire operation. The Starter plan includes 1 ad account to get you started.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">What happens after the free trial? <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a"><p>After your 30-day free trial of Pro features, you can choose to upgrade to Pro (€49/month) or Enterprise (€199/month). If you don't upgrade, your account automatically moves to the Starter plan — you keep access to your dashboard and data, just with limited features. No credit card required to start.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Is my data secure? <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a"><p>Absolutely. Your Facebook tokens and WooCommerce credentials are encrypted and stored securely. Flores uses HTTPS for all connections, follows OAuth best practices for Meta integration, and never shares your data with third parties. Each organization's data is completely isolated in our multi-tenant architecture.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Do I need technical knowledge to set up Flores? <i class="fas fa-chevron-down"></i></div>
+        <div class="faq-a"><p>Not at all. Setting up takes under 5 minutes: sign up, connect your Facebook account with one click, add your WooCommerce store credentials, and you're live. No coding, no API knowledge, no consultants needed.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA ═══ -->
+<section class="cta-section">
+  <h2>Ready to transform your ad performance?</h2>
+  <p>Join marketers who've cut campaign management time by 70% and improved ROAS across every market.</p>
+  <a href="/register" class="btn-primary btn-lg"><i class="fas fa-rocket"></i> Start Your 30-Day Free Trial</a>
+  <div class="cta-note">No credit card required · Cancel anytime · Full Pro features for 30 days</div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="footer-logo">🌸 Flores</div>
+        <p>The command center for Facebook Ads. Manage campaigns, track real profit, and scale with AI — all from one dashboard.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#integrations">Integrations</a>
+        <a href="#faq">FAQ</a>
+        <a href="#">Changelog</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="#">About</a>
+        <a href="#">Blog</a>
+        <a href="#">Careers</a>
+        <a href="#">Contact</a>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">Cookie Policy</a>
+        <a href="#">GDPR</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copyright">© 2026 Flores by Noriks. All rights reserved.</div>
+      <div class="footer-social">
+        <a href="#"><i class="fab fa-twitter"></i></a>
+        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+        <a href="#"><i class="fab fa-github"></i></a>
+      </div>
+    </div>
   </div>
 </footer>
 
 <script>
-// Navbar scroll effect
-window.addEventListener('scroll',()=>{
-  document.getElementById('nav').classList.toggle('scrolled',window.scrollY>40);
+// Sticky nav scroll effect
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 20);
 });
-// Smooth scroll
-document.querySelectorAll('a[href^="#"]').forEach(a=>{
-  a.addEventListener('click',e=>{
-    e.preventDefault();
-    const t=document.querySelector(a.getAttribute('href'));
-    if(t)t.scrollIntoView({behavior:'smooth',block:'start'});
+
+// FAQ toggle
+document.querySelectorAll('.faq-q').forEach(q => {
+  q.addEventListener('click', () => {
+    const item = q.parentElement;
+    document.querySelectorAll('.faq-item').forEach(i => { if (i !== item) i.classList.remove('open'); });
+    item.classList.toggle('open');
   });
+});
+
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  });
+});
+
+// Animate on scroll (IntersectionObserver)
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(0)'; } });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.feature-card, .step, .integration-card, .pricing-card').forEach(el => {
+  el.style.opacity = '0'; el.style.transform = 'translateY(20px)'; el.style.transition = 'opacity .5s, transform .5s';
+  observer.observe(el);
+});
+
+// Mobile menu
+const toggle = document.getElementById('mobileToggle');
+toggle.addEventListener('click', () => {
+  const links = document.querySelector('.nav-links');
+  links.style.display = links.style.display === 'flex' ? 'none' : 'flex';
+  links.style.position = 'absolute'; links.style.top = '72px'; links.style.left = '0'; links.style.right = '0';
+  links.style.background = '#fff'; links.style.flexDirection = 'column'; links.style.padding = '16px 24px';
+  links.style.borderBottom = '1px solid var(--gray-200)'; links.style.boxShadow = 'var(--shadow-lg)';
 });
 </script>
 </body>

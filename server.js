@@ -308,20 +308,159 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read);
 `);
 
+// ═══ ORGANIZATIONS TABLE ═══
+db.exec(`
+  CREATE TABLE IF NOT EXISTS organizations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    plan TEXT DEFAULT 'trial',
+    trial_end TEXT,
+    stripe_customer_id TEXT,
+    max_accounts INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    active INTEGER DEFAULT 1
+  );
+`);
+
+// ═══ ORG SETTINGS TABLE ═══
+db.exec(`
+  CREATE TABLE IF NOT EXISTS org_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    org_id INTEGER NOT NULL,
+    category TEXT NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT,
+    UNIQUE(org_id, category, key)
+  );
+  CREATE INDEX IF NOT EXISTS idx_org_settings ON org_settings(org_id, category);
+`);
+
+// Seed Noriks as org_id=1 if not exists
+try {
+  const orgCount = db.prepare('SELECT COUNT(*) as cnt FROM organizations').get();
+  if (orgCount.cnt === 0) {
+    db.prepare("INSERT INTO organizations (name, plan, trial_end, active) VALUES (?, ?, NULL, 1)").run('Noriks', 'enterprise');
+  }
+} catch(e) { console.error('Org seed error:', e.message); }
+
 // Seed default admin user if no users exist
 try {
   const userCount = db.prepare('SELECT COUNT(*) as cnt FROM flores_users').get();
   if (userCount.cnt === 0) {
     const hash = crypto.createHash('sha256').update('noriks').digest('hex');
-    db.prepare('INSERT INTO flores_users (username, password_hash, role, display_name) VALUES (?, ?, ?, ?)').run('noriks', hash, 'admin', 'Noriks Admin');
+    db.prepare('INSERT INTO flores_users (username, password_hash, role, display_name) VALUES (?, ?, ?, ?)').run('noriks', hash, 'super_admin', 'Noriks Admin');
   }
 } catch(e) { console.error('User seed error:', e.message); }
 
+// Upgrade existing noriks user to super_admin if still admin
+try { db.exec("UPDATE flores_users SET role = 'super_admin' WHERE username = 'noriks' AND role = 'admin'"); } catch(e) {}
+
 // Add org_id column for multi-tenant prep
 try { db.exec("ALTER TABLE flores_users ADD COLUMN org_id INTEGER DEFAULT 1"); } catch(e) { /* exists */ }
+try { db.exec("ALTER TABLE flores_users ADD COLUMN email TEXT"); } catch(e) { /* exists */ }
 try { db.exec("ALTER TABLE flores_settings ADD COLUMN org_id INTEGER DEFAULT 1"); } catch(e) { /* exists */ }
 try { db.exec("ALTER TABLE activity_log ADD COLUMN org_id INTEGER DEFAULT 1"); } catch(e) { /* exists */ }
 try { db.exec("ALTER TABLE notifications ADD COLUMN org_id INTEGER DEFAULT 1"); } catch(e) { /* exists */ }
+
+// ═══ SEED NORIKS ORG SETTINGS ═══
+function seedOrgSettings() {
+  const upsertSetting = db.prepare('INSERT INTO org_settings (org_id, category, key, value) VALUES (?, ?, ?, ?) ON CONFLICT(org_id, category, key) DO UPDATE SET value = excluded.value');
+  const existingCount = db.prepare('SELECT COUNT(*) as cnt FROM org_settings WHERE org_id = 1').get().cnt;
+  if (existingCount > 0) return; // already seeded
+
+  db.transaction(() => {
+    // Countries
+    const countries = ['HR','CZ','PL','GR','SK','IT','HU'];
+    upsertSetting.run(1, 'countries', 'active', JSON.stringify(countries));
+
+    // WC Stores
+    const wcStores = {
+      HR: { url: 'https://noriks.com/hr', ck: 'ck_ff08e90a8ff90be9f7fdfe7badfd4fdaa456d86b', cs: 'cs_0c36e01e44e488ae9d8a931b591a4d52584d975f' },
+      CZ: { url: 'https://noriks.com/cz', ck: 'ck_396d624acec5f7a46dfcfa7d2a74b95c82b38962', cs: 'cs_2a69c7ad4a4d118a2b8abdf44abdd058c9be9115' },
+      PL: { url: 'https://noriks.com/pl', ck: 'ck_8fd83582ada887d0e586a04bf870d43634ca8f2c', cs: 'cs_f1bf98e46a3ae0623c5f2f9fcf7c2478240c5115' },
+      GR: { url: 'https://noriks.com/gr', ck: 'ck_2595568b83966151e08031e42388dd1c34307107', cs: 'cs_dbd091b4fc11091638f8ec4c838483be32cfb15b' },
+      SK: { url: 'https://noriks.com/sk', ck: 'ck_1abaeb006bb9039da0ad40f00ab674067ff1d978', cs: 'cs_32b33bc2716b07a738ff18eb377a767ef60edfe7' },
+      IT: { url: 'https://noriks.com/it', ck: 'ck_84a1e1425710ff9eeed69b100ed9ac445efc39e2', cs: 'cs_81d25dcb0371773387da4d30482afc7ce83d1b3e' },
+      HU: { url: 'https://noriks.com/hu', ck: 'ck_e591c2a0bf8c7a59ec5893e03adde3c760fbdaae', cs: 'cs_d84113ee7a446322d191be0725c0c92883c984c3' }
+    };
+    for (const [cc, store] of Object.entries(wcStores)) {
+      upsertSetting.run(1, 'wc_stores', cc, JSON.stringify(store));
+    }
+
+    // Meta API
+    upsertSetting.run(1, 'meta_api', 'access_token', META_TOKEN);
+    upsertSetting.run(1, 'meta_api', 'ad_accounts', JSON.stringify(Object.values(AD_ACCOUNTS_MAP)));
+    upsertSetting.run(1, 'meta_api', 'page_id', NORIKS_PAGE_ID);
+    upsertSetting.run(1, 'meta_api', 'page_access_token', NORIKS_PAGE_TOKEN);
+
+    // Product Costs
+    upsertSetting.run(1, 'product_costs', 'tshirt', '3.50');
+    upsertSetting.run(1, 'product_costs', 'boxers', '2.25');
+
+    // Rejection Rates (%)
+    const rejections = { HR: 15, CZ: 15, PL: 15, SK: 15, HU: 15, GR: 25, IT: 25 };
+    for (const [cc, rate] of Object.entries(rejections)) {
+      upsertSetting.run(1, 'rejection_rates', cc, String(rate));
+    }
+
+    // Shipping Costs (EUR)
+    const shipping = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 5.5 };
+    for (const [cc, cost] of Object.entries(shipping)) {
+      upsertSetting.run(1, 'shipping_costs', cc, String(cost));
+    }
+
+    // VAT Rates (%)
+    const vat = { HR: 25, CZ: 21, PL: 23, GR: 24, IT: 22, HU: 27, SK: 23 };
+    for (const [cc, rate] of Object.entries(vat)) {
+      upsertSetting.run(1, 'vat_rates', cc, String(rate));
+    }
+  })();
+  console.log('[FLORES] Seeded Noriks org settings');
+}
+try { seedOrgSettings(); } catch(e) { console.error('Seed org settings error:', e.message); }
+
+// ═══ ORG SETTINGS HELPERS ═══
+function getOrgSettings(orgId, category) {
+  const rows = db.prepare('SELECT key, value FROM org_settings WHERE org_id = ? AND category = ?').all(orgId, category);
+  const result = {};
+  for (const r of rows) {
+    try { result[r.key] = JSON.parse(r.value); } catch { result[r.key] = r.value; }
+  }
+  return result;
+}
+
+function getOrgSetting(orgId, category, key) {
+  const row = db.prepare('SELECT value FROM org_settings WHERE org_id = ? AND category = ? AND key = ?').get(orgId, category, key);
+  if (!row) return null;
+  try { return JSON.parse(row.value); } catch { return row.value; }
+}
+
+function getOrgWcStores(orgId) {
+  const settings = getOrgSettings(orgId, 'wc_stores');
+  const stores = {};
+  for (const [cc, val] of Object.entries(settings)) {
+    if (typeof val === 'object' && val.url) stores[cc] = val;
+  }
+  return stores;
+}
+
+function getOrgVatRates(orgId) {
+  const settings = getOrgSettings(orgId, 'vat_rates');
+  const rates = {};
+  for (const [cc, val] of Object.entries(settings)) {
+    rates[cc] = parseFloat(val) / 100;
+  }
+  return rates;
+}
+
+function getOrgProductCosts(orgId) {
+  const settings = getOrgSettings(orgId, 'product_costs');
+  const costs = {};
+  for (const [k, v] of Object.entries(settings)) {
+    costs[k] = parseFloat(v);
+  }
+  return costs;
+}
 
 // Add new columns for flores plugin fields (safe - ignores if already exists)
 const newColumns = [
@@ -1306,7 +1445,7 @@ function parseVideoFilename(name) {
 }
 
 // --- Auth ---
-const sessionStore = {}; // token -> { username, role, userId, displayName }
+const sessionStore = {}; // token -> { username, role, userId, displayName, orgId }
 
 function parseCookies(req) {
   const c = {}; (req.headers.cookie || '').split(';').forEach(p => { const [k,v] = p.trim().split('='); if(k) c[k]=v; }); return c;
@@ -1371,13 +1510,27 @@ const server = http.createServer(async (req, res) => {
       try {
         const { username, password } = JSON.parse(body);
         const hash = crypto.createHash('sha256').update(password).digest('hex');
-        const user = db.prepare('SELECT * FROM flores_users WHERE username = ? AND password_hash = ?').get(username, hash);
+        // Support login by username OR email
+        const user = db.prepare('SELECT * FROM flores_users WHERE (username = ? OR email = ?) AND password_hash = ?').get(username, username, hash);
         if (user) {
+          // Check trial expiration
+          const org = db.prepare('SELECT * FROM organizations WHERE id = ?').get(user.org_id || 1);
+          if (org && org.plan === 'trial' && org.trial_end) {
+            const trialEnd = new Date(org.trial_end + 'Z');
+            if (trialEnd < new Date()) {
+              res.writeHead(403, { 'Content-Type': 'application/json' });
+              return res.end(JSON.stringify({ error: 'Your free trial has expired. Please upgrade to continue using Flores.', trial_expired: true }));
+            }
+          }
+          if (org && !org.active) {
+            res.writeHead(403, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ error: 'Your organization has been deactivated. Contact support.' }));
+          }
           const token = crypto.randomBytes(32).toString('hex');
-          sessionStore[token] = { username: user.username, role: user.role, userId: user.id, displayName: user.display_name };
+          sessionStore[token] = { username: user.username, role: user.role, userId: user.id, displayName: user.display_name, orgId: user.org_id || 1 };
           db.prepare('UPDATE flores_users SET last_login = datetime(\'now\') WHERE id = ?').run(user.id);
           // Log login activity
-          try { logActivity.run(user.id, user.username, 'login', 'User logged in', 'user', String(user.id), 1); } catch(e) {}
+          try { logActivity.run(user.id, user.username, 'login', 'User logged in', 'user', String(user.id), user.org_id || 1); } catch(e) {}
           res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': `flores_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400` });
           res.end(JSON.stringify({ ok: true, role: user.role, username: user.username, redirect: '/app' }));
         } else {
@@ -1393,6 +1546,119 @@ const server = http.createServer(async (req, res) => {
     delete sessionStore[parseCookies(req).flores_session];
     res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': 'flores_session=; Path=/; Max-Age=0' });
     res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
+  // ═══ REGISTRATION API ═══
+  if (urlPath === '/api/register' && req.method === 'POST') {
+    let body = ''; req.on('data', c => body += c); req.on('end', () => {
+      try {
+        const { email, password, company_name } = JSON.parse(body);
+        if (!email || !password || !company_name) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ error: 'Email, password, and company name are required' }));
+        }
+        if (password.length < 6) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ error: 'Password must be at least 6 characters' }));
+        }
+        // Check if email already exists
+        const existing = db.prepare('SELECT id FROM flores_users WHERE email = ?').get(email);
+        if (existing) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ error: 'An account with this email already exists' }));
+        }
+        // Create organization
+        const trialEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+        const orgResult = db.prepare('INSERT INTO organizations (name, plan, trial_end, max_accounts, active) VALUES (?, ?, ?, ?, 1)').run(company_name, 'trial', trialEnd, 1);
+        const orgId = orgResult.lastInsertRowid;
+        // Create admin user for the org
+        const username = email.split('@')[0].toLowerCase().replace(/[^a-z0-9._-]/g, '') + '_' + orgId;
+        const hash = crypto.createHash('sha256').update(password).digest('hex');
+        const userResult = db.prepare('INSERT INTO flores_users (username, email, password_hash, role, display_name, org_id) VALUES (?, ?, ?, ?, ?, ?)').run(username, email, hash, 'admin', company_name + ' Admin', orgId);
+        const userId = userResult.lastInsertRowid;
+        // Auto-login
+        const token = crypto.randomBytes(32).toString('hex');
+        sessionStore[token] = { username, role: 'admin', userId, displayName: company_name + ' Admin', orgId };
+        // Log
+        try { logActivity.run(userId, username, 'register', `New organization: ${company_name}`, 'organization', String(orgId), orgId); } catch(e) {}
+        // Notify super admins
+        try { db.prepare('INSERT INTO notifications (user_id, type, title, message, org_id) VALUES (NULL, ?, ?, ?, 1)').run('new_org', 'New Organization Registered', `${company_name} (${email}) started a free trial`); } catch(e) {}
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': `flores_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400` });
+        res.end(JSON.stringify({ ok: true, redirect: '/app', org_id: orgId, username }));
+      } catch(e) {
+        console.error('Registration error:', e.message);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Registration failed: ' + e.message }));
+      }
+    });
+    return;
+  }
+
+  // ═══ FACEBOOK OAUTH ═══
+  if (urlPath === '/auth/facebook') {
+    const redirectUri = encodeURIComponent((req.headers['x-forwarded-proto'] || 'http') + '://' + req.headers.host + '/auth/facebook/callback');
+    const fbUrl = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${FB_APP_ID}&redirect_uri=${redirectUri}&scope=ads_management,ads_read,business_management`;
+    res.writeHead(302, { 'Location': fbUrl });
+    return res.end();
+  }
+
+  if (urlPath === '/auth/facebook/callback') {
+    const code = query.code;
+    if (!code) {
+      res.writeHead(302, { 'Location': '/login?error=fb_denied' });
+      return res.end();
+    }
+    // Exchange code for token
+    try {
+      const redirectUri = encodeURIComponent((req.headers['x-forwarded-proto'] || 'http') + '://' + req.headers.host + '/auth/facebook/callback');
+      const tokenUrl = `https://graph.facebook.com/v21.0/oauth/access_token?client_id=${FB_APP_ID}&redirect_uri=${redirectUri}&client_secret=${FB_APP_SECRET}&code=${code}`;
+      const tokenData = await new Promise((resolve, reject) => {
+        https.get(tokenUrl, r => {
+          let d = ''; r.on('data', c => d += c); r.on('end', () => { try { resolve(JSON.parse(d)); } catch(e) { reject(e); } });
+        }).on('error', reject);
+      });
+      if (tokenData.access_token) {
+        // Get user info
+        const meData = await new Promise((resolve, reject) => {
+          https.get(`https://graph.facebook.com/v21.0/me?fields=id,name,email&access_token=${tokenData.access_token}`, r => {
+            let d = ''; r.on('data', c => d += c); r.on('end', () => { try { resolve(JSON.parse(d)); } catch(e) { reject(e); } });
+          }).on('error', reject);
+        });
+        // If user is logged in, store the token for their org
+        const sessionUser = getSessionUser(req);
+        if (sessionUser) {
+          const upsertSetting = db.prepare('INSERT INTO org_settings (org_id, category, key, value) VALUES (?, ?, ?, ?) ON CONFLICT(org_id, category, key) DO UPDATE SET value = excluded.value');
+          upsertSetting.run(sessionUser.orgId || 1, 'meta_api', 'access_token', tokenData.access_token);
+          upsertSetting.run(sessionUser.orgId || 1, 'meta_api', 'fb_user_id', meData.id || '');
+          upsertSetting.run(sessionUser.orgId || 1, 'meta_api', 'fb_user_name', meData.name || '');
+          res.writeHead(302, { 'Location': '/app' });
+          return res.end();
+        }
+        // Not logged in — redirect to login with info
+        res.writeHead(302, { 'Location': '/login?fb_connected=1' });
+        return res.end();
+      } else {
+        res.writeHead(302, { 'Location': '/login?error=fb_token_failed' });
+        return res.end();
+      }
+    } catch(e) {
+      console.error('FB OAuth error:', e.message);
+      res.writeHead(302, { 'Location': '/login?error=fb_error' });
+      return res.end();
+    }
+  }
+
+  // Serve register page
+  if (urlPath === '/register' || urlPath === '/register.html') {
+    try {
+      const registerHtml = fs.readFileSync(path.join(__dirname, 'register.html'));
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(registerHtml);
+    } catch(e) {
+      res.writeHead(302, { 'Location': '/login' });
+      res.end();
+    }
     return;
   }
 
@@ -1465,6 +1731,23 @@ const server = http.createServer(async (req, res) => {
     // Other pages — redirect to login
     res.writeHead(302, { 'Location': '/login' });
     return res.end();
+  }
+
+  // Trial expiration check for authenticated API requests
+  const sessionUser = getSessionUser(req);
+  if (sessionUser && urlPath.startsWith('/api/') && urlPath !== '/api/me' && urlPath !== '/api/logout') {
+    const org = db.prepare('SELECT * FROM organizations WHERE id = ?').get(sessionUser.orgId || 1);
+    if (org && org.plan === 'trial' && org.trial_end) {
+      const trialEnd = new Date(org.trial_end + 'Z');
+      if (trialEnd < new Date()) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'Your free trial has expired. Please upgrade to continue.', trial_expired: true }));
+      }
+    }
+    if (org && !org.active) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: 'Organization deactivated. Contact support.' }));
+    }
   }
 
   // Serve the app (authenticated SPA)
@@ -2484,13 +2767,13 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
       // ═══ SESSION INFO ═══
       if (urlPath === '/api/me') {
         const user = getSessionUser(req);
-        return sendJSON(res, { username: user?.username, role: user?.role, displayName: user?.displayName });
+        return sendJSON(res, { username: user?.username, role: user?.role, displayName: user?.displayName, orgId: user?.orgId });
       }
 
       // ═══ USERS MANAGEMENT (admin only) ═══
       if (urlPath === '/api/users' && req.method === 'GET') {
         const user = getSessionUser(req);
-        if (!user || user.role !== 'admin') return sendJSON(res, { error: 'Admin access required' }, 403);
+        if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) return sendJSON(res, { error: 'Admin access required' }, 403);
         const page = parseInt(query.page) || 1;
         const limit = Math.min(parseInt(query.limit) || 50, 200);
         const offset = (page - 1) * limit;
@@ -2500,14 +2783,14 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
       }
       if (urlPath === '/api/users' && req.method === 'POST') {
         const user = getSessionUser(req);
-        if (!user || user.role !== 'admin') return sendJSON(res, { error: 'Admin access required' }, 403);
+        if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) return sendJSON(res, { error: 'Admin access required' }, 403);
         const body = await readBody(req);
         const { username, password, display_name, role } = JSON.parse(body);
         if (!username || !password) return sendJSON(res, { error: "Username and password required" }, 400);
         if (username.length < 3 || username.length > 50) return sendJSON(res, { error: "Username must be 3-50 characters" }, 400);
         if (password.length < 4) return sendJSON(res, { error: "Password must be at least 4 characters" }, 400);
         if (/[^a-zA-Z0-9._-]/.test(username)) return sendJSON(res, { error: "Username can only contain letters, numbers, dots, dashes, underscores" }, 400);
-        if (!['admin', 'advertiser', 'viewer'].includes(role)) return sendJSON(res, { error: 'Invalid role' }, 400);
+        if (!['super_admin', 'admin', 'advertiser', 'viewer'].includes(role)) return sendJSON(res, { error: 'Invalid role' }, 400);
         try {
           const hash = crypto.createHash('sha256').update(password).digest('hex');
           const result = db.prepare('INSERT INTO flores_users (username, password_hash, display_name, role) VALUES (?, ?, ?, ?)').run(username, hash, display_name || username, role);
@@ -2521,11 +2804,11 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
       }
       if (urlPath.match(/^\/api\/users\/\d+$/) && req.method === 'PUT') {
         const user = getSessionUser(req);
-        if (!user || user.role !== 'admin') return sendJSON(res, { error: 'Admin access required' }, 403);
+        if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) return sendJSON(res, { error: 'Admin access required' }, 403);
         const id = parseInt(urlPath.split('/').pop());
         const body = await readBody(req);
         const { display_name, role, password } = JSON.parse(body);
-        if (role && !['admin', 'advertiser', 'viewer'].includes(role)) return sendJSON(res, { error: 'Invalid role' }, 400);
+        if (role && !['super_admin', 'admin', 'advertiser', 'viewer'].includes(role)) return sendJSON(res, { error: 'Invalid role' }, 400);
         if (password) {
           const hash = crypto.createHash('sha256').update(password).digest('hex');
           db.prepare('UPDATE flores_users SET display_name = ?, role = ?, password_hash = ? WHERE id = ?').run(display_name, role, hash, id);
@@ -2536,7 +2819,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
       }
       if (urlPath.match(/^\/api\/users\/\d+$/) && req.method === 'DELETE') {
         const user = getSessionUser(req);
-        if (!user || user.role !== 'admin') return sendJSON(res, { error: 'Admin access required' }, 403);
+        if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) return sendJSON(res, { error: 'Admin access required' }, 403);
         const id = parseInt(urlPath.split('/').pop());
         if (user.userId === id) return sendJSON(res, { error: 'Cannot delete yourself' }, 400);
         db.prepare('DELETE FROM flores_users WHERE id = ?').run(id);
@@ -2552,7 +2835,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
       }
       if (urlPath === '/api/settings' && req.method === 'POST') {
         const user = getSessionUser(req);
-        if (!user || user.role !== 'admin') return sendJSON(res, { error: 'Admin access required' }, 403);
+        if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) return sendJSON(res, { error: 'Admin access required' }, 403);
         const body = await readBody(req);
         const settings = JSON.parse(body);
         const upsert = db.prepare('INSERT INTO flores_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value');
@@ -2888,6 +3171,96 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           db.prepare('UPDATE notifications SET read = 1 WHERE id = ?').run(id);
         }
         return sendJSON(res, { ok: true });
+      }
+
+      // ═══ SUPER ADMIN: ORGANIZATIONS ═══
+      if (urlPath === '/api/admin/organizations' && req.method === 'GET') {
+        const user = getSessionUser(req);
+        if (!user || user.role !== 'super_admin') return sendJSON(res, { error: 'Super admin access required' }, 403);
+        const orgs = db.prepare('SELECT * FROM organizations ORDER BY id').all();
+        const orgData = orgs.map(o => {
+          const userCount = db.prepare('SELECT COUNT(*) as cnt FROM flores_users WHERE org_id = ?').get(o.id).cnt;
+          let trialStatus = 'active';
+          if (o.plan === 'trial' && o.trial_end) {
+            trialStatus = new Date(o.trial_end + 'Z') < new Date() ? 'expired' : 'active';
+          } else if (o.plan !== 'trial') {
+            trialStatus = 'paid';
+          }
+          return { ...o, userCount, trialStatus };
+        });
+        const stats = {
+          totalOrgs: orgs.length,
+          activeTrials: orgs.filter(o => o.plan === 'trial' && o.active && o.trial_end && new Date(o.trial_end + 'Z') >= new Date()).length,
+          paidPlans: orgs.filter(o => o.plan !== 'trial' && o.active).length,
+          inactive: orgs.filter(o => !o.active).length
+        };
+        return sendJSON(res, { organizations: orgData, stats });
+      }
+      if (urlPath.match(/^\/api\/admin\/organizations\/\d+$/) && req.method === 'PUT') {
+        const user = getSessionUser(req);
+        if (!user || user.role !== 'super_admin') return sendJSON(res, { error: 'Super admin access required' }, 403);
+        const orgId = parseInt(urlPath.split('/').pop());
+        const body = await readBody(req);
+        const { plan, active, extend_trial_days, max_accounts } = JSON.parse(body);
+        if (plan !== undefined) db.prepare('UPDATE organizations SET plan = ? WHERE id = ?').run(plan, orgId);
+        if (active !== undefined) db.prepare('UPDATE organizations SET active = ? WHERE id = ?').run(active ? 1 : 0, orgId);
+        if (max_accounts !== undefined) db.prepare('UPDATE organizations SET max_accounts = ? WHERE id = ?').run(max_accounts, orgId);
+        if (extend_trial_days) {
+          const org = db.prepare('SELECT trial_end FROM organizations WHERE id = ?').get(orgId);
+          const baseDate = (org && org.trial_end) ? new Date(org.trial_end + 'Z') : new Date();
+          const newEnd = new Date(Math.max(baseDate.getTime(), Date.now()) + extend_trial_days * 24 * 60 * 60 * 1000);
+          db.prepare('UPDATE organizations SET trial_end = ? WHERE id = ?').run(newEnd.toISOString().slice(0, 19).replace('T', ' '), orgId);
+        }
+        actLog(req, 'org_updated', `Updated org ${orgId}: ${JSON.stringify({ plan, active, extend_trial_days })}`, 'organization', String(orgId));
+        return sendJSON(res, { ok: true });
+      }
+
+      // ═══ ORG SETTINGS API ═══
+      if (urlPath.match(/^\/api\/org-settings\/[\w-]+$/) && req.method === 'GET') {
+        const user = getSessionUser(req);
+        const category = urlPath.split('/').pop();
+        const orgId = user?.orgId || 1;
+        const settings = getOrgSettings(orgId, category);
+        return sendJSON(res, settings);
+      }
+      if (urlPath.match(/^\/api\/org-settings\/[\w-]+$/) && req.method === 'POST') {
+        const user = getSessionUser(req);
+        if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) return sendJSON(res, { error: 'Admin access required' }, 403);
+        const category = urlPath.split('/').pop();
+        const orgId = user.orgId || 1;
+        const body = await readBody(req);
+        const settings = JSON.parse(body);
+        const upsertSetting = db.prepare('INSERT INTO org_settings (org_id, category, key, value) VALUES (?, ?, ?, ?) ON CONFLICT(org_id, category, key) DO UPDATE SET value = excluded.value');
+        const deleteSetting = db.prepare('DELETE FROM org_settings WHERE org_id = ? AND category = ? AND key = ?');
+        db.transaction(() => {
+          for (const [k, v] of Object.entries(settings)) {
+            if (v === null || v === undefined || v === '') {
+              deleteSetting.run(orgId, category, k);
+            } else {
+              const val = typeof v === 'object' ? JSON.stringify(v) : String(v);
+              upsertSetting.run(orgId, category, k, val);
+            }
+          }
+        })();
+        actLog(req, 'org_settings_changed', `Updated ${category} settings (${Object.keys(settings).length} keys)`, 'org_settings', category);
+        return sendJSON(res, { ok: true });
+      }
+
+      // ═══ ME ENDPOINT (enhanced) ═══
+      if (urlPath === '/api/me-full') {
+        const user = getSessionUser(req);
+        const org = db.prepare('SELECT * FROM organizations WHERE id = ?').get(user?.orgId || 1);
+        let trialDaysLeft = null;
+        if (org && org.plan === 'trial' && org.trial_end) {
+          trialDaysLeft = Math.max(0, Math.ceil((new Date(org.trial_end + 'Z').getTime() - Date.now()) / (24 * 60 * 60 * 1000)));
+        }
+        return sendJSON(res, {
+          username: user?.username,
+          role: user?.role,
+          displayName: user?.displayName,
+          orgId: user?.orgId,
+          organization: org ? { name: org.name, plan: org.plan, trialDaysLeft, active: !!org.active } : null
+        });
       }
 
       return sendJSON(res, { error: 'not found' }, 404);

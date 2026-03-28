@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flores — Start Free Trial</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Inter',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:#f9fafb;
+  background-image:radial-gradient(ellipse at 20% 50%, rgba(37,99,235,0.06) 0%, transparent 50%),radial-gradient(ellipse at 80% 20%, rgba(124,58,237,0.04) 0%, transparent 50%);
+  -webkit-font-smoothing:antialiased;
+}
+.register-container{display:flex;width:100%;max-width:480px;margin:20px;animation:slideUp .6s cubic-bezier(0.16,1,0.3,1)}
+@keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.register-card{
+  background:#fff;border-radius:24px;padding:48px 40px;width:100%;
+  box-shadow:0 24px 80px rgba(0,0,0,0.08),0 0 0 1px rgba(0,0,0,0.04);
+}
+.logo-area{text-align:center;margin-bottom:32px}
+.logo-icon{
+  width:64px;height:64px;background:linear-gradient(135deg,#1E3A5F,#2563eb);border-radius:18px;
+  display:inline-flex;align-items:center;justify-content:center;font-size:28px;color:#fff;
+  box-shadow:0 12px 32px rgba(30,58,95,0.25);margin-bottom:18px;
+}
+.logo-title{font-size:28px;font-weight:800;color:#111827;letter-spacing:-0.8px}
+.logo-sub{font-size:12px;color:#9CA3AF;font-weight:600;margin-top:4px;text-transform:uppercase;letter-spacing:2px}
+.welcome{text-align:center;margin-bottom:32px}
+.welcome h2{font-size:22px;font-weight:800;color:#111827;margin-bottom:6px}
+.welcome p{font-size:14px;color:#9CA3AF}
+.form-group{margin-bottom:18px}
+.form-label{display:block;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px}
+.input-wrap{position:relative}
+.input-wrap i{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:#9CA3AF;font-size:14px;transition:color .2s}
+.input-wrap input{
+  width:100%;padding:14px 16px 14px 44px;border:2px solid #e5e7eb;border-radius:12px;
+  font-size:15px;font-family:inherit;outline:none;transition:all .25s;background:#f9fafb;
+}
+.input-wrap input:focus{border-color:#2563eb;background:#fff;box-shadow:0 0 0 4px rgba(37,99,235,0.1)}
+.input-wrap:focus-within i{color:#2563eb}
+.register-btn{
+  width:100%;padding:15px;
+  background:linear-gradient(135deg,#1E3A5F 0%,#2563eb 100%);
+  color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;font-family:inherit;
+  cursor:pointer;transition:all .25s;
+  box-shadow:0 4px 20px rgba(37,99,235,0.3);margin-top:8px;
+}
+.register-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(37,99,235,0.4)}
+.register-btn:active{transform:translateY(0)}
+.error{
+  color:#ef4444;font-size:13px;text-align:center;margin-top:16px;display:none;
+  padding:12px 16px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.12);border-radius:12px;font-weight:500;
+}
+.success{
+  color:#059669;font-size:13px;text-align:center;margin-top:16px;display:none;
+  padding:12px 16px;background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.12);border-radius:12px;font-weight:500;
+}
+.divider{display:flex;align-items:center;gap:12px;margin:24px 0}
+.divider hr{flex:1;border:none;border-top:1px solid #e5e7eb}
+.divider span{font-size:12px;color:#9CA3AF;font-weight:500}
+.fb-btn{
+  width:100%;padding:14px;background:#1877F2;color:#fff;border:none;border-radius:12px;
+  font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.fb-btn:hover{background:#1565D8;transform:translateY(-1px)}
+.footer-links{text-align:center;margin-top:24px;font-size:13px;color:#9CA3AF}
+.footer-links a{color:#2563eb;font-weight:600;text-decoration:none}
+.footer-links a:hover{text-decoration:underline}
+.trial-info{display:flex;align-items:center;gap:8px;padding:12px 16px;background:rgba(37,99,235,0.05);border:1px solid rgba(37,99,235,0.1);border-radius:10px;margin-bottom:24px;font-size:12px;color:#475569}
+.trial-info i{color:#2563eb;font-size:14px;flex-shrink:0}
+.footer-copy{text-align:center;margin-top:20px;font-size:11px;color:#d1d5db}
+</style>
+</head>
+<body>
+<div class="register-container">
+  <div class="register-card">
+    <div class="logo-area">
+      <div class="logo-icon">🌸</div>
+      <div class="logo-title">Flores</div>
+      <div class="logo-sub">Ad Intelligence</div>
+    </div>
+    <div class="welcome">
+      <h2>Start your free trial</h2>
+      <p>30 days of Pro features, no credit card required</p>
+    </div>
+    <div class="trial-info">
+      <i class="fas fa-gift"></i>
+      <span>Your trial includes: Unlimited ad accounts, AI analyst, creative library, bulk creator, and more.</span>
+    </div>
+    <form id="registerForm">
+      <div class="form-group">
+        <label class="form-label">Company Name</label>
+        <div class="input-wrap"><input type="text" id="company" placeholder="Your company or brand name" required><i class="fas fa-building"></i></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <div class="input-wrap"><input type="email" id="email" placeholder="you@company.com" required autocomplete="email"><i class="fas fa-envelope"></i></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-wrap"><input type="password" id="password" placeholder="At least 6 characters" required autocomplete="new-password"><i class="fas fa-lock"></i></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm Password</label>
+        <div class="input-wrap"><input type="password" id="confirmPassword" placeholder="Repeat your password" required autocomplete="new-password"><i class="fas fa-lock"></i></div>
+      </div>
+      <button type="submit" class="register-btn"><i class="fas fa-rocket" style="margin-right:8px"></i> Start 30-Day Free Trial</button>
+      <div class="error" id="error"></div>
+      <div class="success" id="success"></div>
+    </form>
+    <div class="divider"><hr><span>or</span><hr></div>
+    <a href="/auth/facebook" class="fb-btn"><i class="fab fa-facebook-f"></i> Sign up with Facebook</a>
+    <div class="footer-links">Already have an account? <a href="/login">Sign in</a></div>
+    <div class="footer-copy">Flores Ad Intelligence © 2026</div>
+  </div>
+</div>
+<script>
+document.getElementById('registerForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const error = document.getElementById('error');
+  const success = document.getElementById('success');
+  error.style.display = 'none';
+  success.style.display = 'none';
+
+  const company = document.getElementById('company').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const confirmPassword = document.getElementById('confirmPassword').value;
+
+  if (!company || !email || !password) {
+    error.textContent = 'All fields are required';
+    error.style.display = 'block';
+    return;
+  }
+  if (password.length < 6) {
+    error.textContent = 'Password must be at least 6 characters';
+    error.style.display = 'block';
+    return;
+  }
+  if (password !== confirmPassword) {
+    error.textContent = 'Passwords do not match';
+    error.style.display = 'block';
+    return;
+  }
+
+  const btn = e.target.querySelector('.register-btn');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:8px"></i> Creating account...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company_name: company, email, password })
+    });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      success.textContent = 'Account created! Redirecting...';
+      success.style.display = 'block';
+      setTimeout(() => { window.location.href = data.redirect || '/app'; }, 1000);
+    } else {
+      error.textContent = data.error || 'Registration failed';
+      error.style.display = 'block';
+      btn.innerHTML = '<i class="fas fa-rocket" style="margin-right:8px"></i> Start 30-Day Free Trial';
+      btn.disabled = false;
+    }
+  } catch (err) {
+    error.textContent = 'Network error, please try again';
+    error.style.display = 'block';
+    btn.innerHTML = '<i class="fas fa-rocket" style="margin-right:8px"></i> Start 30-Day Free Trial';
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
