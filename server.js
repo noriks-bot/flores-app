@@ -1963,7 +1963,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           
           // Group by creative ID (extract ID prefix like "ID489" from ad name)
           function extractCreativeId(name) {
-            const m = (name || '').match(/\b(ID\d+)\b/i);
+            const m = (name || '').match(/^(ID\d+)/i);
             return m ? m[1].toUpperCase() : null;
           }
           
