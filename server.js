@@ -1931,7 +1931,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           }
 
           // Call Dominik agent via OpenClaw
-          const agentPrompt = AI_SYSTEM_PROMPT + '\n\nDATA:\n' + dataContext;
+          const agentPrompt = AI_SYSTEM_PROMPT + '\n\nDATA:\n' + dataContext; // Routes to Dominik (Sonnet) via OpenClaw
           const llmResponse = await callDominikAgent(agentPrompt);
           return sendJSON(res, { analysis: llmResponse, mode, timestamp: new Date().toISOString() });
         } catch(e) {
