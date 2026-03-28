@@ -2895,7 +2895,7 @@ async function generateUploadPlan() {
       const expandTo = new Set();
       for (const wc of winCountries) { (MARKET_MAP[wc.country]||[]).forEach(s => { if(!tested.has(s)) expandTo.add(s); }); }
       // Filter expand-to by selected target countries
-      for (const cc of [...expandTo]) { if (!selectedCountries.includes(cc)) expandTo.delete(cc); }
+      if (selectedCountries.length) { for (const cc of [...expandTo]) { if (!selectedCountries.includes(cc)) expandTo.delete(cc); } }
       if (!expandTo.size) continue;
       let priority,pColor,pLabel;
       if(bestCpa<=10){priority='Excellent';pColor='#16a34a';pLabel='🟢 Excellent';}
@@ -2928,7 +2928,7 @@ async function generateUploadPlan() {
       document.getElementById('uploadTable').style.display='block';
 
       // Creatives waiting for CZ
-      const FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
+      // FLAGS already declared above = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
       const waitingCZ = [];
       for (const cr of data.creatives) {
         if (cr.id === 'Other') continue;
