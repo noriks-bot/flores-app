@@ -5365,7 +5365,7 @@ function renderDashboard(data) {
 }
 
 // Load dashboard on startup
-setTimeout(() => { if (!dashboardLoaded) loadDashboard(); }, 100);
+// Dashboard loads on navigateTo('dashboard') - not on page start
 
 /* ═══ ACTIVITY LOG ═══ */
 let alCurrentPage = 1;
@@ -5475,7 +5475,7 @@ function timeAgo(dateStr) {
 
 // Poll notifications every 2 minutes
 setInterval(() => loadNotifications(), 120000);
-setTimeout(() => loadNotifications(), 2000);
+setTimeout(() => loadNotifications(), 5000);
 
 // Close notification dropdown when clicking outside
 document.addEventListener('click', e => {
@@ -5938,7 +5938,7 @@ function initSaasAdminMode() {
 
 // Run on page load
 document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(initSaasAdminMode, 500);
+  setTimeout(initSaasAdminMode, 100);
 });
 
 </script>
