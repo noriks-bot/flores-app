@@ -1033,6 +1033,13 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
   </div>
   <nav class="sidebar-nav">
     <div class="nav-section">
+      <div class="nav-section-label" id="saasNavLabel" style="display:none">SaaS</div>
+      <a class="nav-item" data-section="saas-dashboard" onclick="navigateTo('saas-dashboard')" style="display:none">
+        <i class="fas fa-tachometer-alt"></i><span class="nav-item-text">SaaS Dashboard</span>
+      </a>
+      <a class="nav-item" data-section="activity-log" onclick="navigateTo('activity-log')" style="display:none">
+        <i class="fas fa-history"></i><span class="nav-item-text">Activity Log</span>
+      </a>
       <div class="nav-section-label">Menu</div>
       <a class="nav-item active" data-section="dashboard" onclick="navigateTo('dashboard')">
         <i class="fas fa-th-large"></i><span class="nav-item-text">Dashboard</span>
@@ -1926,7 +1933,87 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     </div>
   </div>
 
-  <!-- ORG SETUP -->
+  <!-- SAAS DASHBOARD -->
+  <div id="section-saas-dashboard" class="content-section">
+    <div class="content" style="padding:20px 24px">
+      <!-- Header -->
+      <div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);border-radius:var(--card-radius);padding:24px;margin-bottom:24px;color:#fff">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:22px;font-weight:800">Flores SaaS Admin</div>
+            <div style="font-size:13px;opacity:0.7;margin-top:4px">Platform management & analytics</div>
+          </div>
+          <div style="font-size:12px;opacity:0.7" id="saasLastUpdated"></div>
+        </div>
+      </div>
+
+      <!-- KPI Cards -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px" id="saasKpis">
+        <div class="saas-kpi" style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">Total Organizations</div>
+          <div style="font-size:28px;font-weight:800;margin-top:8px" id="saasKpiOrgs">—</div>
+        </div>
+        <div class="saas-kpi" style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">Active Trials</div>
+          <div style="font-size:28px;font-weight:800;margin-top:8px;color:#f59e0b" id="saasKpiTrials">—</div>
+        </div>
+        <div class="saas-kpi" style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">Paid Plans</div>
+          <div style="font-size:28px;font-weight:800;margin-top:8px;color:#10b981" id="saasKpiPaid">—</div>
+        </div>
+        <div class="saas-kpi" style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">Total Users</div>
+          <div style="font-size:28px;font-weight:800;margin-top:8px;color:#2563eb" id="saasKpiUsers">—</div>
+        </div>
+        <div class="saas-kpi" style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">MRR</div>
+          <div style="font-size:28px;font-weight:800;margin-top:8px;color:#7c3aed" id="saasKpiMrr">—</div>
+        </div>
+        <div class="saas-kpi" style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">System Health</div>
+          <div style="font-size:28px;font-weight:800;margin-top:8px" id="saasKpiHealth">—</div>
+        </div>
+      </div>
+
+      <!-- Organizations Table -->
+      <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);overflow:hidden;margin-bottom:24px">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between">
+          <div style="font-weight:700;font-size:15px">All Organizations</div>
+          <button onclick="loadSaasDashboard()" style="padding:6px 14px;background:var(--content-bg);border:1px solid var(--border-color);border-radius:8px;font-size:12px;cursor:pointer"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr style="background:var(--content-bg)">
+            <th style="text-align:left;padding:10px 16px;font-weight:700;font-size:11px;text-transform:uppercase;color:var(--text-muted)">Organization</th>
+            <th style="padding:10px 16px;font-weight:700;font-size:11px;text-transform:uppercase;color:var(--text-muted)">Plan</th>
+            <th style="padding:10px 16px;font-weight:700;font-size:11px;text-transform:uppercase;color:var(--text-muted)">Status</th>
+            <th style="padding:10px 16px;font-weight:700;font-size:11px;text-transform:uppercase;color:var(--text-muted)">Users</th>
+            <th style="padding:10px 16px;font-weight:700;font-size:11px;text-transform:uppercase;color:var(--text-muted)">Created</th>
+            <th style="padding:10px 16px;font-weight:700;font-size:11px;text-transform:uppercase;color:var(--text-muted)">Actions</th>
+          </tr></thead>
+          <tbody id="saasOrgTable"><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">Loading...</td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- Quick Actions + System Info -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px">
+          <div style="font-weight:700;font-size:15px;margin-bottom:16px">Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button onclick="navigateTo('organizations')" style="padding:10px 16px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-align:left"><i class="fas fa-sitemap" style="width:20px"></i> Manage Organizations</button>
+            <button onclick="navigateTo('users')" style="padding:10px 16px;background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-align:left"><i class="fas fa-users" style="width:20px"></i> Manage Users</button>
+            <button onclick="navigateTo('org-setup')" style="padding:10px 16px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-align:left"><i class="fas fa-building" style="width:20px"></i> Organization Setup</button>
+            <button onclick="navigateTo('settings')" style="padding:10px 16px;background:var(--content-bg);border:1px solid var(--border-color);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-align:left;color:var(--text-primary)"><i class="fas fa-cog" style="width:20px"></i> System Settings</button>
+          </div>
+        </div>
+        <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px">
+          <div style="font-weight:700;font-size:15px;margin-bottom:16px">System Info</div>
+          <div id="saasSystemInfo" style="font-size:13px;color:var(--text-muted)">Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- ORG SETUP -->
   <div id="section-org-setup" class="content-section">
     <div class="content" style="padding:20px 24px">
       <div style="background:linear-gradient(135deg,#1E3A5F,#2a5a8f);border-radius:var(--card-radius);padding:20px 24px;margin-bottom:20px;color:#fff">
@@ -2234,6 +2321,8 @@ const sectionTitles = {
   'settings': 'Settings',
   'org-setup': 'Organization Setup',
   'organizations': 'Organizations',
+  'saas-dashboard': 'SaaS Dashboard',
+  'activity-log': 'Activity Log',
   'activity-log': 'Activity Log'
 };
 
@@ -2265,6 +2354,7 @@ function navigateTo(section) {
   // Auto-load optimizer
   if (section === 'optimizer' && !optLoaded) { loadOptimizer(); }
   if (section === 'organizations') { loadOrganizations(); }
+  if (section === 'saas-dashboard') { loadSaasDashboard(); }
   if (section === 'org-setup') { loadOrgTab('countries', document.querySelector('#section-org-setup .fpill')); }
   // Auto-load AI hints section init
   if (section === 'ai-hints') {
@@ -5730,6 +5820,121 @@ document.addEventListener('DOMContentLoaded', function() {
   var origNav = window.navigateTo;
   if (!origNav) return;
   // We will check after navigation
+});
+
+
+// SaaS Dashboard
+async function loadSaasDashboard() {
+  try {
+    // Load organizations
+    var orgRes = await fetch('/api/admin/organizations', {credentials:'same-origin'});
+    var orgData = await orgRes.json();
+    var stats = orgData.stats || {};
+    var orgs = orgData.organizations || [];
+    
+    // KPIs
+    document.getElementById('saasKpiOrgs').textContent = stats.totalOrgs || 0;
+    document.getElementById('saasKpiTrials').textContent = stats.activeTrials || 0;
+    document.getElementById('saasKpiPaid').textContent = stats.paidPlans || 0;
+    
+    // Calculate MRR
+    var mrr = 0;
+    orgs.forEach(function(o) {
+      if (o.plan === 'pro') mrr += 49;
+      else if (o.plan === 'enterprise') mrr += 199;
+    });
+    document.getElementById('saasKpiMrr').textContent = mrr + ' \u20ac';
+    
+    // Total users
+    var totalUsers = orgs.reduce(function(s,o){return s+(o.userCount||0)},0);
+    document.getElementById('saasKpiUsers').textContent = totalUsers;
+    
+    // Updated time
+    document.getElementById('saasLastUpdated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+    
+    // Org table
+    if (orgs.length) {
+      document.getElementById('saasOrgTable').innerHTML = orgs.map(function(o) {
+        var planColors = {enterprise:'#7c3aed',pro:'#2563eb',trial:'#f59e0b',starter:'#9ca3af'};
+        var pc = planColors[o.plan] || '#9ca3af';
+        var active = o.active ? '<span style="color:#10b981">\u25cf Active</span>' : '<span style="color:#ef4444">\u25cf Inactive</span>';
+        var trial = o.trialStatus==='paid'?'<span style="color:#10b981">Paid</span>':o.trialStatus==='active'?'<span style="color:#f59e0b">Trial</span>':'<span style="color:#ef4444">Expired</span>';
+        return '<tr style="border-bottom:1px solid var(--border-color)">' +
+          '<td style="padding:12px 16px;font-weight:600">' + o.name + '</td>' +
+          '<td style="padding:12px 16px;text-align:center"><span style="padding:3px 12px;border-radius:12px;font-size:11px;font-weight:700;background:'+pc+'15;color:'+pc+'">' + o.plan.toUpperCase() + '</span></td>' +
+          '<td style="padding:12px 16px;text-align:center;font-size:12px">' + active + ' / ' + trial + '</td>' +
+          '<td style="padding:12px 16px;text-align:center;font-weight:600">' + (o.userCount||0) + '</td>' +
+          '<td style="padding:12px 16px;text-align:center;font-size:12px;color:var(--text-muted)">' + (o.created_at||'').slice(0,10) + '</td>' +
+          '<td style="padding:12px 16px;text-align:center"><button onclick="navigateTo(\'organizations\')" style="padding:4px 12px;background:var(--content-bg);border:1px solid var(--border-color);border-radius:6px;font-size:11px;cursor:pointer">Manage</button></td>' +
+        '</tr>';
+      }).join('');
+    }
+    
+    // Health check
+    try {
+      var hRes = await fetch('/api/health');
+      var health = await hRes.json();
+      document.getElementById('saasKpiHealth').innerHTML = health.status === 'ok' ? '<span style="color:#10b981">\u2713 OK</span>' : '<span style="color:#ef4444">\u2717 Error</span>';
+      document.getElementById('saasSystemInfo').innerHTML = 
+        '<div style="display:grid;gap:8px">' +
+        '<div><strong>Version:</strong> ' + (health.version||'?') + '</div>' +
+        '<div><strong>Uptime:</strong> ' + (health.uptimeHuman||'?') + '</div>' +
+        '<div><strong>DB Orders:</strong> ' + ((health.db&&health.db.tables)?health.db.tables.wc_orders||0:'?') + '</div>' +
+        '<div><strong>DB Users:</strong> ' + ((health.db&&health.db.tables)?health.db.tables.flores_users||0:'?') + '</div>' +
+        '<div><strong>Memory:</strong> ' + (health.memory?Math.round(health.memory.heapUsed/1024/1024)+'MB':'?') + '</div>' +
+        '<div><strong>Meta Token:</strong> ' + (health.metaToken?'<span style="color:#10b981">Valid</span>':'<span style="color:#ef4444">Invalid</span>') + '</div>' +
+        '</div>';
+    } catch(e) {
+      document.getElementById('saasKpiHealth').innerHTML = '<span style="color:#ef4444">?</span>';
+    }
+    
+  } catch(e) {
+    console.error('SaaS dashboard error:', e);
+  }
+}
+
+
+// SaaS Admin mode - hide app-specific nav, show admin nav
+function initSaasAdminMode() {
+  fetch('/api/me', {credentials:'same-origin'}).then(r=>r.json()).then(function(u) {
+    if (!u.username) return;
+    window._currentUser = u;
+    
+    // Update sidebar user
+    var sn = document.getElementById('sidebarUserName');
+    var sr = document.getElementById('sidebarUserRole');
+    var sa = document.getElementById('sidebarAvatar');
+    if(sn) sn.textContent = u.displayName || u.username;
+    if(sr) sr.textContent = u.role;
+    if(sa) sa.textContent = (u.displayName||u.username).charAt(0).toUpperCase();
+    
+    if (u.role === 'super_admin' && u.username === 'saas') {
+      // Hide app-specific nav items for SaaS admin
+      document.querySelectorAll('.nav-item').forEach(function(el) {
+        var section = el.getAttribute('data-section');
+        var saasAllowed = ['saas-dashboard','organizations','org-setup','users','activity-log','settings'];
+        if (section && !saasAllowed.includes(section)) {
+          el.style.display = 'none';
+        }
+      });
+      // Hide non-admin section labels
+      document.querySelectorAll('.nav-section-label').forEach(function(el) {
+        var text = el.textContent.trim();
+        if (text !== 'Admin' && text !== 'SaaS') el.style.display = 'none';
+      });
+      // Show SaaS dashboard section label
+      var adminLabel = document.querySelector('.nav-section-label');
+      if (adminLabel) adminLabel.style.display = 'block';
+      
+      // Navigate to SaaS dashboard by default
+      navigateTo('saas-dashboard');
+    }
+  }).catch(function(){});
+}
+
+// Run on page load
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(initSaasAdminMode, 500);
 });
 
 </script>
