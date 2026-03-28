@@ -655,6 +655,46 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 .cr-table tfoot .cr-totals-spend td { background: linear-gradient(135deg, #1a5276, #2e86c1); }
 .cr-table tfoot .cr-totals-purch td { background: linear-gradient(135deg, #1b5a80, #3090cb); }
 .cr-table tfoot .cr-totals-cpa td { background: linear-gradient(135deg, #1e6490, #34a0dd); }
+
+/* Video filter pills */
+.vid-filter-pill { background:var(--bg); border:1px solid var(--border-color); color:var(--text-muted); padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; }
+.vid-filter-pill:hover { border-color:var(--accent); color:var(--text); }
+.vid-filter-pill.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+
+/* Video card */
+.vid-card { background:var(--card-bg); border:1px solid var(--border-color); border-radius:var(--card-radius); overflow:hidden; transition:all .2s; cursor:pointer; position:relative; }
+.vid-card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 8px 25px rgba(0,0,0,0.15); }
+.vid-card .vid-thumb { position:relative; width:100%; aspect-ratio:16/9; background:#0a1628; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.vid-card .vid-thumb img { width:100%; height:100%; object-fit:cover; }
+.vid-card .vid-thumb .play-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.3); opacity:0; transition:opacity .2s; }
+.vid-card:hover .vid-thumb .play-overlay { opacity:1; }
+.vid-card .vid-thumb .play-overlay i { font-size:40px; color:#fff; filter:drop-shadow(0 2px 8px rgba(0,0,0,0.3)); }
+.vid-card .vid-info { padding:12px 14px; }
+.vid-card .vid-id { font-size:18px; font-weight:800; color:var(--accent); }
+.vid-card .vid-name { font-size:11px; color:var(--text-muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.vid-card .vid-badges { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+.vid-card .vid-badge { font-size:10px; font-weight:700; padding:3px 8px; border-radius:6px; text-transform:uppercase; letter-spacing:0.5px; }
+.vid-card .vid-badge-country { background:rgba(59,130,246,0.15); color:#60a5fa; }
+.vid-card .vid-badge-product { background:rgba(16,185,129,0.15); color:#34d399; }
+.vid-card .vid-badge-size { background:rgba(139,92,246,0.15); color:#a78bfa; }
+.vid-card .vid-select { position:absolute; top:8px; right:8px; z-index:2; }
+.vid-card .vid-select input[type=checkbox] { width:18px; height:18px; accent-color:var(--accent); cursor:pointer; }
+
+/* Bulk uploader campaign card */
+.bulk-row { background:var(--card-bg); border:1px solid var(--border-color); border-radius:var(--card-radius); padding:20px; margin-bottom:12px; position:relative; }
+.bulk-row:hover { border-color:rgba(59,130,246,0.3); }
+.bulk-row .bulk-row-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.bulk-row .bulk-row-num { font-size:13px; font-weight:800; color:var(--accent); background:rgba(59,130,246,0.1); padding:4px 10px; border-radius:6px; }
+.bulk-row .bulk-fields { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; }
+.bulk-row .bulk-field label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); display:block; margin-bottom:4px; }
+.bulk-row .bulk-field input, .bulk-row .bulk-field select, .bulk-row .bulk-field textarea { width:100%; background:var(--bg); border:1px solid var(--border-color); color:var(--text); padding:7px 10px; border-radius:6px; font-size:12px; }
+.bulk-row .bulk-field textarea { resize:vertical; min-height:60px; }
+
+/* Roles badges */
+.role-badge { font-size:11px; font-weight:700; padding:3px 10px; border-radius:6px; text-transform:uppercase; letter-spacing:0.5px; }
+.role-admin { background:rgba(239,68,68,0.15); color:#f87171; }
+.role-advertiser { background:rgba(59,130,246,0.15); color:#60a5fa; }
+.role-viewer { background:rgba(107,114,128,0.15); color:#9ca3af; }
 </style>
 </head>
 <body>
@@ -701,6 +741,24 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
       <div class="nav-section-label">Data</div>
       <a class="nav-item" data-section="upload" onclick="navigateTo('upload')">
         <i class="fas fa-cloud-upload-alt"></i><span class="nav-item-text">Upload</span>
+      </a>
+      <a class="nav-item" data-section="bulk-uploader" onclick="navigateTo('bulk-uploader')">
+        <i class="fas fa-layer-group"></i><span class="nav-item-text">Bulk Uploader</span>
+      </a>
+      <a class="nav-item" data-section="videos" onclick="navigateTo('videos')">
+        <i class="fas fa-video"></i><span class="nav-item-text">Videos</span>
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-item" data-section="fb-integration" onclick="navigateTo('fb-integration')">
+        <i class="fab fa-facebook"></i><span class="nav-item-text">FB Integration</span>
+      </a>
+      <a class="nav-item" data-section="users" onclick="navigateTo('users')">
+        <i class="fas fa-users"></i><span class="nav-item-text">Users</span>
+      </a>
+      <a class="nav-item" data-section="settings" onclick="navigateTo('settings')">
+        <i class="fas fa-cog"></i><span class="nav-item-text">Settings</span>
       </a>
     </div>
   </nav>
@@ -1298,6 +1356,277 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
     </div>
   </div>
 
+  <!-- BULK UPLOADER -->
+  <div id="section-bulk-uploader" class="content-section">
+    <div class="content" style="padding:20px 24px">
+      <!-- Summary bar -->
+      <div id="bulkSummaryBar" style="background:linear-gradient(135deg,#1E3A5F,#2a5a8f);border-radius:var(--card-radius);padding:20px 24px;margin-bottom:20px;color:#fff;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:20px;font-weight:800"><i class="fas fa-layer-group" style="margin-right:8px"></i>Bulk Campaign Creator</div>
+          <div style="font-size:13px;opacity:0.7;margin-top:4px">Create multiple Facebook campaigns at once</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px">
+          <div id="bulkStats" style="text-align:right">
+            <div style="font-size:22px;font-weight:800"><span id="bulkCampCount">0</span> campaigns</div>
+            <div style="font-size:13px;opacity:0.7">Total budget: €<span id="bulkTotalBudget">0</span>/day</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Campaign rows -->
+      <div id="bulkCampaignRows"></div>
+
+      <!-- Add campaign button -->
+      <div style="display:flex;gap:12px;margin:16px 0">
+        <button onclick="bulkAddRow()" style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px">
+          <i class="fas fa-plus"></i> Add Campaign
+        </button>
+      </div>
+
+      <!-- Create button -->
+      <div style="margin-top:20px;display:flex;gap:12px;align-items:center">
+        <button id="bulkCreateBtn" onclick="bulkCreateAll()" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:16px 40px;border-radius:12px;font-weight:800;font-size:16px;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 4px 15px rgba(16,185,129,0.3)">
+          <i class="fas fa-rocket"></i> Create All Campaigns
+        </button>
+        <div id="bulkProgress" style="display:none;color:var(--text-muted);font-size:13px"><i class="fas fa-spinner fa-spin"></i> <span id="bulkProgressText">Creating...</span></div>
+      </div>
+
+      <!-- Results -->
+      <div id="bulkResults" style="display:none;margin-top:20px">
+        <div style="background:var(--card-bg);border-radius:var(--card-radius);border:1px solid var(--border-color);overflow:hidden">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--border-color);font-weight:700;font-size:15px"><i class="fas fa-clipboard-list" style="margin-right:8px;color:var(--accent)"></i>Creation Results</div>
+          <div style="overflow-x:auto">
+            <table class="data-table"><thead><tr>
+              <th style="text-align:left">Campaign</th><th>Status</th><th>Campaign ID</th><th>Adset ID</th><th>Ad ID</th><th>Error</th>
+            </tr></thead><tbody id="bulkResultsBody"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIDEOS -->
+  <div id="section-videos" class="content-section">
+    <div class="content" style="padding:20px 24px">
+      <div style="background:linear-gradient(135deg,#1E3A5F,#2a5a8f);border-radius:var(--card-radius);padding:20px 24px;margin-bottom:20px;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:20px;font-weight:800"><i class="fas fa-video" style="margin-right:8px"></i>Video Creatives</div>
+          <div style="font-size:13px;opacity:0.7;margin-top:4px">Browse Dropbox creatives · <span id="vidTotalCount">0</span> videos · <span id="vidSelectedCount">0</span> selected</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button onclick="loadVideos(true)" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:16px 20px;margin-bottom:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px">
+          <i class="fas fa-search" style="color:var(--text-muted)"></i>
+          <input id="vidSearchInput" type="text" placeholder="Search by ID or name..." oninput="filterVideos()" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:8px 14px;border-radius:8px;font-size:13px;width:200px">
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="vidCountryFilters">
+          <button class="vid-filter-pill active" data-country="all" onclick="setVidCountry('all',this)">All</button>
+          <button class="vid-filter-pill" data-country="HR" onclick="setVidCountry('HR',this)">🇭🇷 HR</button>
+          <button class="vid-filter-pill" data-country="CZ" onclick="setVidCountry('CZ',this)">🇨🇿 CZ</button>
+          <button class="vid-filter-pill" data-country="PL" onclick="setVidCountry('PL',this)">🇵🇱 PL</button>
+          <button class="vid-filter-pill" data-country="GR" onclick="setVidCountry('GR',this)">🇬🇷 GR</button>
+          <button class="vid-filter-pill" data-country="SK" onclick="setVidCountry('SK',this)">🇸🇰 SK</button>
+          <button class="vid-filter-pill" data-country="IT" onclick="setVidCountry('IT',this)">🇮🇹 IT</button>
+          <button class="vid-filter-pill" data-country="HU" onclick="setVidCountry('HU',this)">🇭🇺 HU</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="vidProductFilters">
+          <button class="vid-filter-pill active" data-product="all" onclick="setVidProduct('all',this)">All</button>
+          <button class="vid-filter-pill" data-product="shirts" onclick="setVidProduct('shirts',this)">👕 Shirts</button>
+          <button class="vid-filter-pill" data-product="boxers" onclick="setVidProduct('boxers',this)">🩲 Boxers</button>
+          <button class="vid-filter-pill" data-product="starter" onclick="setVidProduct('starter',this)">📦 Starter</button>
+          <button class="vid-filter-pill" data-product="kompleti" onclick="setVidProduct('kompleti',this)">🎁 Kompleti</button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div id="vidLoading" style="display:none;text-align:center;padding:60px 20px;color:var(--text-muted)">
+        <i class="fas fa-spinner fa-spin" style="font-size:28px;margin-bottom:12px;display:block;color:var(--accent)"></i>
+        <div style="font-size:15px;font-weight:600">Loading videos from Dropbox...</div>
+      </div>
+
+      <!-- Grid -->
+      <div id="vidGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px"></div>
+      <div id="vidEmpty" style="display:none;text-align:center;padding:60px;color:var(--text-muted)"><i class="fas fa-film" style="font-size:40px;margin-bottom:12px;display:block;opacity:0.4"></i>No videos found</div>
+    </div>
+  </div>
+
+  <!-- VIDEO PLAYER MODAL -->
+  <div id="videoModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.9);backdrop-filter:blur(8px)" onclick="if(event.target===this)closeVideoModal()">
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:90vw;max-width:900px;background:var(--card-bg);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+      <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-color)">
+        <div>
+          <div style="font-weight:700;font-size:15px" id="vmTitle">—</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px" id="vmMeta">—</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button onclick="vmPrev()" title="Previous" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:14px"><i class="fas fa-chevron-left"></i></button>
+          <button onclick="vmNext()" title="Next" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:14px"><i class="fas fa-chevron-right"></i></button>
+          <button onclick="vmCopyLink()" title="Copy link" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:14px"><i class="fas fa-link"></i></button>
+          <button onclick="closeVideoModal()" title="Close" style="background:#ef4444;border:none;color:#fff;width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:14px"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+      <div style="background:#000;position:relative">
+        <video id="vmPlayer" controls autoplay style="width:100%;max-height:70vh;display:block"></video>
+        <div id="vmLoading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7)"><i class="fas fa-spinner fa-spin" style="font-size:30px;color:#fff"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FB INTEGRATION -->
+  <div id="section-fb-integration" class="content-section">
+    <div class="content" style="padding:20px 24px">
+      <div style="background:linear-gradient(135deg,#1E3A5F,#2a5a8f);border-radius:var(--card-radius);padding:20px 24px;margin-bottom:20px;color:#fff;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:20px;font-weight:800"><i class="fab fa-facebook" style="margin-right:8px"></i>Facebook Integration</div>
+          <div style="font-size:13px;opacity:0.7;margin-top:4px">API connection status and accounts</div>
+        </div>
+        <button onclick="loadFbIntegration()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer"><i class="fas fa-sync-alt"></i> Refresh</button>
+      </div>
+
+      <!-- Status card -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-bottom:20px">
+        <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:12px">Token Status</div>
+          <div id="fbTokenStatus" style="font-size:18px;font-weight:800"><i class="fas fa-spinner fa-spin"></i></div>
+          <div id="fbTokenUser" style="font-size:13px;color:var(--text-muted);margin-top:4px">—</div>
+        </div>
+        <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:12px">App Info</div>
+          <div id="fbAppInfo" style="font-size:15px;font-weight:700">—</div>
+        </div>
+        <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:12px">Ad Accounts</div>
+          <div id="fbAccountCount" style="font-size:18px;font-weight:800">—</div>
+        </div>
+      </div>
+
+      <!-- Ad Accounts table -->
+      <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);overflow:hidden;margin-bottom:20px">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border-color);font-weight:700">Ad Accounts</div>
+        <div style="overflow-x:auto">
+          <table class="data-table"><thead><tr><th style="text-align:left">Name</th><th>Account ID</th><th>Currency</th><th>Timezone</th><th>Status</th></tr></thead>
+          <tbody id="fbAccountsBody"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted)">Click Refresh to load</td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- Pages table -->
+      <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);overflow:hidden">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border-color);font-weight:700">Pages</div>
+        <div style="overflow-x:auto">
+          <table class="data-table"><thead><tr><th style="text-align:left">Name</th><th>Page ID</th><th>Permissions</th></tr></thead>
+          <tbody id="fbPagesBody"><tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-muted)">Click Refresh to load</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div id="section-users" class="content-section">
+    <div class="content" style="padding:20px 24px">
+      <div style="background:linear-gradient(135deg,#1E3A5F,#2a5a8f);border-radius:var(--card-radius);padding:20px 24px;margin-bottom:20px;color:#fff;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:20px;font-weight:800"><i class="fas fa-users" style="margin-right:8px"></i>User Management</div>
+          <div style="font-size:13px;opacity:0.7;margin-top:4px">Manage access and roles</div>
+        </div>
+      </div>
+
+      <!-- Add user form -->
+      <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px;margin-bottom:20px">
+        <div style="font-weight:700;font-size:15px;margin-bottom:16px"><i class="fas fa-user-plus" style="margin-right:8px;color:var(--accent)"></i>Add New User</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+          <div>
+            <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:4px">Username</label>
+            <input id="newUsername" type="text" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:8px 14px;border-radius:8px;font-size:13px;width:150px">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:4px">Password</label>
+            <input id="newPassword" type="password" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:8px 14px;border-radius:8px;font-size:13px;width:150px">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:4px">Display Name</label>
+            <input id="newDisplayName" type="text" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:8px 14px;border-radius:8px;font-size:13px;width:150px">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:4px">Role</label>
+            <select id="newRole" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:8px 14px;border-radius:8px;font-size:13px">
+              <option value="viewer">Viewer</option>
+              <option value="advertiser">Advertiser</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <button onclick="addUser()" style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:none;padding:8px 20px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer"><i class="fas fa-plus" style="margin-right:6px"></i>Add</button>
+        </div>
+      </div>
+
+      <!-- Users table -->
+      <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);overflow:hidden">
+        <div style="overflow-x:auto">
+          <table class="data-table"><thead><tr>
+            <th style="text-align:left">Username</th><th>Display Name</th><th>Role</th><th>Created</th><th>Last Login</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="usersBody"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">Loading...</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="section-settings" class="content-section">
+    <div class="content" style="padding:20px 24px">
+      <div style="background:linear-gradient(135deg,#1E3A5F,#2a5a8f);border-radius:var(--card-radius);padding:20px 24px;margin-bottom:20px;color:#fff">
+        <div style="font-size:20px;font-weight:800"><i class="fas fa-cog" style="margin-right:8px"></i>Settings</div>
+        <div style="font-size:13px;opacity:0.7;margin-top:4px">Application configuration</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:20px">
+        <!-- Meta API -->
+        <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px">
+          <div style="font-weight:700;font-size:15px;margin-bottom:16px"><i class="fab fa-facebook" style="margin-right:8px;color:#1877f2"></i>Meta API</div>
+          <div style="margin-bottom:16px">
+            <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:4px">Access Token</label>
+            <div style="display:flex;gap:8px">
+              <input id="settingsToken" type="password" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:8px 14px;border-radius:8px;font-size:12px;flex:1;font-family:monospace" readonly>
+              <button onclick="toggleTokenReveal()" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);width:36px;height:36px;border-radius:8px;cursor:pointer"><i class="fas fa-eye" id="tokenEyeIcon"></i></button>
+            </div>
+          </div>
+          <div style="margin-bottom:16px">
+            <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:4px">App ID</label>
+            <div id="settingsAppId" style="font-size:13px;font-family:monospace;padding:8px 14px;background:var(--bg);border-radius:8px;border:1px solid var(--border-color)">—</div>
+          </div>
+        </div>
+
+        <!-- Defaults -->
+        <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px">
+          <div style="font-weight:700;font-size:15px;margin-bottom:16px"><i class="fas fa-sliders-h" style="margin-right:8px;color:var(--accent)"></i>Defaults</div>
+          <div style="margin-bottom:16px">
+            <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:4px">Default Ad Account</label>
+            <select id="settingsDefaultAccount" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:8px 14px;border-radius:8px;font-size:13px;width:100%">
+              <option value="top_noriks_2">top_noriks_2 (act_1922887421998222)</option>
+              <option value="top_noriks_4">top_noriks_4 (act_1426869489183439)</option>
+            </select>
+          </div>
+          <div style="margin-bottom:16px">
+            <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:4px">Default Country</label>
+            <select id="settingsDefaultCountry" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:8px 14px;border-radius:8px;font-size:13px;width:100%">
+              <option value="HR">🇭🇷 Croatia</option><option value="CZ">🇨🇿 Czech Republic</option><option value="PL">🇵🇱 Poland</option>
+              <option value="GR">🇬🇷 Greece</option><option value="SK">🇸🇰 Slovakia</option><option value="IT">🇮🇹 Italy</option><option value="HU">🇭🇺 Hungary</option>
+            </select>
+          </div>
+          <div style="margin-bottom:16px">
+            <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:4px">Default Daily Budget (€)</label>
+            <input id="settingsDefaultBudget" type="number" value="20" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:8px 14px;border-radius:8px;font-size:13px;width:100%">
+          </div>
+          <button onclick="saveSettings()" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:10px 24px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;width:100%"><i class="fas fa-save" style="margin-right:8px"></i>Save Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 </div>
 
@@ -1310,7 +1639,12 @@ const sectionTitles = {
   'ai-hints': 'AI Hints',
   'upload': 'Upload',
   'origin-report': 'Origin Report',
-  'optimizer': 'Optimizer'
+  'optimizer': 'Optimizer',
+  'bulk-uploader': 'Bulk Uploader',
+  'videos': 'Videos',
+  'fb-integration': 'FB Integration',
+  'users': 'Users',
+  'settings': 'Settings'
 };
 
 function navigateTo(section) {
@@ -3534,6 +3868,459 @@ async function toggleOpt(campaignId) {
       renderOptimizer();
     }
   } catch(e) {}
+}
+
+
+/* ═══ NAVIGATION HOOKS FOR NEW SECTIONS ═══ */
+(function() {
+  const origNav = navigateTo;
+  window.navigateTo = function(section) {
+    origNav(section);
+    if (section === 'fb-integration') loadFbIntegration();
+    if (section === 'users') loadUsers();
+    if (section === 'settings') loadSettings();
+    if (section === 'videos' && !videosData) loadVideos();
+  };
+  // Handle initial hash if it's a new section
+  const h = window.location.hash.replace('#','');
+  if (['fb-integration','users','settings','videos','bulk-uploader'].includes(h)) {
+    setTimeout(() => navigateTo(h), 100);
+  }
+})();
+
+/* ═══ BULK UPLOADER ═══ */
+let bulkRowId = 0;
+
+function bulkAddRow(clone) {
+  bulkRowId++;
+  const id = bulkRowId;
+  const today = new Date();
+  const dateStr = String(today.getDate()).padStart(2,'0') + '.' + String(today.getMonth()+1).padStart(2,'0') + '.' + today.getFullYear();
+  const d = clone || { ad_account:'top_noriks_2', country:'HR', product:'shirts', campaign_type:'CBO', daily_budget:20, objective:'OUTCOME_SALES', age_min:25, age_max:55, gender:'all', cta:'SHOP_NOW', image_url:'', landing_page_url:'', primary_text:'', headline:'' };
+
+  const html = `<div class="bulk-row" id="bulk-row-${id}">
+    <div class="bulk-row-header">
+      <span class="bulk-row-num">#${id}</span>
+      <div style="display:flex;gap:6px">
+        <button onclick="bulkDuplicateRow(${id})" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text-muted);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer" title="Duplicate"><i class="fas fa-copy"></i> Duplicate</button>
+        <button onclick="bulkRemoveRow(${id})" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer" title="Remove"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-family:monospace" id="bulk-name-${id}">—</div>
+    <div class="bulk-fields">
+      <div class="bulk-field"><label>Ad Account</label><select data-f="ad_account" onchange="bulkUpdateName(${id})"><option value="top_noriks_2" ${d.ad_account==='top_noriks_2'?'selected':''}>top_noriks_2</option><option value="top_noriks_4" ${d.ad_account==='top_noriks_4'?'selected':''}>top_noriks_4</option></select></div>
+      <div class="bulk-field"><label>Country</label><select data-f="country" onchange="bulkUpdateName(${id})"><option value="HR" ${d.country==='HR'?'selected':''}>🇭🇷 HR</option><option value="CZ" ${d.country==='CZ'?'selected':''}>🇨🇿 CZ</option><option value="PL" ${d.country==='PL'?'selected':''}>🇵🇱 PL</option><option value="GR" ${d.country==='GR'?'selected':''}>🇬🇷 GR</option><option value="SK" ${d.country==='SK'?'selected':''}>🇸🇰 SK</option><option value="IT" ${d.country==='IT'?'selected':''}>🇮🇹 IT</option><option value="HU" ${d.country==='HU'?'selected':''}>🇭🇺 HU</option></select></div>
+      <div class="bulk-field"><label>Product</label><select data-f="product" onchange="bulkUpdateName(${id})"><option value="shirts" ${d.product==='shirts'?'selected':''}>Shirts</option><option value="boxers" ${d.product==='boxers'?'selected':''}>Boxers</option><option value="starter" ${d.product==='starter'?'selected':''}>Starter</option><option value="kompleti" ${d.product==='kompleti'?'selected':''}>Kompleti</option></select></div>
+      <div class="bulk-field"><label>Type</label><select data-f="campaign_type" onchange="bulkUpdateName(${id})"><option value="CBO" ${d.campaign_type==='CBO'?'selected':''}>CBO</option><option value="ABO" ${d.campaign_type==='ABO'?'selected':''}>ABO</option></select></div>
+      <div class="bulk-field"><label>Daily Budget €</label><input type="number" data-f="daily_budget" value="${d.daily_budget}" min="1" onchange="bulkUpdateStats()"></div>
+      <div class="bulk-field"><label>Objective</label><select data-f="objective"><option value="OUTCOME_SALES" ${d.objective==='OUTCOME_SALES'?'selected':''}>Sales</option><option value="OUTCOME_LEADS" ${d.objective==='OUTCOME_LEADS'?'selected':''}>Leads</option><option value="OUTCOME_TRAFFIC" ${d.objective==='OUTCOME_TRAFFIC'?'selected':''}>Traffic</option></select></div>
+      <div class="bulk-field"><label>Age Min</label><input type="number" data-f="age_min" value="${d.age_min}" min="13" max="65"></div>
+      <div class="bulk-field"><label>Age Max</label><input type="number" data-f="age_max" value="${d.age_max}" min="13" max="65"></div>
+      <div class="bulk-field"><label>Gender</label><select data-f="gender"><option value="all" ${d.gender==='all'?'selected':''}>All</option><option value="1" ${d.gender==='1'||d.gender===1?'selected':''}>Male</option><option value="2" ${d.gender==='2'||d.gender===2?'selected':''}>Female</option></select></div>
+      <div class="bulk-field"><label>Image URL</label><input type="text" data-f="image_url" value="${d.image_url||''}" placeholder="https://..."></div>
+      <div class="bulk-field" style="grid-column:span 2"><label>Landing Page URL</label><input type="text" data-f="landing_page_url" value="${d.landing_page_url||''}" placeholder="https://noriks.com/..."></div>
+      <div class="bulk-field" style="grid-column:span 2"><label>Primary Text</label><textarea data-f="primary_text" placeholder="Ad copy...">${d.primary_text||''}</textarea></div>
+      <div class="bulk-field"><label>Headline</label><input type="text" data-f="headline" value="${d.headline||''}" placeholder="Your headline"></div>
+      <div class="bulk-field"><label>CTA</label><select data-f="cta"><option value="SHOP_NOW" ${d.cta==='SHOP_NOW'?'selected':''}>Shop Now</option><option value="LEARN_MORE" ${d.cta==='LEARN_MORE'?'selected':''}>Learn More</option><option value="SIGN_UP" ${d.cta==='SIGN_UP'?'selected':''}>Sign Up</option></select></div>
+    </div>
+  </div>`;
+  document.getElementById('bulkCampaignRows').insertAdjacentHTML('beforeend', html);
+  bulkUpdateName(id);
+  bulkUpdateStats();
+}
+
+function bulkUpdateName(id) {
+  const row = document.getElementById('bulk-row-' + id);
+  if (!row) return;
+  const g = (f) => row.querySelector(`[data-f="${f}"]`)?.value || '';
+  const today = new Date();
+  const dateStr = String(today.getDate()).padStart(2,'0') + '.' + String(today.getMonth()+1).padStart(2,'0') + '.' + today.getFullYear();
+  const name = `cc:${g('country')} | ${g('campaign_type')} | sku:${g('product')} | date: ${dateStr}`;
+  document.getElementById('bulk-name-' + id).textContent = name;
+}
+
+function bulkUpdateStats() {
+  const rows = document.querySelectorAll('.bulk-row');
+  let total = 0;
+  rows.forEach(r => { total += parseFloat(r.querySelector('[data-f="daily_budget"]')?.value || 0); });
+  document.getElementById('bulkCampCount').textContent = rows.length;
+  document.getElementById('bulkTotalBudget').textContent = total.toFixed(0);
+}
+
+function bulkDuplicateRow(id) {
+  const row = document.getElementById('bulk-row-' + id);
+  if (!row) return;
+  const g = (f) => row.querySelector(`[data-f="${f}"]`)?.value || '';
+  bulkAddRow({
+    ad_account: g('ad_account'), country: g('country'), product: g('product'), campaign_type: g('campaign_type'),
+    daily_budget: parseFloat(g('daily_budget')) || 20, objective: g('objective'), age_min: parseInt(g('age_min')) || 25,
+    age_max: parseInt(g('age_max')) || 55, gender: g('gender'), cta: g('cta'), image_url: g('image_url'),
+    landing_page_url: g('landing_page_url'), primary_text: g('primary_text'), headline: g('headline')
+  });
+}
+
+function bulkRemoveRow(id) {
+  const el = document.getElementById('bulk-row-' + id);
+  if (el) el.remove();
+  bulkUpdateStats();
+}
+
+function bulkGetAllConfigs() {
+  const configs = [];
+  document.querySelectorAll('.bulk-row').forEach(row => {
+    const g = (f) => row.querySelector(`[data-f="${f}"]`)?.value || '';
+    const today = new Date();
+    const dateStr = String(today.getDate()).padStart(2,'0') + '.' + String(today.getMonth()+1).padStart(2,'0') + '.' + today.getFullYear();
+    configs.push({
+      campaign_name: `cc:${g('country')} | ${g('campaign_type')} | sku:${g('product')} | date: ${dateStr}`,
+      ad_account: g('ad_account'), country: g('country'), campaign_type: g('campaign_type'),
+      daily_budget: parseFloat(g('daily_budget')) || 20, objective: g('objective'),
+      age_min: parseInt(g('age_min')) || 25, age_max: parseInt(g('age_max')) || 55,
+      gender: g('gender') === 'all' ? [1,2] : [parseInt(g('gender'))],
+      image_url: g('image_url'), landing_page_url: g('landing_page_url'),
+      primary_text: g('primary_text'), headline: g('headline'), cta: g('cta')
+    });
+  });
+  return configs;
+}
+
+async function bulkCreateAll() {
+  const configs = bulkGetAllConfigs();
+  if (!configs.length) return alert('Add at least one campaign first');
+  if (!confirm(`Create ${configs.length} campaign(s) on Facebook?\n\nTotal daily budget: €${configs.reduce((s,c)=>s+c.daily_budget,0)}\n\nAll will be created as PAUSED.`)) return;
+
+  const btn = document.getElementById('bulkCreateBtn');
+  const prog = document.getElementById('bulkProgress');
+  btn.disabled = true; btn.style.opacity = '0.5';
+  prog.style.display = 'flex';
+  document.getElementById('bulkProgressText').textContent = `Creating ${configs.length} campaigns...`;
+
+  try {
+    const resp = await fetch('/api/bulk-create-campaigns', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ campaigns: configs })
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+
+    // Show results
+    const results = data.results || [];
+    const tbody = document.getElementById('bulkResultsBody');
+    tbody.innerHTML = results.map(r => `<tr>
+      <td style="text-align:left;font-size:12px">${r.campaign_name || '—'}</td>
+      <td>${r.success ? '<span style="color:#34d399;font-weight:700">✓ OK</span>' : '<span style="color:#f87171;font-weight:700">✗ Failed</span>'}</td>
+      <td style="font-family:monospace;font-size:11px">${r.campaign_id || '—'}</td>
+      <td style="font-family:monospace;font-size:11px">${r.adset_id || '—'}</td>
+      <td style="font-family:monospace;font-size:11px">${r.ad_id || '—'}</td>
+      <td style="font-size:11px;color:#f87171;max-width:200px;overflow:hidden;text-overflow:ellipsis" title="${r.error||''}">${r.error || ''}</td>
+    </tr>`).join('');
+    document.getElementById('bulkResults').style.display = 'block';
+    document.getElementById('bulkProgressText').textContent = `Done! ${results.filter(r=>r.success).length}/${results.length} succeeded`;
+  } catch(e) {
+    alert('Error: ' + e.message);
+    prog.style.display = 'none';
+  }
+  btn.disabled = false; btn.style.opacity = '1';
+}
+
+/* ═══ VIDEOS ═══ */
+let videosData = null;
+let filteredVideos = [];
+let vidCountryFilter = 'all';
+let vidProductFilter = 'all';
+let vidCurrentIndex = -1;
+let selectedVideos = new Set();
+
+async function loadVideos(force) {
+  document.getElementById('vidLoading').style.display = 'block';
+  document.getElementById('vidGrid').innerHTML = '';
+  document.getElementById('vidEmpty').style.display = 'none';
+  try {
+    const resp = await fetch('/api/videos' + (force ? '?refresh=1' : ''));
+    videosData = await resp.json();
+    if (videosData.error) throw new Error(videosData.error);
+    document.getElementById('vidTotalCount').textContent = videosData.total || 0;
+    filterVideos();
+  } catch(e) {
+    document.getElementById('vidGrid').innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#f87171"><i class="fas fa-exclamation-triangle" style="font-size:24px;margin-bottom:8px;display:block"></i>${e.message}</div>`;
+  }
+  document.getElementById('vidLoading').style.display = 'none';
+}
+
+function setVidCountry(c, el) {
+  vidCountryFilter = c;
+  document.querySelectorAll('#vidCountryFilters .vid-filter-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  filterVideos();
+}
+
+function setVidProduct(p, el) {
+  vidProductFilter = p;
+  document.querySelectorAll('#vidProductFilters .vid-filter-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  filterVideos();
+}
+
+function filterVideos() {
+  if (!videosData || !videosData.files) return;
+  const search = (document.getElementById('vidSearchInput').value || '').toLowerCase().trim();
+  filteredVideos = videosData.files.filter(v => {
+    if (vidCountryFilter !== 'all' && v.country !== vidCountryFilter) return false;
+    if (vidProductFilter !== 'all' && v.productType !== vidProductFilter) return false;
+    if (search) {
+      const idMatch = v.id && ('id' + v.id).toLowerCase().includes(search.replace(/^id/i,'').length ? search : '___');
+      const nameMatch = v.name.toLowerCase().includes(search);
+      const pureIdSearch = search.replace(/^id/i,'');
+      const idDirectMatch = v.id && v.id.includes(pureIdSearch);
+      if (!nameMatch && !idDirectMatch) return false;
+    }
+    return true;
+  });
+  renderVideoGrid();
+}
+
+function formatFileSize(bytes) {
+  if (!bytes) return '—';
+  if (bytes > 1e9) return (bytes/1e9).toFixed(1) + ' GB';
+  if (bytes > 1e6) return (bytes/1e6).toFixed(1) + ' MB';
+  return (bytes/1e3).toFixed(0) + ' KB';
+}
+
+function renderVideoGrid() {
+  const grid = document.getElementById('vidGrid');
+  const empty = document.getElementById('vidEmpty');
+  if (!filteredVideos.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  grid.innerHTML = filteredVideos.map((v, i) => {
+    const thumbUrl = `/api/video-thumbnail?path=${encodeURIComponent(v.path)}`;
+    const countryFlag = v.country ? (COUNTRY_FLAGS[v.country] || '') : '';
+    const checked = selectedVideos.has(v.path) ? 'checked' : '';
+    return `<div class="vid-card" onclick="openVideoModal(${i})" data-idx="${i}">
+      <div class="vid-select" onclick="event.stopPropagation()">
+        <input type="checkbox" ${checked} onchange="toggleVideoSelect('${v.path.replace(/'/g,"\\'")}',this.checked)">
+      </div>
+      <div class="vid-thumb">
+        <img src="${thumbUrl}" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fas fa-video\\' style=\\'font-size:36px;color:rgba(255,255,255,0.2)\\'></i><div class=\\'play-overlay\\'><i class=\\'fas fa-play-circle\\'></i></div>'" alt="">
+        <div class="play-overlay"><i class="fas fa-play-circle"></i></div>
+      </div>
+      <div class="vid-info">
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span class="vid-id">${v.id ? 'ID' + v.id : '—'}</span>
+          <span style="font-size:11px;color:var(--text-muted)">${formatFileSize(v.size)}</span>
+        </div>
+        <div class="vid-name" title="${v.name}">${v.name}</div>
+        <div class="vid-badges">
+          ${v.country ? `<span class="vid-badge vid-badge-country">${countryFlag} ${v.country}</span>` : ''}
+          ${v.productType ? `<span class="vid-badge vid-badge-product">${v.productType}</span>` : ''}
+          ${v.fileDate ? `<span class="vid-badge vid-badge-size">${v.fileDate}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  updateSelectedCount();
+}
+
+function toggleVideoSelect(path, checked) {
+  if (checked) selectedVideos.add(path); else selectedVideos.delete(path);
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  document.getElementById('vidSelectedCount').textContent = selectedVideos.size;
+}
+
+async function openVideoModal(idx) {
+  vidCurrentIndex = idx;
+  const v = filteredVideos[idx];
+  if (!v) return;
+  const modal = document.getElementById('videoModal');
+  const player = document.getElementById('vmPlayer');
+  const loading = document.getElementById('vmLoading');
+
+  modal.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  loading.style.display = 'flex';
+  player.src = '';
+
+  document.getElementById('vmTitle').textContent = v.name;
+  const countryFlag = v.country ? (COUNTRY_FLAGS[v.country] || '') + ' ' + v.country : '';
+  document.getElementById('vmMeta').textContent = [v.id ? 'ID' + v.id : '', countryFlag, v.productType, formatFileSize(v.size)].filter(Boolean).join(' · ');
+
+  try {
+    const resp = await fetch(`/api/video-link?path=${encodeURIComponent(v.path)}`);
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    player.src = data.link;
+    player._currentLink = data.link;
+    loading.style.display = 'none';
+  } catch(e) {
+    loading.innerHTML = `<div style="color:#f87171;text-align:center"><i class="fas fa-exclamation-triangle" style="font-size:24px;margin-bottom:8px;display:block"></i>${e.message}</div>`;
+  }
+}
+
+function closeVideoModal() {
+  document.getElementById('videoModal').style.display = 'none';
+  document.body.style.overflow = '';
+  const player = document.getElementById('vmPlayer');
+  player.pause(); player.src = '';
+}
+
+function vmPrev() { if (vidCurrentIndex > 0) openVideoModal(vidCurrentIndex - 1); }
+function vmNext() { if (vidCurrentIndex < filteredVideos.length - 1) openVideoModal(vidCurrentIndex + 1); }
+
+function vmCopyLink() {
+  const link = document.getElementById('vmPlayer')._currentLink;
+  if (link) { navigator.clipboard.writeText(link); }
+}
+
+document.addEventListener('keydown', e => {
+  if (document.getElementById('videoModal').style.display !== 'block') return;
+  if (e.key === 'Escape') closeVideoModal();
+  if (e.key === 'ArrowLeft') vmPrev();
+  if (e.key === 'ArrowRight') vmNext();
+});
+
+/* ═══ FB INTEGRATION ═══ */
+async function loadFbIntegration() {
+  try {
+    const [statusResp, accountsResp, pagesResp] = await Promise.all([
+      fetch('/api/fb-status'), fetch('/api/fb-accounts'), fetch('/api/fb-pages')
+    ]);
+    const status = await statusResp.json();
+    const accounts = await accountsResp.json();
+    const pages = await pagesResp.json();
+
+    // Status
+    document.getElementById('fbTokenStatus').innerHTML = status.token_valid
+      ? '<span style="color:#34d399">✓ Valid</span>' : '<span style="color:#f87171">✗ Invalid/Expired</span>';
+    document.getElementById('fbTokenUser').textContent = status.user_name || '—';
+    document.getElementById('fbAppInfo').textContent = 'App ID: ' + (status.app_id || '—');
+
+    // Accounts
+    const accts = Array.isArray(accounts) ? accounts : [];
+    document.getElementById('fbAccountCount').textContent = accts.length + ' accounts';
+    const acctStatuses = { 1: 'Active', 2: 'Disabled', 3: 'Unsettled', 7: 'Pending', 9: 'In Grace', 100: 'Temp Unavailable', 101: 'Closed' };
+    document.getElementById('fbAccountsBody').innerHTML = accts.length
+      ? accts.map(a => `<tr><td style="text-align:left;font-weight:600">${a.name||'—'}</td><td style="font-family:monospace;font-size:12px">${a.account_id||a.id}</td><td>${a.currency||'—'}</td><td style="font-size:12px">${a.timezone_name||'—'}</td><td>${acctStatuses[a.account_status]||a.account_status||'—'}</td></tr>`).join('')
+      : '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted)">No accounts found</td></tr>';
+
+    // Pages
+    const pagesList = Array.isArray(pages) ? pages : [];
+    document.getElementById('fbPagesBody').innerHTML = pagesList.length
+      ? pagesList.map(p => `<tr><td style="text-align:left;font-weight:600">${p.name||'—'}</td><td style="font-family:monospace;font-size:12px">${p.id}</td><td style="font-size:11px">${(p.tasks||[]).join(', ')||'—'}</td></tr>`).join('')
+      : '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-muted)">No pages found</td></tr>';
+  } catch(e) {
+    document.getElementById('fbTokenStatus').innerHTML = '<span style="color:#f87171">Error: ' + e.message + '</span>';
+  }
+}
+
+/* ═══ USERS ═══ */
+let currentUserInfo = null;
+(async function() {
+  try { currentUserInfo = await (await fetch('/api/me')).json(); } catch(e) {}
+})();
+
+async function loadUsers() {
+  try {
+    const resp = await fetch('/api/users');
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    const users = data.data || data;
+    document.getElementById('usersBody').innerHTML = users.length
+      ? users.map(u => `<tr>
+          <td style="text-align:left;font-weight:600">${u.username}</td>
+          <td>${u.display_name || '—'}</td>
+          <td><span class="role-badge role-${u.role}">${u.role}</span></td>
+          <td style="font-size:12px;color:var(--text-muted)">${u.created_at ? new Date(u.created_at+'Z').toLocaleDateString() : '—'}</td>
+          <td style="font-size:12px;color:var(--text-muted)">${u.last_login ? new Date(u.last_login+'Z').toLocaleString() : 'Never'}</td>
+          <td>
+            <div style="display:flex;gap:4px">
+              <button onclick="editUser(${u.id},'${u.username}','${(u.display_name||'').replace(/'/g,"\\'")}','${u.role}')" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text-muted);padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer"><i class="fas fa-edit"></i></button>
+              ${currentUserInfo && currentUserInfo.username !== u.username ? `<button onclick="deleteUser(${u.id},'${u.username}')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer"><i class="fas fa-trash"></i></button>` : ''}
+            </div>
+          </td>
+        </tr>`).join('')
+      : '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">No users</td></tr>';
+  } catch(e) {
+    document.getElementById('usersBody').innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#f87171">${e.message}</td></tr>`;
+  }
+}
+
+async function addUser() {
+  const username = document.getElementById('newUsername').value.trim();
+  const password = document.getElementById('newPassword').value;
+  const display_name = document.getElementById('newDisplayName').value.trim();
+  const role = document.getElementById('newRole').value;
+  if (!username || !password) return alert('Username and password required');
+  try {
+    const resp = await fetch('/api/users', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username, password, display_name, role}) });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    document.getElementById('newUsername').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('newDisplayName').value = '';
+    loadUsers();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+function editUser(id, username, displayName, role) {
+  const newDisplay = prompt('Display name:', displayName);
+  if (newDisplay === null) return;
+  const newRole = prompt('Role (admin/advertiser/viewer):', role);
+  if (newRole === null) return;
+  if (!['admin','advertiser','viewer'].includes(newRole)) return alert('Invalid role');
+  const newPass = prompt('New password (leave empty to keep):', '');
+  const body = { display_name: newDisplay, role: newRole };
+  if (newPass) body.password = newPass;
+  fetch('/api/users/' + id, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) })
+    .then(r => r.json()).then(d => { if(d.error) throw new Error(d.error); loadUsers(); }).catch(e => alert(e.message));
+}
+
+async function deleteUser(id, username) {
+  if (!confirm(`Delete user "${username}"?`)) return;
+  try {
+    const resp = await fetch('/api/users/' + id, { method:'DELETE' });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    loadUsers();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+/* ═══ SETTINGS ═══ */
+async function loadSettings() {
+  try {
+    const [settingsResp, statusResp] = await Promise.all([fetch('/api/settings'), fetch('/api/fb-status')]);
+    const settings = await settingsResp.json();
+    const status = await statusResp.json();
+    document.getElementById('settingsAppId').textContent = status.app_id || '—';
+    // Token is masked server-side; show placeholder
+    document.getElementById('settingsToken').value = '••••••••••••••••••••••••••••••••';
+    if (settings.default_ad_account) document.getElementById('settingsDefaultAccount').value = settings.default_ad_account;
+    if (settings.default_country) document.getElementById('settingsDefaultCountry').value = settings.default_country;
+    if (settings.default_daily_budget) document.getElementById('settingsDefaultBudget').value = settings.default_daily_budget;
+  } catch(e) {}
+}
+
+function toggleTokenReveal() {
+  const inp = document.getElementById('settingsToken');
+  const icon = document.getElementById('tokenEyeIcon');
+  if (inp.type === 'password') { inp.type = 'text'; icon.className = 'fas fa-eye-slash'; }
+  else { inp.type = 'password'; icon.className = 'fas fa-eye'; }
+}
+
+async function saveSettings() {
+  const settings = {
+    default_ad_account: document.getElementById('settingsDefaultAccount').value,
+    default_country: document.getElementById('settingsDefaultCountry').value,
+    default_daily_budget: document.getElementById('settingsDefaultBudget').value
+  };
+  try {
+    const resp = await fetch('/api/settings', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(settings) });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    alert('Settings saved!');
+  } catch(e) { alert('Error: ' + e.message); }
 }
 
 </script>

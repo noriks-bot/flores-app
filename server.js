@@ -2,11 +2,29 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const Database = require('better-sqlite3');
 
 const PORT = 3200;
-const META_TOKEN = 'EAAR1d7hDpEkBQxdtLk9xZBIPqpxFNV48ZA6FnqOumgzSSagyz3l720s5SI1Ev6YIWrZCTjLDxcEiPYwIxKfLmBr4AEoIf8SiusxRaSZAHX8DePLnFUajOSKI4ZAZA8sauiHEUVhsr2ZCIeZA8bhzak5qCZCfh0bVWm2ZAhZCJ8CYmbK0BNiTgHHgeKLD6pAWz5V';
+const META_TOKEN = 'EAASl5P6z0UYBRJrZCHWVQvMLmwwDu5jzdA5NEdl9t5K4ogCgH5Pi7acEEKhKSf5LYQKQcx9vd6S7euJRJWeICdZCHsVtUyQfVbF4lxAU25t9sRONxjhVZCBAv0nAnQJ7qiszzZBCR75JHzMXfSACfhxApcZBB0tMRngZAZBXQ3c0c4VeZC8OU6ltFc9YaCydW8Vg';
+const FB_APP_ID = '1308302851166534';
+const FB_APP_SECRET = '055332aa992f885134cf9cb6cd3ce5cf';
+const NORIKS_PAGE_ID = '104695358812961';
+const NORIKS_PAGE_TOKEN = 'EAASl5P6z0UYBRBeMx5auFDmvdkLwZCm8AZAsaVWqcNvyTFZAZBggUFybXpimvtfceKJIjPijA0prRvgWBILLBtdANqShzEmf8PxVCR9Dg5ZACR8Xsx2ucpO19HNktZCbSCK68rd7shT4ZC1SCZC3WkTNuJysHRqvfHlHuF1WdB5Sd2TNB5fAGvVOfnNNZCFE2ZCPWXJRIaiOAZD';
+const AD_ACCOUNTS_MAP = { 'top_noriks_2': 'act_1922887421998222', 'top_noriks_4': 'act_1426869489183439' };
 const AD_ACCOUNT = 'act_1922887421998222';
+
+// Dropbox integration
+const DROPBOX_APP_KEY = 'h7gx1yglwenhrz2';
+const DROPBOX_APP_SECRET = '3n4ebxqlqfehwkr';
+const DROPBOX_REFRESH_TOKEN = '2HlTHHp3-2QAAAAAAAAAAZD8orXfKnu4Srqe6Us7JrIY_B_NKu0tXb9HWum7CBaE';
+const DROPBOX_ROOT = '13547329251';
+const DROPBOX_FOLDER = '/NORIKS Team Folder/TEJA - KREATIVE/FINAL CREATIVES 🔥';
+let DROPBOX_ACCESS_TOKEN = null;
+let dropboxTokenExpires = 0;
+let videosCache = null;
+let videosCacheTime = 0;
+const VIDEOS_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 const API_VERSION = 'v21.0';
 const CACHE_DIR = path.join(__dirname, 'cache');
 if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
@@ -156,7 +174,33 @@ db.exec(`
     last_sync_at TEXT,
     total_orders INTEGER DEFAULT 0
   );
+
+  CREATE TABLE IF NOT EXISTS flores_users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'viewer',
+    display_name TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    last_login TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_users_username ON flores_users(username);
+  CREATE INDEX IF NOT EXISTS idx_users_role ON flores_users(role);
+
+  CREATE TABLE IF NOT EXISTS flores_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL DEFAULT ''
+  );
 `);
+
+// Seed default admin user if no users exist
+try {
+  const userCount = db.prepare('SELECT COUNT(*) as cnt FROM flores_users').get();
+  if (userCount.cnt === 0) {
+    const hash = crypto.createHash('sha256').update('noriks').digest('hex');
+    db.prepare('INSERT INTO flores_users (username, password_hash, role, display_name) VALUES (?, ?, ?, ?)').run('noriks', hash, 'admin', 'Noriks Admin');
+  }
+} catch(e) { console.error('User seed error:', e.message); }
 
 // Add new columns for flores plugin fields (safe - ignores if already exists)
 const newColumns = [
@@ -1022,17 +1066,136 @@ function getToday() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', c => body += c);
+    req.on('end', () => resolve(body));
+    req.on('error', reject);
+  });
+}
+
+function fbGet(path) {
+  return new Promise((resolve, reject) => {
+    https.get(`https://graph.facebook.com/v21.0${path}`, (resp) => {
+      let data = '';
+      resp.on('data', c => data += c);
+      resp.on('end', () => { try { resolve(JSON.parse(data)); } catch(e) { reject(e); } });
+    }).on('error', reject);
+  });
+}
+
+function fbPost(path, params) {
+  return new Promise((resolve, reject) => {
+    const postData = new URLSearchParams({ ...params, access_token: META_TOKEN }).toString();
+    const options = {
+      hostname: 'graph.facebook.com',
+      path: `/v21.0${path}`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(postData) }
+    };
+    const req = https.request(options, (resp) => {
+      let data = '';
+      resp.on('data', c => data += c);
+      resp.on('end', () => { try { resolve(JSON.parse(data)); } catch(e) { reject(e); } });
+    });
+    req.on('error', reject);
+    req.write(postData);
+    req.end();
+  });
+}
+
+// ═══ Dropbox Helpers ═══
+async function getDropboxToken() {
+  if (DROPBOX_ACCESS_TOKEN && Date.now() < dropboxTokenExpires) return DROPBOX_ACCESS_TOKEN;
+  return new Promise((resolve, reject) => {
+    const data = `grant_type=refresh_token&refresh_token=${DROPBOX_REFRESH_TOKEN}&client_id=${DROPBOX_APP_KEY}&client_secret=${DROPBOX_APP_SECRET}`;
+    const req = https.request({ hostname: 'api.dropboxapi.com', path: '/oauth2/token', method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(data) }
+    }, res => {
+      let body = '';
+      res.on('data', c => body += c);
+      res.on('end', () => {
+        try {
+          const j = JSON.parse(body);
+          if (j.access_token) { DROPBOX_ACCESS_TOKEN = j.access_token; dropboxTokenExpires = Date.now() + j.expires_in * 1000 - 60000; resolve(DROPBOX_ACCESS_TOKEN); }
+          else reject(new Error('Dropbox token refresh failed: ' + body));
+        } catch(e) { reject(e); }
+      });
+    });
+    req.on('error', reject);
+    req.end(data);
+  });
+}
+
+function dropboxApi(endpoint, body) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const token = await getDropboxToken();
+      const postData = JSON.stringify(body);
+      const hostname = endpoint.startsWith('/2/files/get_thumbnail') ? 'content.dropboxapi.com' : 'api.dropboxapi.com';
+      const req = https.request({
+        hostname, path: endpoint, method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(postData),
+          'Dropbox-API-Path-Root': JSON.stringify({".tag": "root", "root": DROPBOX_ROOT})
+        }
+      }, (res) => {
+        let data = '';
+        res.on('data', c => data += c);
+        res.on('end', () => { try { resolve(JSON.parse(data)); } catch(e) { reject(new Error('Dropbox parse error: ' + data.slice(0, 200))); } });
+      });
+      req.on('error', reject);
+      req.end(postData);
+    } catch(e) { reject(e); }
+  });
+}
+
+async function dropboxListAllFiles(folderPath) {
+  const allFiles = [];
+  let result = await dropboxApi('/2/files/list_folder', { path: folderPath, recursive: true, limit: 2000 });
+  allFiles.push(...(result.entries || []));
+  while (result.has_more) {
+    result = await dropboxApi('/2/files/list_folder/continue', { cursor: result.cursor });
+    allFiles.push(...(result.entries || []));
+  }
+  return allFiles;
+}
+
+function parseVideoFilename(name) {
+  const idMatch = name.match(/ID(\d+)/i);
+  const countries = ['HR','CZ','PL','GR','SK','IT','HU'];
+  const foundCountry = countries.find(c => name.toUpperCase().includes('_' + c + '_') || name.toUpperCase().includes('_' + c + '.') || name.toUpperCase().startsWith(c + '_'));
+  let productType = null;
+  const upper = name.toUpperCase();
+  if (/SHIRT/i.test(upper)) productType = 'shirts';
+  else if (/BOXER/i.test(upper)) productType = 'boxers';
+  else if (/STARTER/i.test(upper)) productType = 'starter';
+  else if (/KOMPLET|COMPLET|2P5/i.test(upper)) productType = 'kompleti';
+  // Try to extract date from filename (patterns like 13-02-26 or 26.02.13)
+  const dateMatch = name.match(/(\d{2})-(\d{2})-(\d{2})/);
+  let fileDate = null;
+  if (dateMatch) fileDate = `20${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`;
+  return { creativeId: idMatch ? idMatch[1] : null, country: foundCountry || null, productType, fileDate };
+}
+
 // --- Auth ---
-const crypto = require('crypto');
-const USERS = { noriks: 'noriks' };
-const sessions = new Set();
+const sessionStore = {}; // token -> { username, role, userId, displayName }
 
 function parseCookies(req) {
   const c = {}; (req.headers.cookie || '').split(';').forEach(p => { const [k,v] = p.trim().split('='); if(k) c[k]=v; }); return c;
 }
 
 function isAuthed(req) {
-  return sessions.has(parseCookies(req).flores_session);
+  const token = parseCookies(req).flores_session;
+  return !!sessionStore[token];
+}
+
+function getSessionUser(req) {
+  const token = parseCookies(req).flores_session;
+  return sessionStore[token] || null;
 }
 
 const server = http.createServer(async (req, res) => {
@@ -1044,11 +1207,14 @@ const server = http.createServer(async (req, res) => {
     let body = ''; req.on('data', c => body += c); req.on('end', () => {
       try {
         const { username, password } = JSON.parse(body);
-        if (USERS[username] && USERS[username] === password) {
+        const hash = crypto.createHash('sha256').update(password).digest('hex');
+        const user = db.prepare('SELECT * FROM flores_users WHERE username = ? AND password_hash = ?').get(username, hash);
+        if (user) {
           const token = crypto.randomBytes(32).toString('hex');
-          sessions.add(token);
+          sessionStore[token] = { username: user.username, role: user.role, userId: user.id, displayName: user.display_name };
+          db.prepare('UPDATE flores_users SET last_login = datetime(\'now\') WHERE id = ?').run(user.id);
           res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': `flores_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400` });
-          res.end(JSON.stringify({ ok: true }));
+          res.end(JSON.stringify({ ok: true, role: user.role, username: user.username }));
         } else {
           res.writeHead(401, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Invalid credentials' }));
@@ -1059,7 +1225,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (urlPath === '/api/logout') {
-    sessions.delete(parseCookies(req).flores_session);
+    delete sessionStore[parseCookies(req).flores_session];
     res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': 'flores_session=; Path=/; Max-Age=0' });
     res.end(JSON.stringify({ ok: true }));
     return;
@@ -1879,6 +2045,279 @@ const server = http.createServer(async (req, res) => {
         files.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
         return sendJSON(res, { cleared: files.length });
       }
+
+      // ═══ SESSION INFO ═══
+      if (urlPath === '/api/me') {
+        const user = getSessionUser(req);
+        return sendJSON(res, { username: user?.username, role: user?.role, displayName: user?.displayName });
+      }
+
+      // ═══ USERS MANAGEMENT (admin only) ═══
+      if (urlPath === '/api/users' && req.method === 'GET') {
+        const user = getSessionUser(req);
+        if (!user || user.role !== 'admin') return sendJSON(res, { error: 'Admin access required' }, 403);
+        const page = parseInt(query.page) || 1;
+        const limit = Math.min(parseInt(query.limit) || 50, 200);
+        const offset = (page - 1) * limit;
+        const total = db.prepare('SELECT COUNT(*) as cnt FROM flores_users').get().cnt;
+        const users = db.prepare('SELECT id, username, display_name, role, created_at, last_login FROM flores_users ORDER BY id LIMIT ? OFFSET ?').all(limit, offset);
+        return sendJSON(res, { data: users, meta: { total, page, limit, pages: Math.ceil(total / limit) } });
+      }
+      if (urlPath === '/api/users' && req.method === 'POST') {
+        const user = getSessionUser(req);
+        if (!user || user.role !== 'admin') return sendJSON(res, { error: 'Admin access required' }, 403);
+        const body = await readBody(req);
+        const { username, password, display_name, role } = JSON.parse(body);
+        if (!username || !password) return sendJSON(res, { error: 'Username and password required' }, 400);
+        if (!['admin', 'advertiser', 'viewer'].includes(role)) return sendJSON(res, { error: 'Invalid role' }, 400);
+        try {
+          const hash = crypto.createHash('sha256').update(password).digest('hex');
+          const result = db.prepare('INSERT INTO flores_users (username, password_hash, display_name, role) VALUES (?, ?, ?, ?)').run(username, hash, display_name || username, role);
+          return sendJSON(res, { ok: true, id: result.lastInsertRowid });
+        } catch(e) {
+          return sendJSON(res, { error: 'Username already exists' }, 400);
+        }
+      }
+      if (urlPath.match(/^\/api\/users\/\d+$/) && req.method === 'PUT') {
+        const user = getSessionUser(req);
+        if (!user || user.role !== 'admin') return sendJSON(res, { error: 'Admin access required' }, 403);
+        const id = parseInt(urlPath.split('/').pop());
+        const body = await readBody(req);
+        const { display_name, role, password } = JSON.parse(body);
+        if (role && !['admin', 'advertiser', 'viewer'].includes(role)) return sendJSON(res, { error: 'Invalid role' }, 400);
+        if (password) {
+          const hash = crypto.createHash('sha256').update(password).digest('hex');
+          db.prepare('UPDATE flores_users SET display_name = ?, role = ?, password_hash = ? WHERE id = ?').run(display_name, role, hash, id);
+        } else {
+          db.prepare('UPDATE flores_users SET display_name = ?, role = ? WHERE id = ?').run(display_name, role, id);
+        }
+        return sendJSON(res, { ok: true });
+      }
+      if (urlPath.match(/^\/api\/users\/\d+$/) && req.method === 'DELETE') {
+        const user = getSessionUser(req);
+        if (!user || user.role !== 'admin') return sendJSON(res, { error: 'Admin access required' }, 403);
+        const id = parseInt(urlPath.split('/').pop());
+        if (user.userId === id) return sendJSON(res, { error: 'Cannot delete yourself' }, 400);
+        db.prepare('DELETE FROM flores_users WHERE id = ?').run(id);
+        return sendJSON(res, { ok: true });
+      }
+
+      // ═══ SETTINGS ═══
+      if (urlPath === '/api/settings' && req.method === 'GET') {
+        const rows = db.prepare('SELECT key, value FROM flores_settings').all();
+        const settings = {};
+        rows.forEach(r => settings[r.key] = r.value);
+        return sendJSON(res, settings);
+      }
+      if (urlPath === '/api/settings' && req.method === 'POST') {
+        const user = getSessionUser(req);
+        if (!user || user.role !== 'admin') return sendJSON(res, { error: 'Admin access required' }, 403);
+        const body = await readBody(req);
+        const settings = JSON.parse(body);
+        const upsert = db.prepare('INSERT INTO flores_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value');
+        db.transaction(() => {
+          for (const [k, v] of Object.entries(settings)) upsert.run(k, String(v));
+        })();
+        return sendJSON(res, { ok: true });
+      }
+
+      // ═══ FB INTEGRATION ═══
+      if (urlPath === '/api/fb-status') {
+        try {
+          const meData = await fbGet(`/me?fields=id,name&access_token=${META_TOKEN}`);
+          return sendJSON(res, {
+            app_id: FB_APP_ID,
+            token_valid: !meData.error,
+            user_name: meData.name || 'Unknown',
+            user_id: meData.id || ''
+          });
+        } catch(e) {
+          return sendJSON(res, { app_id: FB_APP_ID, token_valid: false, user_name: 'Error', error: e.message });
+        }
+      }
+      if (urlPath === '/api/fb-accounts') {
+        try {
+          const data = await fbGet(`/me/adaccounts?fields=name,account_id,currency,timezone_name,account_status&limit=50&access_token=${META_TOKEN}`);
+          return sendJSON(res, data.data || []);
+        } catch(e) {
+          return sendJSON(res, { error: e.message }, 500);
+        }
+      }
+      if (urlPath === '/api/fb-pages') {
+        try {
+          const data = await fbGet(`/me/accounts?fields=name,id,access_token,tasks&limit=50&access_token=${META_TOKEN}`);
+          return sendJSON(res, data.data || []);
+        } catch(e) {
+          return sendJSON(res, { error: e.message }, 500);
+        }
+      }
+
+      // ═══ BULK CREATE CAMPAIGNS ═══
+      if (urlPath === '/api/bulk-create-campaigns' && req.method === 'POST') {
+        const body = await readBody(req);
+        const { campaigns: campConfigs } = JSON.parse(body);
+        if (!campConfigs || !campConfigs.length) return sendJSON(res, { error: 'No campaigns provided' }, 400);
+
+        const results = [];
+        for (let i = 0; i < campConfigs.length; i++) {
+          const cfg = campConfigs[i];
+          const adAccountId = AD_ACCOUNTS_MAP[cfg.ad_account] || AD_ACCOUNTS_MAP['top_noriks_2'];
+          try {
+            // 1. Create Campaign (PAUSED)
+            const campaignData = await fbPost(`/${adAccountId}/campaigns`, {
+              name: cfg.campaign_name,
+              objective: cfg.objective || 'OUTCOME_SALES',
+              status: 'PAUSED',
+              special_ad_categories: '[]',
+              ...(cfg.campaign_type === 'CBO' ? { daily_budget: Math.round((cfg.daily_budget || 20) * 100) } : {})
+            });
+            if (campaignData.error) throw new Error(campaignData.error.message);
+
+            // 2. Create AdSet
+            const targeting = {
+              geo_locations: { countries: [cfg.country] },
+              age_min: cfg.age_min || 25,
+              age_max: cfg.age_max || 55,
+            };
+            if (cfg.gender && cfg.gender !== 'all') {
+              targeting.genders = Array.isArray(cfg.gender) ? cfg.gender : [parseInt(cfg.gender)];
+            }
+            const adsetPayload = {
+              campaign_id: campaignData.id,
+              name: `${cfg.campaign_name} - Adset`,
+              targeting: JSON.stringify(targeting),
+              billing_event: 'IMPRESSIONS',
+              optimization_goal: 'OFFSITE_CONVERSIONS',
+              bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
+              status: 'PAUSED',
+              ...(cfg.campaign_type !== 'CBO' ? { daily_budget: Math.round((cfg.daily_budget || 20) * 100) } : {})
+            };
+            const adsetData = await fbPost(`/${adAccountId}/adsets`, adsetPayload);
+            if (adsetData.error) throw new Error(adsetData.error.message);
+
+            // 3. Create Creative
+            const creativePayload = {
+              name: `${cfg.campaign_name} - Creative`,
+              object_story_spec: JSON.stringify({
+                page_id: NORIKS_PAGE_ID,
+                link_data: {
+                  image_url: cfg.image_url || '',
+                  link: cfg.landing_page_url || '',
+                  message: cfg.primary_text || '',
+                  name: cfg.headline || '',
+                  call_to_action: { type: cfg.cta || 'SHOP_NOW', value: { link: cfg.landing_page_url || '' } }
+                }
+              })
+            };
+            const creativeData = await fbPost(`/${adAccountId}/adcreatives`, creativePayload);
+            if (creativeData.error) throw new Error(creativeData.error.message);
+
+            // 4. Create Ad
+            const adPayload = {
+              name: `${cfg.campaign_name} - Ad`,
+              adset_id: adsetData.id,
+              creative: JSON.stringify({ creative_id: creativeData.id }),
+              status: 'PAUSED'
+            };
+            const adData = await fbPost(`/${adAccountId}/ads`, adPayload);
+            if (adData.error) throw new Error(adData.error.message);
+
+            results.push({
+              index: i,
+              success: true,
+              campaign_name: cfg.campaign_name,
+              campaign_id: campaignData.id,
+              adset_id: adsetData.id,
+              creative_id: creativeData.id,
+              ad_id: adData.id
+            });
+          } catch(e) {
+            results.push({
+              index: i,
+              success: false,
+              campaign_name: cfg.campaign_name,
+              error: e.message
+            });
+          }
+          // Delay between campaigns
+          if (i < campConfigs.length - 1) await new Promise(r => setTimeout(r, 1000));
+        }
+        return sendJSON(res, { results });
+      }
+
+      // ═══ VIDEOS (Dropbox) ═══
+      if (urlPath === '/api/videos' && req.method === 'GET') {
+        const forceRefresh = query.refresh === '1';
+        if (!forceRefresh && videosCache && Date.now() - videosCacheTime < VIDEOS_CACHE_TTL) {
+          return sendJSON(res, videosCache);
+        }
+        try {
+          const allFiles = await dropboxListAllFiles(DROPBOX_FOLDER);
+          const videoExts = ['.mp4', '.mov', '.avi', '.mkv', '.webm'];
+          const videos = allFiles
+            .filter(f => f['.tag'] === 'file' && videoExts.some(ext => f.name.toLowerCase().endsWith(ext)))
+            .map(f => {
+              const parsed = parseVideoFilename(f.name);
+              return {
+                name: f.name,
+                path: f.path_display || f.path_lower,
+                id: parsed.creativeId,
+                country: parsed.country,
+                productType: parsed.productType,
+                fileDate: parsed.fileDate,
+                size: f.size,
+                modified: f.server_modified
+              };
+            })
+            .sort((a, b) => {
+              const idA = parseInt(a.id) || 0, idB = parseInt(b.id) || 0;
+              return idB - idA; // newest IDs first
+            });
+          const result = { files: videos, total: videos.length, cached_at: new Date().toISOString() };
+          videosCache = result;
+          videosCacheTime = Date.now();
+          return sendJSON(res, result);
+        } catch(e) {
+          console.error('Videos API error:', e);
+          return sendJSON(res, { error: e.message }, 500);
+        }
+      }
+      if (urlPath === '/api/video-link' && req.method === 'GET') {
+        if (!query.path) return sendJSON(res, { error: 'path required' }, 400);
+        try {
+          const result = await dropboxApi('/2/files/get_temporary_link', { path: query.path });
+          if (result.error) throw new Error(JSON.stringify(result.error));
+          return sendJSON(res, { link: result.link, name: result.metadata?.name });
+        } catch(e) {
+          return sendJSON(res, { error: e.message }, 500);
+        }
+      }
+      if (urlPath === '/api/video-thumbnail' && req.method === 'GET') {
+        if (!query.path) return sendJSON(res, { error: 'path required' }, 400);
+        try {
+          const token = await getDropboxToken();
+          const arg = JSON.stringify({ resource: { ".tag": "path", path: query.path }, format: { ".tag": "jpeg" }, size: { ".tag": "w256h256" }, mode: { ".tag": "fitone_bestfit" } });
+          return new Promise((resolve, reject) => {
+            const req2 = https.request({
+              hostname: 'content.dropboxapi.com', path: '/2/files/get_thumbnail_v2', method: 'POST',
+              headers: {
+                'Authorization': 'Bearer ' + token,
+                'Dropbox-API-Arg': arg,
+                'Dropbox-API-Path-Root': JSON.stringify({".tag": "root", "root": DROPBOX_ROOT})
+              }
+            }, (resp) => {
+              res.writeHead(resp.statusCode, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=3600' });
+              resp.pipe(res);
+              resolve();
+            });
+            req2.on('error', (e) => { sendJSON(res, { error: e.message }, 500); resolve(); });
+            req2.end();
+          });
+        } catch(e) {
+          return sendJSON(res, { error: e.message }, 500);
+        }
+      }
+
       return sendJSON(res, { error: 'not found' }, 404);
     } catch (err) {
       console.error('API error:', err);
