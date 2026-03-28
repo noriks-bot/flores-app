@@ -3312,4 +3312,12 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
 
 server.listen(PORT, () => {
   console.log(`Flores running on http://localhost:${PORT}`);
+  // Pre-warm campaign cache on startup (so first dashboard load is fast)
+  setTimeout(async () => {
+    try {
+      const today = getToday();
+      await getCampaigns(today, today);
+      console.log('[FLORES] Campaign cache pre-warmed');
+    } catch(e) { console.log('[FLORES] Pre-warm failed:', e.message); }
+  }, 3000);
 });
