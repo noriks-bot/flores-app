@@ -943,7 +943,6 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
               <tr>
                 <th class="cr-th" data-sort="id" style="text-align:left">Creative ID</th>
                 <th class="cr-th" data-sort="adCount">Ads</th>
-                <th class="cr-th">Metric</th>
                 <th class="cr-th" data-sort="totalSpend">Total ▾</th>
                 <th class="cr-th cr-country-th" data-sort="HR">🇭🇷 HR</th>
                 <th class="cr-th cr-country-th" data-sort="CZ">🇨🇿 CZ</th>
@@ -955,7 +954,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
               </tr>
             </thead>
             <tbody id="crBody">
-              <tr><td colspan="11" style="text-align:center;padding:60px;color:var(--text-muted)">Select a date range and click Load</td></tr>
+              <tr><td colspan="10" style="text-align:center;padding:60px;color:var(--text-muted)">Select a date range and click Load</td></tr>
             </tbody>
             <tfoot id="crTotals"></tfoot>
           </table>
@@ -2682,7 +2681,7 @@ async function loadCreativeReport() {
   const end = document.getElementById('crDateTo').value;
   if (!start || !end) return;
 
-  document.getElementById('crBody').innerHTML = '<tr><td colspan="11" style="text-align:center;padding:60px;color:var(--text-muted)"><div class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading creative data...</td></tr>';
+  document.getElementById('crBody').innerHTML = '<tr><td colspan="10" style="text-align:center;padding:60px;color:var(--text-muted)"><div class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading creative data...</td></tr>';
   document.getElementById('crTotals').innerHTML = '';
 
   try {
@@ -2692,7 +2691,7 @@ async function loadCreativeReport() {
     sortCreativeData();
     renderCreativeTable();
   } catch(e) {
-    document.getElementById('crBody').innerHTML = `<tr><td colspan="11" style="text-align:center;padding:60px;color:var(--danger)">Error: ${e.message}</td></tr>`;
+    document.getElementById('crBody').innerHTML = `<tr><td colspan="10" style="text-align:center;padding:60px;color:var(--danger)">Error: ${e.message}</td></tr>`;
   }
 }
 
@@ -2711,7 +2710,7 @@ function crFmtCpa(spend, purchases) {
 
 function renderCreativeTable() {
   if (!crData || !crData.creatives.length) {
-    document.getElementById('crBody').innerHTML = '<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text-muted)">No creative data found</td></tr>';
+    document.getElementById('crBody').innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted)">No creative data found</td></tr>';
     document.getElementById('crTotals').innerHTML = '';
     return;
   }
@@ -2731,47 +2730,34 @@ function renderCreativeTable() {
   });
 
   const rows = crData.creatives.map(c => {
-    // Spend row
-    const spendCells = CR_COUNTRIES.map(cc => {
-      const cs = c.countries[cc];
-      if (!cs || cs.spend === 0) return '<td><span class="cr-country-zero">—</span></td>';
-      return '<td>' + cs.spend.toFixed(2) + ' €</td>';
-    }).join('');
-
-    // Purchases row
-    const purchCells = CR_COUNTRIES.map(cc => {
-      const cs = c.countries[cc];
-      if (!cs || !cs.purchases) return '<td><span class="cr-country-zero">—</span></td>';
-      return '<td>' + cs.purchases + '</td>';
-    }).join('');
-
-    // CPA row — each cell colored individually
-    const cpaCells = CR_COUNTRIES.map(cc => {
-      const cs = c.countries[cc];
-      if (!cs || !cs.purchases || cs.purchases === 0) return '<td><span class="cr-country-zero">—</span></td>';
+    // Combined cell per country: spend / purchases / cpa
+    function crCombinedCell(cs) {
+      if (!cs || cs.spend === 0) return '<td><span class="cr-country-zero">\u2014</span></td>';
+      const spend = cs.spend >= 1000 ? (cs.spend/1000).toFixed(1)+'k' : cs.spend.toFixed(0);
+      if (!cs.purchases) return '<td style="font-size:12px">' + spend + '\u20ac</td>';
+      const cpa = (cs.spend / cs.purchases).toFixed(0);
       const style = crCpaStyle(cs.spend, cs.purchases);
-      return '<td class="cr-cpa-cell" style="' + style + '">' + (cs.spend / cs.purchases).toFixed(2) + ' €</td>';
-    }).join('');
+      return '<td style="font-size:12px;' + style + '">' + spend + '\u20ac / ' + cs.purchases + 'p / ' + cpa + '\u20ac</td>';
+    }
+    const combinedCells = CR_COUNTRIES.map(cc => crCombinedCell(c.countries[cc])).join('');
 
-    const totalCpaStyle = crCpaStyle(c.totalSpend, c.totalPurchases);
+    // Total combined cell
+    const totalSpendFmt = c.totalSpend >= 1000 ? (c.totalSpend/1000).toFixed(1)+'k' : c.totalSpend.toFixed(0);
+    let totalCombined;
+    if (c.totalPurchases > 0) {
+      const totalCpa = (c.totalSpend / c.totalPurchases).toFixed(0);
+      const totalCpaStyle = crCpaStyle(c.totalSpend, c.totalPurchases);
+      totalCombined = '<td style="font-weight:600;font-size:12px;' + totalCpaStyle + '">' + totalSpendFmt + '\u20ac / ' + c.totalPurchases + 'p / ' + totalCpa + '\u20ac</td>';
+    } else {
+      totalCombined = '<td style="font-weight:600;font-size:12px">' + totalSpendFmt + '\u20ac</td>';
+    }
 
-    return `<tr class="cr-spend-row" data-cr-id="${c.id.toLowerCase()}">
-      <td rowspan="3"><span class="cr-id-pill">${c.id}</span></td>
-      <td rowspan="3">${c.adCount}</td>
-      <td><span class="cr-metric-label">Spend</span></td>
-      <td style="font-weight:600">${c.totalSpend.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} €</td>
-      ${spendCells}
-    </tr>
-    <tr class="cr-purch-row" data-cr-group="${c.id.toLowerCase()}">
-      <td><span class="cr-metric-label">Purchases</span></td>
-      <td style="font-weight:600">${c.totalPurchases > 0 ? c.totalPurchases : '<span class="cr-country-zero">—</span>'}</td>
-      ${purchCells}
-    </tr>
-    <tr class="cr-cpa-row" data-cr-group="${c.id.toLowerCase()}">
-      <td><span class="cr-metric-label">CPA</span></td>
-      <td class="cr-cpa-cell" style="${totalCpaStyle}">${crFmtCpa(c.totalSpend, c.totalPurchases)}</td>
-      ${cpaCells}
-    </tr>`;
+    return '<tr class="cr-spend-row" data-cr-id="' + c.id.toLowerCase() + '">' +
+      '<td><span class="cr-id-pill">' + c.id + '</span></td>' +
+      '<td>' + c.adCount + '</td>' +
+      totalCombined +
+      combinedCells +
+    '</tr>';
   }).join('');
 
   document.getElementById('crBody').innerHTML = rows;
@@ -2787,37 +2773,34 @@ function renderCreativeTable() {
     });
   });
 
-  const totalSpendCells = CR_COUNTRIES.map(cc => `<td>${countryData[cc].spend > 0 ? countryData[cc].spend.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €' : '—'}</td>`).join('');
-  const totalPurchCells = CR_COUNTRIES.map(cc => `<td>${countryData[cc].purchases > 0 ? countryData[cc].purchases : '—'}</td>`).join('');
-  const totalCpaCells = CR_COUNTRIES.map(cc => {
+  const totalAds = crData.creatives.reduce((s,c) => s + c.adCount, 0);
+  const totalCombinedCells = CR_COUNTRIES.map(cc => {
     const d = countryData[cc];
-    if (!d.purchases) return '<td>—</td>';
+    if (!d.spend) return '<td>\u2014</td>';
+    const spFmt = d.spend >= 1000 ? (d.spend/1000).toFixed(1)+'k' : d.spend.toFixed(0);
+    if (!d.purchases) return '<td style="font-size:12px">' + spFmt + '\u20ac</td>';
+    const cpa = (d.spend / d.purchases).toFixed(0);
     const style = crCpaStyle(d.spend, d.purchases);
-    return `<td style="${style}">${(d.spend / d.purchases).toFixed(2)} €</td>`;
+    return '<td style="font-size:12px;' + style + '">' + spFmt + '\u20ac / ' + d.purchases + 'p / ' + cpa + '\u20ac</td>';
   }).join('');
 
-  const overallCpaStyle = crCpaStyle(t.spend, t.purchases);
-  const totalAds = crData.creatives.reduce((s,c) => s + c.adCount, 0);
+  const tSpFmt = t.spend >= 1000 ? (t.spend/1000).toFixed(1)+'k' : t.spend.toFixed(0);
+  let totalCell;
+  if (t.purchases > 0) {
+    const overallCpaStyle = crCpaStyle(t.spend, t.purchases);
+    totalCell = '<td style="font-weight:700;font-size:12px;' + overallCpaStyle + '">' + tSpFmt + '\u20ac / ' + t.purchases + 'p / ' + (t.spend/t.purchases).toFixed(0) + '\u20ac</td>';
+  } else {
+    totalCell = '<td style="font-weight:700;font-size:12px">' + tSpFmt + '\u20ac</td>';
+  }
 
-  document.getElementById('crTotals').innerHTML = `<tr class="cr-totals-spend">
-    <td rowspan="3">Total (${crData.creatives.length})</td>
-    <td rowspan="3">${totalAds}</td>
-    <td>Spend</td>
-    <td>${t.spend.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} €</td>
-    ${totalSpendCells}
-  </tr>
-  <tr class="cr-totals-purch">
-    <td>Purchases</td>
-    <td>${t.purchases > 0 ? t.purchases : '—'}</td>
-    ${totalPurchCells}
-  </tr>
-  <tr class="cr-totals-cpa">
-    <td>CPA</td>
-    <td style="${overallCpaStyle}">${t.purchases > 0 ? (t.spend / t.purchases).toFixed(2) + ' €' : '—'}</td>
-    ${totalCpaCells}
-  </tr>`;
+  document.getElementById('crTotals').innerHTML = '<tr class="cr-totals-spend">' +
+    '<td>Total (' + crData.creatives.length + ')</td>' +
+    '<td>' + totalAds + '</td>' +
+    totalCell +
+    totalCombinedCells +
+  '</tr>';
 
-  // Re-apply search filter
+    // Re-apply search filter
   filterCreativeTable();
 }
 
