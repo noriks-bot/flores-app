@@ -1656,7 +1656,7 @@ const server = http.createServer(async (req, res) => {
   if (urlPath === '/register' || urlPath === '/register.html') {
     try {
       const registerHtml = fs.readFileSync(path.join(__dirname, 'register.html'));
-      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' });
       res.end(registerHtml);
     } catch(e) {
       res.writeHead(302, { 'Location': '/login' });
@@ -1669,7 +1669,7 @@ const server = http.createServer(async (req, res) => {
   if (urlPath === '/' || urlPath === '/index' || urlPath === '/landing') {
     try {
       const landingHtml = fs.readFileSync(path.join(__dirname, 'landing.html'));
-      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' });
       res.end(landingHtml);
     } catch(e) {
       // Fallback: redirect to /app if no landing page exists
@@ -1682,7 +1682,7 @@ const server = http.createServer(async (req, res) => {
   // Serve login page without auth
   if (urlPath === '/login' || urlPath === '/login.html') {
     const loginHtml = fs.readFileSync(path.join(__dirname, 'login.html'));
-    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' });
     res.end(loginHtml);
     return;
   }
@@ -1756,7 +1756,7 @@ const server = http.createServer(async (req, res) => {
   // Serve the app (authenticated SPA)
   if (urlPath === '/app' || urlPath === '/app/') {
     const appHtml = fs.readFileSync(path.join(__dirname, 'index.html'));
-    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' });
     res.end(appHtml);
     return;
   }
