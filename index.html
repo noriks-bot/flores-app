@@ -2298,7 +2298,8 @@ function closeMobileSidebar() {
 }
 
 function logout() {
-  fetch('/api/logout', { method: 'POST' }).finally(() => {
+  fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }).finally(function() {
+    document.cookie = 'flores_session=; Path=/; Max-Age=0';
     window.location.href = '/login';
   });
 }
