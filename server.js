@@ -1975,12 +1975,13 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             for (const ad of ads) {
               const cid = extractCreativeId(ad.name);
               if (!cid) continue;
-              if (!groups[cid]) groups[cid] = { spend: 0, clicks: 0, impressions: 0, purchases: 0, names: new Set() };
+              if (!groups[cid]) groups[cid] = { spend: 0, clicks: 0, impressions: 0, reach: 0, purchases: 0, names: new Set() };
               const g = groups[cid];
               const ins = ad.insights || {};
               g.spend += parseFloat(ins.spend || 0);
               g.clicks += parseInt(ins.clicks || 0);
               g.impressions += parseInt(ins.impressions || 0);
+              g.reach += parseInt(ins.reach || 0);
               g.names.add(ad.name);
               const purch = (ins.actions || []).find(a => 
                 a.action_type === 'offsite_conversion.fb_pixel_purchase' || 
@@ -1993,6 +1994,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             for (const [id, g] of Object.entries(groups)) {
               g.cpa = g.purchases > 0 ? g.spend / g.purchases : null;
               g.ctr = g.impressions > 0 ? (g.clicks / g.impressions) * 100 : 0;
+              g.frequency = g.reach > 0 ? g.impressions / g.reach : 0;
               g.name = [...g.names][0] || id;
             }
             return groups;
@@ -2018,30 +2020,50 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             let severity = 'low';
             let reasons = [];
             
-            // CPA increased > 30%
+            // FB Frequency (impressions/reach) — primary fatigue metric
+            const freq14 = m14.frequency || 0;
+            const freq3 = m3?.frequency || 0;
+            
+            // High frequency = audience fatigue
+            if (freq14 >= 4) {
+              isFatigued = true;
+              reasons.push('frequency');
+              if (freq14 >= 6) severity = 'high';
+              else severity = 'medium';
+            }
+            
+            // Frequency rising fast (3d higher than 14d avg)
+            if (freq3 > freq14 * 1.3 && freq3 >= 3) {
+              isFatigued = true;
+              reasons.push('freq_rising');
+              if (freq3 >= 5) severity = 'high';
+              else if (severity !== 'high') severity = 'medium';
+            }
+            
+            // CPA spike (supporting signal)
             if (cpa14 && cpa14 > 0 && cpa3 && cpa3 > 0) {
               const cpaChange = ((cpa3 - cpa14) / cpa14) * 100;
               if (cpaChange > 30) {
                 isFatigued = true;
                 reasons.push('cpa');
-                if (cpaChange > 60) severity = 'high';
-                else if (cpaChange > 30) severity = 'medium';
+                if (cpaChange > 60 && severity !== 'high') severity = 'high';
+                else if (severity === 'low') severity = 'medium';
               }
             }
             
-            // CTR decreased > 20%
+            // CTR decline (supporting signal)
             if (ctr14 > 0 && ctr3 >= 0) {
               const ctrChange = ((ctr3 - ctr14) / ctr14) * 100;
               if (ctrChange < -20) {
                 isFatigued = true;
                 reasons.push('ctr');
-                if (ctrChange < -40) severity = 'high';
-                else if (ctrChange < -20 && severity !== 'high') severity = 'medium';
+                if (severity === 'low') severity = 'medium';
               }
             }
             
-            // Both fatigued = high
-            if (reasons.length === 2) severity = 'high';
+            // Multiple signals = high
+            if (reasons.length >= 3) severity = 'high';
+            if (reasons.length >= 2 && reasons.includes('frequency')) severity = 'high';
             
             const entry = {
               id,
@@ -2049,6 +2071,8 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
               cpa14d: cpa14 ? Math.round(cpa14 * 100) / 100 : null,
               cpa3d: cpa3 ? Math.round(cpa3 * 100) / 100 : null,
               cpaChange: (cpa14 && cpa3 && cpa14 > 0) ? (((cpa3 - cpa14) / cpa14) * 100).toFixed(0) + '%' : 'N/A',
+              frequency14d: Math.round((m14.frequency || 0) * 100) / 100,
+              frequency3d: Math.round((m3?.frequency || 0) * 100) / 100,
               ctr14d: Math.round(ctr14 * 100) / 100,
               ctr3d: Math.round(ctr3 * 100) / 100,
               ctrChange: ctr14 > 0 ? (((ctr3 - ctr14) / ctr14) * 100).toFixed(0) + '%' : 'N/A',
