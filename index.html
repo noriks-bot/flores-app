@@ -917,13 +917,6 @@ body::before {
 
   <!-- === CONTENT SECTIONS === -->
   <div id="section-ads-manager" class="content-section active">
-  <!-- LEVEL TABS -->
-  <div class="level-tabs">
-    <button class="level-tab active" data-level="campaigns" onclick="switchTab('campaigns')">🔷 Campaigns <span class="tab-count" id="tab-count-campaigns">—</span></button>
-    <button class="level-tab" data-level="adsets" onclick="switchTab('adsets')">📦 Ad Sets <span class="tab-count" id="tab-count-adsets">—</span></button>
-    <button class="level-tab" data-level="ads" onclick="switchTab('ads')">📋 Ads <span class="tab-count" id="tab-count-ads">—</span></button>
-  </div>
-
   <!-- FILTERS -->
   <div class="filters-bar">
     <span class="filter-label">Period</span>
@@ -984,6 +977,13 @@ body::before {
   </div>
 
   <div class="content">
+    <!-- LEVEL TABS (moved below filters) -->
+  <div class="level-tabs" style="padding:0 24px;background:var(--card-bg);border-bottom:2px solid var(--border-color)">
+    <button class="level-tab active" data-level="campaigns" onclick="switchTab('campaigns')">🔷 Campaigns <span class="tab-count" id="tab-count-campaigns">—</span></button>
+    <button class="level-tab" data-level="adsets" onclick="switchTab('adsets')">📦 Ad Sets <span class="tab-count" id="tab-count-adsets">—</span></button>
+    <button class="level-tab" data-level="ads" onclick="switchTab('ads')">📋 Ads <span class="tab-count" id="tab-count-ads">—</span></button>
+  </div>
+
     <!-- TABLE -->
     <div class="table-card">
       <!-- campaign count moved to topbar -->
@@ -3918,6 +3918,7 @@ let optDateRange = 'today';
 let optCampaigns = [];
 let optExpanded = {};
 let optLoaded = false;
+let optExpandedAds = {};
 
 function switchOptTab(btn, country) {
   document.querySelectorAll('#section-optimizer .fpill').forEach(b => b.classList.remove('fpill-active'));
@@ -4037,16 +4038,40 @@ function renderOptimizer() {
         }
         if (!asMatchesCountry && optCountry === 'SOFI') { asMatchesCountry = asName.includes('SOFI'); }
         const grayStyle = (!asMatchesCountry && optCountry !== 'ALL') ? 'opacity:0.35;' : '';
-        html += '<tr style="background:#f9fafb;border-bottom:1px solid #f0f0f0;'+grayStyle+'">';
-        html += '<td></td>';
+        html += '<tr style="background:#f9fafb;border-bottom:1px solid #f0f0f0;cursor:pointer;'+grayStyle+'" onclick="event.stopPropagation();toggleOptAds(\''+as.id+'\',\''+c.id+'\');">';
+        html += '<td style="text-align:center;font-size:11px;color:#9ca3af;padding-left:16px">'+(optExpandedAds[as.id]?'\u25be':'\u25b8')+'</td>';
         html += '<td style="text-align:left;padding-left:32px;font-size:11px;color:#4b5563;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">↳ '+as.name+'</td>';
         html += '<td style="font-size:11px;text-align:center">'+(as.status==='ACTIVE'?'<span style="color:#22c55e">●</span>':'<span style="color:#9ca3af">●</span>')+'</td>';
         html += '<td style="text-align:right">'+asSpend.toFixed(2)+' €</td>';
         html += '<td style="text-align:right">'+(asOrders||'—')+'</td>';
         html += '<td style="text-align:right">'+(asRevenue>0?asRevenue.toFixed(2)+' €':'—')+'</td>';
         html += '<td style="text-align:right;'+asProfitStyle+'">'+(asProfit!==0?asProfit.toFixed(2)+' €':'—')+'</td>';
-        html += '<td style="text-align:right">—</td><td style="text-align:right">—</td>';
+        const asPurch = optGetPurchases(as.insights);
+        const asCpa = asPurch > 0 ? asSpend/asPurch : 0;
+        const asCpaStyle = asCpa > 0 ? (asCpa <= 15 ? 'background:#4caf50;color:#fff' : asCpa <= 25 ? 'background:#f59e0b;color:#fff' : 'background:#ef5350;color:#fff') : '';
+        html += '<td style="text-align:right;'+asCpaStyle+'">'+(asCpa>0?asCpa.toFixed(2)+' \u20ac':'\u2014')+'</td>';
+        html += '<td style="text-align:right">'+(asRevenue>0&&asSpend>0?((asRevenue/asSpend)).toFixed(2)+'x':'\u2014')+'</td>';
         html += '</tr>';
+        // Ads under this adset
+        if (optExpandedAds[as.id]) {
+          for (const ad of (optExpandedAds[as.id].ads || [])) {
+            const adSpend = parseFloat(ad.insights?.spend||0);
+            const adPurch = optGetPurchases(ad.insights);
+            const adCpa = adPurch > 0 ? adSpend/adPurch : 0;
+            const adCpaStyle = adCpa > 0 ? (adCpa <= 15 ? 'background:#4caf50;color:#fff' : adCpa <= 25 ? 'background:#f59e0b;color:#fff' : 'background:#ef5350;color:#fff') : '';
+            html += '<tr style="background:#f0f4ff;border-bottom:1px solid #e8edf5;'+grayStyle+'">';
+            html += '<td></td>';
+            html += '<td style="text-align:left;padding-left:56px;font-size:10px;color:#6b7280;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">\u2514 '+ad.name+'</td>';
+            html += '<td style="font-size:11px;text-align:center">'+(ad.status==='ACTIVE'?'<span style="color:#22c55e">\u25cf</span>':'<span style="color:#9ca3af">\u25cf</span>')+'</td>';
+            html += '<td style="text-align:right;font-size:11px">'+adSpend.toFixed(2)+' \u20ac</td>';
+            html += '<td style="text-align:right;font-size:11px">\u2014</td>';
+            html += '<td style="text-align:right;font-size:11px">\u2014</td>';
+            html += '<td style="text-align:right;font-size:11px">\u2014</td>';
+            html += '<td style="text-align:right;font-size:11px;'+adCpaStyle+'">'+(adCpa>0?adCpa.toFixed(2)+' \u20ac':'\u2014')+'</td>';
+            html += '<td style="text-align:right;font-size:11px">\u2014</td>';
+            html += '</tr>';
+          }
+        }
       }
     }
   }
@@ -4749,6 +4774,30 @@ async function toggleInlinePlay(idx, cardEl) {
   } else {
     player.play();
   }
+}
+
+
+async function toggleOptAds(adsetId, campaignId) {
+  if (optExpandedAds[adsetId]) {
+    delete optExpandedAds[adsetId];
+    renderOptimizer();
+    return;
+  }
+  optExpandedAds[adsetId] = { ads: [], loading: true };
+  renderOptimizer();
+  try {
+    const {from,to} = getOptDateRange();
+    const res = await fetch('/api/ads?adset_id='+adsetId+'&date_from='+from+'&date_to='+to);
+    const ads = await res.json();
+    if (!ads.error) {
+      optExpandedAds[adsetId] = { ads };
+    } else {
+      delete optExpandedAds[adsetId];
+    }
+  } catch(e) {
+    delete optExpandedAds[adsetId];
+  }
+  renderOptimizer();
 }
 
 </script>
