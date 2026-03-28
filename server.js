@@ -3025,7 +3025,13 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         if (!query.path) return sendJSON(res, { error: 'path required' }, 400);
         try {
           const token = await getDropboxToken();
-          const arg = JSON.stringify({ resource: { ".tag": "path", path: query.path }, format: { ".tag": "jpeg" }, size: { ".tag": "w256h256" }, mode: { ".tag": "fitone_bestfit" } });
+          // Sanitize path for HTTP header (replace non-ASCII with escaped unicode)
+          const safePath = query.path.replace(/[^\x00-\x7F]/g, function(ch) {
+            var code = ch.codePointAt(0);
+            if (code > 0xFFFF) return '\\U' + ('00000000' + code.toString(16)).slice(-8);
+            return '\\u' + ('0000' + code.toString(16)).slice(-4);
+          });
+          const arg = JSON.stringify({ resource: { ".tag": "path", path: safePath }, format: { ".tag": "jpeg" }, size: { ".tag": "w256h256" }, mode: { ".tag": "fitone_bestfit" } });
           return new Promise((resolve, reject) => {
             const req2 = https.request({
               hostname: 'content.dropboxapi.com', path: '/2/files/get_thumbnail_v2', method: 'POST',
