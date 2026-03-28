@@ -2068,7 +2068,10 @@ const server = http.createServer(async (req, res) => {
         if (!user || user.role !== 'admin') return sendJSON(res, { error: 'Admin access required' }, 403);
         const body = await readBody(req);
         const { username, password, display_name, role } = JSON.parse(body);
-        if (!username || !password) return sendJSON(res, { error: 'Username and password required' }, 400);
+        if (!username || !password) return sendJSON(res, { error: "Username and password required" }, 400);
+        if (username.length < 3 || username.length > 50) return sendJSON(res, { error: "Username must be 3-50 characters" }, 400);
+        if (password.length < 4) return sendJSON(res, { error: "Password must be at least 4 characters" }, 400);
+        if (/[^a-zA-Z0-9._-]/.test(username)) return sendJSON(res, { error: "Username can only contain letters, numbers, dots, dashes, underscores" }, 400);
         if (!['admin', 'advertiser', 'viewer'].includes(role)) return sendJSON(res, { error: 'Invalid role' }, 400);
         try {
           const hash = crypto.createHash('sha256').update(password).digest('hex');
