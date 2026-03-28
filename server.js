@@ -1319,7 +1319,10 @@ function parseQuery(url) {
   if (idx === -1) return {};
   const params = {};
   url.slice(idx + 1).split('&').forEach(p => {
-    const [k, v] = p.split('=');
+    const eqIdx = p.indexOf('=');
+    if (eqIdx === -1) return;
+    const k = p.slice(0, eqIdx);
+    const v = p.slice(eqIdx + 1);
     params[decodeURIComponent(k)] = decodeURIComponent(v || '');
   });
   return params;

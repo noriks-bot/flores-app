@@ -5080,40 +5080,40 @@ async function domChatSend() {
 async function toggleInlinePlay(idx, cardEl) {
   const v = filteredVideos[idx];
   if (!v) return;
+  if (!cardEl || !cardEl.classList.contains('vid-card')) cardEl = document.querySelector('.vid-card[data-idx="'+idx+'"]');
+  if (!cardEl) return;
   const player = document.getElementById('vidInline' + idx);
-  
-  // If already playing, pause it
+  if (!player) return;
+
   if (cardEl.classList.contains('playing')) {
     player.pause();
     cardEl.classList.remove('playing');
     return;
   }
-  
-  // Pause any other playing videos
-  document.querySelectorAll('.vid-card.playing').forEach(c => {
-    c.classList.remove('playing');
-    const vid = c.querySelector('video');
-    if (vid) { vid.pause(); vid.src = ''; }
+
+  document.querySelectorAll('.vid-card.playing').forEach(function(c2) {
+    c2.classList.remove('playing');
+    var vid = c2.querySelector('video');
+    if (vid) { vid.pause(); vid.removeAttribute('src'); vid.load(); }
   });
-  
-  // Load and play this video
+
   cardEl.classList.add('playing');
-  
-  if (!player.src || player.src === window.location.href) {
-    // Need to fetch temporary link
+
+  if (!player.currentSrc) {
     try {
-      const resp = await fetch('/api/video-link?path=' + encodeURIComponent(v.path));
-      const data = await resp.json();
+      var resp = await fetch('/api/video-link?path=' + encodeURIComponent(v.path));
+      var data = await resp.json();
+      if (data.error) throw new Error(data.error);
       if (data.link) {
         player.src = data.link;
-        player.play();
+        player.play().catch(function(){});
       }
     } catch(e) {
       console.error('Video load error:', e);
       cardEl.classList.remove('playing');
     }
   } else {
-    player.play();
+    player.play().catch(function(){});
   }
 }
 
