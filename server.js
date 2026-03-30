@@ -3400,7 +3400,10 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         const ordersList = db.prepare("SELECT wc_order_id, order_date, order_datetime, country, gross_eur, profit, utm_source, utm_medium, is_fb_attributed, billing_name, billing_city, billing_email, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ? ORDER BY order_datetime DESC, wc_order_id DESC").all(dashFrom, dashTo);
         const ordersListFormatted = ordersList.map(o => {
           let origin = 'Organic';
-          if (o.is_fb_attributed === 1) origin = 'Facebook';
+          if (o.is_fb_attributed === 1) {
+            const hasUtm = o.utm_campaign && o.utm_campaign !== '' && !o.utm_campaign.startsWith('google');
+            origin = hasUtm ? 'Facebook (Measured)' : 'Facebook (Not Measured)';
+          }
           else if (o.utm_source === 'callcenter') origin = 'Call Center';
           else if ((o.utm_source || '').includes('google') || o.utm_medium === 'cpc') origin = 'Google';
           else if ((o.utm_source || '').includes('klaviyo') || (o.utm_source || '').includes('email')) origin = 'Klaviyo';
