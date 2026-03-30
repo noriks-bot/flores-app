@@ -3108,7 +3108,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         const chartData = db.prepare('SELECT order_date as date, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? GROUP BY order_date ORDER BY order_date').all(d7ago);
         
         // Top campaigns by orders (today)
-        const topCampaigns = db.prepare("SELECT utm_campaign as name, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ? AND utm_campaign IS NOT NULL AND utm_campaign != '' GROUP BY utm_campaign ORDER BY orders DESC LIMIT 5").all(today);
+        const topCampaigns = db.prepare("SELECT utm_campaign as name, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ? AND utm_campaign IS NOT NULL AND utm_campaign != '' GROUP BY utm_campaign ORDER BY orders DESC LIMIT 10").all(today);
         
         // Top products
         const topProducts = db.prepare("SELECT product_type, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue FROM wc_orders WHERE order_date = ? GROUP BY product_type ORDER BY orders DESC").all(today);
@@ -3157,11 +3157,11 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             const campData = JSON.parse(fs.readFileSync(path.join(CACHE_DIR, latestCampFile), 'utf8'));
             if (Array.isArray(campData)) {
               enrichedCampaigns = enrichedCampaigns.map(c => {
-                const fbCamp = campData.find(fb => c.name && fb.name && fb.name.includes(c.name));
+                const fbCamp = campData.find(fb => fb.id === c.name);
                 if (fbCamp && fbCamp.insights) {
                   const spend = parseFloat(fbCamp.insights.spend) || 0;
                   const purchases = (fbCamp.insights.actions || []).find(a => a.action_type === 'purchase')?.value || 0;
-                  return { ...c, spend: Math.round(spend * 100) / 100, purchases: parseInt(purchases), cpa: parseInt(purchases) > 0 ? Math.round(spend / parseInt(purchases) * 100) / 100 : 0 };
+                  return { ...c, displayName: fbCamp.name, spend: Math.round(spend * 100) / 100, purchases: parseInt(purchases), cpa: c.orders > 0 ? Math.round(spend / c.orders * 100) / 100 : 0 };
                 }
                 return c;
               });

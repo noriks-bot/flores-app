@@ -1182,7 +1182,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           <!-- Top Campaigns -->
           <div class="table-card">
             <div class="table-header"><span class="table-title">🏆 Top Campaigns (Today)</span></div>
-            <div style="padding:0"><table class="dash-mini-table" id="dashTopCampaigns"><thead><tr><th style="text-align:left;padding:8px 12px">Campaign</th><th>Spend</th><th>Purch</th><th>CPA</th></tr></thead><tbody></tbody></table></div>
+            <div style="padding:0"><table class="dash-mini-table" id="dashTopCampaigns"><thead><tr><th style="text-align:left;padding:8px 12px">Campaign</th><th>Spend</th><th>Orders</th><th>Revenue</th><th>Profit</th><th>CPA</th></tr></thead><tbody></tbody></table></div>
           </div>
           <!-- Top Creatives (hidden until implemented) --><!-- 
           <div class="table-card">
@@ -5582,7 +5582,16 @@ function renderDashboard(data) {
   
   // Top Campaigns table
   const tcBody = document.querySelector('#dashTopCampaigns tbody');
-  tcBody.innerHTML = (data.topCampaigns || []).map(c => `<tr><td style="text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name.slice(0,45)}</td><td>€${(c.spend!=null?c.spend.toFixed(0):"—")}</td><td>${(c.purchases!=null?c.purchases:(c.orders||"—"))}</td><td>${c.cpa > 0 ? '€'+c.cpa.toFixed(2) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
+  tcBody.innerHTML = (data.topCampaigns || []).map(c => {
+    var nm = (c.displayName||c.name||'—').slice(0,50);
+    var sp = c.spend!=null ? '€'+c.spend.toFixed(0) : '—';
+    var ord = c.orders||'—';
+    var rev = c.revenue!=null ? '€'+c.revenue.toFixed(0) : '—';
+    var pft = c.profit!=null ? '€'+c.profit.toFixed(0) : '—';
+    var pfStyle = c.profit>0 ? 'color:#10b981;font-weight:600' : c.profit<0 ? 'color:#ef4444;font-weight:600' : '';
+    var cpa = c.cpa > 0 ? '€'+c.cpa.toFixed(2) : '—';
+    return '<tr><td style="text-align:left;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+nm+'</td><td>'+sp+'</td><td>'+ord+'</td><td>'+rev+'</td><td style="'+pfStyle+'">'+pft+'</td><td>'+cpa+'</td></tr>';
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
   
   // Top Creatives table
   const crBody = document.querySelector('#dashTopCreatives tbody');
