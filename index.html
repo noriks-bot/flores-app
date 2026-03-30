@@ -1158,7 +1158,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <div class="dash-loading" id="dashLoading" style="text-align:center;padding:60px;color:var(--text-muted)"><i class="fas fa-spinner fa-spin"></i> Loading dashboard...</div>
       <div id="dashContent" style="display:none">
         <!-- KPI Cards -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span></span><button onclick="refreshDashboard(this)" style="padding:8px 18px;border:none;background:#2563eb;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#fff;display:flex;align-items:center;gap:5px"><i class="fas fa-sync-alt"></i> Refresh</button></div><div class="dash-kpis" id="dashKpis"></div>
+        <div class="dash-kpis" id="dashKpis"></div>
         <!-- Quick Actions -->
         <div class="dash-quick-actions" style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
           <button class="dash-action-btn" onclick="navigateTo('bulk-uploader')"><i class="fas fa-layer-group"></i> Bulk Uploader</button>
@@ -1182,9 +1182,9 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           <!-- Top Campaigns -->
           <div class="table-card">
             <div class="table-header"><span class="table-title">🏆 Top Campaigns (Today)</span></div>
-            <div style="padding:0"><table class="dash-mini-table" id="dashTopCampaigns"><thead><tr><th style="text-align:left;padding:8px 12px">Campaign</th><th>Spend</th><th>Orders</th><th>Revenue</th><th>Profit</th><th>CPA</th></tr></thead><tbody></tbody></table></div>
+            <div style="padding:0"><table class="dash-mini-table" id="dashTopCampaigns"><thead><tr><th style="text-align:left;padding:8px 12px">Campaign</th><th>Spend</th><th>Purch</th><th>CPA</th></tr></thead><tbody></tbody></table></div>
           </div>
-          <!-- Top Creatives (hidden until implemented) --><!-- 
+          <!-- Top Creatives -->
           <div class="table-card">
             <div class="table-header"><span class="table-title">🎨 Top Creatives (Today)</span></div>
             <div style="padding:0"><table class="dash-mini-table" id="dashTopCreatives"><thead><tr><th style="text-align:left;padding:8px 12px">Creative</th><th>Spend</th><th>Purch</th><th>CPA</th></tr></thead><tbody></tbody></table></div>
@@ -2472,7 +2472,7 @@ function logout() {
   }
   // Handle hash navigation
   const hash = window.location.hash.replace('#', '') || 'dashboard';
-  navigateTo(hash);
+  if (hash !== 'dashboard') navigateTo(hash);
 })();
 
 window.addEventListener('hashchange', () => {
@@ -3988,7 +3988,7 @@ async function generateUploadPlan() {
     document.getElementById('uploadSummarySubtitle').textContent=totalExp+' expansion opportunities across '+ALL_COUNTRIES.length+' countries';
     if(winners.length>0){
       document.getElementById('uploadBody').innerHTML=winners.map(w=>{
-        const winFlags=w.winCountries.map(wc=>'<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;background:rgba(76,175,80,0.1);border-radius:4px;font-size:11px;margin:1px">'+FLAGS[wc.country]+' '+wc.country+' <span style="color:#4caf50;font-weight:600">'+wc.cpa.toFixed(0)+'€</span> <span style="color:#9ca3af;font-size:9px">'+wc.purchases+'p/'+w(c.spend!=null?c.spend.toFixed(0):"—")+'€</span></span>').join('');
+        const winFlags=w.winCountries.map(wc=>'<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;background:rgba(76,175,80,0.1);border-radius:4px;font-size:11px;margin:1px">'+FLAGS[wc.country]+' '+wc.country+' <span style="color:#4caf50;font-weight:600">'+wc.cpa.toFixed(0)+'€</span> <span style="color:#9ca3af;font-size:9px">'+wc.purchases+'p/'+wc.spend.toFixed(0)+'€</span></span>').join('');
         const expandFlags=w.expandTo.map(cc=>'<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;background:rgba(59,130,246,0.1);border-radius:4px;font-size:11px;margin:1px">'+FLAGS[cc]+' '+cc+'</span>').join('');
         const cpaStyle=w.overallCpa>0?(w.overallCpa<=15?'background:#4caf50;color:#fff':w.overallCpa<=20?'background:#84cc16;color:#fff':w.overallCpa<=25?'background:#f59e0b;color:#fff':'background:#ef5350;color:#fff'):'';
         return '<tr>'+
@@ -5543,7 +5543,6 @@ async function toggleOptAds(adsetId, campaignId) {
 let dashboardLoaded = false;
 let dashChart = null;
 
-async function refreshDashboard(btn) {  if(btn){btn.disabled=true;btn.innerHTML="<i class=\"fas fa-sync-alt fa-spin\"></i> Refreshing...";}  try { await fetch("/api/dashboard-refresh",{method:"POST",credentials:"same-origin"}); } catch(e){}  dashboardLoaded=false;  await loadDashboard();  if(btn){btn.disabled=false;btn.innerHTML="<i class=\"fas fa-sync-alt\"></i> Refresh";}}
 async function loadDashboard() {
   document.getElementById('dashLoading').style.display = 'block';
   document.getElementById('dashContent').style.display = 'none';
@@ -5582,20 +5581,11 @@ function renderDashboard(data) {
   
   // Top Campaigns table
   const tcBody = document.querySelector('#dashTopCampaigns tbody');
-  tcBody.innerHTML = (data.topCampaigns || []).map(c => {
-    var nm = (c.displayName||c.name||'—').slice(0,50);
-    var sp = c.spend!=null ? '€'+c.spend.toFixed(0) : '—';
-    var ord = c.orders||'—';
-    var rev = c.revenue!=null ? '€'+c.revenue.toFixed(0) : '—';
-    var pft = c.profit!=null ? '€'+c.profit.toFixed(0) : '—';
-    var pfStyle = c.profit>0 ? 'color:#10b981;font-weight:600' : c.profit<0 ? 'color:#ef4444;font-weight:600' : '';
-    var cpa = c.cpa > 0 ? '€'+c.cpa.toFixed(2) : '—';
-    return '<tr><td style="text-align:left;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+nm+'</td><td>'+sp+'</td><td>'+ord+'</td><td>'+rev+'</td><td style="'+pfStyle+'">'+pft+'</td><td>'+cpa+'</td></tr>';
-  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
+  tcBody.innerHTML = (data.topCampaigns || []).map(c => `<tr><td style="text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name.slice(0,45)}</td><td>€${c.spend.toFixed(0)}</td><td>${c.purchases}</td><td>${c.cpa > 0 ? '€'+c.cpa.toFixed(2) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
   
   // Top Creatives table
   const crBody = document.querySelector('#dashTopCreatives tbody');
-  crBody.innerHTML = (data.topCreatives || []).map(c => `<tr><td style="text-align:left;font-weight:600">${c.id}</td><td>€${(c.spend!=null?c.spend.toFixed(0):"—")}</td><td>${(c.purchases!=null?c.purchases:(c.orders||"—"))}</td><td>${c.cpa > 0 ? '€'+c.cpa.toFixed(2) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
+  crBody.innerHTML = (data.topCreatives || []).map(c => `<tr><td style="text-align:left;font-weight:600">${c.id}</td><td>€${c.spend.toFixed(0)}</td><td>${c.purchases}</td><td>${c.cpa > 0 ? '€'+c.cpa.toFixed(2) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
   
   // Chart
   if (data.chartData && data.chartData.length > 0) {

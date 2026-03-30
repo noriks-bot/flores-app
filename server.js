@@ -3092,11 +3092,9 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         }
       }
 
-      if (urlPath === "/api/dashboard-refresh" && req.method === "POST") {        try {          console.log("[DASH-API] Manual refresh triggered");          _dashboardCacheTime = 0;          await refreshDashboardInBackground();          syncDashData();          return sendJSON(res, { ok: true });        } catch(e) { return sendJSON(res, { ok: false, error: e.message }); }      }
       // ═══ DASHBOARD API ═══
-      console.log("[DASH-API] Dashboard request received");
       if (urlPath === '/api/dashboard') {
-        // Dashboard reads from SQLite + dash-cache.json for FB spend
+        // Dashboard reads ONLY from SQLite - no Meta API calls, instant response
         const today = getToday();
         const d7ago = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
         
@@ -3108,7 +3106,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         const chartData = db.prepare('SELECT order_date as date, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? GROUP BY order_date ORDER BY order_date').all(d7ago);
         
         // Top campaigns by orders (today)
-        const topCampaigns = db.prepare("SELECT utm_campaign as name, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ? AND utm_campaign IS NOT NULL AND utm_campaign != '' GROUP BY utm_campaign ORDER BY orders DESC LIMIT 10").all(today);
+        const topCampaigns = db.prepare("SELECT utm_campaign as name, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ? AND utm_campaign IS NOT NULL AND utm_campaign != '' GROUP BY utm_campaign ORDER BY orders DESC LIMIT 5").all(today);
         
         // Top products
         const topProducts = db.prepare("SELECT product_type, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue FROM wc_orders WHERE order_date = ? GROUP BY product_type ORDER BY orders DESC").all(today);
@@ -3119,66 +3117,20 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         // 7-day totals
         const weekStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ?').get(d7ago);
         
-        // Read FB spend from dash-cache
-        let fbSpendToday = 0, fbSpend7d = 0;
-        let activeCampaigns = 0;
-        let dashCacheData = null;
-        try {
-          const dashCache = JSON.parse(fs.readFileSync(DASH_CACHE_FILE, 'utf8'));
-          dashCacheData = dashCache.data || {};
-          // Sum spend across all countries for today
-          const todayData = dashCacheData[today] || {};
-          for (const [country, vals] of Object.entries(todayData)) {
-            if (vals && typeof vals.spend === 'number') fbSpendToday += vals.spend;
-          }
-          // Sum spend for last 7 days
-          for (const [date, countries] of Object.entries(dashCacheData)) {
-            if (date >= d7ago && date <= today) {
-              for (const [country, vals] of Object.entries(countries)) {
-                if (vals && typeof vals.spend === 'number') fbSpend7d += vals.spend;
-              }
-            }
-          }
-          // Active campaigns count from campaign cache files
-          const campFiles = fs.readdirSync(CACHE_DIR).filter(f => f.startsWith('campaigns_'));
-          if (campFiles.length > 0) {
-            const latestCampFile = campFiles.sort().pop();
-            const campData = JSON.parse(fs.readFileSync(path.join(CACHE_DIR, latestCampFile), 'utf8'));
-            if (Array.isArray(campData)) activeCampaigns = campData.filter(c => c.status === 'ACTIVE').length;
-          }
-        } catch(e) { console.warn('Dashboard FB spend read error:', e.message); }
-        
-        // Enrich top campaigns with FB data
-        let enrichedCampaigns = topCampaigns.map(c => ({ name: c.name, orders: c.orders, revenue: Math.round(c.revenue * 100) / 100, profit: Math.round(c.profit * 100) / 100 }));
-        try {          const campData = await getCampaigns(today, today);          if (Array.isArray(campData)) {            enrichedCampaigns = enrichedCampaigns.map(c => {              const fbCamp = campData.find(fb => fb.id === c.name);              if (fbCamp) {                const spend = parseFloat(fbCamp.insights?.spend) || 0;                return { ...c, displayName: fbCamp.name, spend: Math.round(spend * 100) / 100, cpa: c.orders > 0 ? Math.round(spend / c.orders * 100) / 100 : 0 };              }              return c;            });          }        } catch(e) { /* graceful */ }
-        
         return sendJSON(res, {
           kpis: {
             orders: todayStats.orders || 0,
             revenue: Math.round((todayStats.revenue || 0) * 100) / 100,
             profit: Math.round((todayStats.profit || 0) * 100) / 100,
-            spend: Math.round(fbSpendToday * 100) / 100,
-            cpa: todayStats.orders > 0 ? Math.round((fbSpendToday / todayStats.orders) * 100) / 100 : 0,
-            activeCampaigns: activeCampaigns,
             fbOrders: fbOrders?.orders || 0,
             weekOrders: weekStats?.orders || 0,
             weekRevenue: Math.round((weekStats?.revenue || 0) * 100) / 100,
-            weekProfit: Math.round((weekStats?.profit || 0) * 100) / 100,
-            weekSpend: Math.round(fbSpend7d * 100) / 100
+            weekProfit: Math.round((weekStats?.profit || 0) * 100) / 100
           },
-          topCampaigns: enrichedCampaigns,
+          topCampaigns: topCampaigns.map(c => ({ name: c.name, orders: c.orders, revenue: Math.round(c.revenue * 100) / 100, profit: Math.round(c.profit * 100) / 100 })),
           topProducts,
           byCountry: byCountry.map(c => ({ country: c.country, orders: c.orders, revenue: Math.round(c.revenue * 100) / 100, profit: Math.round(c.profit * 100) / 100 })),
-          chartData: chartData.map(d => {
-            let daySpend = 0;
-            const dayData = (dashCacheData || {})[d.date] || {};
-            for (const [country, vals] of Object.entries(dayData)) {
-              if (vals && typeof vals.spend === 'number') daySpend += vals.spend;
-            }
-            return { date: d.date, orders: d.orders, revenue: Math.round(d.revenue * 100) / 100, profit: Math.round(d.profit * 100) / 100, spend: Math.round(daySpend * 100) / 100 };
-          }),
-          topCreatives: [],
-          alerts: [],
+          chartData: chartData.map(d => ({ date: d.date, orders: d.orders, revenue: Math.round(d.revenue * 100) / 100, profit: Math.round(d.profit * 100) / 100 })),
           date: today
         });
       }
