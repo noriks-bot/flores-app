@@ -3202,7 +3202,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
               cpa: orders > 0 ? Math.round(spend / orders * 100) / 100 : 0
             });
           }
-          enrichedCampaigns.sort((a, b) => b.orders - a.orders || b.spend - a.spend);
+          enrichedCampaigns.sort((a, b) => { if (a.orders > 0 && b.orders === 0) return -1; if (b.orders > 0 && a.orders === 0) return 1; return b.orders - a.orders || b.spend - a.spend; });
           enrichedCampaigns = enrichedCampaigns.slice(0, 10);
         }
 
@@ -3241,7 +3241,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
               cpa: orders > 0 ? Math.round(spend / orders * 100) / 100 : 0
             });
           }
-          topCreativesData.sort((a, b) => b.purchases - a.purchases || b.spend - a.spend);
+          topCreativesData.sort((a, b) => { if (a.purchases > 0 && b.purchases === 0) return -1; if (b.purchases > 0 && a.purchases === 0) return 1; return b.purchases - a.purchases || b.spend - a.spend; });
           topCreativesData = topCreativesData.slice(0, 10);
         } catch(e) { console.warn('[DASH] Top creatives fetch error:', e.message); }
 
