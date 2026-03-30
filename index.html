@@ -1201,15 +1201,16 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <!-- Orders Table (full width, outside grid) -->
         <div class="table-card" style="margin-top:20px">
           <div class="table-header"><span class="table-title">📋 Orders</span></div>
-          <div style="padding:0"><table id="dashOrdersTable" style="width:100%;border-collapse:collapse;font-size:12px">
+          <div style="padding:0"><table id="dashOrdersTable" style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed">
+            <colgroup><col style="width:25px"><col style="width:45px"><col style="width:55px"><col><col style="width:80px"><col style="width:70px"></colgroup>
             <thead>
               <tr style="border-bottom:1px solid #e5e7eb">
-                <th style="text-align:center;padding:8px 4px;font-size:11px;font-weight:600;color:#6b7280;width:25px">#</th>
-                <th style="text-align:left;padding:8px 4px;font-size:11px;font-weight:600;color:#6b7280">Date</th>
-                <th style="text-align:left;padding:8px 4px;font-size:11px;font-weight:600;color:#6b7280">Country</th>
-                <th style="text-align:left;padding:8px 4px;font-size:11px;font-weight:600;color:#6b7280">Customer</th>
-                <th style="text-align:left;padding:8px 4px;font-size:11px;font-weight:600;color:#6b7280">Origin</th>
-                <th style="text-align:right;padding:8px 8px;font-size:11px;font-weight:600;color:#6b7280">Amount</th>
+                <th style="text-align:center;padding:6px 2px;font-size:11px;font-weight:600;color:#6b7280">#</th>
+                <th style="text-align:left;padding:6px 2px;font-size:11px;font-weight:600;color:#6b7280">Date</th>
+                <th style="text-align:left;padding:6px 2px;font-size:11px;font-weight:600;color:#6b7280">Country</th>
+                <th style="text-align:left;padding:6px 4px;font-size:11px;font-weight:600;color:#6b7280">Customer</th>
+                <th style="text-align:left;padding:6px 2px;font-size:11px;font-weight:600;color:#6b7280">Origin</th>
+                <th style="text-align:right;padding:6px 6px;font-size:11px;font-weight:600;color:#6b7280">Amount</th>
               </tr>
             </thead>
             <tbody id="dashOrdersBody"><tr><td colspan="6" style="text-align:center;padding:20px;color:#9ca3af">Loading...</td></tr></tbody>
