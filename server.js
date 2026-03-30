@@ -543,7 +543,12 @@ function calculateOrderProfit(order, country) {
   const rejRate = (dashRejectionRates[country] || 15) / 100;
   const grossTotal = parseFloat(order.total || 0);
   const grossEur = grossTotal * eurRate;
-  const netRevenue = grossEur * (1 - rejRate) / (1 + vatRate);
+
+  // Match dash formula exactly:
+  // effectiveGrossEur = grossEur * (1 - rejectionRate)
+  // effectiveNetEur = effectiveGrossEur / (1 + vatRate)
+  const effectiveGrossEur = grossEur * (1 - rejRate);
+  const netRevenue = effectiveGrossEur / (1 + vatRate);
 
   let productCost = 0;
   const items = order.line_items || [];
@@ -552,9 +557,11 @@ function calculateOrderProfit(order, country) {
     const isShirt = shirtWords.test(item.name || '') || shirtWords.test(item.sku || '');
     productCost += (isShirt ? PRODUCT_COSTS.tshirt : PRODUCT_COSTS.boxers) * qty;
   }
+  // Shipping ALWAYS applied per order (matches dash behavior — every order has shipping cost)
   const SHIPPING_COSTS = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 5.5 };
-  const shippingCost = parseFloat(order.shipping_total || 0) > 0 ? (SHIPPING_COSTS[country] || 4) : 0;
+  const shippingCost = SHIPPING_COSTS[country] || 4;
   const effectiveProductCost = productCost * (1 - rejRate);
+  // profit per order (FB spend subtracted at aggregate level in dashboard API)
   const profit = netRevenue - effectiveProductCost - shippingCost;
 
   return { grossTotal, grossEur, netRevenue, productCost: effectiveProductCost, shippingCost, profit };
@@ -3233,18 +3240,70 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           topCreativesData = topCreativesData.slice(0, 10);
         } catch(e) { console.warn('[DASH] Top creatives fetch error:', e.message); }
 
+        // FB KPI data
+        const fbAttributedProfit = db.prepare('SELECT COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1').get(dashFrom, dashTo);
+        let fbMeasuredOrders = 0;
+        if (Array.isArray(topCampaignsRaw)) {
+          for (const camp of topCampaignsRaw) {
+            const pAct = (camp.insights?.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
+            if (pAct) fbMeasuredOrders += parseInt(pAct.value) || 0;
+          }
+        }
+        const fbOrderCount = fbOrders?.orders || 0;
+        const fbUnmeasuredOrders = Math.max(0, fbOrderCount - fbMeasuredOrders);
+        const fbCpa = fbOrderCount > 0 ? Math.round((fbSpendToday / fbOrderCount) * 100) / 100 : 0;
+        const fbProfit = Math.round(((fbAttributedProfit.profit || 0) - fbSpendRange) * 100) / 100;
+
         // Alerts
         const alerts = [];
+        // Global CPA alert
         if (fbSpendToday > 0 && todayStats.orders > 0) {
           const todayCPA = fbSpendToday / todayStats.orders;
           if (todayCPA > 25) alerts.push({ type: 'high_cpa', message: 'CPA today is €' + todayCPA.toFixed(2) + ' — above €25 threshold' });
         }
+        // Global ROAS alert
         if (fbSpendToday > 50 && todayStats.revenue > 0) {
           const roas = todayStats.revenue / fbSpendToday;
           if (roas < 1.5) alerts.push({ type: 'low_roas', message: 'ROAS today is ' + roas.toFixed(2) + 'x — below 1.5x threshold' });
         }
+        // Global no-orders alert
         if (fbSpendToday > 100 && todayStats.orders === 0) {
           alerts.push({ type: 'no_orders', message: '€' + fbSpendToday.toFixed(0) + ' spent today with 0 orders' });
+        }
+        // Per-campaign high CPA alert
+        for (const camp of enrichedCampaigns) {
+          if (camp.orders > 0 && camp.cpa > 20) {
+            alerts.push({ type: 'high_cpa', message: camp.name + ' — CPA €' + camp.cpa.toFixed(2) + ' (>' + '\u20ac20)' });
+          }
+        }
+        // Per-campaign high spend, zero orders alert
+        for (const camp of enrichedCampaigns) {
+          if (camp.spend > 15 && camp.orders === 0) {
+            alerts.push({ type: 'no_orders', message: camp.name + ' — €' + camp.spend.toFixed(0) + ' spent, 0 orders' });
+          }
+        }
+        // Per-country high spend, zero orders alert
+        if (dashCacheData) {
+          const td = dashCacheData[dashFrom] || {};
+          for (const [ctry, v] of Object.entries(td)) {
+            if (v && typeof v.spend === 'number' && v.spend > 15) {
+              const ctryOrders = db.prepare('SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND country = ?').get(dashFrom, dashTo, ctry);
+              if ((ctryOrders?.cnt || 0) === 0) {
+                alerts.push({ type: 'no_orders', message: ctry + ' — €' + v.spend.toFixed(0) + ' spent, 0 orders' });
+              }
+            }
+          }
+        }
+        // Spending pace alert (projected daily spend > €800)
+        {
+          const now = new Date();
+          const currentHour = now.getUTCHours() + now.getUTCMinutes() / 60;
+          if (currentHour > 1 && fbSpendToday > 0) {
+            const projectedSpend = fbSpendToday * (24 / currentHour);
+            if (projectedSpend > 800) {
+              alerts.push({ type: 'high_cpa', message: 'Spending pace: projected €' + projectedSpend.toFixed(0) + '/day (current €' + fbSpendToday.toFixed(0) + ' in ' + currentHour.toFixed(1) + 'h)' });
+            }
+          }
         }
 
         return sendJSON(res, {
@@ -3252,7 +3311,11 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             orders: todayStats.orders || 0,
             revenue: Math.round((todayStats.revenue || 0) * 100) / 100,
             profit: Math.round(((todayStats.profit || 0) - fbSpendRange) * 100) / 100,
-            fbOrders: fbOrders?.orders || 0,
+            fbOrders: fbOrderCount,
+            fbMeasuredOrders,
+            fbUnmeasuredOrders,
+            fbCpa,
+            fbProfit,
             weekOrders: weekStats?.orders || 0,
             weekRevenue: Math.round((weekStats?.revenue || 0) * 100) / 100,
             weekProfit: Math.round(((weekStats?.profit || 0) - fbSpend7d) * 100) / 100,

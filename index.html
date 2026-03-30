@@ -918,6 +918,9 @@ body::before {
 .dash-kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 8px; }
 .dash-kpi-value { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
 .dash-kpi-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.dash-kpis-fb .dash-kpi-card { background: linear-gradient(135deg, #1e40af, #3b82f6) !important; color: #fff !important; }
+.dash-kpis-fb .dash-kpi-label { color: rgba(255,255,255,0.8) !important; }
+.dash-kpis-fb .dash-kpi-value { color: #fff !important; }
 .dash-action-btn {
   padding: 10px 20px; background: var(--card-bg); border: 1px solid var(--border-color);
   border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer;
@@ -1163,6 +1166,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           <button onclick="refreshDashboard(this)" style="padding:10px 24px;border:none;background:#2563eb;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px;box-shadow:0 2px 4px rgba(37,99,235,0.3)"><i class="fas fa-sync-alt"></i> Refresh</button>
         </div>
         <div class="dash-kpis" id="dashKpis"></div>
+        <div class="dash-kpis dash-kpis-fb" id="dashKpisFb" style="margin-top:16px"></div>
         <!-- Quick Actions -->
         <div class="dash-quick-actions" style="display:none">
           <button class="dash-action-btn" onclick="navigateTo('bulk-uploader')"><i class="fas fa-layer-group"></i> Bulk Uploader</button>
@@ -1196,7 +1200,6 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         </div>
       </div>
     </div>
-  </div>
 
   <div id="section-ads-manager" class="content-section">
   <!-- FILTERS -->
@@ -5586,7 +5589,17 @@ function renderDashboard(data) {
     { label: "Active Campaigns", value: k.activeCampaigns || 0, icon: 'fas fa-bullhorn', color: '#2563eb' }
   ].map(c => `<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="${c.icon}" style="margin-right:6px;color:${c.color}"></i>${c.label}</div><div class="dash-kpi-value" style="color:${c.color}">${c.value}</div></div>`).join('');
   
-  // Alerts
+  // FB KPI Cards
+  document.getElementById('dashKpisFb').innerHTML = [
+    { label: "FB Spend", value: '\u20ac' + (k.spend||0).toFixed(2), icon: 'fas fa-ad' },
+    { label: "FB Orders", value: k.fbOrders || 0, icon: 'fas fa-shopping-cart' },
+    { label: "FB Measured Orders", value: k.fbMeasuredOrders || 0, icon: 'fas fa-check-circle' },
+    { label: "FB Unmeasured Orders", value: k.fbUnmeasuredOrders || 0, icon: 'fas fa-question-circle' },
+    { label: "FB CPA", value: '\u20ac' + (k.fbCpa||0).toFixed(2), icon: 'fas fa-bullseye' },
+    { label: "FB Profit", value: '\u20ac' + (k.fbProfit||0).toFixed(2), icon: 'fas fa-chart-line' }
+  ].map(c => '<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="' + c.icon + '" style="margin-right:6px"></i>' + c.label + '</div><div class="dash-kpi-value">' + c.value + '</div></div>').join('');
+
+    // Alerts
   const alerts = data.alerts || [];
   document.getElementById('alertCount').textContent = alerts.length;
   document.getElementById('dashAlerts').innerHTML = alerts.length === 0 
