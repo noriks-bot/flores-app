@@ -3137,8 +3137,9 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         // 7-day daily chart data
         const chartData = db.prepare('SELECT order_date as date, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? GROUP BY order_date ORDER BY order_date').all(d7ago);
         
-        // Top campaigns by orders (today)
-        const topCampaigns = db.prepare("SELECT utm_campaign as name, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND utm_campaign IS NOT NULL AND utm_campaign != '' GROUP BY utm_campaign ORDER BY orders DESC LIMIT 10").all(dashFrom, dashTo);
+        // Top campaigns - from Meta API (has campaign names)
+        let topCampaignsRaw = [];
+        try { topCampaignsRaw = await getCampaigns(dashFrom, dashTo); } catch(e) {}
         
         // Top products
         const topProducts = db.prepare("SELECT product_type, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue FROM wc_orders WHERE order_date >= ? AND order_date <= ? GROUP BY product_type ORDER BY orders DESC").all(dashFrom, dashTo);
@@ -3168,28 +3169,30 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         } catch(e) {}
 
         // Enrich topCampaigns with FB spend data
-        let enrichedCampaigns = topCampaigns.map(c => ({ name: c.name, orders: c.orders, revenue: Math.round(c.revenue * 100) / 100, profit: Math.round(c.profit * 100) / 100 }));
-        try {
-          const campData = await getCampaigns(dashFrom, dashTo);
-          if (Array.isArray(campData)) {
-            enrichedCampaigns = enrichedCampaigns.map(c => {
-              const fb = campData.find(f => f.id === c.name);
-              if (fb) {
-                const spend = parseFloat(fb.insights?.spend) || 0;
-                return { ...c, displayName: fb.name, spend: Math.round(spend * 100) / 100, cpa: c.orders > 0 ? Math.round(spend / c.orders * 100) / 100 : 0 };
-              }
-              return c;
+        let enrichedCampaigns = [];
+        if (Array.isArray(topCampaignsRaw)) {
+          for (const camp of topCampaignsRaw) {
+            const spend = parseFloat(camp.insights?.spend) || 0;
+            if (spend <= 0) continue;
+            const orders = camp.wc?.orders || 0;
+            const revenue = camp.wc?.revenueGross || 0;
+            const rawProfit = camp.wc?.profit || 0;
+            const profit = Math.round((rawProfit - spend) * 100) / 100;
+            const pAct = (camp.insights?.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
+            const purchases = pAct ? parseInt(pAct.value) : 0;
+            enrichedCampaigns.push({
+              name: camp.name,
+              displayName: camp.name,
+              spend: Math.round(spend * 100) / 100,
+              orders,
+              revenue: Math.round(revenue * 100) / 100,
+              profit,
+              cpa: orders > 0 ? Math.round(spend / orders * 100) / 100 : 0
             });
           }
-        } catch(e) {}
-
-        // Adjust campaign profit: subtract FB spend (match dash formula)
-        enrichedCampaigns = enrichedCampaigns.map(c => {
-          if (c.spend != null && c.spend > 0) {
-            return { ...c, profit: Math.round((c.profit - c.spend) * 100) / 100 };
-          }
-          return c;
-        });
+          enrichedCampaigns.sort((a, b) => b.orders - a.orders || b.spend - a.spend);
+          enrichedCampaigns = enrichedCampaigns.slice(0, 10);
+        }
 
         // Top creatives — ad-level from Meta Insights API
         let topCreativesData = [];
