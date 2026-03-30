@@ -1198,13 +1198,13 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
             <div style="padding:0;overflow-x:auto"><table class="dash-mini-table" id="dashTopCreatives" style="min-width:600px;width:100%"><thead><tr><th style="text-align:left;padding:8px 12px">Creative</th><th>Spend</th><th>Orders</th><th>Revenue</th><th>Profit</th><th>CPA</th></tr></thead><tbody></tbody></table></div>
           </div>
         </div>
-        <!-- Orders Table (full width, outside grid) -->
-        <div class="table-card" style="margin-top:20px;overflow:visible">
-          <div class="table-header"><span class="table-title">📋 Orders</span></div>
-          <div><table id="dashOrdersTable" style="width:100%">
-            <thead><tr><th>#</th><th>Date</th><th>Country</th><th>Customer</th><th>Origin</th><th style="text-align:right">Amount</th></tr></thead>
+        <!-- Orders Table -->
+        <div style="margin-top:20px;background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px">
+          <div style="padding:14px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border-color)">📋 Orders</div>
+          <table id="dashOrdersTable" border="0" cellpadding="6" cellspacing="0" style="width:100%">
+            <tr style="border-bottom:1px solid #e5e7eb"><th>#</th><th align="left">Date</th><th align="left">Country</th><th align="left">Customer</th><th align="left">Origin</th><th align="right">Amount</th></tr>
             <tbody id="dashOrdersBody"></tbody>
-          </table></div>
+          </table>
         </div>
 
       </div>
