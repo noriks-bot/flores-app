@@ -1425,41 +1425,41 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 
   <div id="section-optimizer" class="content-section">
   <style>
-    .opt-header-bar { display:flex; align-items:center; justify-content:space-between; background:#f5f6f7; border-bottom:1px solid #dadde1; padding:10px 24px; gap:12px; flex-wrap:wrap; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+    .opt-header-bar { display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg,#1E3A5F,#2a5a8f); padding:10px 24px; gap:12px; flex-wrap:wrap; }
     .opt-header-left { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-    .opt-header-title { font-size:16px; font-weight:700; color:#1c1e21; white-space:nowrap; display:flex; align-items:center; gap:6px; }
+    .opt-header-title { font-size:16px; font-weight:800; color:#fff; white-space:nowrap; display:flex; align-items:center; gap:6px; }
     .opt-header-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-    .opt-toggle { position:relative; display:inline-block; width:28px; height:16px; }
+    .opt-toggle { position:relative; display:inline-block; width:32px; height:18px; }
     .opt-toggle input { opacity:0; width:0; height:0; }
-    .opt-toggle-slider { position:absolute; cursor:pointer; inset:0; background:#ccc; border-radius:16px; transition:.2s; }
-    .opt-toggle-slider:before { content:""; position:absolute; height:12px; width:12px; left:2px; bottom:2px; background:#fff; border-radius:50%; transition:.2s; }
+    .opt-toggle-slider { position:absolute; cursor:pointer; inset:0; background:#ccc; border-radius:18px; transition:.2s; }
+    .opt-toggle-slider:before { content:""; position:absolute; height:14px; width:14px; left:2px; bottom:2px; background:#fff; border-radius:50%; transition:.2s; }
     .opt-toggle input:checked + .opt-toggle-slider { background:#22c55e; }
-    .opt-toggle input:checked + .opt-toggle-slider:before { transform:translateX(12px); }
-    .opt-fpill { padding:4px 10px; border-radius:4px; border:1px solid #dadde1; background:#fff; color:#65676b; font-size:11px; font-weight:600; cursor:pointer; transition:all .15s; white-space:nowrap; }
-    .opt-fpill:hover { background:#e4e6eb; color:#1c1e21; }
-    .opt-fpill.active { background:#1c1e21; color:#fff; border-color:#1c1e21; }
-    .opt-period-tab { padding:4px 8px; border-radius:4px; border:1px solid transparent; background:transparent; color:#65676b; font-size:11px; font-weight:600; cursor:pointer; transition:all .15s; }
-    .opt-period-tab:hover { background:#e4e6eb; color:#1c1e21; }
-    .opt-period-tab.active { background:#fff; color:#1c1e21; border-color:#dadde1; box-shadow:0 1px 2px rgba(0,0,0,0.05); }
-    .opt-refresh-btn { height:30px; padding:0 12px; border-radius:6px; border:1px solid #dadde1; background:#fff; color:#65676b; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:12px; gap:5px; transition:all .15s; }
-    .opt-refresh-btn:hover { background:#e4e6eb; color:#1c1e21; }
-    #optTable { width:100%; border-collapse:collapse; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
-    #optTable thead th { position:sticky; top:0; z-index:10; background:#f5f6f7; color:#65676b; font-size:12px; font-weight:600; text-transform:none; letter-spacing:0; padding:8px 6px; white-space:nowrap; border:none; border-bottom:1px solid #dadde1; }
+    .opt-toggle input:checked + .opt-toggle-slider:before { transform:translateX(14px); }
+    .opt-fpill { padding:4px 10px; border-radius:4px; border:1px solid rgba(255,255,255,0.25); background:transparent; color:rgba(255,255,255,0.8); font-size:11px; font-weight:600; cursor:pointer; transition:all .15s; white-space:nowrap; }
+    .opt-fpill:hover { background:rgba(255,255,255,0.15); color:#fff; }
+    .opt-fpill.active { background:#fff; color:#1E3A5F; border-color:#fff; }
+    .opt-period-tab { padding:4px 8px; border-radius:4px; border:none; background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.7); font-size:11px; font-weight:600; cursor:pointer; transition:all .15s; }
+    .opt-period-tab:hover { background:rgba(255,255,255,0.2); color:#fff; }
+    .opt-period-tab.active { background:#fff; color:#1E3A5F; }
+    .opt-refresh-btn { height:30px; padding:0 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.1); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:12px; gap:5px; transition:all .15s; }
+    .opt-refresh-btn:hover { background:rgba(255,255,255,0.15); }
+    #optTable { width:100%; border-collapse:collapse; }
+    #optTable thead th { position:sticky; top:0; z-index:2; background:#f1f5f9; color:#475569; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; padding:10px 6px; white-space:nowrap; border:none; border-bottom:2px solid #cbd5e1; }
     #optTable thead th:first-child { border-radius:0; }
     #optTable thead th:last-child { border-radius:0; }
-    .opt-campaign-row { background:#fff; cursor:pointer; border-bottom:1px solid #e4e6eb; transition:background .1s; }
-    
-    .opt-campaign-row:hover { background:#f2f3f5 !important; }
-    .opt-campaign-row td { padding:8px 12px; font-size:13px; font-weight:600; }
-    .opt-adset-row { background:#fafbfc; cursor:pointer; border-bottom:1px solid #e4e6eb; transition:background .1s; }
-    .opt-adset-row:hover { background:#f2f3f5 !important; }
-    .opt-adset-row td { padding:6px 6px; font-size:12px; font-weight:400; }
-    .opt-ad-row { background:#fff; border-bottom:1px solid #e4e6eb; }
-    .opt-ad-row td { padding:5px 6px 5px 24px; font-size:12px; font-weight:400; }
-    .opt-ad-row:hover { background:#f2f3f5 !important; }
-    .opt-expand { font-size:16px; cursor:pointer; user-select:none; display:inline-block; width:24px; text-align:center; line-height:1; }
-    .opt-expand-campaign { color:#65676b; }
-    .opt-expand-adset { color:#65676b; font-size:14px; }
+    .opt-campaign-row { background:#fff; cursor:pointer; border-bottom:1px solid #e5e7eb; transition:background .1s; }
+    .opt-campaign-row:nth-child(even of .opt-campaign-row) { background:#fafbfc; }
+    .opt-campaign-row:hover { background:#eff6ff !important; }
+    .opt-campaign-row td { padding:8px 6px; font-size:13px; }
+    .opt-adset-row { background:#f9fafb; cursor:pointer; border-bottom:1px solid #f0f0f0; transition:background .1s; }
+    .opt-adset-row:hover { background:#f0f4ff !important; }
+    .opt-adset-row td { padding:6px 6px; font-size:12px; }
+    .opt-ad-row { background:#f5f7ff; border-bottom:1px solid #eef1f8; }
+    .opt-ad-row td { padding:5px 6px; font-size:11px; }
+    .opt-ad-row:hover { background:#eef2ff !important; }
+    .opt-expand { font-size:18px; cursor:pointer; user-select:none; display:inline-block; width:24px; text-align:center; line-height:1; }
+    .opt-expand-campaign { color:#2563eb; }
+    .opt-expand-adset { color:#6b7280; font-size:15px; }
     .opt-budget-edit { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border:none; background:transparent; cursor:pointer; font-size:12px; opacity:0.4; transition:opacity .15s; padding:0; margin-left:3px; vertical-align:middle; }
     .opt-budget-edit:hover { opacity:1; }
     .opt-action-btn { border:none; background:transparent; cursor:pointer; font-size:14px; padding:2px 4px; border-radius:4px; transition:all .15s; }
@@ -1470,7 +1470,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
   <div class="opt-header-bar">
     <div class="opt-header-left">
       <span class="opt-header-title">⚡ Optimizer</span>
-      <span style="width:1px;height:20px;background:#dadde1;margin:0 2px"></span>
+      <span style="width:1px;height:20px;background:rgba(255,255,255,0.2);margin:0 2px"></span>
       <button class="opt-fpill active" onclick="switchOptTab(this,'HR')">🇭🇷 HR</button>
       <button class="opt-fpill" onclick="switchOptTab(this,'CZ')">🇨🇿 CZ</button>
       <button class="opt-fpill" onclick="switchOptTab(this,'PL')">🇵🇱 PL</button>
@@ -1478,15 +1478,15 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <button class="opt-fpill" onclick="switchOptTab(this,'SK')">🇸🇰 SK</button>
       <button class="opt-fpill" onclick="switchOptTab(this,'IT')">🇮🇹 IT</button>
       <button class="opt-fpill" onclick="switchOptTab(this,'HU')">🇭🇺 HU</button>
-      <span style="width:1px;height:16px;background:#dadde1"></span>
+      <span style="width:1px;height:16px;background:rgba(255,255,255,0.15)"></span>
       <button class="opt-fpill" onclick="switchOptTab(this,'SOFI')">SOFI</button>
       <button class="opt-fpill" onclick="switchOptTab(this,'ALL')">All</button>
     </div>
     <div class="opt-header-right">
-      <label style="display:flex;align-items:center;gap:4px;color:#1c1e21;font-size:11px;cursor:pointer;white-space:nowrap">
+      <label style="display:flex;align-items:center;gap:4px;color:#fff;font-size:11px;cursor:pointer;white-space:nowrap">
         <input type="checkbox" id="optExpandAll" onchange="toggleOptExpandAll(this.checked)" style="cursor:pointer"> Expand all
       </label>
-      <div style="display:flex;gap:2px;background:#e4e6eb;border-radius:5px;padding:2px">
+      <div style="display:flex;gap:2px;background:rgba(0,0,0,0.15);border-radius:5px;padding:2px">
         <button class="opt-period-tab active" onclick="setOptDate(this,'today')">Today</button>
         <button class="opt-period-tab" onclick="setOptDate(this,'yesterday')">Yesterday</button>
         <button class="opt-period-tab" onclick="setOptDate(this,'3d')">3D</button>
@@ -1522,15 +1522,15 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     </table>
   </div>
   <!-- Optimizer Summary -->
-  <div id="optSummary"  style="padding:12px 24px;background:#f5f6f7;border:1px solid #dadde1;margin:16px 24px 16px;border-radius:8px;color:#1c1e21;display:flex;gap:24px;align-items:center;flex-wrap:wrap;font-size:13px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif">
+  <div id="optSummary"  style="padding:12px 24px;background:linear-gradient(135deg,#1E3A5F,#2a5a8f);margin:16px 24px 16px;border-radius:8px;color:#fff;display:flex;gap:24px;align-items:center;flex-wrap:wrap;font-size:13px">
     <div><span style="opacity:0.7">Campaigns:</span> <strong id="optSumCampaigns">0</strong></div>
     <div><span style="opacity:0.7">Active Adsets:</span> <strong id="optSumAdsets">0</strong></div>
     <div><span style="opacity:0.7">Active Ads:</span> <strong id="optSumAds">0</strong></div>
-    <div style="width:1px;height:20px;background:#dadde1"></div>
+    <div style="width:1px;height:20px;background:rgba(255,255,255,0.2)"></div>
     <div><span style="opacity:0.7">Spend:</span> <strong id="optSumSpend">0</strong></div>
     <div><span style="opacity:0.7">Orders:</span> <strong id="optSumOrders">0</strong></div>
     <div><span style="opacity:0.7">Revenue:</span> <strong id="optSumRevenue">0</strong></div>
-    <div><span style="opacity:0.7">Profit:</span> <strong id="optSumProfit" style="color:#16a34a">0</strong></div>
+    <div><span style="opacity:0.7">Profit:</span> <strong id="optSumProfit" style="color:#4ade80">0</strong></div>
     <div><span style="opacity:0.7">CPA:</span> <strong id="optSumCpa">0</strong></div>
   </div>
   </div>
@@ -4786,20 +4786,18 @@ function toggleOptExpandAll(checked) {
     if (ccMatch) return ccMatch[1].split('+').includes(optCountry);
     return false;
   });
-  if (!filtered.length) return;
+  var pending = filtered.length;
+  if (!pending) return;
   var {from,to} = getOptDateRange();
-  // Mark all as loading immediately
-  filtered.forEach(function(c) { optExpanded[c.id] = { adsets: [], loading: true }; });
-  renderOptimizer();
-  // Fetch each campaign progressively
   filtered.forEach(function(c) {
+    optExpanded[c.id] = { adsets: [], loading: true };
     fetch('/api/adsets?campaign_id='+c.id+'&date_from='+from+'&date_to='+to)
       .then(function(r){return r.json()})
       .then(function(adsets) {
         if (!adsets.error) {
           optExpanded[c.id] = { adsets: adsets };
-          renderOptimizer();
-          // Also load ads for each adset
+          var adsPending = adsets.length;
+          if (!adsPending) { pending--; if(!pending) renderOptimizer(); return; }
           adsets.forEach(function(as) {
             optExpandedAds[as.id] = { ads: [], loading: true };
             fetch('/api/ads?adset_id='+as.id+'&date_from='+from+'&date_to='+to)
@@ -4807,14 +4805,16 @@ function toggleOptExpandAll(checked) {
               .then(function(ads) {
                 if (!ads.error) optExpandedAds[as.id] = { ads: ads };
                 else delete optExpandedAds[as.id];
-                renderOptimizer();
+                adsPending--;
+                if (!adsPending) { pending--; if(!pending) renderOptimizer(); }
               })
-              .catch(function() { delete optExpandedAds[as.id]; renderOptimizer(); });
+              .catch(function() { delete optExpandedAds[as.id]; adsPending--; if(!adsPending){pending--;if(!pending)renderOptimizer();} });
           });
-        } else { delete optExpanded[c.id]; renderOptimizer(); }
+        } else { delete optExpanded[c.id]; pending--; if(!pending) renderOptimizer(); }
       })
-      .catch(function() { delete optExpanded[c.id]; renderOptimizer(); });
+      .catch(function() { delete optExpanded[c.id]; pending--; if(!pending) renderOptimizer(); });
   });
+  renderOptimizer(); // Show loading state immediately
 }
 
 async function toggleOpt(campaignId) {
