@@ -1425,8 +1425,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
   <div id="section-optimizer" class="content-section">
   <div style="background:linear-gradient(135deg,#fafbff,#f0f4ff);border:1px solid #c7d2fe;border-radius:12px;padding:20px 24px;margin:16px 24px;box-shadow:0 4px 16px rgba(30,58,95,0.06)"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:linear-gradient(135deg,#1E3A5F,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">⚡</div><div><div style="font-size:18px;font-weight:800;color:#1E3A5F">Optimizer</div><div style="font-size:11px;color:#6b7280;margin-top:1px">Country-level campaign management</div></div></div></div>
   <div style="padding:8px 16px;display:flex;gap:6px;flex-wrap:wrap;background:#fff;border-bottom:1px solid #e6e8ea">
-    <button class="fpill fpill-active" onclick="switchOptTab(this,'ALL')">All</button>
-    <button class="fpill" onclick="switchOptTab(this,'HR')">🇭🇷 HR</button>
+    <button class="fpill fpill-active" onclick="switchOptTab(this,'HR')">🇭🇷 HR</button>
     <button class="fpill" onclick="switchOptTab(this,'CZ')">🇨🇿 CZ</button>
     <button class="fpill" onclick="switchOptTab(this,'PL')">🇵🇱 PL</button>
     <button class="fpill" onclick="switchOptTab(this,'GR')">🇬🇷 GR</button>
@@ -1435,6 +1434,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     <button class="fpill" onclick="switchOptTab(this,'HU')">🇭🇺 HU</button>
     <span style="width:1px;height:20px;background:#ddd;margin:0 4px"></span>
     <button class="fpill" onclick="switchOptTab(this,'SOFI')">SOFI</button>
+    <button class="fpill" onclick="switchOptTab(this,'ALL')">All</button>
   </div>
   <div style="padding:8px 16px;display:flex;gap:8px;align-items:center;background:#fff;border-bottom:1px solid #e6e8ea">
     <span style="font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase">Period</span>
@@ -1463,6 +1463,18 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       </tr></thead>
       <tbody id="optBody"><tr><td colspan="10" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
     </table>
+  </div>
+  <!-- Optimizer Summary -->
+  <div id="optSummary" style="padding:12px 24px;background:linear-gradient(135deg,#1E3A5F,#2a5a8f);margin:0 16px 16px;border-radius:var(--card-radius);color:#fff;display:flex;gap:24px;align-items:center;flex-wrap:wrap;font-size:13px">
+    <div><span style="opacity:0.7">Campaigns:</span> <strong id="optSumCampaigns">0</strong></div>
+    <div><span style="opacity:0.7">Active Adsets:</span> <strong id="optSumAdsets">0</strong></div>
+    <div><span style="opacity:0.7">Active Ads:</span> <strong id="optSumAds">0</strong></div>
+    <div style="width:1px;height:20px;background:rgba(255,255,255,0.2)"></div>
+    <div><span style="opacity:0.7">Spend:</span> <strong id="optSumSpend">0</strong></div>
+    <div><span style="opacity:0.7">Orders:</span> <strong id="optSumOrders">0</strong></div>
+    <div><span style="opacity:0.7">Revenue:</span> <strong id="optSumRevenue">0</strong></div>
+    <div><span style="opacity:0.7">Profit:</span> <strong id="optSumProfit" style="color:#4ade80">0</strong></div>
+    <div><span style="opacity:0.7">CPA:</span> <strong id="optSumCpa">0</strong></div>
   </div>
   </div>
 
@@ -4403,7 +4415,7 @@ function renderAIHints(s, isCampaignMode) {
 }
 
 // ═══ OPTIMIZER ═══
-let optCountry = 'ALL';
+let optCountry = 'HR';
 let optDateRange = 'today';
 let optCampaigns = [];
 let optExpanded = {};
@@ -4567,6 +4579,27 @@ function renderOptimizer() {
     }
   }
   document.getElementById('optBody').innerHTML = html;
+  
+  // Calculate summary
+  var sumCampaigns = filtered.length;
+  var sumSpend = 0, sumOrders = 0, sumRevenue = 0, sumProfit = 0, sumPurchases = 0;
+  for (var ci = 0; ci < filtered.length; ci++) {
+    var fc = filtered[ci];
+    sumSpend += parseFloat(fc.insights?.spend || 0);
+    sumOrders += (fc.wc?.orders || 0);
+    sumRevenue += (fc.wc?.revenueGross || 0);
+    sumProfit += (fc.wc?.profit || 0);
+    var pA = (fc.insights?.actions || []).find(function(a) { return a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase'; });
+    sumPurchases += pA ? parseInt(pA.value) : 0;
+  }
+  var sumCpa = sumPurchases > 0 ? (sumSpend / sumPurchases) : 0;
+  
+  var se = document.getElementById('optSumCampaigns'); if(se) se.textContent = sumCampaigns;
+  se = document.getElementById('optSumSpend'); if(se) se.textContent = sumSpend.toFixed(2) + ' \u20ac';
+  se = document.getElementById('optSumOrders'); if(se) se.textContent = sumOrders;
+  se = document.getElementById('optSumRevenue'); if(se) se.textContent = sumRevenue.toFixed(2) + ' \u20ac';
+  se = document.getElementById('optSumProfit'); if(se) { se.textContent = sumProfit.toFixed(2) + ' \u20ac'; se.style.color = sumProfit >= 0 ? '#4ade80' : '#f87171'; }
+  se = document.getElementById('optSumCpa'); if(se) se.textContent = sumCpa > 0 ? sumCpa.toFixed(2) + ' \u20ac' : '\u2014';
 }
 
 async function toggleOpt(campaignId) {
