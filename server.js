@@ -3093,6 +3093,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
       }
 
       // ═══ DASHBOARD API ═══
+      console.log("[DASH-API] Dashboard request received");
       if (urlPath === '/api/dashboard') {
         // Dashboard reads from SQLite + dash-cache.json for FB spend
         const today = getToday();

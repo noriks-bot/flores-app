@@ -3988,7 +3988,7 @@ async function generateUploadPlan() {
     document.getElementById('uploadSummarySubtitle').textContent=totalExp+' expansion opportunities across '+ALL_COUNTRIES.length+' countries';
     if(winners.length>0){
       document.getElementById('uploadBody').innerHTML=winners.map(w=>{
-        const winFlags=w.winCountries.map(wc=>'<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;background:rgba(76,175,80,0.1);border-radius:4px;font-size:11px;margin:1px">'+FLAGS[wc.country]+' '+wc.country+' <span style="color:#4caf50;font-weight:600">'+wc.cpa.toFixed(0)+'€</span> <span style="color:#9ca3af;font-size:9px">'+wc.purchases+'p/'+wc.spend.toFixed(0)+'€</span></span>').join('');
+        const winFlags=w.winCountries.map(wc=>'<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;background:rgba(76,175,80,0.1);border-radius:4px;font-size:11px;margin:1px">'+FLAGS[wc.country]+' '+wc.country+' <span style="color:#4caf50;font-weight:600">'+wc.cpa.toFixed(0)+'€</span> <span style="color:#9ca3af;font-size:9px">'+wc.purchases+'p/'+w(c.spend!=null?c.spend.toFixed(0):"—")+'€</span></span>').join('');
         const expandFlags=w.expandTo.map(cc=>'<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;background:rgba(59,130,246,0.1);border-radius:4px;font-size:11px;margin:1px">'+FLAGS[cc]+' '+cc+'</span>').join('');
         const cpaStyle=w.overallCpa>0?(w.overallCpa<=15?'background:#4caf50;color:#fff':w.overallCpa<=20?'background:#84cc16;color:#fff':w.overallCpa<=25?'background:#f59e0b;color:#fff':'background:#ef5350;color:#fff'):'';
         return '<tr>'+
@@ -5581,11 +5581,11 @@ function renderDashboard(data) {
   
   // Top Campaigns table
   const tcBody = document.querySelector('#dashTopCampaigns tbody');
-  tcBody.innerHTML = (data.topCampaigns || []).map(c => `<tr><td style="text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name.slice(0,45)}</td><td>€${c.spend.toFixed(0)}</td><td>${c.purchases}</td><td>${c.cpa > 0 ? '€'+c.cpa.toFixed(2) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
+  tcBody.innerHTML = (data.topCampaigns || []).map(c => `<tr><td style="text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name.slice(0,45)}</td><td>€${(c.spend!=null?c.spend.toFixed(0):"—")}</td><td>${(c.purchases!=null?c.purchases:(c.orders||"—"))}</td><td>${c.cpa > 0 ? '€'+c.cpa.toFixed(2) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
   
   // Top Creatives table
   const crBody = document.querySelector('#dashTopCreatives tbody');
-  crBody.innerHTML = (data.topCreatives || []).map(c => `<tr><td style="text-align:left;font-weight:600">${c.id}</td><td>€${c.spend.toFixed(0)}</td><td>${c.purchases}</td><td>${c.cpa > 0 ? '€'+c.cpa.toFixed(2) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
+  crBody.innerHTML = (data.topCreatives || []).map(c => `<tr><td style="text-align:left;font-weight:600">${c.id}</td><td>€${(c.spend!=null?c.spend.toFixed(0):"—")}</td><td>${(c.purchases!=null?c.purchases:(c.orders||"—"))}</td><td>${c.cpa > 0 ? '€'+c.cpa.toFixed(2) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
   
   // Chart
   if (data.chartData && data.chartData.length > 0) {
