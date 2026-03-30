@@ -3094,22 +3094,23 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
 
       // ═══ DASHBOARD API ═══
       if (urlPath === '/api/dashboard') {
-        // Dashboard reads ONLY from SQLite - no Meta API calls, instant response
+        const dashFrom = query.date_from || getToday(); const dashTo = query.date_to || getToday();
+        // Dashboard reads from SQLite - no Meta API calls, instant response
         const today = getToday();
         const d7ago = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
         
         // Today's KPIs from wc_orders
-        const todayStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ?').get(today);
-        const fbOrders = db.prepare('SELECT COUNT(*) as orders FROM wc_orders WHERE order_date = ? AND is_fb_attributed = 1').get(today);
+        const todayStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ?').get(dashFrom, dashTo);
+        const fbOrders = db.prepare('SELECT COUNT(*) as orders FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1').get(dashFrom, dashTo);
         
         // 7-day daily chart data
         const chartData = db.prepare('SELECT order_date as date, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? GROUP BY order_date ORDER BY order_date').all(d7ago);
         
         // Top campaigns by orders (today)
-        const topCampaigns = db.prepare("SELECT utm_campaign as name, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ? AND utm_campaign IS NOT NULL AND utm_campaign != '' GROUP BY utm_campaign ORDER BY orders DESC LIMIT 10").all(today);
+        const topCampaigns = db.prepare("SELECT utm_campaign as name, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND utm_campaign IS NOT NULL AND utm_campaign != '' GROUP BY utm_campaign ORDER BY orders DESC LIMIT 10").all(dashFrom, dashTo);
         
         // Top products
-        const topProducts = db.prepare("SELECT product_type, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue FROM wc_orders WHERE order_date = ? GROUP BY product_type ORDER BY orders DESC").all(today);
+        const topProducts = db.prepare("SELECT product_type, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue FROM wc_orders WHERE order_date >= ? AND order_date <= ? GROUP BY product_type ORDER BY orders DESC").all(dashFrom, dashTo);
         
         // By country (today)
         const byCountry = db.prepare('SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ? GROUP BY country ORDER BY orders DESC').all(today);
@@ -3135,7 +3136,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         // Enrich topCampaigns with FB spend data
         let enrichedCampaigns = topCampaigns.map(c => ({ name: c.name, orders: c.orders, revenue: Math.round(c.revenue * 100) / 100, profit: Math.round(c.profit * 100) / 100 }));
         try {
-          const campData = await getCampaigns(today, today);
+          const campData = await getCampaigns(dashFrom, dashTo);
           if (Array.isArray(campData)) {
             enrichedCampaigns = enrichedCampaigns.map(c => {
               const fb = campData.find(f => f.id === c.name);
@@ -3383,7 +3384,7 @@ server.listen(PORT, () => {
     try {
       const today = getToday();
       const d7ago = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
-      const campaignData = await getCampaigns(today, today);
+      const campaignData = await getCampaigns(dashFrom, dashTo);
       let totalSpend = 0, totalPurchases = 0, totalOrders = 0, totalRevenue = 0, totalProfit = 0, activeCampaigns = 0;
       const topCampaigns = [];
       for (const c of campaignData) {
@@ -3414,7 +3415,7 @@ server.listen(PORT, () => {
   async function prewarmDashboard() {
     try {
       const today = getToday();
-      await getCampaigns(today, today);
+      await getCampaigns(dashFrom, dashTo);
       _dashboardCacheTime = 0; // Force refresh next dashboard call
       console.log('[FLORES] Campaign cache pre-warmed');
     } catch(e) { console.log('[FLORES] Pre-warm failed:', e.message); }
