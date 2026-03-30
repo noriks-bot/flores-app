@@ -3258,7 +3258,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             weekProfit: Math.round(((weekStats?.profit || 0) - fbSpend7d) * 100) / 100,
             spend: Math.round(fbSpendToday * 100) / 100,
             cpa: todayStats.orders > 0 ? Math.round((fbSpendToday / todayStats.orders) * 100) / 100 : 0,
-            activeCampaigns: 0,
+            activeCampaigns: Array.isArray(topCampaignsRaw) ? topCampaignsRaw.filter(c => c.status === "ACTIVE").length : 0,
             weekSpend: Math.round(fbSpend7d * 100) / 100
           },
           topCampaigns: enrichedCampaigns,
