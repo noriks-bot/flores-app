@@ -4518,12 +4518,28 @@ async function loadOptimizer() {
 }
 
 function optGetFlags(name) {
-  const flagMap = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
-  const upper = (name||'').toUpperCase();
-  const ccMatch = upper.match(/CC:([A-Z+]+)/);
-  if (ccMatch) return ccMatch[1].split('+').map(c => flagMap[c]||'').filter(Boolean).join('');
-  for (const [code,flag] of Object.entries(flagMap)) { if (upper.includes(code)) return flag; }
-  return '';
+  var flagMap = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
+  var upper = (name||'').toUpperCase();
+  var isSofi = upper.includes('SOFI');
+  var sofiTag = isSofi ? '<span style="display:inline-block;padding:1px 5px;border-radius:4px;font-size:9px;font-weight:800;background:#7c3aed;color:#fff;margin-right:3px;vertical-align:middle">SOFI</span>' : '';
+  var ccMatch = upper.match(/CC:([A-Z+]+)/);
+  var countries = [];
+  if (ccMatch) { countries = ccMatch[1].split('+'); }
+  else { for (var code in flagMap) { if (upper.includes(code)) { countries = [code]; break; } } }
+  if (!countries.length) return sofiTag;
+  var activeCountry = optCountry;
+  var html = sofiTag;
+  countries.forEach(function(cc) {
+    var flag = flagMap[cc] || '';
+    if (!flag) return;
+    var isActive = (activeCountry === 'ALL' || activeCountry === cc);
+    if (isActive) {
+      html += '<span style="font-size:14px;vertical-align:middle">' + flag + '</span>';
+    } else {
+      html += '<span style="font-size:14px;vertical-align:middle;filter:grayscale(1) opacity(0.4)">' + flag + '</span>';
+    }
+  });
+  return html;
 }
 function optActionBtn(status) {
   if (status === 'ACTIVE') return '<button class="opt-action-btn" title="Pause (coming soon)" onclick="event.stopPropagation()">⏸</button>';
