@@ -5584,9 +5584,9 @@ function renderDashboard(data) {
   // KPI Cards
   document.getElementById('dashKpis').innerHTML = [
     { label: "Today's Spend", value: '€' + (k.spend||0).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}), icon: 'fas fa-coins', color: '#2563eb' },
-    { label: "Today's Orders", value: (k.orders || 0) + '<div style="font-size:10px;font-weight:400;color:#6b7280;margin-top:4px;line-height:1.4">' + Object.entries(k.ordersBySource || {}).map(function(e) { return '<span style="white-space:nowrap">' + e[0] + ' <b>' + e[1] + '</b></span>'; }).join(' · ') + '</div>', icon: 'fas fa-shopping-bag', color: '#7c3aed' },
+    { label: "Today's Orders", value: (k.orders || 0) + '<div style="font-size:11px;font-weight:500;color:#4b5563;margin-top:4px;line-height:1.5">' + Object.entries(k.ordersBySource || {}).map(function(e) { return '<span style="white-space:nowrap">' + e[0] + ' <b>' + e[1] + '</b></span>'; }).join(' · ') + '</div>', icon: 'fas fa-shopping-bag', color: '#7c3aed' },
     { label: "Today's Revenue", value: '€' + (k.revenue||0).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}), icon: 'fas fa-euro-sign', color: '#10b981' },
-    { label: "Today's Profit", value: '€' + (k.profit||0).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}) + '<div style="font-size:10px;font-weight:400;color:#6b7280;margin-top:2px">€' + (k.profitPerOrder||0).toFixed(2) + '/order</div>', icon: 'fas fa-chart-line', color: k.profit >= 0 ? '#10b981' : '#ef4444' },
+    { label: "Today's Profit", value: '€' + (k.profit||0).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}) + '<div style="font-size:12px;font-weight:600;color:#4b5563;margin-top:3px">€' + (k.profitPerOrder||0).toFixed(2) + '/order</div>', icon: 'fas fa-chart-line', color: k.profit >= 0 ? '#10b981' : '#ef4444' },
     { label: "CPA", value: '€' + (k.cpa||0).toFixed(2), icon: 'fas fa-bullseye', color: k.cpa < 15 ? '#10b981' : k.cpa < 25 ? '#f59e0b' : '#ef4444' },
     { label: "Active Campaigns", value: k.activeCampaigns || 0, icon: 'fas fa-bullhorn', color: '#2563eb' }
   ].map(c => `<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="${c.icon}" style="margin-right:6px;color:${c.color}"></i>${c.label}</div><div class="dash-kpi-value" style="color:${c.color}">${c.value}</div></div>`).join('');
@@ -5598,7 +5598,7 @@ function renderDashboard(data) {
     { label: "FB Measured Orders", value: k.fbMeasuredOrders || 0, icon: 'fas fa-check-circle' },
     { label: "FB Unmeasured Orders", value: k.fbUnmeasuredOrders || 0, icon: 'fas fa-question-circle' },
     { label: "FB CPA", value: '\u20ac' + (k.fbCpa||0).toFixed(2), icon: 'fas fa-bullseye' },
-    { label: "FB Profit", value: '\u20ac' + (k.fbProfit||0).toFixed(2) + '<div style="font-size:10px;font-weight:400;color:rgba(255,255,255,0.7);margin-top:2px">\u20ac' + (k.fbProfitPerOrder||0).toFixed(2) + '/order</div>', icon: 'fas fa-chart-line' }
+    { label: "FB Profit", value: '\u20ac' + (k.fbProfit||0).toFixed(2) + '<div style="font-size:12px;font-weight:700;color:#fff;margin-top:3px">\u20ac' + (k.fbProfitPerOrder||0).toFixed(2) + '/order</div>', icon: 'fas fa-chart-line' }
   ].map(c => '<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="' + c.icon + '" style="margin-right:6px"></i>' + c.label + '</div><div class="dash-kpi-value">' + c.value + '</div></div>').join('');
 
     // Alerts
