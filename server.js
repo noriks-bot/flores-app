@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const Database = require('better-sqlite3');
+const { detectProduct: sharedDetectProduct } = require('./detect-product');
 
 // Load rejection rates from dash
 let dashRejectionRates = {};
@@ -550,14 +551,18 @@ function calculateOrderProfit(order, country) {
   const effectiveGrossEur = grossEur * (1 - rejRate);
   const netRevenue = effectiveGrossEur / (1 + vatRate);
 
-  let productCost = 0;
+  // Product cost: use shared detectProduct (same as dash) to decompose bundles
+  let totalTshirts = 0, totalBoxers = 0;
   const items = order.line_items || [];
   for (const item of items) {
     const qty = item.quantity || 1;
-    const isShirt = shirtWords.test(item.name || '') || shirtWords.test(item.sku || '');
-    productCost += (isShirt ? PRODUCT_COSTS.tshirt : PRODUCT_COSTS.boxers) * qty;
+    const detected = sharedDetectProduct(item.name || '', true, item.meta_data || null, item.sku || null);
+    totalTshirts += (detected.tshirts || 0) * qty;
+    totalBoxers += (detected.boxers || 0) * qty;
   }
-  // Shipping ALWAYS applied per order (matches dash behavior — every order has shipping cost)
+  const productCost = (totalTshirts * PRODUCT_COSTS.tshirt) + (totalBoxers * PRODUCT_COSTS.boxers);
+
+  // Shipping ALWAYS applied per order (matches dash behavior)
   const SHIPPING_COSTS = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 5.5 };
   const shippingCost = SHIPPING_COSTS[country] || 4;
   const effectiveProductCost = productCost * (1 - rejRate);
