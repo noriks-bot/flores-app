@@ -1973,6 +1973,34 @@ const server = http.createServer(async (req, res) => {
         const data = await getInsights(level, dateFrom, dateTo, query.breakdown);
         return sendJSON(res, data);
       }
+
+      if (urlPath === '/api/resync-profits' && req.method === 'POST') {
+        console.log('[RESYNC] Force re-sync: resetting sync_state to 30 days ago and re-fetching all orders...');
+        try {
+          const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+          for (const country of Object.keys(WC_STORES)) {
+            updateSyncState.run({
+              country,
+              last_synced_order_id: 0,
+              last_sync_at: thirtyDaysAgo,
+              total_orders: 0
+            });
+          }
+          const result = await syncAllCountries();
+          // Clear all caches
+          try {
+            const files = fs.readdirSync(CACHE_DIR).filter(f => f.endsWith('.json'));
+            files.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
+            console.log('[RESYNC] Cleared ' + files.length + ' cache files');
+          } catch(e) {}
+          const totalOrders = db.prepare('SELECT COUNT(*) as cnt FROM wc_orders').get().cnt;
+          console.log('[RESYNC] Complete. Total orders in DB: ' + totalOrders);
+          return sendJSON(res, { ok: true, totalOrders, synced: result.synced });
+        } catch (e) {
+          console.error('[RESYNC] Error:', e.message);
+          return sendJSON(res, { error: e.message }, 500);
+        }
+      }
       if (urlPath === '/api/sync') {
         try {
           const result = await syncAllCountries();
