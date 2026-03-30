@@ -1041,10 +1041,10 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <i class="fas fa-history"></i><span class="nav-item-text">Activity Log</span>
       </a>
       <div class="nav-section-label">Menu</div>
-      <a class="nav-item active" data-section="dashboard" onclick="navigateTo('dashboard')">
+      <a class="nav-item" data-section="dashboard" onclick="navigateTo('dashboard')">
         <i class="fas fa-th-large"></i><span class="nav-item-text">Dashboard</span>
       </a>
-      <a class="nav-item" data-section="ads-manager" onclick="navigateTo('ads-manager')">
+      <a class="nav-item active" data-section="ads-manager" onclick="navigateTo('ads-manager')">
         <i class="fas fa-bullhorn"></i><span class="nav-item-text">Ads Manager</span>
       </a>
       <a class="nav-item" data-section="optimizer" onclick="navigateTo('optimizer')">
@@ -1152,7 +1152,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 
   <!-- === CONTENT SECTIONS === -->
   <!-- ═══ DASHBOARD ═══ -->
-  <div id="section-dashboard" class="content-section active">
+  <div id="section-dashboard" class="content-section">
     <div class="content">
       <div class="dash-loading" id="dashLoading" style="text-align:center;padding:60px;color:var(--text-muted)"><i class="fas fa-spinner fa-spin"></i> Loading dashboard...</div>
       <div id="dashContent" style="display:none">
@@ -1193,7 +1193,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     </div>
   </div>
 
-  <div id="section-ads-manager" class="content-section">
+  <div id="section-ads-manager" class="content-section active">
   <!-- FILTERS -->
   <div class="filters-bar">
     <span class="filter-label">Period</span>
