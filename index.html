@@ -168,7 +168,7 @@ body { overflow-x: hidden;
 table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 2400px; }
 
 thead th {
-  position: sticky; top: 0; z-index: 10;
+  position: sticky; top: 0; z-index: 20;
   padding: 4px 6px; text-align: right;
   font-size: 9px; font-weight: 600; color: #6b6f75;
   text-transform: none; letter-spacing: 0; white-space: nowrap;
@@ -180,7 +180,7 @@ thead th {
 thead th:hover { color: var(--text-secondary); }
 thead th.sorted-asc, thead th.sorted-desc { color: var(--primary); }
 thead th:nth-child(1), thead th:nth-child(2) { text-align: left; }
-tr.totals-row td { padding: 6px 10px; font-weight: 600; font-size: 11px; background: linear-gradient(135deg, #1a2332 0%, #1f3044 100%) !important; color: #fff !important; border: none; border-top: 2px solid #1a2430; text-align: right; position: sticky; top: 34px; z-index: 9; }
+tr.totals-row td { padding: 6px 10px; font-weight: 600; font-size: 11px; background: linear-gradient(135deg, #1a2332 0%, #1f3044 100%) !important; color: #fff !important; border: none; border-top: 2px solid #1a2430; text-align: right; position: sticky; top: 34px; z-index: 19; }
 tr.totals-row td:nth-child(2) { font-size: 12px; font-weight: 700; }
 tr.totals-row:hover td { background: linear-gradient(135deg, #1a2332 0%, #1f3044 100%) !important; }
 tr.totals-row .pill-green { color: #fff; background: #4caf50; }
@@ -641,7 +641,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 }
 .cr-table-scroll { overflow-x: auto; max-height: calc(100vh - 200px); }
 .cr-table { width: 100%; border-collapse: collapse; min-width: 900px; }
-.cr-table thead { position: sticky; top: 0; z-index: 10; }
+.cr-table thead { position: sticky; top: 0; z-index: 20; }
 .cr-th {
   padding: 6px 10px; text-align: right; font-size: 11px; font-weight: 500;
   color: #64748b; background: #f5f7fa; border-bottom: 1px solid #eee;
