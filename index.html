@@ -1191,7 +1191,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           <!-- Top Creatives -->
           <div class="table-card">
             <div class="table-header"><span class="table-title">🎨 Top Creatives (Today)</span></div>
-            <div style="padding:0"><table class="dash-mini-table" id="dashTopCreatives"><thead><tr><th style="text-align:left;padding:8px 12px">Creative</th><th>Spend</th><th>Purch</th><th>CPA</th></tr></thead><tbody></tbody></table></div>
+            <div style="padding:0"><table class="dash-mini-table" id="dashTopCreatives"><thead><tr><th style="text-align:left;padding:8px 12px">Creative</th><th>Spend</th><th>Purchases</th><th>CPA</th><th>Orders</th><th>Revenue</th><th>Profit</th></tr></thead><tbody></tbody></table></div>
           </div>
         </div>
       </div>
@@ -5616,7 +5616,18 @@ function renderDashboard(data) {
   
   // Top Creatives table
   const crBody = document.querySelector('#dashTopCreatives tbody');
-  crBody.innerHTML = (data.topCreatives || []).map(c => `<tr><td style="text-align:left;font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(c.name || c.id || '').replace(/"/g,'&quot;')}">${(c.name || c.id || '—').slice(0,40)}</td><td>€${c.spend!=null ? c.spend.toFixed(0) : '—'}</td><td>${c.purchases||0}</td><td>${c.cpa!=null && c.cpa > 0 ? '€'+c.cpa.toFixed(2) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
+  crBody.innerHTML = (data.topCreatives || []).map(c => {
+    var crName = (c.name || c.id || '—');
+    var sp = c.spend != null ? '€' + c.spend.toFixed(0) : '—';
+    var purch = c.purchases || 0;
+    var cpa = c.cpa != null && c.cpa > 0 ? '€' + c.cpa.toFixed(2) : '—';
+    var ord = c.orders || '—';
+    var rev = c.revenue != null ? '€' + c.revenue.toFixed(0) : '—';
+    var pft = c.profit != null ? c.profit : null;
+    var pfColor = pft != null && pft > 0 ? '#10b981' : pft != null && pft < 0 ? '#ef4444' : 'inherit';
+    var pfStr = pft != null ? '€' + pft.toFixed(0) : '—';
+    return '<tr><td style="text-align:left;font-weight:600;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + crName.replace(/"/g,'&quot;') + '">' + crName + '</td><td>' + sp + '</td><td>' + purch + '</td><td>' + cpa + '</td><td>' + ord + '</td><td>' + rev + '</td><td style="color:' + pfColor + ';font-weight:600">' + pfStr + '</td></tr>';
+  }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
   
   // Chart
   if (data.chartData && data.chartData.length > 0) {

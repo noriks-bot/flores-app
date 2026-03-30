@@ -3199,7 +3199,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         try {
           const adsInsights = await metaGetAll(AD_ACCOUNT + '/insights', {
             level: 'ad',
-            fields: 'ad_name,ad_id,spend,actions',
+            fields: 'ad_name,ad_id,spend,actions,action_values',
             time_range: JSON.stringify({since: today, until: today}),
             sort: 'spend_descending',
             limit: '10'
@@ -3209,11 +3209,17 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             if (spend <= 0) continue;
             const pAct = (ad.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
             const purchases = pAct ? parseInt(pAct.value) : 0;
+            const rvAct = (ad.action_values || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
+            const revenue = rvAct ? Math.round(parseFloat(rvAct.value) * 100) / 100 : 0;
+            const profit = Math.round((revenue - spend) * 100) / 100;
             topCreativesData.push({
               id: ad.ad_id,
               name: ad.ad_name,
               spend: Math.round(spend * 100) / 100,
               purchases,
+              orders: purchases,
+              revenue,
+              profit,
               cpa: purchases > 0 ? Math.round(spend / purchases * 100) / 100 : 0
             });
           }
