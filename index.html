@@ -141,6 +141,11 @@ body { overflow-x: hidden;
 /* profit period column bg — removed */
 
 /* ═══ TABLE ═══ */
+
+#dashOrdersTable th, #dashOrdersTable td { text-align:left !important; white-space:normal !important; padding:6px 8px !important; border-right:none !important; font-size:12px; }
+#dashOrdersTable th:first-child, #dashOrdersTable td:first-child { text-align:center !important; width:30px; }
+#dashOrdersTable th:last-child, #dashOrdersTable td:last-child { text-align:right !important; }
+#dashOrdersTable td:nth-child(4) { max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap !important; }
 .table-card {
   background: var(--card-bg); border-radius: var(--card-radius);
   box-shadow: var(--card-shadow); border: 1px solid var(--border-color); overflow: hidden;
