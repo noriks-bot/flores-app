@@ -5616,17 +5616,19 @@ function renderDashboard(data) {
   
   // Top Creatives table
   const crBody = document.querySelector('#dashTopCreatives tbody');
-  crBody.innerHTML = (data.topCreatives || []).map(c => {
-    var crName = (c.name || c.id || '—');
-    var sp = c.spend != null ? '€' + c.spend.toFixed(0) : '—';
-    var ord = c.orders || 0;
-    var rev = c.revenue != null ? '€' + c.revenue.toFixed(0) : '—';
-    var pft = c.profit != null ? c.profit : null;
-    var pfColor = pft != null && pft > 0 ? '#10b981' : pft != null && pft < 0 ? '#ef4444' : 'inherit';
-    var pfStr = pft != null ? '€' + pft.toFixed(0) : '—';
-    var cpa = c.cpa != null && c.cpa > 0 ? '€' + c.cpa.toFixed(2) : '—';
-    return '<tr><td style="text-align:left;font-weight:600;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + crName.replace(/"/g,'&quot;') + '">' + crName + '</td><td>' + sp + '</td><td>' + ord + '</td><td>' + rev + '</td><td style="color:' + pfColor + ';font-weight:600">' + pfStr + '</td><td>' + cpa + '</td></tr>';
-  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
+  try {
+    crBody.innerHTML = (data.topCreatives || []).map(function(c) {
+      var crName = (c.name || c.id || '—');
+      var sp = (typeof c.spend === 'number') ? '€' + c.spend.toFixed(0) : '—';
+      var ord = c.orders || 0;
+      var rev = (typeof c.revenue === 'number') ? '€' + c.revenue.toFixed(0) : '—';
+      var pft = (typeof c.profit === 'number') ? c.profit : null;
+      var pfColor = pft !== null && pft > 0 ? '#10b981' : pft !== null && pft < 0 ? '#ef4444' : 'inherit';
+      var pfStr = pft !== null ? '€' + pft.toFixed(0) : '—';
+      var cpa = (typeof c.cpa === 'number') && c.cpa > 0 ? '€' + c.cpa.toFixed(2) : '—';
+      return '<tr><td style="text-align:left;font-weight:600;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + crName.replace(/"/g,'&quot;') + '">' + crName + '</td><td>' + sp + '</td><td>' + ord + '</td><td>' + rev + '</td><td style="color:' + pfColor + ';font-weight:600">' + pfStr + '</td><td>' + cpa + '</td></tr>';
+    }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
+  } catch(crErr) { console.error('Top Creatives render error:', crErr); crBody.innerHTML = '<tr><td colspan="6">Render error: ' + crErr.message + '</td></tr>'; }
   
   // Chart
   if (data.chartData && data.chartData.length > 0) {
