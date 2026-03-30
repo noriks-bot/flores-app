@@ -3407,7 +3407,13 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           const fbMeasured = o.is_fb_attributed === 1 ? (o.utm_campaign && o.utm_campaign !== '' && !o.utm_campaign.startsWith('google') ? 'Measured' : 'Not Measured') : null;
           const customer = (o.billing_name || '').trim() || '#' + o.wc_order_id;
           const datetime = (o.order_datetime || o.order_date || '').slice(0, 16);
-          return { id: o.wc_order_id, date: o.order_date, datetime, country: o.country, customer, email: o.billing_email || '', origin, revenue: Math.round(o.gross_eur * 100) / 100, profit: Math.round(o.profit * 100) / 100 };
+          let items = '';
+          try { const mm = JSON.parse(o.raw_meta || '{}'); if (mm.line_items) items = mm.line_items.map(li => (li.quantity||1) + 'x ' + (li.name||'').slice(0,30)).join(', '); } catch(e5) {}
+          let orderDatetime2 = datetime;
+          if (!orderDatetime2 || orderDatetime2.length < 11) {
+            try { const mm2 = JSON.parse(o.raw_meta || '{}'); if (mm2.date_created) orderDatetime2 = mm2.date_created.replace('T',' ').slice(0,16); } catch(e6) {}
+          }
+          return { id: o.wc_order_id, date: o.order_date, datetime: orderDatetime2, country: o.country, customer, email: o.billing_email || '', origin, fbMeasured, items, revenue: Math.round(o.gross_eur * 100) / 100, profit: Math.round(o.profit * 100) / 100 };
         });
 
         return sendJSON(res, {
