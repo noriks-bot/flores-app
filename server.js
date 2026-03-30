@@ -3148,6 +3148,44 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           }
         } catch(e) {}
 
+        // Top creatives from campaign cache
+        let topCreatives = [];
+        try {
+          const campData2 = await getCampaigns(today, today);
+          if (Array.isArray(campData2)) {
+            for (const c of campData2) {
+              if (c.insights && parseFloat(c.insights.spend) > 0) {
+                const spend = parseFloat(c.insights.spend);
+                const pAct = (c.insights.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
+                const purchases = pAct ? parseInt(pAct.value) : 0;
+                topCreatives.push({
+                  id: c.id,
+                  name: c.name,
+                  spend: Math.round(spend * 100) / 100,
+                  purchases,
+                  cpa: purchases > 0 ? Math.round(spend / purchases * 100) / 100 : 0
+                });
+              }
+            }
+            topCreatives.sort((a, b) => b.spend - a.spend);
+            topCreatives = topCreatives.slice(0, 10);
+          }
+        } catch(e) {}
+
+        // Alerts
+        const alerts = [];
+        if (fbSpendToday > 0 && todayStats.orders > 0) {
+          const todayCPA = fbSpendToday / todayStats.orders;
+          if (todayCPA > 25) alerts.push({ type: 'high_cpa', message: 'CPA today is €' + todayCPA.toFixed(2) + ' — above €25 threshold' });
+        }
+        if (fbSpendToday > 50 && todayStats.revenue > 0) {
+          const roas = todayStats.revenue / fbSpendToday;
+          if (roas < 1.5) alerts.push({ type: 'low_roas', message: 'ROAS today is ' + roas.toFixed(2) + 'x — below 1.5x threshold' });
+        }
+        if (fbSpendToday > 100 && todayStats.orders === 0) {
+          alerts.push({ type: 'no_orders', message: '€' + fbSpendToday.toFixed(0) + ' spent today with 0 orders' });
+        }
+
         return sendJSON(res, {
           kpis: {
             orders: todayStats.orders || 0,
@@ -3170,8 +3208,8 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             try { const dd = (dashCacheData||{})[d.date]||{}; for (const [,v] of Object.entries(dd)) { if (v && typeof v.spend === 'number') daySpend += v.spend; } } catch(e){}
             return { date: d.date, orders: d.orders, revenue: Math.round(d.revenue * 100) / 100, profit: Math.round(d.profit * 100) / 100, spend: Math.round(daySpend * 100) / 100 };
           }),
-          alerts: [],
-          topCreatives: [],
+          alerts: alerts,
+          topCreatives: topCreatives,
           date: today
         });
       }
