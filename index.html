@@ -2395,6 +2395,7 @@ const sectionTitles = {
   'activity-log': 'Activity Log'
 };
 
+var dashboardLoaded = false;
 function navigateTo(section) {
   // Update hash
   window.location.hash = section;
@@ -5540,7 +5541,7 @@ async function toggleOptAds(adsetId, campaignId) {
 }
 
 /* ═══ DASHBOARD ═══ */
-let dashboardLoaded = false;
+
 let dashChart = null;
 
 async function loadDashboard() {
