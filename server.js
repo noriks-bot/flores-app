@@ -3219,12 +3219,13 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             const pActCheck = (camp.insights?.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
             const hasPurchases = pActCheck && parseInt(pActCheck.value) > 0;
             if (spend <= 0 && !hasPurchases) continue;
-            const orders = camp.wc?.orders || 0;
+            const pAct = (camp.insights?.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
+            const purchases = pAct ? parseInt(pAct.value) : 0;
+            const wcOrders = camp.wc?.orders || 0;
+            const orders = Math.max(wcOrders, purchases);
             const revenue = camp.wc?.revenueGross || 0;
             const rawProfit = camp.wc?.profit || 0;
             const profit = Math.round((rawProfit - spend) * 100) / 100;
-            const pAct = (camp.insights?.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
-            const purchases = pAct ? parseInt(pAct.value) : 0;
             enrichedCampaigns.push({
               name: camp.name,
               displayName: camp.name,
