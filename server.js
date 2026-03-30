@@ -8,6 +8,7 @@ const Database = require('better-sqlite3');
 const PORT = 3200;
 let _dashboardCache = null;
 let _dashboardCacheTime = 0;
+let _dashRefreshing = false;
 const META_TOKEN = 'EAASl5P6z0UYBRJrZCHWVQvMLmwwDu5jzdA5NEdl9t5K4ogCgH5Pi7acEEKhKSf5LYQKQcx9vd6S7euJRJWeICdZCHsVtUyQfVbF4lxAU25t9sRONxjhVZCBAv0nAnQJ7qiszzZBCR75JHzMXfSACfhxApcZBB0tMRngZAZBXQ3c0c4VeZC8OU6ltFc9YaCydW8Vg';
 const FB_APP_ID = '1308302851166534';
 const FB_APP_SECRET = '055332aa992f885134cf9cb6cd3ce5cf';
@@ -3057,8 +3058,13 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
 
       // ═══ DASHBOARD API ═══
       if (urlPath === '/api/dashboard') {
-        // Return cached if less than 5 minutes old
-        if (_dashboardCache && (Date.now() - _dashboardCacheTime) < 900000) {
+        // ALWAYS return cached data instantly if available (stale-while-revalidate)
+        if (_dashboardCache) {
+          const age = Date.now() - _dashboardCacheTime;
+          // If stale (>5min), trigger background refresh but still return cached
+          if (age > 300000) {
+            refreshDashboardInBackground();
+          }
           return sendJSON(res, _dashboardCache);
         }
         const today = getToday();
@@ -3313,6 +3319,41 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
 server.listen(PORT, () => {
   console.log(`Flores running on http://localhost:${PORT}`);
   // Pre-warm dashboard cache on startup + every 10 min
+  // Background dashboard refresh (non-blocking)
+  async function refreshDashboardInBackground() {
+    if (_dashRefreshing) return;
+    _dashRefreshing = true;
+    try {
+      const today = getToday();
+      const d7ago = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
+      const campaignData = await getCampaigns(today, today);
+      let totalSpend = 0, totalPurchases = 0, totalOrders = 0, totalRevenue = 0, totalProfit = 0, activeCampaigns = 0;
+      const topCampaigns = [];
+      for (const c of campaignData) {
+        const spend = parseFloat(c.insights?.spend || 0);
+        const pAct = (c.insights?.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
+        const p = pAct ? parseInt(pAct.value) : 0;
+        totalSpend += spend; totalPurchases += p;
+        totalOrders += (c.wc?.orders || 0); totalRevenue += (c.wc?.revenueGross || 0); totalProfit += (c.wc?.profit || 0);
+        if (c.status === 'ACTIVE') activeCampaigns++;
+        topCampaigns.push({ name: c.name, spend: Math.round(spend*100)/100, purchases: p, profit: Math.round((c.wc?.profit||0)*100)/100 });
+      }
+      topCampaigns.sort((a,b) => b.spend - a.spend);
+      const avgCPA = totalPurchases > 0 ? totalSpend / totalPurchases : 0;
+      _dashboardCache = {
+        kpis: { spend: Math.round(totalSpend*100)/100, orders: totalOrders, revenue: Math.round(totalRevenue*100)/100, profit: Math.round(totalProfit*100)/100, cpa: Math.round(avgCPA*100)/100, activeCampaigns },
+        topCampaigns: topCampaigns.slice(0,5),
+        topCreatives: [],
+        alerts: [],
+        chartData: [],
+        date: today
+      };
+      _dashboardCacheTime = Date.now();
+      console.log('[FLORES] Dashboard background refresh done');
+    } catch(e) { console.log('[FLORES] Background refresh failed:', e.message); }
+    _dashRefreshing = false;
+  }
+
   async function prewarmDashboard() {
     try {
       const today = getToday();
