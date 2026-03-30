@@ -243,16 +243,17 @@ tr.campaign-loss:hover td { background: #f3f4f6 !important; }
 tr.level-campaign.row-expanded td:first-child { box-shadow: none !important; }
 
 /* Toggle - FloreX style */
-.toggle { position: relative; width: 32px; height: 18px; display: inline-block; }
+.toggle { position: relative; width: 38px; height: 22px; display: inline-block; }
 .toggle input { display: none; }
-.toggle .slider { position: absolute; inset: 0; background: #e6e8ea; border-radius: 18px; cursor: default; transition: .2s; }
-.toggle input:checked + .slider { background: #21c07a; }
+.toggle .slider { position: absolute; inset: 0; background: #fecaca; border-radius: 18px; cursor: default; transition: .2s; }
+.toggle input:checked + .slider { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.4); }
+.toggle input:checked + .slider:before { left: 18px; }
 .toggle .slider:before {
   content: ''; position: absolute; width: 14px; height: 14px;
   border-radius: 50%; background: #fff; top: 2px; left: 2px; transition: .2s;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
-.toggle input:checked + .slider:before { left: 16px; }
+/* toggle before left handled above */
 
 /* Search bar */
 .search-bar {
