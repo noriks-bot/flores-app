@@ -3058,7 +3058,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
       // ═══ DASHBOARD API ═══
       if (urlPath === '/api/dashboard') {
         // Return cached if less than 5 minutes old
-        if (_dashboardCache && (Date.now() - _dashboardCacheTime) < 300000) {
+        if (_dashboardCache && (Date.now() - _dashboardCacheTime) < 900000) {
           return sendJSON(res, _dashboardCache);
         }
         const today = getToday();
@@ -3312,12 +3312,15 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
 
 server.listen(PORT, () => {
   console.log(`Flores running on http://localhost:${PORT}`);
-  // Pre-warm campaign cache on startup (so first dashboard load is fast)
-  setTimeout(async () => {
+  // Pre-warm dashboard cache on startup + every 10 min
+  async function prewarmDashboard() {
     try {
       const today = getToday();
       await getCampaigns(today, today);
+      _dashboardCacheTime = 0; // Force refresh next dashboard call
       console.log('[FLORES] Campaign cache pre-warmed');
     } catch(e) { console.log('[FLORES] Pre-warm failed:', e.message); }
-  }, 3000);
+  }
+  setTimeout(prewarmDashboard, 3000);
+  setInterval(prewarmDashboard, 600000);
 });
