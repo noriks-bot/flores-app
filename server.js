@@ -3148,29 +3148,32 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           }
         } catch(e) {}
 
-        // Top creatives from campaign cache
-        let topCreatives = [];
+        // Top creatives — ad-level from Meta Insights API
+        let topCreativesData = [];
         try {
-          const campData2 = await getCampaigns(today, today);
-          if (Array.isArray(campData2)) {
-            for (const c of campData2) {
-              if (c.insights && parseFloat(c.insights.spend) > 0) {
-                const spend = parseFloat(c.insights.spend);
-                const pAct = (c.insights.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
-                const purchases = pAct ? parseInt(pAct.value) : 0;
-                topCreatives.push({
-                  id: c.id,
-                  name: c.name,
-                  spend: Math.round(spend * 100) / 100,
-                  purchases,
-                  cpa: purchases > 0 ? Math.round(spend / purchases * 100) / 100 : 0
-                });
-              }
-            }
-            topCreatives.sort((a, b) => b.spend - a.spend);
-            topCreatives = topCreatives.slice(0, 10);
+          const adsInsights = await metaGetAll(AD_ACCOUNT + '/insights', {
+            level: 'ad',
+            fields: 'ad_name,ad_id,spend,actions',
+            time_range: JSON.stringify({since: today, until: today}),
+            sort: 'spend_descending',
+            limit: '10'
+          });
+          for (const ad of (adsInsights || [])) {
+            const spend = parseFloat(ad.spend) || 0;
+            if (spend <= 0) continue;
+            const pAct = (ad.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
+            const purchases = pAct ? parseInt(pAct.value) : 0;
+            topCreativesData.push({
+              id: ad.ad_id,
+              name: ad.ad_name,
+              spend: Math.round(spend * 100) / 100,
+              purchases,
+              cpa: purchases > 0 ? Math.round(spend / purchases * 100) / 100 : 0
+            });
           }
-        } catch(e) {}
+          topCreativesData.sort((a, b) => b.purchases - a.purchases || b.spend - a.spend);
+          topCreativesData = topCreativesData.slice(0, 10);
+        } catch(e) { console.warn('[DASH] Top creatives fetch error:', e.message); }
 
         // Alerts
         const alerts = [];
@@ -3209,7 +3212,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             return { date: d.date, orders: d.orders, revenue: Math.round(d.revenue * 100) / 100, profit: Math.round(d.profit * 100) / 100, spend: Math.round(daySpend * 100) / 100 };
           }),
           alerts: alerts,
-          topCreatives: topCreatives,
+          topCreatives: topCreativesData,
           date: today
         });
       }
