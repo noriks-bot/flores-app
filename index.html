@@ -1423,49 +1423,96 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
   <!-- AI HINTS -->
 
   <div id="section-optimizer" class="content-section">
-  <div style="background:linear-gradient(135deg,#fafbff,#f0f4ff);border:1px solid #c7d2fe;border-radius:12px;padding:20px 24px;margin:16px 24px;box-shadow:0 4px 16px rgba(30,58,95,0.06)"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:linear-gradient(135deg,#1E3A5F,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">⚡</div><div><div style="font-size:18px;font-weight:800;color:#1E3A5F">Optimizer</div><div style="font-size:11px;color:#6b7280;margin-top:1px">Country-level campaign management</div></div></div></div>
-  <div style="padding:8px 16px;display:flex;gap:6px;flex-wrap:wrap;background:#fff;border-bottom:1px solid #e6e8ea">
-    <button class="fpill fpill-active" onclick="switchOptTab(this,'HR')">🇭🇷 HR</button>
-    <button class="fpill" onclick="switchOptTab(this,'CZ')">🇨🇿 CZ</button>
-    <button class="fpill" onclick="switchOptTab(this,'PL')">🇵🇱 PL</button>
-    <button class="fpill" onclick="switchOptTab(this,'GR')">🇬🇷 GR</button>
-    <button class="fpill" onclick="switchOptTab(this,'SK')">🇸🇰 SK</button>
-    <button class="fpill" onclick="switchOptTab(this,'IT')">🇮🇹 IT</button>
-    <button class="fpill" onclick="switchOptTab(this,'HU')">🇭🇺 HU</button>
-    <span style="width:1px;height:20px;background:#ddd;margin:0 4px"></span>
-    <button class="fpill" onclick="switchOptTab(this,'SOFI')">SOFI</button>
-    <button class="fpill" onclick="switchOptTab(this,'ALL')">All</button>
-  </div>
-  <div style="padding:8px 16px;display:flex;gap:8px;align-items:center;background:#fff;border-bottom:1px solid #e6e8ea">
-    <span style="font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase">Period</span>
-    <div style="display:flex;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:2px;gap:2px">
-      <button class="preset-tab active" onclick="setOptDate(this,'today')">Today</button>
-      <button class="preset-tab" onclick="setOptDate(this,'yesterday')">Yesterday</button>
-      <button class="preset-tab" onclick="setOptDate(this,'3d')">3D</button>
-      <button class="preset-tab" onclick="setOptDate(this,'7d')">7D</button>
-      <button class="preset-tab" onclick="setOptDate(this,'14d')">14D</button>
-      <button class="preset-tab" onclick="setOptDate(this,'30d')">30D</button>
+  <style>
+    .opt-header-bar { display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg,#1E3A5F,#2a5a8f); padding:10px 24px; gap:12px; flex-wrap:wrap; }
+    .opt-header-left { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .opt-header-title { font-size:16px; font-weight:800; color:#fff; white-space:nowrap; display:flex; align-items:center; gap:6px; }
+    .opt-header-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .opt-fpill { padding:4px 10px; border-radius:4px; border:1px solid rgba(255,255,255,0.25); background:transparent; color:rgba(255,255,255,0.8); font-size:11px; font-weight:600; cursor:pointer; transition:all .15s; white-space:nowrap; }
+    .opt-fpill:hover { background:rgba(255,255,255,0.15); color:#fff; }
+    .opt-fpill.active { background:#fff; color:#1E3A5F; border-color:#fff; }
+    .opt-period-tab { padding:4px 8px; border-radius:4px; border:none; background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.7); font-size:11px; font-weight:600; cursor:pointer; transition:all .15s; }
+    .opt-period-tab:hover { background:rgba(255,255,255,0.2); color:#fff; }
+    .opt-period-tab.active { background:#fff; color:#1E3A5F; }
+    .opt-refresh-btn { width:28px; height:28px; border-radius:6px; border:1px solid rgba(255,255,255,0.3); background:transparent; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; transition:all .15s; }
+    .opt-refresh-btn:hover { background:rgba(255,255,255,0.15); }
+    #optTable { width:100%; border-collapse:collapse; }
+    #optTable thead th { position:sticky; top:0; z-index:2; background:#1E3A5F; color:#fff; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; padding:8px 6px; white-space:nowrap; border:none; }
+    #optTable thead th:first-child { border-radius:0; }
+    #optTable thead th:last-child { border-radius:0; }
+    .opt-campaign-row { background:#fff; cursor:pointer; border-bottom:1px solid #e5e7eb; transition:background .1s; }
+    .opt-campaign-row:nth-child(even of .opt-campaign-row) { background:#fafbfc; }
+    .opt-campaign-row:hover { background:#eff6ff !important; }
+    .opt-campaign-row td { padding:8px 6px; font-size:13px; }
+    .opt-adset-row { background:#f9fafb; cursor:pointer; border-bottom:1px solid #f0f0f0; transition:background .1s; }
+    .opt-adset-row:hover { background:#f0f4ff !important; }
+    .opt-adset-row td { padding:6px 6px; font-size:12px; }
+    .opt-ad-row { background:#f5f7ff; border-bottom:1px solid #eef1f8; }
+    .opt-ad-row td { padding:5px 6px; font-size:11px; }
+    .opt-ad-row:hover { background:#eef2ff !important; }
+    .opt-expand { font-size:18px; cursor:pointer; user-select:none; display:inline-block; width:24px; text-align:center; line-height:1; }
+    .opt-expand-campaign { color:#2563eb; }
+    .opt-expand-adset { color:#6b7280; font-size:15px; }
+    .opt-budget-edit { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border:none; background:transparent; cursor:pointer; font-size:12px; opacity:0.4; transition:opacity .15s; padding:0; margin-left:3px; vertical-align:middle; }
+    .opt-budget-edit:hover { opacity:1; }
+    .opt-action-btn { border:none; background:transparent; cursor:pointer; font-size:14px; padding:2px 4px; border-radius:4px; transition:all .15s; }
+    .opt-action-btn:hover { background:rgba(0,0,0,0.05); }
+    .opt-range-cell { font-size:11px; color:#9ca3af; text-align:center; line-height:1.4; white-space:nowrap; min-width:80px; }
+  </style>
+  <!-- Merged header bar -->
+  <div class="opt-header-bar">
+    <div class="opt-header-left">
+      <span class="opt-header-title">⚡ Optimizer</span>
+      <span style="width:1px;height:20px;background:rgba(255,255,255,0.2);margin:0 2px"></span>
+      <button class="opt-fpill active" onclick="switchOptTab(this,'HR')">🇭🇷 HR</button>
+      <button class="opt-fpill" onclick="switchOptTab(this,'CZ')">🇨🇿 CZ</button>
+      <button class="opt-fpill" onclick="switchOptTab(this,'PL')">🇵🇱 PL</button>
+      <button class="opt-fpill" onclick="switchOptTab(this,'GR')">🇬🇷 GR</button>
+      <button class="opt-fpill" onclick="switchOptTab(this,'SK')">🇸🇰 SK</button>
+      <button class="opt-fpill" onclick="switchOptTab(this,'IT')">🇮🇹 IT</button>
+      <button class="opt-fpill" onclick="switchOptTab(this,'HU')">🇭🇺 HU</button>
+      <span style="width:1px;height:16px;background:rgba(255,255,255,0.15)"></span>
+      <button class="opt-fpill" onclick="switchOptTab(this,'SOFI')">SOFI</button>
+      <button class="opt-fpill" onclick="switchOptTab(this,'ALL')">All</button>
+    </div>
+    <div class="opt-header-right">
+      <div style="display:flex;gap:2px;background:rgba(0,0,0,0.15);border-radius:5px;padding:2px">
+        <button class="opt-period-tab active" onclick="setOptDate(this,'today')">Today</button>
+        <button class="opt-period-tab" onclick="setOptDate(this,'yesterday')">Yesterday</button>
+        <button class="opt-period-tab" onclick="setOptDate(this,'3d')">3D</button>
+        <button class="opt-period-tab" onclick="setOptDate(this,'7d')">7D</button>
+        <button class="opt-period-tab" onclick="setOptDate(this,'14d')">14D</button>
+        <button class="opt-period-tab" onclick="setOptDate(this,'30d')">30D</button>
+      </div>
+      <button class="opt-refresh-btn" onclick="loadOptimizer()" title="Refresh"><i class="fas fa-sync-alt"></i></button>
     </div>
   </div>
-  <div style="padding:16px;overflow-x:auto">
-    <table class="cr-table" style="min-width:1200px" id="optTable">
+  <div style="padding:0 24px 16px 24px;overflow-x:auto">
+    <table id="optTable">
       <thead><tr>
-        <th class="cr-th" style="width:32px"></th>
-        <th class="cr-th" style="text-align:left;min-width:300px">Name</th>
-        <th class="cr-th">Status</th>
-        <th class="cr-th">Budget</th>
-        <th class="cr-th">Spend</th>
-        <th class="cr-th">Orders</th>
-        <th class="cr-th">Revenue</th>
-        <th class="cr-th">Profit</th>
-        <th class="cr-th">CPA</th>
-        <th class="cr-th">ROAS</th>
+        <th style="width:32px"></th>
+        <th style="width:36px;text-align:center">🏳</th>
+        <th style="text-align:left;min-width:260px">Name</th>
+        <th style="text-align:center">Status</th>
+        <th style="text-align:right">Budget</th>
+        <th style="text-align:right">Spend</th>
+        <th style="text-align:right">Orders</th>
+        <th style="text-align:right">Revenue</th>
+        <th style="text-align:right">Profit</th>
+        <th style="text-align:right">CPA</th>
+        <th style="text-align:right">ROAS</th>
+        <th style="text-align:center">Actions</th>
+        <th style="text-align:center;font-size:9px">3D</th>
+        <th style="text-align:center;font-size:9px">7D</th>
+        <th style="text-align:center;font-size:9px">14D</th>
+        <th style="text-align:center;font-size:9px">30D</th>
+        <th style="text-align:center;font-size:9px">MAX</th>
       </tr></thead>
-      <tbody id="optBody"><tr><td colspan="10" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
+      <tbody id="optBody"><tr><td colspan="17" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
     </table>
   </div>
   <!-- Optimizer Summary -->
-  <div id="optSummary" style="padding:12px 24px;background:linear-gradient(135deg,#1E3A5F,#2a5a8f);margin:0 16px 16px;border-radius:var(--card-radius);color:#fff;display:flex;gap:24px;align-items:center;flex-wrap:wrap;font-size:13px">
+  <div id="optSummary" style="padding:12px 24px;background:linear-gradient(135deg,#1E3A5F,#2a5a8f);margin:0 24px 16px;border-radius:var(--card-radius);color:#fff;display:flex;gap:24px;align-items:center;flex-wrap:wrap;font-size:13px">
     <div><span style="opacity:0.7">Campaigns:</span> <strong id="optSumCampaigns">0</strong></div>
     <div><span style="opacity:0.7">Active Adsets:</span> <strong id="optSumAdsets">0</strong></div>
     <div><span style="opacity:0.7">Active Ads:</span> <strong id="optSumAds">0</strong></div>
@@ -2325,7 +2372,7 @@ const sectionTitles = {
   'dominik-chat': 'Chat Dominik',
   'upload': 'Upload Planer',
   'origin-report': 'Origin Report',
-  'optimizer': 'Optimizer',
+  'optimizer': '',
   'bulk-uploader': 'Bulk Uploader',
   'videos': 'Videos',
   'fb-integration': 'FB Integration',
@@ -4423,14 +4470,14 @@ let optLoaded = false;
 let optExpandedAds = {};
 
 function switchOptTab(btn, country) {
-  document.querySelectorAll('#section-optimizer .fpill').forEach(b => b.classList.remove('fpill-active'));
-  btn.classList.add('fpill-active');
+  document.querySelectorAll('#section-optimizer .opt-fpill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
   optCountry = country;
   renderOptimizer();
 }
 
 function setOptDate(btn, range) {
-  document.querySelectorAll('#section-optimizer .preset-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#section-optimizer .opt-period-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   optDateRange = range;
   loadOptimizer();
@@ -4457,7 +4504,7 @@ function optGetPurchases(ins) {
 
 async function loadOptimizer() {
   const {from,to} = getOptDateRange();
-  document.getElementById('optBody').innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr>';
+  document.getElementById('optBody').innerHTML = '<tr><td colspan="17" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr>';
   try {
     const res = await fetch('/api/campaigns?date_from='+from+'&date_to='+to);
     optCampaigns = await res.json();
@@ -4466,8 +4513,22 @@ async function loadOptimizer() {
     optExpanded = {};
     optLoaded = true;
     renderOptimizer();
-  } catch(e) { document.getElementById('optBody').innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#dc2626">Error: '+e.message+'</td></tr>'; }
+  } catch(e) { document.getElementById('optBody').innerHTML = '<tr><td colspan="17" style="text-align:center;padding:30px;color:#dc2626">Error: '+e.message+'</td></tr>'; }
 }
+
+function optGetFlags(name) {
+  const flagMap = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
+  const upper = (name||'').toUpperCase();
+  const ccMatch = upper.match(/CC:([A-Z+]+)/);
+  if (ccMatch) return ccMatch[1].split('+').map(c => flagMap[c]||'').filter(Boolean).join('');
+  for (const [code,flag] of Object.entries(flagMap)) { if (upper.includes(code)) return flag; }
+  return '';
+}
+function optActionBtn(status) {
+  if (status === 'ACTIVE') return '<button class="opt-action-btn" title="Pause (coming soon)" onclick="event.stopPropagation()">⏸</button>';
+  return '<button class="opt-action-btn" title="Activate (coming soon)" onclick="event.stopPropagation()" style="color:#22c55e">▶</button>';
+}
+const optRangeCols = '<td class="opt-range-cell">—</td><td class="opt-range-cell">—</td><td class="opt-range-cell">—</td><td class="opt-range-cell">—</td><td class="opt-range-cell">—</td>';
 
 function renderOptimizer() {
   const filtered = optCampaigns.filter(c => {
@@ -4479,7 +4540,7 @@ function renderOptimizer() {
     return false;
   });
   if (!filtered.length) {
-    document.getElementById('optBody').innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#9ca3af">No campaigns found</td></tr>';
+    document.getElementById('optBody').innerHTML = '<tr><td colspan="17" style="text-align:center;padding:30px;color:#9ca3af">No campaigns found</td></tr>';
     return;
   }
   // Auto-expand multi-country campaigns when country filter is active
@@ -4488,9 +4549,7 @@ function renderOptimizer() {
       const name = (c.name||'').toUpperCase();
       const ccMatch = name.match(/CC:([A-Z+]+)/);
       if (ccMatch && ccMatch[1].includes('+') && !optExpanded[c.id]) {
-        // Multi-country campaign - auto expand
         optExpanded[c.id] = { adsets: [], loading: true };
-        // Fetch adsets in background
         const {from,to} = getOptDateRange();
         fetch('/api/adsets?campaign_id='+c.id+'&date_from='+from+'&date_to='+to)
           .then(r=>r.json()).then(adsets => {
@@ -4511,19 +4570,25 @@ function renderOptimizer() {
     const purchases = optGetPurchases(c.insights);
     const cpaVal = purchases > 0 ? spend/purchases : 0;
     const roas = c.wc?.roas||0;
-    const profitStyle = profit > 0 ? 'background:#4caf50;color:#fff;font-weight:600' : profit < 0 ? 'background:#ef5350;color:#fff;font-weight:600' : '';
-    const cpaStyle = cpaVal > 0 ? (cpaVal <= 15 ? 'background:#4caf50;color:#fff' : cpaVal <= 25 ? 'background:#f59e0b;color:#fff' : 'background:#ef5350;color:#fff') : '';
+    const budget = c.daily_budget ? (parseFloat(c.daily_budget)/100).toFixed(0) : '';
+    const profitStyle = profit > 0 ? 'background:#4caf50;color:#fff;font-weight:600;border-radius:4px;padding:2px 6px' : profit < 0 ? 'background:#ef5350;color:#fff;font-weight:600;border-radius:4px;padding:2px 6px' : '';
+    const cpaStyle = cpaVal > 0 ? (cpaVal <= 15 ? 'background:#4caf50;color:#fff;border-radius:4px;padding:2px 6px' : cpaVal <= 25 ? 'background:#f59e0b;color:#fff;border-radius:4px;padding:2px 6px' : 'background:#ef5350;color:#fff;border-radius:4px;padding:2px 6px') : '';
     const isExp = optExpanded[c.id];
-    html += '<tr style="cursor:pointer;border-bottom:1px solid #eee" onclick="toggleOpt(this.dataset.cid)" data-cid="'+c.id+'">';
-    html += '<td style="text-align:center;font-size:13px;color:#9ca3af">'+(isExp?'▾':'▸')+'</td>';
-    html += '<td style="text-align:left;font-weight:500;font-size:11px;max-width:350px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+c.name.replace(/"/g,'&quot;')+'">'+c.name+'</td>';
-    html += '<td style="font-size:11px;text-align:center">'+(c.status==='ACTIVE'?'<span style="color:#22c55e">●</span>':'<span style="color:#9ca3af">●</span>')+'</td>';
+    const flags = optGetFlags(c.name);
+    html += '<tr class="opt-campaign-row" onclick="toggleOpt(this.dataset.cid)" data-cid="'+c.id+'">';
+    html += '<td style="text-align:center"><span class="opt-expand opt-expand-campaign">'+(isExp?'▾':'▸')+'</span></td>';
+    html += '<td style="text-align:center">'+flags+'</td>';
+    html += '<td style="text-align:left;font-weight:700;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+c.name.replace(/"/g,'&quot;')+'">'+c.name+'</td>';
+    html += '<td style="text-align:center">'+(c.status==='ACTIVE'?'<span style="color:#22c55e;font-size:14px">●</span>':'<span style="color:#9ca3af;font-size:14px">●</span>')+'</td>';
+    html += '<td style="text-align:right">'+(budget?budget+' €':'—')+' <button class="opt-budget-edit" title="Coming soon" onclick="event.stopPropagation()">✏️</button></td>';
     html += '<td style="text-align:right">'+spend.toFixed(2)+' €</td>';
     html += '<td style="text-align:right">'+(orders||'—')+'</td>';
     html += '<td style="text-align:right">'+(revenue>0?revenue.toFixed(2)+' €':'—')+'</td>';
-    html += '<td style="text-align:right;'+profitStyle+'">'+profit.toFixed(2)+' €</td>';
-    html += '<td style="text-align:right;'+cpaStyle+'">'+(cpaVal>0?cpaVal.toFixed(2)+' €':'—')+'</td>';
+    html += '<td style="text-align:right"><span style="'+profitStyle+'">'+profit.toFixed(2)+' €</span></td>';
+    html += '<td style="text-align:right"><span style="'+cpaStyle+'">'+(cpaVal>0?cpaVal.toFixed(2)+' €':'—')+'</span></td>';
     html += '<td style="text-align:right">'+(roas>0?roas.toFixed(2)+'x':'—')+'</td>';
+    html += '<td style="text-align:center">'+optActionBtn(c.status)+'</td>';
+    html += optRangeCols;
     html += '</tr>';
     if (isExp && optExpanded[c.id].adsets) {
       for (const as of optExpanded[c.id].adsets) {
@@ -4531,8 +4596,7 @@ function renderOptimizer() {
         const asOrders = as.wc?.orders||0;
         const asRevenue = as.wc?.revenueGross||0;
         const asProfit = as.wc?.profit||0;
-        const asProfitStyle = asProfit > 0 ? 'background:#4caf50;color:#fff' : asProfit < 0 ? 'background:#ef5350;color:#fff' : '';
-        // Check if this adset matches selected country
+        const asProfitStyle = asProfit > 0 ? 'background:#4caf50;color:#fff;border-radius:4px;padding:2px 6px' : asProfit < 0 ? 'background:#ef5350;color:#fff;border-radius:4px;padding:2px 6px' : '';
         const asName = (as.name||'').toUpperCase();
         let asMatchesCountry = optCountry === 'ALL';
         if (!asMatchesCountry && optCountry !== 'SOFI') {
@@ -4540,19 +4604,24 @@ function renderOptimizer() {
         }
         if (!asMatchesCountry && optCountry === 'SOFI') { asMatchesCountry = asName.includes('SOFI'); }
         const grayStyle = (!asMatchesCountry && optCountry !== 'ALL') ? 'opacity:0.35;' : '';
-        html += '<tr style="background:#f9fafb;border-bottom:1px solid #f0f0f0;cursor:pointer;'+grayStyle+'" onclick="event.stopPropagation();toggleOptAds(\''+as.id+'\',\''+c.id+'\');">';
-        html += '<td style="text-align:center;font-size:11px;color:#9ca3af;padding-left:16px">'+(optExpandedAds[as.id]?'\u25be':'\u25b8')+'</td>';
-        html += '<td style="text-align:left;padding-left:32px;font-size:11px;color:#4b5563;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">↳ '+as.name+'</td>';
-        html += '<td style="font-size:11px;text-align:center">'+(as.status==='ACTIVE'?'<span style="color:#22c55e">●</span>':'<span style="color:#9ca3af">●</span>')+'</td>';
+        const asFlags = optGetFlags(as.name);
+        html += '<tr class="opt-adset-row" style="'+grayStyle+'" onclick="event.stopPropagation();toggleOptAds(\''+as.id+'\',\''+c.id+'\');">';
+        html += '<td style="text-align:center;padding-left:16px"><span class="opt-expand opt-expand-adset">'+(optExpandedAds[as.id]?'▾':'▸')+'</span></td>';
+        html += '<td style="text-align:center;font-size:12px">'+asFlags+'</td>';
+        html += '<td style="text-align:left;padding-left:32px;color:#4b5563;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">↳ '+as.name+'</td>';
+        html += '<td style="text-align:center">'+(as.status==='ACTIVE'?'<span style="color:#22c55e">●</span>':'<span style="color:#9ca3af">●</span>')+'</td>';
+        html += '<td style="text-align:right;color:#9ca3af">—</td>';
         html += '<td style="text-align:right">'+asSpend.toFixed(2)+' €</td>';
         html += '<td style="text-align:right">'+(asOrders||'—')+'</td>';
         html += '<td style="text-align:right">'+(asRevenue>0?asRevenue.toFixed(2)+' €':'—')+'</td>';
-        html += '<td style="text-align:right;'+asProfitStyle+'">'+(asProfit!==0?asProfit.toFixed(2)+' €':'—')+'</td>';
+        html += '<td style="text-align:right"><span style="'+asProfitStyle+'">'+(asProfit!==0?asProfit.toFixed(2)+' €':'—')+'</span></td>';
         const asPurch = optGetPurchases(as.insights);
         const asCpa = asPurch > 0 ? asSpend/asPurch : 0;
-        const asCpaStyle = asCpa > 0 ? (asCpa <= 15 ? 'background:#4caf50;color:#fff' : asCpa <= 25 ? 'background:#f59e0b;color:#fff' : 'background:#ef5350;color:#fff') : '';
-        html += '<td style="text-align:right;'+asCpaStyle+'">'+(asCpa>0?asCpa.toFixed(2)+' \u20ac':'\u2014')+'</td>';
-        html += '<td style="text-align:right">'+(asRevenue>0&&asSpend>0?((asRevenue/asSpend)).toFixed(2)+'x':'\u2014')+'</td>';
+        const asCpaStyle = asCpa > 0 ? (asCpa <= 15 ? 'background:#4caf50;color:#fff;border-radius:4px;padding:2px 6px' : asCpa <= 25 ? 'background:#f59e0b;color:#fff;border-radius:4px;padding:2px 6px' : 'background:#ef5350;color:#fff;border-radius:4px;padding:2px 6px') : '';
+        html += '<td style="text-align:right"><span style="'+asCpaStyle+'">'+(asCpa>0?asCpa.toFixed(2)+' €':'—')+'</span></td>';
+        html += '<td style="text-align:right">'+(asRevenue>0&&asSpend>0?((asRevenue/asSpend)).toFixed(2)+'x':'—')+'</td>';
+        html += '<td style="text-align:center">'+optActionBtn(as.status)+'</td>';
+        html += optRangeCols;
         html += '</tr>';
         // Ads under this adset
         if (optExpandedAds[as.id]) {
@@ -4560,18 +4629,22 @@ function renderOptimizer() {
             const adSpend = parseFloat(ad.insights?.spend||0);
             const adPurch = optGetPurchases(ad.insights);
             const adCpa = adPurch > 0 ? adSpend/adPurch : 0;
-            const adCpaStyle = adCpa > 0 ? (adCpa <= 15 ? 'background:#4caf50;color:#fff' : adCpa <= 25 ? 'background:#f59e0b;color:#fff' : 'background:#ef5350;color:#fff') : '';
-            html += '<tr style="background:#f0f4ff;border-bottom:1px solid #e8edf5;'+grayStyle+'">';
+            const adCpaStyle = adCpa > 0 ? (adCpa <= 15 ? 'background:#4caf50;color:#fff;border-radius:4px;padding:2px 6px' : adCpa <= 25 ? 'background:#f59e0b;color:#fff;border-radius:4px;padding:2px 6px' : 'background:#ef5350;color:#fff;border-radius:4px;padding:2px 6px') : '';
+            const adFlags = optGetFlags(ad.name);
+            html += '<tr class="opt-ad-row" style="'+grayStyle+'">';
             html += '<td></td>';
-            html += '<td style="text-align:left;padding-left:56px;font-size:10px;color:#6b7280;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">\u2514 '+ad.name+'</td>';
-            html += '<td style="font-size:11px;text-align:center">'+(ad.status==='ACTIVE'?'<span style="color:#22c55e">\u25cf</span>':'<span style="color:#9ca3af">\u25cf</span>')+'</td>';
-            html += '<td style="text-align:right;font-size:11px;color:var(--text-muted)">\u2014</td>';
-            html += '<td style="text-align:right;font-size:11px">'+adSpend.toFixed(2)+' \u20ac</td>';
-            html += '<td style="text-align:right;font-size:11px">\u2014</td>';
-            html += '<td style="text-align:right;font-size:11px">\u2014</td>';
-            html += '<td style="text-align:right;font-size:11px">\u2014</td>';
-            html += '<td style="text-align:right;font-size:11px;'+adCpaStyle+'">'+(adCpa>0?adCpa.toFixed(2)+' \u20ac':'\u2014')+'</td>';
-            html += '<td style="text-align:right;font-size:11px">\u2014</td>';
+            html += '<td style="text-align:center;font-size:11px">'+adFlags+'</td>';
+            html += '<td style="text-align:left;padding-left:56px;color:#6b7280;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">└ '+ad.name+'</td>';
+            html += '<td style="text-align:center">'+(ad.status==='ACTIVE'?'<span style="color:#22c55e">●</span>':'<span style="color:#9ca3af">●</span>')+'</td>';
+            html += '<td style="text-align:right;color:#9ca3af">—</td>';
+            html += '<td style="text-align:right">'+adSpend.toFixed(2)+' €</td>';
+            html += '<td style="text-align:right">—</td>';
+            html += '<td style="text-align:right">—</td>';
+            html += '<td style="text-align:right">—</td>';
+            html += '<td style="text-align:right"><span style="'+adCpaStyle+'">'+(adCpa>0?adCpa.toFixed(2)+' €':'—')+'</span></td>';
+            html += '<td style="text-align:right">—</td>';
+            html += '<td style="text-align:center">'+optActionBtn(ad.status)+'</td>';
+            html += optRangeCols;
             html += '</tr>';
           }
         }
