@@ -4478,6 +4478,7 @@ let optCampaigns = [];
 let optExpanded = {};
 let optLoaded = false;
 let optExpandedAds = {};
+let optRangeData = {};
 
 function switchOptTab(btn, country) {
   document.querySelectorAll('#section-optimizer .opt-fpill').forEach(b => b.classList.remove('active'));
@@ -4523,6 +4524,8 @@ async function loadOptimizer() {
     optExpanded = {};
     optLoaded = true;
     renderOptimizer();
+    optRangeData = {};
+    loadOptRanges();
   } catch(e) { document.getElementById('optBody').innerHTML = '<tr><td colspan="17" style="text-align:center;padding:30px;color:#dc2626">Error: '+e.message+'</td></tr>'; }
 }
 
@@ -4556,6 +4559,62 @@ function optActionBtn(status) {
   return '<button class="opt-action-btn" title="Activate (coming soon)" onclick="event.stopPropagation()" style="color:#22c55e">▶</button>';
 }
 const optRangeCols = '<td class="opt-range-cell">—</td><td class="opt-range-cell">—</td><td class="opt-range-cell">—</td><td class="opt-range-cell">—</td><td class="opt-range-cell">—</td>';
+
+
+function optRangeRow(campaignId) {
+  var ranges = ["3d","7d","14d","30d","max"];
+  var html = "";
+  for (var i = 0; i < ranges.length; i++) {
+    var r = ranges[i];
+    var data = optRangeData[campaignId];
+    if (!data || data[r] === undefined) {
+      html += '<td class="opt-range-cell" style="font-size:11px;color:#9ca3af">...</td>';
+    } else {
+      var p = data[r];
+      if (p === 0) {
+        html += '<td class="opt-range-cell">\u2014</td>';
+      } else {
+        var st = p > 0 ? 'background:#4caf50;color:#fff;font-weight:600;border-radius:4px;padding:2px 6px' : 'background:#ef5350;color:#fff;font-weight:600;border-radius:4px;padding:2px 6px';
+        html += '<td class="opt-range-cell"><span style="' + st + '">' + p.toFixed(2) + ' \u20ac</span></td>';
+      }
+    }
+  }
+  return html;
+}
+
+function getOptRangeDates(range) {
+  var today = new Date().toISOString().slice(0,10);
+  var d = new Date();
+  switch(range) {
+    case '3d': d.setDate(d.getDate()-2); return {from:d.toISOString().slice(0,10),to:today};
+    case '7d': d.setDate(d.getDate()-6); return {from:d.toISOString().slice(0,10),to:today};
+    case '14d': d.setDate(d.getDate()-13); return {from:d.toISOString().slice(0,10),to:today};
+    case '30d': d.setDate(d.getDate()-29); return {from:d.toISOString().slice(0,10),to:today};
+    case 'max': return {from:'2025-01-01',to:today};
+    default: return {from:today,to:today};
+  }
+}
+
+function loadOptRanges() {
+  var ranges = ["3d","7d","14d","30d","max"];
+  for (var i = 0; i < ranges.length; i++) {
+    (function(r) {
+      var dates = getOptRangeDates(r);
+      fetch('/api/campaigns?date_from='+dates.from+'&date_to='+dates.to)
+        .then(function(res) { return res.json(); })
+        .then(function(camps) {
+          if (camps.error) return;
+          for (var j = 0; j < camps.length; j++) {
+            var c = camps[j];
+            if (!optRangeData[c.id]) optRangeData[c.id] = {};
+            optRangeData[c.id][r] = (c.wc && c.wc.profit) ? c.wc.profit : 0;
+          }
+          renderOptimizer();
+        })
+        .catch(function() {});
+    })(ranges[i]);
+  }
+}
 
 function renderOptimizer() {
   const filtered = optCampaigns.filter(c => {
@@ -4615,7 +4674,7 @@ function renderOptimizer() {
     html += '<td style="text-align:right"><span style="'+cpaStyle+'">'+(cpaVal>0?cpaVal.toFixed(2)+' €':'—')+'</span></td>';
     html += '<td style="text-align:right">'+(roas>0?roas.toFixed(2)+'x':'—')+'</td>';
     html += '<td style="text-align:center">'+optActionBtn(c.status)+'</td>';
-    html += optRangeCols;
+    html += optRangeRow(c.id);
     html += '</tr>';
     if (isExp && optExpanded[c.id].adsets) {
       for (const as of optExpanded[c.id].adsets) {
