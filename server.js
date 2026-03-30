@@ -881,7 +881,7 @@ function getSmartTTL(dateFrom, dateTo) {
 }
 
 // --- Meta API helper ---
-function metaGet(endpoint, params = {}) {
+function _metaGetOnce(endpoint, params = {}) {
   return new Promise((resolve, reject) => {
     params.access_token = META_TOKEN;
     const qs = Object.entries(params).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
@@ -901,12 +901,27 @@ function metaGet(endpoint, params = {}) {
   });
 }
 
+async function metaGet(endpoint, params = {}) {
+  for (let i = 0; i < 3; i++) {
+    try {
+      return await _metaGetOnce(endpoint, params);
+    } catch (err) {
+      if ((err.code === 4 || err.code === 32) && i < 2) {
+        console.warn('[Meta] Rate limited, retry ' + (i+1) + '/2 in 5s — ' + endpoint);
+        await new Promise(r => setTimeout(r, 5000));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 // --- Cache helper ---
-function getCached(key, ttl) {
+function getCached(key, ttl, allowStale) {
   const file = path.join(CACHE_DIR, key + '.json');
   try {
     const stat = fs.statSync(file);
-    if (Date.now() - stat.mtimeMs < (ttl || CACHE_TTL)) {
+    if (allowStale || Date.now() - stat.mtimeMs < (ttl || CACHE_TTL)) {
       return JSON.parse(fs.readFileSync(file, 'utf8'));
     }
   } catch (e) {}
@@ -945,6 +960,7 @@ async function getCampaigns(dateFrom, dateTo) {
   const cacheKey = `campaigns_${dateFrom}_${dateTo}`;
   let cached = getCached(cacheKey);
   if (cached) return cached;
+  try {
 
   // Get campaign insights (includes campaign_id and campaign_name)
   const insights = await metaGetAll(`${AD_ACCOUNT}/insights`, {
@@ -999,12 +1015,19 @@ async function getCampaigns(dateFrom, dateTo) {
   enrichCampaignsWithProfit(result, dateFrom, dateTo);
   setCache(cacheKey, result);
   return result;
+  } catch (err) {
+    console.warn('[Meta] getCampaigns failed:', err.message || err);
+    const stale = getCached(cacheKey, null, true);
+    if (stale) { console.warn('[Meta] Returning stale cache for campaigns'); return stale; }
+    throw err;
+  }
 }
 
 async function getAdsets(campaignId, dateFrom, dateTo) {
   const cacheKey = `adsets_${campaignId}_${dateFrom}_${dateTo}`;
   let cached = getCached(cacheKey);
   if (cached) return cached;
+  try {
 
   // Get insights first (source of truth for IDs)
   const insights = await metaGetAll(`${campaignId}/insights`, {
@@ -1053,12 +1076,19 @@ async function getAdsets(campaignId, dateFrom, dateTo) {
 
   setCache(cacheKey, result);
   return result;
+  } catch (err) {
+    console.warn('[Meta] getAdsets failed:', err.message || err);
+    const stale = getCached(cacheKey, null, true);
+    if (stale) { console.warn('[Meta] Returning stale cache for adsets'); return stale; }
+    throw err;
+  }
 }
 
 async function getAds(adsetId, dateFrom, dateTo) {
   const cacheKey = `ads_${adsetId}_${dateFrom}_${dateTo}`;
   let cached = getCached(cacheKey);
   if (cached) return cached;
+  try {
 
   // Fetch ad-level insights filtered by adset
   const insights = await metaGetAll(`${AD_ACCOUNT}/insights`, {
@@ -1091,6 +1121,12 @@ async function getAds(adsetId, dateFrom, dateTo) {
 
   setCache(cacheKey, result);
   return result;
+  } catch (err) {
+    console.warn('[Meta] getAds failed:', err.message || err);
+    const stale = getCached(cacheKey, null, true);
+    if (stale) { console.warn('[Meta] Returning stale cache for ads'); return stale; }
+    throw err;
+  }
 }
 
 // Multi-period profit: returns {campaignId: {yesterday, d3, d7, d14, lifetime}} 
