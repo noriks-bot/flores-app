@@ -1201,7 +1201,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <!-- Orders Table -->
         <div style="margin-top:20px;background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px">
           <div style="padding:14px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border-color)">📋 Orders</div>
-          <table id="dashOrdersTable" border="0" cellpadding="6" cellspacing="0" style="width:100%">
+          <table id="dashOrdersTable" border="0" cellpadding="4" cellspacing="0" style="width:100%;font-size:12px">
             <tr style="border-bottom:1px solid #e5e7eb"><th>#</th><th align="left">Date</th><th align="left">Country</th><th align="left">Customer</th><th align="left">Origin</th><th align="right">Amount</th></tr>
             <tbody id="dashOrdersBody"></tbody>
           </table>
@@ -5661,7 +5661,7 @@ function renderDashboard(data) {
     var oc = {Facebook:'#1877f2','Call Center':'#f59e0b',Google:'#34a853',Organic:'#6b7280',Klaviyo:'#6b21a8'};
     obody.innerHTML = data.orders_list.map(function(o,i){
       var bg = oc[o.origin]||'#6b7280';
-      return '<tr><td>'+(i+1)+'</td><td>'+(o.date||'').slice(5).replace(/-/g,'.')+'</td><td>'+(fl[o.country]||'')+' '+(o.country||'')+'</td><td>'+(o.customer||'#'+o.id)+'</td><td><span style="background:'+bg+';color:#fff;padding:1px 6px;border-radius:3px;font-size:10px">'+(o.origin||'')+'</span></td><td style="text-align:right;font-weight:600">\u20ac'+(o.revenue||0).toFixed(2)+'</td></tr>';
+      return '<tr><td>'+(i+1)+'</td><td>'+(o.date||'').slice(8)+'.'+(o.date||'').slice(5,7)+'</td><td>'+(fl[o.country]||'')+'</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(o.customer||'#'+o.id)+'</td><td><span style="background:'+bg+';color:#fff;padding:1px 5px;border-radius:3px;font-size:9px">'+(o.origin||'').replace('Call Center','CC')+'</span></td><td style="text-align:right;font-weight:600">\u20ac'+(o.revenue||0).toFixed(0)+'</td></tr>';
     }).join('');
   } else if (obody) { obody.innerHTML = '<tr><td colspan="6">No orders</td></tr>'; }
 
