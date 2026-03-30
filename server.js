@@ -3458,7 +3458,7 @@ server.listen(PORT, () => {
   async function prewarmDashboard() {
     try {
       const today = getToday();
-      await getCampaigns(dashFrom, dashTo);
+      await getCampaigns(today, today);
       _dashboardCacheTime = 0; // Force refresh next dashboard call
       console.log('[FLORES] Campaign cache pre-warmed');
     } catch(e) { console.log('[FLORES] Pre-warm failed:', e.message); }
