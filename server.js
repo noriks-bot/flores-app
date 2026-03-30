@@ -3202,7 +3202,15 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
               cpa: orders > 0 ? Math.round(spend / orders * 100) / 100 : 0
             });
           }
-          enrichedCampaigns.sort((a, b) => { if (a.orders > 0 && b.orders === 0) return -1; if (b.orders > 0 && a.orders === 0) return 1; return b.orders - a.orders || b.spend - a.spend; });
+          // Add orders without campaign match
+        const matchedOrders = enrichedCampaigns.reduce((s, c) => s + (c.orders || 0), 0);
+        const totalWcOrders = db.prepare('SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ?').get(dashFrom, dashTo).cnt;
+        const unmatchedOrders = totalWcOrders - matchedOrders;
+        if (unmatchedOrders > 0) {
+          const unmatchedStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND (utm_campaign IS NULL OR utm_campaign = \'\'  OR utm_campaign NOT IN (SELECT DISTINCT utm_campaign FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND utm_campaign IS NOT NULL AND utm_campaign != \'\'))').get(dashFrom, dashTo, dashFrom, dashTo);
+          enrichedCampaigns.push({ name: 'Direct / Organic', displayName: 'Direct / Organic', orders: unmatchedOrders, revenue: Math.round((unmatchedStats?.revenue || 0) * 100) / 100, profit: Math.round((unmatchedStats?.profit || 0) * 100) / 100, spend: 0, cpa: 0 });
+        }
+        enrichedCampaigns.sort((a, b) => { if (a.orders > 0 && b.orders === 0) return -1; if (b.orders > 0 && a.orders === 0) return 1; return b.orders - a.orders || b.spend - a.spend; });
           enrichedCampaigns = enrichedCampaigns.slice(0, 10);
         }
 
