@@ -3375,6 +3375,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           }
         }
         const fbOrderCount = fbOrders?.orders || 0;
+        fbMeasuredOrders = Math.min(fbMeasuredOrders, fbOrderCount);
         const fbUnmeasuredOrders = Math.max(0, fbOrderCount - fbMeasuredOrders);
         const fbCpa = fbOrderCount > 0 ? Math.round((fbSpendRange / fbOrderCount) * 100) / 100 : 0;
         const fbProfit = Math.round(((fbAttributedProfit.profit || 0) - fbSpendRange) * 100) / 100;
