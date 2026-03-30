@@ -3394,7 +3394,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             fbOrders: fbOrderCount,
             profitPerOrder: todayStats.orders > 0 ? Math.round(((todayStats.profit || 0) - fbSpendRange) / todayStats.orders * 100) / 100 : 0,
             fbProfitPerOrder: fbOrderCount > 0 ? Math.round(fbProfit / fbOrderCount * 100) / 100 : 0,
-            ordersBySource: (() => { try { const rows = db.prepare("SELECT CASE WHEN utm_source = 'callcenter' THEN 'callcenter' WHEN utm_source = 'instagram' OR utm_medium = 'paid' OR is_fb_attributed = 1 THEN 'facebook' WHEN utm_source LIKE '%google%' OR utm_medium = 'cpc' THEN 'google' ELSE 'other' END as src, COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? GROUP BY src").all(dashFrom, dashTo); const m = {}; rows.forEach(r => m[r.src] = r.cnt); return m; } catch(e) { return {}; } })(),
+            ordersBySource: (() => { try { const rows = db.prepare("SELECT CASE WHEN is_fb_attributed = 1 THEN 'Facebook' WHEN utm_source = 'callcenter' THEN 'Call Center' WHEN utm_source LIKE '%google%' OR utm_medium = 'cpc' THEN 'Google' WHEN utm_source LIKE '%klaviyo%' OR utm_source LIKE '%email%' THEN 'Klaviyo' ELSE 'Organic' END as src, COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? GROUP BY src ORDER BY cnt DESC").all(dashFrom, dashTo); const m = {}; rows.forEach(r => m[r.src] = r.cnt); return m; } catch(e) { return {}; } })(),
             fbMeasuredOrders,
             fbUnmeasuredOrders,
             fbCpa,
