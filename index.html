@@ -1435,7 +1435,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     .opt-period-tab { padding:4px 8px; border-radius:4px; border:none; background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.7); font-size:11px; font-weight:600; cursor:pointer; transition:all .15s; }
     .opt-period-tab:hover { background:rgba(255,255,255,0.2); color:#fff; }
     .opt-period-tab.active { background:#fff; color:#1E3A5F; }
-    .opt-refresh-btn { width:28px; height:28px; border-radius:6px; border:1px solid rgba(255,255,255,0.3); background:transparent; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; transition:all .15s; }
+    .opt-refresh-btn { height:30px; padding:0 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.1); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:12px; gap:5px; transition:all .15s; }
     .opt-refresh-btn:hover { background:rgba(255,255,255,0.15); }
     #optTable { width:100%; border-collapse:collapse; }
     #optTable thead th { position:sticky; top:0; z-index:2; background:#f1f5f9; color:#475569; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; padding:10px 6px; white-space:nowrap; border:none; border-bottom:2px solid #cbd5e1; }
@@ -1485,7 +1485,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <button class="opt-period-tab" onclick="setOptDate(this,'14d')">14D</button>
         <button class="opt-period-tab" onclick="setOptDate(this,'30d')">30D</button>
       </div>
-      <button class="opt-refresh-btn" onclick="loadOptimizer()" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+      <button class="opt-refresh-btn" onclick="loadOptimizer()" title="Refresh"><i class="fas fa-sync-alt"></i> Refresh</button>
     </div>
   </div>
   <div style="padding:0;overflow-x:auto">
