@@ -3216,7 +3216,9 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         if (Array.isArray(topCampaignsRaw)) {
           for (const camp of topCampaignsRaw) {
             const spend = parseFloat(camp.insights?.spend) || 0;
-            if (spend <= 0) continue;
+            const pActCheck = (camp.insights?.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
+            const hasPurchases = pActCheck && parseInt(pActCheck.value) > 0;
+            if (spend <= 0 && !hasPurchases) continue;
             const orders = camp.wc?.orders || 0;
             const revenue = camp.wc?.revenueGross || 0;
             const rawProfit = camp.wc?.profit || 0;
