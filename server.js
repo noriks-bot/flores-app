@@ -487,7 +487,9 @@ const newColumns = [
   'landing_page TEXT DEFAULT ""',
   'placement TEXT DEFAULT ""',
   'billing_name TEXT DEFAULT ""',
-  'billing_city TEXT DEFAULT ""'
+  'billing_city TEXT DEFAULT ""',
+  'billing_email TEXT DEFAULT ""',
+  'order_datetime TEXT DEFAULT ""'
 ];
 for (const col of newColumns) {
   try { db.exec(`ALTER TABLE wc_orders ADD COLUMN ${col}`); } catch(e) { /* column exists */ }
@@ -495,8 +497,8 @@ for (const col of newColumns) {
 
 // Prepared statements for WC sync
 const upsertOrder = db.prepare(`
-  INSERT INTO wc_orders (country, wc_order_id, order_date, status, gross_total, gross_eur, net_revenue, product_cost, shipping_cost, profit, product_type, utm_source, utm_campaign, is_fb_attributed, raw_meta, created_at, adset_id, ad_id, campaign_name, adset_name, ad_name, utm_medium, landing_page, placement, billing_name, billing_city)
-  VALUES (@country, @wc_order_id, @order_date, @status, @gross_total, @gross_eur, @net_revenue, @product_cost, @shipping_cost, @profit, @product_type, @utm_source, @utm_campaign, @is_fb_attributed, @raw_meta, datetime('now'), @adset_id, @ad_id, @campaign_name, @adset_name, @ad_name, @utm_medium, @landing_page, @placement, @billing_name, @billing_city)
+  INSERT INTO wc_orders (country, wc_order_id, order_date, status, gross_total, gross_eur, net_revenue, product_cost, shipping_cost, profit, product_type, utm_source, utm_campaign, is_fb_attributed, raw_meta, created_at, adset_id, ad_id, campaign_name, adset_name, ad_name, utm_medium, landing_page, placement, billing_name, billing_city, billing_email, order_datetime)
+  VALUES (@country, @wc_order_id, @order_date, @status, @gross_total, @gross_eur, @net_revenue, @product_cost, @shipping_cost, @profit, @product_type, @utm_source, @utm_campaign, @is_fb_attributed, @raw_meta, datetime('now'), @adset_id, @ad_id, @campaign_name, @adset_name, @ad_name, @utm_medium, @landing_page, @placement, @billing_name, @billing_city, @billing_email, @order_datetime)
   ON CONFLICT(country, wc_order_id) DO UPDATE SET
     order_date=excluded.order_date, status=excluded.status, gross_total=excluded.gross_total,
     gross_eur=excluded.gross_eur, net_revenue=excluded.net_revenue, product_cost=excluded.product_cost,
@@ -505,7 +507,8 @@ const upsertOrder = db.prepare(`
     raw_meta=excluded.raw_meta, adset_id=excluded.adset_id, ad_id=excluded.ad_id,
     campaign_name=excluded.campaign_name, adset_name=excluded.adset_name, ad_name=excluded.ad_name,
     utm_medium=excluded.utm_medium, landing_page=excluded.landing_page, placement=excluded.placement,
-    billing_name=excluded.billing_name, billing_city=excluded.billing_city
+    billing_name=excluded.billing_name, billing_city=excluded.billing_city,
+    billing_email=excluded.billing_email, order_datetime=excluded.order_datetime
 `);
 
 const updateSyncState = db.prepare(`
@@ -702,7 +705,9 @@ async function syncCountry(country) {
         landing_page: floresLanding,
         placement: floresPlacement,
         billing_name: ((order.billing?.first_name || '') + ' ' + (order.billing?.last_name || '')).trim(),
-        billing_city: order.billing?.city || ''
+        billing_city: order.billing?.city || '',
+        billing_email: order.billing?.email || '',
+        order_datetime: (order.date_created || '').replace('T', ' ').slice(0, 16)
       });
       count++;
     }
@@ -3392,7 +3397,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         }
 
         // Orders list for table
-        const ordersList = db.prepare("SELECT wc_order_id, order_date, country, gross_eur, profit, utm_source, utm_medium, is_fb_attributed, billing_name, billing_city FROM wc_orders WHERE order_date >= ? AND order_date <= ? ORDER BY order_date DESC, wc_order_id DESC").all(dashFrom, dashTo);
+        const ordersList = db.prepare("SELECT wc_order_id, order_date, order_datetime, country, gross_eur, profit, utm_source, utm_medium, is_fb_attributed, billing_name, billing_city, billing_email FROM wc_orders WHERE order_date >= ? AND order_date <= ? ORDER BY order_datetime DESC, wc_order_id DESC").all(dashFrom, dashTo);
         const ordersListFormatted = ordersList.map(o => {
           let origin = 'Organic';
           if (o.is_fb_attributed === 1) origin = 'Facebook';
@@ -3400,7 +3405,8 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           else if ((o.utm_source || '').includes('google') || o.utm_medium === 'cpc') origin = 'Google';
           else if ((o.utm_source || '').includes('klaviyo') || (o.utm_source || '').includes('email')) origin = 'Klaviyo';
           const customer = (o.billing_name || '').trim() || '#' + o.wc_order_id;
-          return { id: o.wc_order_id, date: o.order_date, country: o.country, customer, origin, revenue: Math.round(o.gross_eur * 100) / 100, profit: Math.round(o.profit * 100) / 100 };
+          const datetime = (o.order_datetime || o.order_date || '').slice(0, 16);
+          return { id: o.wc_order_id, date: o.order_date, datetime, country: o.country, customer, email: o.billing_email || '', origin, revenue: Math.round(o.gross_eur * 100) / 100, profit: Math.round(o.profit * 100) / 100 };
         });
 
         return sendJSON(res, {

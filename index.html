@@ -5664,16 +5664,19 @@ function renderDashboard(data) {
   // Orders table
   var obody = document.getElementById('dashOrdersBody');
   if (obody && data.orders_list && data.orders_list.length > 0) {
-    obody.innerHTML = data.orders_list.map(function(o) {
-      var profitColor = o.profit >= 0 ? '#10b981' : '#ef4444';
-      var origin = o.origin || '—';
+    var countryFlags = {HR:'🇭🇷',CZ:'🇨🇿',SK:'🇸🇰',GR:'🇬🇷',IT:'🇮🇹',HU:'🇭🇺',PL:'🇵🇱',SI:'🇸🇮',RS:'🇷🇸',BA:'🇧🇦',DE:'🇩🇪',AT:'🇦🇹',RO:'🇷🇴',BG:'🇧🇬'};
+    var originColors = {'Facebook':'#1877f2','Call Center':'#f59e0b','Google':'#34a853','Organic':'#6b7280','Klaviyo':'#8b5cf6'};
+    obody.innerHTML = data.orders_list.map(function(o, idx) {
+      var flag = countryFlags[o.country] || '🏳️';
+      var originBg = originColors[o.origin] || '#6b7280';
+      var emailHtml = o.email ? '<div style="font-size:11px;color:#9ca3af;line-height:1.2;margin-top:1px">' + o.email + '</div>' : '';
       return '<tr>' +
-        '<td style="text-align:left;padding:6px 12px;font-size:12px;white-space:nowrap">' + (o.date || '—') + '</td>' +
-        '<td style="text-align:left;font-size:12px">' + (o.country || '—') + '</td>' +
-        '<td style="text-align:left;font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (o.customer || '—') + '</td>' +
-        '<td style="text-align:left;font-size:12px">' + origin + '</td>' +
-        '<td style="text-align:right;font-size:12px">€' + (o.revenue||0).toFixed(2) + '</td>' +
-        '<td style="text-align:right;font-size:12px;font-weight:600;color:' + profitColor + '">€' + (o.profit||0).toFixed(2) + '</td>' +
+        '<td style="text-align:center;padding:6px 12px;font-size:12px;color:#9ca3af">' + (idx + 1) + '</td>' +
+        '<td style="text-align:left;padding:6px 12px;font-size:12px;white-space:nowrap">' + (o.datetime || o.date || '—') + '</td>' +
+        '<td style="text-align:left;padding:6px 12px;font-size:12px;white-space:nowrap">' + flag + ' ' + (o.country || '—') + '</td>' +
+        '<td style="text-align:left;padding:6px 12px;font-size:12px;max-width:200px"><div style="font-weight:500">' + (o.customer || '—') + '</div>' + emailHtml + '</td>' +
+        '<td style="text-align:left;padding:6px 12px;font-size:12px"><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;color:#fff;background:' + originBg + '">' + (o.origin || '—') + '</span></td>' +
+        '<td style="text-align:right;padding:6px 12px;font-size:13px;font-weight:700">€' + (o.revenue||0).toFixed(2) + '</td>' +
         '</tr>';
     }).join('');
   } else if (obody) {
