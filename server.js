@@ -3194,6 +3194,8 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             }
             return { date: d.date, orders: d.orders, revenue: Math.round(d.revenue * 100) / 100, profit: Math.round(d.profit * 100) / 100, spend: Math.round(daySpend * 100) / 100 };
           }),
+          topCreatives: [],
+          alerts: [],
           date: today
         });
       }
