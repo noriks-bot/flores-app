@@ -1429,6 +1429,12 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     .opt-header-left { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
     .opt-header-title { font-size:16px; font-weight:800; color:#fff; white-space:nowrap; display:flex; align-items:center; gap:6px; }
     .opt-header-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .opt-toggle { position:relative; display:inline-block; width:32px; height:18px; }
+    .opt-toggle input { opacity:0; width:0; height:0; }
+    .opt-toggle-slider { position:absolute; cursor:pointer; inset:0; background:#ccc; border-radius:18px; transition:.2s; }
+    .opt-toggle-slider:before { content:""; position:absolute; height:14px; width:14px; left:2px; bottom:2px; background:#fff; border-radius:50%; transition:.2s; }
+    .opt-toggle input:checked + .opt-toggle-slider { background:#22c55e; }
+    .opt-toggle input:checked + .opt-toggle-slider:before { transform:translateX(14px); }
     .opt-fpill { padding:4px 10px; border-radius:4px; border:1px solid rgba(255,255,255,0.25); background:transparent; color:rgba(255,255,255,0.8); font-size:11px; font-weight:600; cursor:pointer; transition:all .15s; white-space:nowrap; }
     .opt-fpill:hover { background:rgba(255,255,255,0.15); color:#fff; }
     .opt-fpill.active { background:#fff; color:#1E3A5F; border-color:#fff; }
@@ -1477,6 +1483,9 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <button class="opt-fpill" onclick="switchOptTab(this,'ALL')">All</button>
     </div>
     <div class="opt-header-right">
+      <label style="display:flex;align-items:center;gap:4px;color:#fff;font-size:11px;cursor:pointer;white-space:nowrap">
+        <input type="checkbox" id="optExpandAll" onchange="toggleOptExpandAll(this.checked)" style="cursor:pointer"> Expand all
+      </label>
       <div style="display:flex;gap:2px;background:rgba(0,0,0,0.15);border-radius:5px;padding:2px">
         <button class="opt-period-tab active" onclick="setOptDate(this,'today')">Today</button>
         <button class="opt-period-tab" onclick="setOptDate(this,'yesterday')">Yesterday</button>
@@ -4521,6 +4530,7 @@ function optGetFlags(name) {
   var flagMap = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
   var upper = (name||'').toUpperCase();
   var isSofi = upper.includes('SOFI');
+  if (!isSofi) { var _ccM = upper.match(/CC:([A-Z+]+)/); if (_ccM && _ccM[1].split('+').length > 1) isSofi = true; }
   var sofiTag = isSofi ? '<span style="display:inline-block;padding:1px 5px;border-radius:4px;font-size:9px;font-weight:800;background:#7c3aed;color:#fff;margin-right:3px;vertical-align:middle">SOFI</span>' : '';
   var ccMatch = upper.match(/CC:([A-Z+]+)/);
   var countries = [];
@@ -4551,7 +4561,7 @@ function renderOptimizer() {
   const filtered = optCampaigns.filter(c => {
     const name = (c.name||'').toUpperCase();
     if (optCountry === 'ALL') return true;
-    if (optCountry === 'SOFI') return name.includes('SOFI');
+    if (optCountry === 'SOFI') { if (name.includes('SOFI')) return true; var _ccF = name.match(/CC:([A-Z+]+)/); if (_ccF && _ccF[1].split('+').length > 1) return true; return false; }
     const ccMatch = name.match(/CC:([A-Z+]+)/);
     if (ccMatch) return ccMatch[1].split('+').includes(optCountry);
     return false;
@@ -4596,7 +4606,7 @@ function renderOptimizer() {
     html += '<td style="text-align:center"><span class="opt-expand opt-expand-campaign">'+(isExp?'▾':'▸')+'</span></td>';
     html += '<td style="text-align:center">'+flags+'</td>';
     html += '<td style="text-align:left;font-weight:700;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+c.name.replace(/"/g,'&quot;')+'">'+c.name+'</td>';
-    html += '<td style="text-align:center">'+(c.status==='ACTIVE'?'<span style="color:#22c55e;font-size:14px">●</span>':'<span style="color:#9ca3af;font-size:14px">●</span>')+'</td>';
+    html += '<td style="text-align:center" onclick="event.stopPropagation()"><label class="opt-toggle"><input type="checkbox" '+(c.status==='ACTIVE'?'checked':'')+' onchange="toggleCampaignStatus(\''+c.id+'\',this.checked)"><span class="opt-toggle-slider"></span></label></td>';
     html += '<td style="text-align:right">'+(budget?budget+' €':'—')+' <button class="opt-budget-edit" title="Coming soon" onclick="event.stopPropagation()">✏️</button></td>';
     html += '<td style="text-align:right">'+spend.toFixed(2)+' €</td>';
     html += '<td style="text-align:right">'+(orders||'—')+'</td>';
@@ -4619,14 +4629,14 @@ function renderOptimizer() {
         if (!asMatchesCountry && optCountry !== 'SOFI') {
           asMatchesCountry = asName.includes(optCountry) || asName.includes('CC:'+optCountry);
         }
-        if (!asMatchesCountry && optCountry === 'SOFI') { asMatchesCountry = asName.includes('SOFI'); }
+        if (!asMatchesCountry && optCountry === 'SOFI') { asMatchesCountry = asName.includes('SOFI'); if (!asMatchesCountry) { var _asCC = asName.match(/CC:([A-Z+]+)/); if (_asCC && _asCC[1].split('+').length > 1) asMatchesCountry = true; } }
         const grayStyle = (!asMatchesCountry && optCountry !== 'ALL') ? 'opacity:0.35;' : '';
         const asFlags = optGetFlags(as.name);
         html += '<tr class="opt-adset-row" style="'+grayStyle+'" onclick="event.stopPropagation();toggleOptAds(\''+as.id+'\',\''+c.id+'\');">';
         html += '<td style="text-align:center;padding-left:16px"><span class="opt-expand opt-expand-adset">'+(optExpandedAds[as.id]?'▾':'▸')+'</span></td>';
         html += '<td style="text-align:center;font-size:12px">'+asFlags+'</td>';
         html += '<td style="text-align:left;padding-left:32px;color:#4b5563;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">↳ '+as.name+'</td>';
-        html += '<td style="text-align:center">'+(as.status==='ACTIVE'?'<span style="color:#22c55e">●</span>':'<span style="color:#9ca3af">●</span>')+'</td>';
+        html += '<td style="text-align:center" onclick="event.stopPropagation()"><label class="opt-toggle"><input type="checkbox" '+(as.status==='ACTIVE'?'checked':'')+' onchange="toggleAdsetStatus(\''+as.id+'\',this.checked)"><span class="opt-toggle-slider"></span></label></td>';
         html += '<td style="text-align:right;color:#9ca3af">—</td>';
         html += '<td style="text-align:right">'+asSpend.toFixed(2)+' €</td>';
         html += '<td style="text-align:right">'+(asOrders||'—')+'</td>';
@@ -4652,7 +4662,7 @@ function renderOptimizer() {
             html += '<td></td>';
             html += '<td style="text-align:center;font-size:11px">'+adFlags+'</td>';
             html += '<td style="text-align:left;padding-left:56px;color:#6b7280;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">└ '+ad.name+'</td>';
-            html += '<td style="text-align:center">'+(ad.status==='ACTIVE'?'<span style="color:#22c55e">●</span>':'<span style="color:#9ca3af">●</span>')+'</td>';
+            html += '<td style="text-align:center" onclick="event.stopPropagation()"><label class="opt-toggle"><input type="checkbox" '+(ad.status==='ACTIVE'?'checked':'')+' onchange="toggleAdStatus(\''+ad.id+'\',this.checked)"><span class="opt-toggle-slider"></span></label></td>';
             html += '<td style="text-align:right;color:#9ca3af">—</td>';
             html += '<td style="text-align:right">'+adSpend.toFixed(2)+' €</td>';
             html += '<td style="text-align:right">—</td>';
@@ -4690,6 +4700,62 @@ function renderOptimizer() {
   se = document.getElementById('optSumRevenue'); if(se) se.textContent = sumRevenue.toFixed(2) + ' \u20ac';
   se = document.getElementById('optSumProfit'); if(se) { se.textContent = sumProfit.toFixed(2) + ' \u20ac'; se.style.color = sumProfit >= 0 ? '#4ade80' : '#f87171'; }
   se = document.getElementById('optSumCpa'); if(se) se.textContent = sumCpa > 0 ? sumCpa.toFixed(2) + ' \u20ac' : '\u2014';
+}
+
+function toggleCampaignStatus(campaignId, isActive) {
+  console.log("Toggle campaign", campaignId, isActive);
+}
+function toggleAdsetStatus(adsetId, isActive) {
+  console.log("Toggle adset", adsetId, isActive);
+}
+function toggleAdStatus(adId, isActive) {
+  console.log("Toggle ad", adId, isActive);
+}
+
+function toggleOptExpandAll(checked) {
+  if (!checked) {
+    optExpanded = {};
+    optExpandedAds = {};
+    renderOptimizer();
+    return;
+  }
+  const filtered = optCampaigns.filter(function(c) {
+    var name = (c.name||'').toUpperCase();
+    if (optCountry === 'ALL') return true;
+    if (optCountry === 'SOFI') { if (name.includes('SOFI')) return true; var _ccF = name.match(/CC:([A-Z+]+)/); return _ccF && _ccF[1].split('+').length > 1; }
+    var ccMatch = name.match(/CC:([A-Z+]+)/);
+    if (ccMatch) return ccMatch[1].split('+').includes(optCountry);
+    return false;
+  });
+  var pending = filtered.length;
+  if (!pending) return;
+  var {from,to} = getOptDateRange();
+  filtered.forEach(function(c) {
+    optExpanded[c.id] = { adsets: [], loading: true };
+    fetch('/api/adsets?campaign_id='+c.id+'&date_from='+from+'&date_to='+to)
+      .then(function(r){return r.json()})
+      .then(function(adsets) {
+        if (!adsets.error) {
+          optExpanded[c.id] = { adsets: adsets };
+          var adsPending = adsets.length;
+          if (!adsPending) { pending--; if(!pending) renderOptimizer(); return; }
+          adsets.forEach(function(as) {
+            optExpandedAds[as.id] = { ads: [], loading: true };
+            fetch('/api/ads?adset_id='+as.id+'&date_from='+from+'&date_to='+to)
+              .then(function(r2){return r2.json()})
+              .then(function(ads) {
+                if (!ads.error) optExpandedAds[as.id] = { ads: ads };
+                else delete optExpandedAds[as.id];
+                adsPending--;
+                if (!adsPending) { pending--; if(!pending) renderOptimizer(); }
+              })
+              .catch(function() { delete optExpandedAds[as.id]; adsPending--; if(!adsPending){pending--;if(!pending)renderOptimizer();} });
+          });
+        } else { delete optExpanded[c.id]; pending--; if(!pending) renderOptimizer(); }
+      })
+      .catch(function() { delete optExpanded[c.id]; pending--; if(!pending) renderOptimizer(); });
+  });
+  renderOptimizer(); // Show loading state immediately
 }
 
 async function toggleOpt(campaignId) {
