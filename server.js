@@ -650,10 +650,10 @@ async function syncCountry(country) {
       const wcSessionEntry = (meta.find(m => m.key === '_wc_order_attribution_session_entry')?.value || '').toLowerCase();
 
       // Best values (flores plugin takes priority)
-      let utmSource = floresUtmSource || wcUtmSource;
-      // If flores says "direct" but WC has a more specific source, use WC
-      if (utmSource === 'direct' && wcUtmSource && wcUtmSource !== 'direct') utmSource = wcUtmSource;
+      // WC attribution takes priority over flores plugin (more accurate)
+      let utmSource = wcUtmSource || floresUtmSource || '';
       if (!utmSource && wcReferrer.includes('google')) utmSource = 'google';
+      if (!utmSource && wcReferrer.includes('facebook')) utmSource = 'fb';
       const utmMedium = floresUtmMedium || '';
 
       // Campaign ID: flores plugin > WC utm_campaign > session entry extraction
@@ -3409,10 +3409,11 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         // Orders list for table
         const ordersList = db.prepare("SELECT wc_order_id, order_date, order_datetime, country, gross_eur, profit, utm_source, utm_medium, utm_campaign, is_fb_attributed, product_type, billing_name, billing_city, billing_email, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ? ORDER BY order_datetime DESC, wc_order_id DESC").all(dashFrom, dashTo);
         const ordersListFormatted = ordersList.map(o => {
-          let origin = 'Organic';
+          let origin = 'Direct';
           if (o.is_fb_attributed === 1) origin = 'Facebook';
           else if (o.utm_source === 'callcenter') origin = 'Call Center';
-          else if ((o.utm_source || '').includes('google') || o.utm_medium === 'cpc') origin = 'Google';
+          else if ((o.utm_source || '').includes('google') && (o.utm_medium === 'cpc' || o.utm_medium === 'paid')) origin = 'Google Paid';
+          else if ((o.utm_source || '').includes('google')) origin = 'Google Organic';
           else if ((o.utm_source || '').includes('klaviyo') || (o.utm_source || '').includes('email')) origin = 'Klaviyo';
           const fbMeasured = o.is_fb_attributed === 1 ? (o.utm_campaign && o.utm_campaign !== '' && !o.utm_campaign.startsWith('google') ? 'Measured' : 'Not Measured') : null;
           const customer = (o.billing_name || '').trim() || '#' + o.wc_order_id;
@@ -3436,7 +3437,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             fbOrders: fbOrderCount,
             profitPerOrder: todayStats.orders > 0 ? Math.round(((todayStats.profit || 0) - fbSpendRange) / todayStats.orders * 100) / 100 : 0,
             fbProfitPerOrder: fbOrderCount > 0 ? Math.round(fbProfit / fbOrderCount * 100) / 100 : 0,
-            ordersBySource: (() => { try { const rows = db.prepare("SELECT CASE WHEN is_fb_attributed = 1 THEN 'Facebook' WHEN utm_source = 'callcenter' THEN 'Call Center' WHEN utm_source LIKE '%google%' OR utm_medium = 'cpc' THEN 'Google' WHEN utm_source LIKE '%klaviyo%' OR utm_source LIKE '%email%' THEN 'Klaviyo' ELSE 'Organic' END as src, COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? GROUP BY src ORDER BY cnt DESC").all(dashFrom, dashTo); const m = {}; rows.forEach(r => m[r.src] = r.cnt); return m; } catch(e) { return {}; } })(),
+            ordersBySource: (() => { try { const rows = db.prepare("SELECT CASE WHEN is_fb_attributed = 1 THEN 'Facebook' WHEN utm_source = 'callcenter' THEN 'Call Center' WHEN (utm_source LIKE '%google%') AND (utm_medium = 'cpc' OR utm_medium = 'paid') THEN 'Google Paid' WHEN utm_source LIKE '%google%' THEN 'Google Organic' WHEN utm_source LIKE '%klaviyo%' OR utm_source LIKE '%email%' THEN 'Klaviyo' ELSE 'Direct' END as src, COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? GROUP BY src ORDER BY cnt DESC").all(dashFrom, dashTo); const m = {}; rows.forEach(r => m[r.src] = r.cnt); return m; } catch(e) { return {}; } })(),
             fbMeasuredOrders,
             fbUnmeasuredOrders,
             fbCpa,
