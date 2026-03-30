@@ -1190,7 +1190,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           <!-- Top Campaigns -->
           <div class="table-card">
             <div class="table-header"><span class="table-title">🏆 Top Campaigns (Today)</span></div>
-            <div style="padding:0;overflow-x:auto"><table class="dash-mini-table" id="dashTopCampaigns" style="min-width:500px"><thead><tr><th style="text-align:left;padding:8px 12px">Campaign</th><th>Spend</th><th>Orders</th><th>Revenue</th><th>Profit</th><th>CPA</th></tr></thead><tbody></tbody></table></div>
+            <div style="padding:0;overflow-x:auto"><table class="dash-mini-table" id="dashTopCampaigns" style="min-width:500px;table-layout:fixed"><thead><tr><th style="text-align:left;padding:8px 12px">Campaign</th><th>Spend</th><th>Orders</th><th>Revenue</th><th>Profit</th><th>CPA</th></tr></thead><tbody></tbody></table></div>
           </div>
           <!-- Top Creatives -->
           <div class="table-card">
@@ -5609,7 +5609,7 @@ function renderDashboard(data) {
     : alerts.map(a => `<div class="dash-alert-item ${a.type}"><i class="fas ${a.type==='high_cpa'?'fa-exclamation-triangle':'fa-times-circle'}"></i><span>${a.message}</span></div>`).join('');
   
   // Top Campaigns table
-  const tcBody = document.querySelector('#dashTopCampaigns tbody');
+  const tcBody = document.getElementById("dashTopCampaigns")?.querySelector("tbody");
   tcBody.innerHTML = (data.topCampaigns || []).map(c => {
     const campName = c.displayName || c.name || '—';
     const spend = c.spend != null ? '€' + c.spend.toFixed(0) : '—';
