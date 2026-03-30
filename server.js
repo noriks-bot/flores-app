@@ -1055,6 +1055,37 @@ async function getCampaigns(dateFrom, dateTo) {
     return spendB - spendA;
   });
 
+  // Also fetch from second ad account
+  const allAccounts = Object.values(AD_ACCOUNTS_MAP);
+  for (const acct of allAccounts) {
+    if (acct === AD_ACCOUNT) continue; // Already fetched
+    try {
+      const ins2 = await metaGetAll(acct + '/insights', {
+        fields: INSIGHT_FIELDS + ',campaign_id,campaign_name',
+        level: 'campaign',
+        time_range: JSON.stringify({ since: dateFrom, until: dateTo }),
+        limit: 500
+      });
+      const camps2 = await metaGetAll(acct + '/campaigns', {
+        fields: 'id,name,status,objective,daily_budget,lifetime_budget',
+        limit: 500
+      });
+      const cmap2 = {}; for (const cc of camps2) cmap2[cc.id] = cc;
+      for (const i of ins2) {
+        if (!result.find(r => r.id === i.campaign_id)) {
+          result.push({
+            id: i.campaign_id,
+            name: i.campaign_name || cmap2[i.campaign_id]?.name || i.campaign_id,
+            status: cmap2[i.campaign_id]?.status || 'UNKNOWN',
+            objective: cmap2[i.campaign_id]?.objective || '',
+            daily_budget: cmap2[i.campaign_id]?.daily_budget || '0',
+            insights: i
+          });
+        }
+      }
+    } catch(e) { console.warn('[getCampaigns] Second account error:', e.message); }
+  }
+
   enrichCampaignsWithProfit(result, dateFrom, dateTo);
   setCache(cacheKey, result);
   return result;
