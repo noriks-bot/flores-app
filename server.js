@@ -5,6 +5,16 @@ const path = require('path');
 const crypto = require('crypto');
 const Database = require('better-sqlite3');
 
+// Load rejection rates from dash
+let dashRejectionRates = {};
+try {
+  const rejFile = '/home/ec2-user/apps/raketa/dashboard/rejections.json';
+  if (fs.existsSync(rejFile)) {
+    dashRejectionRates = JSON.parse(fs.readFileSync(rejFile, 'utf8'));
+    console.log('[FLORES] Loaded dash rejection rates:', Object.keys(dashRejectionRates).join(','));
+  }
+} catch(e) { console.warn('[FLORES] Could not load dash rejection rates:', e.message); }
+
 const PORT = 3200;
 let _dashboardCache = null;
 let _dashboardCacheTime = 0;
@@ -530,8 +540,7 @@ function detectProductType(items) {
 function calculateOrderProfit(order, country) {
   const eurRate = EUR_RATES[country] || 1;
   const vatRate = VAT_RATES[country] || 0;
-  const REJECTION_RATES = { HR: 0.15, CZ: 0.15, PL: 0.15, SK: 0.15, HU: 0.15, GR: 0.25, IT: 0.25 };
-  const rejRate = REJECTION_RATES[country] || 0.15;
+  const rejRate = (dashRejectionRates[country] || 15) / 100;
   const grossTotal = parseFloat(order.total || 0);
   const grossEur = grossTotal * eurRate;
   const netRevenue = grossEur * (1 - rejRate) / (1 + vatRate);
@@ -683,6 +692,28 @@ async function syncCountry(country) {
   });
 
   insertMany(orders);
+
+  // Check for cancelled orders and remove them from SQLite
+  try {
+    const store = WC_STORES[country];
+    const cancelledUrl = `${store.url}/wp-json/wc/v3/orders?status=cancelled&per_page=100&modified_after=${modifiedAfter || new Date(Date.now() - 7 * 86400000).toISOString()}&consumer_key=${store.ck}&consumer_secret=${store.cs}`;
+    const cancelledOrders = await new Promise((res, rej) => {
+      https.get(cancelledUrl, resp => {
+        let d = '';
+        resp.on('data', c => d += c);
+        resp.on('end', () => { try { res(JSON.parse(d)); } catch(e) { rej(e); } });
+      }).on('error', rej);
+    });
+    if (Array.isArray(cancelledOrders) && cancelledOrders.length > 0) {
+      const delStmt = db.prepare('DELETE FROM wc_orders WHERE wc_order_id = ? AND country = ?');
+      let delCount = 0;
+      for (const co of cancelledOrders) {
+        const r = delStmt.run(co.id, country);
+        if (r.changes > 0) delCount++;
+      }
+      if (delCount > 0) console.log(`[FLORES] Removed ${delCount} cancelled orders for ${country}`);
+    }
+  } catch(e) { console.warn(`[FLORES] Cancelled order check failed for ${country}:`, e.message); }
 
   // Update sync state
   const totalOrders = db.prepare('SELECT COUNT(*) as cnt FROM wc_orders WHERE country = ?').get(country).cnt;
@@ -3119,7 +3150,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         const weekStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ?').get(d7ago);
         
         // FB spend from dash-cache
-        let fbSpendToday = 0, fbSpend7d = 0;
+        let fbSpendToday = 0, fbSpend7d = 0, fbSpendRange = 0;
         let dashCacheData = null;
         try {
           const dc = JSON.parse(fs.readFileSync(DASH_CACHE_FILE, 'utf8'));
@@ -3129,6 +3160,9 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           for (const [date, countries] of Object.entries(dashCacheData)) {
             if (date >= d7ago && date <= today) {
               for (const [,v] of Object.entries(countries)) { if (v && typeof v.spend === 'number') fbSpend7d += v.spend; }
+            }
+            if (date >= dashFrom && date <= dashTo) {
+              for (const [,v] of Object.entries(countries)) { if (v && typeof v.spend === 'number') fbSpendRange += v.spend; }
             }
           }
         } catch(e) {}
@@ -3148,6 +3182,14 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             });
           }
         } catch(e) {}
+
+        // Adjust campaign profit: subtract FB spend (match dash formula)
+        enrichedCampaigns = enrichedCampaigns.map(c => {
+          if (c.spend != null && c.spend > 0) {
+            return { ...c, profit: Math.round((c.profit - c.spend) * 100) / 100 };
+          }
+          return c;
+        });
 
         // Top creatives — ad-level from Meta Insights API
         let topCreativesData = [];
@@ -3194,11 +3236,11 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           kpis: {
             orders: todayStats.orders || 0,
             revenue: Math.round((todayStats.revenue || 0) * 100) / 100,
-            profit: Math.round((todayStats.profit || 0) * 100) / 100,
+            profit: Math.round(((todayStats.profit || 0) - fbSpendRange) * 100) / 100,
             fbOrders: fbOrders?.orders || 0,
             weekOrders: weekStats?.orders || 0,
             weekRevenue: Math.round((weekStats?.revenue || 0) * 100) / 100,
-            weekProfit: Math.round((weekStats?.profit || 0) * 100) / 100,
+            weekProfit: Math.round(((weekStats?.profit || 0) - fbSpend7d) * 100) / 100,
             spend: Math.round(fbSpendToday * 100) / 100,
             cpa: todayStats.orders > 0 ? Math.round((fbSpendToday / todayStats.orders) * 100) / 100 : 0,
             activeCampaigns: 0,
@@ -3210,7 +3252,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           chartData: chartData.map(d => {
             let daySpend = 0;
             try { const dd = (dashCacheData||{})[d.date]||{}; for (const [,v] of Object.entries(dd)) { if (v && typeof v.spend === 'number') daySpend += v.spend; } } catch(e){}
-            return { date: d.date, orders: d.orders, revenue: Math.round(d.revenue * 100) / 100, profit: Math.round(d.profit * 100) / 100, spend: Math.round(daySpend * 100) / 100 };
+            return { date: d.date, orders: d.orders, revenue: Math.round(d.revenue * 100) / 100, profit: Math.round((d.profit - daySpend) * 100) / 100, spend: Math.round(daySpend * 100) / 100 };
           }),
           alerts: alerts,
           topCreatives: topCreativesData,
@@ -3394,7 +3436,7 @@ server.listen(PORT, () => {
         totalSpend += spend; totalPurchases += p;
         totalOrders += (c.wc?.orders || 0); totalRevenue += (c.wc?.revenueGross || 0); totalProfit += (c.wc?.profit || 0);
         if (c.status === 'ACTIVE') activeCampaigns++;
-        topCampaigns.push({ name: c.name, spend: Math.round(spend*100)/100, purchases: p, profit: Math.round((c.wc?.profit||0)*100)/100 });
+        topCampaigns.push({ name: c.name, spend: Math.round(spend*100)/100, purchases: p, profit: Math.round(((c.wc?.profit||0) - spend)*100)/100 });
       }
       topCampaigns.sort((a,b) => b.spend - a.spend);
       const avgCPA = totalPurchases > 0 ? totalSpend / totalPurchases : 0;

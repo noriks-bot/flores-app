@@ -5595,7 +5595,24 @@ function renderDashboard(data) {
   
   // Top Campaigns table
   const tcBody = document.querySelector('#dashTopCampaigns tbody');
-  tcBody.innerHTML = (data.topCampaigns || []).map(c => `<tr><td style="text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(c.displayName || c.name || '').replace(/"/g,'&quot;')}">${(c.displayName || c.name || '').slice(0,45)}</td><td>€${c.spend!=null ? c.spend.toFixed(0) : '—'}</td><td>${c.orders||0}</td><td>€${c.revenue!=null ? c.revenue.toFixed(0) : '—'}</td><td style="color:${c.profit!=null && c.profit > 0 ? '#10b981' : c.profit!=null && c.profit < 0 ? '#ef4444' : 'inherit'};font-weight:600">${c.profit!=null ? '€'+c.profit.toFixed(0) : '—'}</td><td>${c.cpa!=null && c.cpa > 0 ? '€'+c.cpa.toFixed(2) : '—'}</td></tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
+  tcBody.innerHTML = (data.topCampaigns || []).map(c => {
+    const campName = c.displayName || c.name || '—';
+    const spend = c.spend != null ? '€' + c.spend.toFixed(0) : '—';
+    const orders = c.orders || 0;
+    const revenue = c.revenue != null ? '€' + c.revenue.toFixed(0) : '—';
+    const profitVal = c.profit != null ? c.profit : null;
+    const profitColor = profitVal != null && profitVal > 0 ? '#10b981' : profitVal != null && profitVal < 0 ? '#ef4444' : 'inherit';
+    const profitStr = profitVal != null ? '€' + profitVal.toFixed(0) : '—';
+    const cpa = c.cpa != null && c.cpa > 0 ? '€' + c.cpa.toFixed(2) : '—';
+    return `<tr>
+      <td style="text-align:left;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${campName.replace(/"/g,'&quot;')}">${campName}</td>
+      <td>${spend}</td>
+      <td>${orders}</td>
+      <td>${revenue}</td>
+      <td style="color:${profitColor};font-weight:600">${profitStr}</td>
+      <td>${cpa}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
   
   // Top Creatives table
   const crBody = document.querySelector('#dashTopCreatives tbody');
