@@ -3426,6 +3426,7 @@ server.listen(PORT, () => {
     try {
       const today = getToday();
       const d7ago = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
+      const dashFrom = today, dashTo = today;
       const campaignData = await getCampaigns(dashFrom, dashTo);
       let totalSpend = 0, totalPurchases = 0, totalOrders = 0, totalRevenue = 0, totalProfit = 0, activeCampaigns = 0;
       const topCampaigns = [];
