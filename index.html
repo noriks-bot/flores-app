@@ -1189,31 +1189,31 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <div class="dash-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px">
           <!-- Top Campaigns -->
           <div class="table-card">
-            <div class="table-header"><span class="table-title">🏆 Top Campaigns</span></div>
+            <div class="table-header"><span class="table-title">🏆 Top Campaigns (Today)</span></div>
             <div style="padding:0;overflow-x:auto"><table class="dash-mini-table" id="dashTopCampaigns" style="min-width:600px;width:100%"><thead><tr><th style="text-align:left;padding:8px 12px">Campaign</th><th>Spend</th><th>Orders</th><th>Revenue</th><th>Profit</th><th>CPA</th></tr></thead><tbody></tbody></table></div>
           </div>
           <!-- Top Creatives -->
           <div class="table-card">
-            <div class="table-header"><span class="table-title">🎨 Top Creatives</span></div>
+            <div class="table-header"><span class="table-title">🎨 Top Creatives (Today)</span></div>
             <div style="padding:0;overflow-x:auto"><table class="dash-mini-table" id="dashTopCreatives" style="min-width:600px;width:100%"><thead><tr><th style="text-align:left;padding:8px 12px">Creative</th><th>Spend</th><th>Orders</th><th>Revenue</th><th>Profit</th><th>CPA</th></tr></thead><tbody></tbody></table></div>
           </div>
-        <!-- Orders Table -->
+        </div>
+        <!-- Orders Table (full width, outside grid) -->
         <div class="table-card" style="margin-top:20px">
-          <div class="table-header"><span class="table-title">📋 Orders</span></div>
+          <div class="table-header"><span class="table-title">📋 Orders (Today)</span></div>
           <div style="padding:0;overflow-x:auto"><table class="dash-mini-table" id="dashOrdersTable" style="width:100%">
             <thead><tr>
-              <th style="text-align:left;padding:8px 12px">Date</th>
+              <th style="text-align:center;padding:8px 12px;width:40px">#</th>
+              <th style="text-align:left">Date & Time</th>
               <th style="text-align:left">Country</th>
               <th style="text-align:left">Customer</th>
               <th style="text-align:left">Origin</th>
-              <th style="text-align:right">Revenue</th>
-              <th style="text-align:right">Profit</th>
+              <th style="text-align:right;padding-right:12px">Amount</th>
             </tr></thead>
             <tbody id="dashOrdersBody"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">Loading...</td></tr></tbody>
           </table></div>
         </div>
 
-        </div>
       </div>
     </div>
 
