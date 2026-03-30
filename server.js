@@ -3058,109 +3058,48 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
 
       // ═══ DASHBOARD API ═══
       if (urlPath === '/api/dashboard') {
-        // ALWAYS return cached data instantly if available (stale-while-revalidate)
-        if (_dashboardCache) {
-          const age = Date.now() - _dashboardCacheTime;
-          // If stale (>5min), trigger background refresh but still return cached
-          if (age > 300000) {
-            refreshDashboardInBackground();
-          }
-          return sendJSON(res, _dashboardCache);
-        }
+        // Dashboard reads ONLY from SQLite - no Meta API calls, instant response
         const today = getToday();
         const d7ago = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
         
-        // KPIs from campaigns
-        const campaignData = await getCampaigns(today, today);
-        let totalSpend = 0, totalPurchases = 0, totalOrders = 0, totalRevenue = 0, totalProfit = 0, activeCampaigns = 0;
-        for (const c of campaignData) {
-          const spend = parseFloat(c.insights?.spend || 0);
-          totalSpend += spend;
-          if (c.status === 'ACTIVE') activeCampaigns++;
-          const pAct = (c.insights?.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
-          totalPurchases += pAct ? parseInt(pAct.value) : 0;
-          totalOrders += c.wc?.orders || 0;
-          totalRevenue += c.wc?.revenueGross || 0;
-          totalProfit += c.wc?.profit || 0;
-        }
-        const avgCPA = totalPurchases > 0 ? totalSpend / totalPurchases : 0;
+        // Today's KPIs from wc_orders
+        const todayStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ?').get(today);
+        const fbOrders = db.prepare('SELECT COUNT(*) as orders FROM wc_orders WHERE order_date = ? AND is_fb_attributed = 1').get(today);
         
-        // Top 5 campaigns by spend today
-        const topCampaigns = campaignData
-          .filter(c => parseFloat(c.insights?.spend || 0) > 0)
-          .sort((a, b) => parseFloat(b.insights?.spend || 0) - parseFloat(a.insights?.spend || 0))
-          .slice(0, 5)
-          .map(c => {
-            const sp = parseFloat(c.insights?.spend || 0);
-            const pAct = (c.insights?.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
-            const p = pAct ? parseInt(pAct.value) : 0;
-            return { name: c.name, spend: Math.round(sp * 100) / 100, purchases: p, cpa: p > 0 ? Math.round(sp / p * 100) / 100 : 0, profit: c.wc?.profit || 0 };
-          });
+        // 7-day daily chart data
+        const chartData = db.prepare('SELECT order_date as date, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? GROUP BY order_date ORDER BY order_date').all(d7ago);
         
-        // Top 5 creatives by purchases (from ads)
-        let topCreatives = [];
-        try {
-          const allAds = await getAllAds(today, today);
-          const crMap = {};
-          for (const ad of allAds) {
-            const idMatch = (ad.name || '').match(/^(ID\d+)/i);
-            const crId = idMatch ? idMatch[1].toUpperCase() : null;
-            if (!crId) continue;
-            if (!crMap[crId]) crMap[crId] = { id: crId, spend: 0, purchases: 0 };
-            crMap[crId].spend += parseFloat(ad.insights?.spend || 0);
-            const pAct = (ad.insights?.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
-            crMap[crId].purchases += pAct ? parseInt(pAct.value) : 0;
-          }
-          topCreatives = Object.values(crMap).sort((a, b) => b.purchases - a.purchases).slice(0, 5)
-            .map(c => ({ id: c.id, spend: Math.round(c.spend * 100) / 100, purchases: c.purchases, cpa: c.purchases > 0 ? Math.round(c.spend / c.purchases * 100) / 100 : 0 }));
-        } catch(e) {}
+        // Top campaigns by orders (today)
+        const topCampaigns = db.prepare("SELECT utm_campaign as name, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ? AND utm_campaign IS NOT NULL AND utm_campaign != '' GROUP BY utm_campaign ORDER BY orders DESC LIMIT 5").all(today);
         
-        // Alerts
-        const alerts = [];
-        for (const c of campaignData) {
-          if (c.status !== 'ACTIVE') continue;
-          const sp = parseFloat(c.insights?.spend || 0);
-          const pAct = (c.insights?.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
-          const p = pAct ? parseInt(pAct.value) : 0;
-          const cpa = p > 0 ? sp / p : 0;
-          if (cpa > 25 && p > 0) alerts.push({ type: 'high_cpa', message: `${c.name.slice(0, 50)} — CPA €${cpa.toFixed(2)}`, campaignId: c.id });
-          if (sp > 20 && p === 0) alerts.push({ type: 'zero_purchases', message: `${c.name.slice(0, 50)} — €${sp.toFixed(2)} spent, 0 purchases`, campaignId: c.id });
-        }
+        // Top products
+        const topProducts = db.prepare("SELECT product_type, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue FROM wc_orders WHERE order_date = ? GROUP BY product_type ORDER BY orders DESC").all(today);
         
-        // 7-day spend/profit chart data
-        let chartData = [];
-        try {
-          const weekCampaigns = await getCampaigns(d7ago, today);
-          // Get daily insights
-          const dailyInsights = await metaGetAll(`${AD_ACCOUNT}/insights`, {
-            fields: 'spend,actions',
-            time_increment: 1,
-            time_range: JSON.stringify({ since: d7ago, until: today }),
-            limit: 100
-          });
-          for (const d of dailyInsights) {
-            const day = d.date_start;
-            const spend = parseFloat(d.spend || 0);
-            // Get WC profit for the day
-            const dayOrders = db.prepare('SELECT SUM(profit) as p, COUNT(*) as c FROM wc_orders WHERE order_date = ? AND is_fb_attributed = 1').get(day);
-            chartData.push({ date: day, spend: Math.round(spend * 100) / 100, profit: Math.round((dayOrders?.p || 0) * 100) / 100 - Math.round(spend * 100) / 100, orders: dayOrders?.c || 0 });
-          }
-        } catch(e) {}
+        // By country (today)
+        const byCountry = db.prepare('SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ? GROUP BY country ORDER BY orders DESC').all(today);
         
-        const _dashData = {
-          kpis: { spend: Math.round(totalSpend * 100) / 100, orders: totalOrders, revenue: Math.round(totalRevenue * 100) / 100, profit: Math.round(totalProfit * 100) / 100, cpa: Math.round(avgCPA * 100) / 100, activeCampaigns },
-          topCampaigns,
-          topCreatives,
-          alerts,
-          chartData,
+        // 7-day totals
+        const weekStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ?').get(d7ago);
+        
+        return sendJSON(res, {
+          kpis: {
+            orders: todayStats.orders || 0,
+            revenue: Math.round((todayStats.revenue || 0) * 100) / 100,
+            profit: Math.round((todayStats.profit || 0) * 100) / 100,
+            fbOrders: fbOrders?.orders || 0,
+            weekOrders: weekStats?.orders || 0,
+            weekRevenue: Math.round((weekStats?.revenue || 0) * 100) / 100,
+            weekProfit: Math.round((weekStats?.profit || 0) * 100) / 100
+          },
+          topCampaigns: topCampaigns.map(c => ({ name: c.name, orders: c.orders, revenue: Math.round(c.revenue * 100) / 100, profit: Math.round(c.profit * 100) / 100 })),
+          topProducts,
+          byCountry: byCountry.map(c => ({ country: c.country, orders: c.orders, revenue: Math.round(c.revenue * 100) / 100, profit: Math.round(c.profit * 100) / 100 })),
+          chartData: chartData.map(d => ({ date: d.date, orders: d.orders, revenue: Math.round(d.revenue * 100) / 100, profit: Math.round(d.profit * 100) / 100 })),
           date: today
-        };
-        _dashboardCache = _dashData;
-        _dashboardCacheTime = Date.now();
-        return sendJSON(res, _dashData);
+        });
       }
 
-      // ═══ ACTIVITY LOG API ═══
+            // ═══ ACTIVITY LOG API ═══
       if (urlPath === '/api/activity-log') {
         const page = parseInt(query.page) || 1;
         const limit = Math.min(parseInt(query.limit) || 50, 200);
