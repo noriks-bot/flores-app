@@ -5611,7 +5611,7 @@ function renderDashboard(data) {
   // FB KPI Cards
   document.getElementById('dashKpisFb').innerHTML = [
     { label: "FB Spend", value: '\u20ac' + (k.spend||0).toFixed(2), icon: 'fas fa-ad' },
-    { label: "FB Orders", value: k.fbOrders || 0, icon: 'fas fa-shopping-cart' },
+    { label: "FB Orders", value: (k.fbOrders || 0) + '<div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);margin-top:3px">FB Report: ' + (k.fbPixelPurchases || 0) + '</div>', icon: 'fas fa-shopping-cart' },
     { label: "FB Measured Orders", value: k.fbMeasuredOrders || 0, icon: 'fas fa-check-circle' },
     { label: "FB Unmeasured Orders", value: k.fbUnmeasuredOrders || 0, icon: 'fas fa-question-circle' },
     { label: "FB CPA", value: '\u20ac' + (k.fbCpa||0).toFixed(2), icon: 'fas fa-bullseye' },

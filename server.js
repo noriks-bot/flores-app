@@ -3367,6 +3367,14 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
 
         // FB KPI data
         const fbAttributedProfit = db.prepare('SELECT COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1').get(dashFrom, dashTo);
+        // FB pixel purchases from Meta API (what FB reports)
+        let fbPixelPurchases = 0;
+        if (Array.isArray(topCampaignsRaw)) {
+          for (const camp of topCampaignsRaw) {
+            const pAct = (camp.insights?.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
+            if (pAct) fbPixelPurchases += parseInt(pAct.value) || 0;
+          }
+        }
         const fbOrderCount = fbOrders?.orders || 0;
         const fbMeasuredResult = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo);
         const fbMeasuredOrders = fbMeasuredResult?.cnt || 0;
@@ -3460,6 +3468,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             revenue: Math.round((todayStats.revenue || 0) * 100) / 100,
             profit: Math.round(((todayStats.profit || 0) - fbSpendRange) * 100) / 100,
             fbOrders: fbOrderCount,
+            fbPixelPurchases,
             profitPerOrder: todayStats.orders > 0 ? Math.round(((todayStats.profit || 0) - fbSpendRange) / todayStats.orders * 100) / 100 : 0,
             fbProfitPerOrder: fbOrderCount > 0 ? Math.round(fbProfit / fbOrderCount * 100) / 100 : 0,
             ordersBySource: (() => { try { const rows = db.prepare("SELECT CASE WHEN is_fb_attributed = 1 THEN 'Facebook' WHEN utm_source = 'callcenter' THEN 'Call Center' WHEN (utm_source LIKE '%google%') AND (utm_medium = 'cpc' OR utm_medium = 'paid') THEN 'Google Paid' WHEN utm_source LIKE '%google%' THEN 'Google Organic' WHEN utm_source LIKE '%klaviyo%' OR utm_source LIKE '%email%' THEN 'Klaviyo' ELSE 'Direct' END as src, COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? GROUP BY src ORDER BY cnt DESC").all(dashFrom, dashTo); const m = {}; rows.forEach(r => m[r.src] = r.cnt); return m; } catch(e) { return {}; } })(),
