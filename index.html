@@ -5664,7 +5664,6 @@ function renderDashboard(data) {
       return '<tr><td>'+(i+1)+'</td><td>'+(o.date||'').slice(5).replace(/-/g,'.')+'</td><td>'+(fl[o.country]||'')+' '+(o.country||'')+'</td><td>'+(o.customer||'#'+o.id)+'</td><td><span style="background:'+bg+';color:#fff;padding:1px 6px;border-radius:3px;font-size:10px">'+(o.origin||'')+'</span></td><td style="text-align:right;font-weight:600">\u20ac'+(o.revenue||0).toFixed(2)+'</td></tr>';
     }).join('');
   } else if (obody) { obody.innerHTML = '<tr><td colspan="6">No orders</td></tr>'; }
-  }
 
   // Chart
   if (data.chartData && data.chartData.length > 0) {
