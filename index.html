@@ -1158,7 +1158,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <div class="dash-loading" id="dashLoading" style="text-align:center;padding:60px;color:var(--text-muted)"><i class="fas fa-spinner fa-spin"></i> Loading dashboard...</div>
       <div id="dashContent" style="display:none">
         <!-- KPI Cards -->
-        <div class="dash-kpis" id="dashKpis"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span></span><button onclick="refreshDashboard(this)" style="padding:6px 14px;border:1px solid #dadde1;background:#fff;border-radius:6px;cursor:pointer;font-size:12px;color:#65676b;display:flex;align-items:center;gap:5px"><i class="fas fa-sync-alt"></i> Refresh</button></div><div class="dash-kpis" id="dashKpis"></div>
         <!-- Quick Actions -->
         <div class="dash-quick-actions" style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
           <button class="dash-action-btn" onclick="navigateTo('bulk-uploader')"><i class="fas fa-layer-group"></i> Bulk Uploader</button>
@@ -5543,6 +5543,7 @@ async function toggleOptAds(adsetId, campaignId) {
 let dashboardLoaded = false;
 let dashChart = null;
 
+async function refreshDashboard(btn) {  if(btn){btn.disabled=true;btn.innerHTML="<i class=\"fas fa-sync-alt fa-spin\"></i> Refreshing...";}  try { await fetch("/api/dashboard-refresh",{method:"POST",credentials:"same-origin"}); } catch(e){}  dashboardLoaded=false;  await loadDashboard();  if(btn){btn.disabled=false;btn.innerHTML="<i class=\"fas fa-sync-alt\"></i> Refresh";}}
 async function loadDashboard() {
   document.getElementById('dashLoading').style.display = 'block';
   document.getElementById('dashContent').style.display = 'none';

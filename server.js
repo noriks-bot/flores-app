@@ -3092,6 +3092,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         }
       }
 
+      if (urlPath === "/api/dashboard-refresh" && req.method === "POST") {        try {          console.log("[DASH-API] Manual refresh triggered");          _dashboardCacheTime = 0;          await refreshDashboardInBackground();          syncDashData();          return sendJSON(res, { ok: true });        } catch(e) { return sendJSON(res, { ok: false, error: e.message }); }      }
       // ═══ DASHBOARD API ═══
       console.log("[DASH-API] Dashboard request received");
       if (urlPath === '/api/dashboard') {
