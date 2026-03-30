@@ -526,6 +526,34 @@ const boxerWords = /boxer|μπόξερ|μποξερ|bokser|boxerk|airflow|modal/
 const kompletWords = /komplet|bundle|σετ/i;
 const starterWords = /starter|εκκίνησ|start/i;
 
+
+// Origin classification — copied from dash (raketa) for consistency
+function classifySourceDash(meta, coupons) {
+    if (meta._call_center === 'yes') return 'Call Center';
+    if ((meta._wc_order_attribution_utm_source || '').toLowerCase() === 'callcenter') return 'Call Center';
+    const src = (meta._wc_order_attribution_utm_source || '').toLowerCase();
+    const med = (meta._wc_order_attribution_utm_medium || '').toLowerCase();
+    const stype = (meta._wc_order_attribution_source_type || '').toLowerCase();
+    const referrer = (meta._wc_order_attribution_referrer || '').toLowerCase();
+    const entry = (meta._wc_order_attribution_session_entry || '').toLowerCase();
+    if (src === 'fb' || src === 'ig' || src === 'an') return 'Facebook';
+    if (src.includes('facebook') || src.includes('instagram')) return 'Facebook';
+    if ((src === 'm.facebook.com' || src === 'l.facebook.com' || src === 'lm.facebook.com') && stype === 'referral') return 'Facebook';
+    if (src.includes('meta') && (med === 'cpc' || med === 'paid')) return 'Facebook';
+    if ((src === 'google' || src === 'google.com') && (med === 'cpc' || med === 'paid')) return 'Google Paid';
+    if (referrer.includes('gclid') || entry.includes('gclid')) return 'Google Paid';
+    if (src === 'google' || src === 'google.com') return 'Google Organic';
+    if (src === 'klaviyo' || med === 'email') return 'Klaviyo';
+    if (coupons && coupons.length > 0) {
+        const klaviyoCoupons = ['shop20', 'welcome', 'email'];
+        if (coupons.some(c => klaviyoCoupons.some(k => c.toLowerCase().includes(k)))) return 'Klaviyo';
+    }
+    if (referrer.includes('fbclid') || referrer.includes('utm_source=fb') || referrer.includes('utm_source=ig') || referrer.includes('facebook.com')) return 'Facebook';
+    if (entry.includes('fbclid') || entry.includes('utm_source=fb') || entry.includes('utm_source=ig')) return 'Facebook';
+    if (referrer.includes('google.com') && (referrer.includes('gclid') || referrer.includes('ads'))) return 'Google Paid';
+    if (referrer.includes('google.com')) return 'Google Organic';
+    return 'Direct';
+}
 function detectProductType(items) {
   let hasShirt = false, hasBoxer = false, hasKomplet = false, hasStarter = false;
   for (const i of items) {
@@ -663,15 +691,12 @@ async function syncCountry(country) {
         if (match) campaignId = match[1];
       }
 
-      // FB attribution: check all sources
-      const srcLower = utmSource.toLowerCase();
-      const isFB = srcLower.includes('facebook') || srcLower.includes('fb') ||
-                   srcLower.includes('ig') || srcLower.includes('meta') ||
-                   wcReferrer.includes('facebook.com') || wcReferrer.includes('fb.com') ||
-                   wcReferrer.includes('instagram.com') || wcReferrer.includes('fbclid') ||
-                   wcSessionEntry.includes('fbclid') ||
-                   (wcSessionEntry.includes('campaignid') && !wcReferrer.includes('google')) ||
-                   (!!floresCampaignId && !wcReferrer.includes('google'));  // campaignid from google is not FB
+      // Origin classification using dash logic
+      const orderMeta = {};
+      for (const m of meta) orderMeta[m.key] = m.value;
+      const coupons = (order.coupon_lines || []).map(cl => cl.code);
+      const orderOrigin = classifySourceDash(orderMeta, coupons);
+      const isFB = orderOrigin === 'Facebook';
 
       const calc = calculateOrderProfit(order, country);
       const ptype = detectProductType(order.line_items || []);
@@ -679,7 +704,7 @@ async function syncCountry(country) {
 
       const relevantMeta = {};
       for (const m of meta) {
-        if (m.key && (m.key.startsWith('_wc_order_attribution_') || m.key.startsWith('_flores_'))) {
+        if (m.key && (m.key.startsWith('_wc_order_attribution_') || m.key.startsWith('_flores_') || m.key === '_call_center')) {
           relevantMeta[m.key] = m.value;
         }
       }
@@ -3409,12 +3434,17 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         // Orders list for table
         const ordersList = db.prepare("SELECT wc_order_id, order_date, order_datetime, country, gross_eur, profit, utm_source, utm_medium, utm_campaign, is_fb_attributed, product_type, billing_name, billing_city, billing_email, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ? ORDER BY order_datetime DESC, wc_order_id DESC").all(dashFrom, dashTo);
         const ordersListFormatted = ordersList.map(o => {
+          // Use dash classification from raw_meta
           let origin = 'Direct';
-          if (o.is_fb_attributed === 1) origin = 'Facebook';
-          else if (o.utm_source === 'callcenter') origin = 'Call Center';
-          else if ((o.utm_source || '').includes('google') && (o.utm_medium === 'cpc' || o.utm_medium === 'paid')) origin = 'Google Paid';
-          else if ((o.utm_source || '').includes('google')) origin = 'Google Organic';
-          else if ((o.utm_source || '').includes('klaviyo') || (o.utm_source || '').includes('email')) origin = 'Klaviyo';
+          try {
+            const rawM = JSON.parse(o.raw_meta || '{}');
+            const coupons2 = [];
+            origin = classifySourceDash(rawM, coupons2);
+          } catch(eO) {
+            if (o.is_fb_attributed === 1) origin = 'Facebook';
+            else if (o.utm_source === 'callcenter') origin = 'Call Center';
+            else if ((o.utm_source || '').includes('google')) origin = 'Google Paid';
+          }
           const fbMeasured = o.is_fb_attributed === 1 ? (o.utm_campaign && o.utm_campaign !== '' && !o.utm_campaign.startsWith('google') ? 'Measured' : 'Not Measured') : null;
           const customer = (o.billing_name || '').trim() || '#' + o.wc_order_id;
           const datetime = (o.order_datetime || o.order_date || '').slice(0, 16);
