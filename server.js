@@ -3458,7 +3458,15 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           if (!orderDatetime2 || orderDatetime2.length < 11) {
             try { const mm2 = JSON.parse(o.raw_meta || '{}'); if (mm2.date_created) orderDatetime2 = mm2.date_created.replace('T',' ').slice(0,16); } catch(e6) {}
           }
-          return { id: o.wc_order_id, date: o.order_date, datetime: orderDatetime2, country: o.country, customer, email: o.billing_email || '', origin, fbMeasured, items, revenue: Math.round(o.gross_eur * 100) / 100, profit: Math.round(o.profit * 100) / 100 };
+          // Get campaign name from FB cache if utm_campaign exists
+          let campaignName = '';
+          if (o.utm_campaign && o.utm_campaign !== '') {
+            if (Array.isArray(topCampaignsRaw)) {
+              const fc = topCampaignsRaw.find(camp => camp.id === o.utm_campaign);
+              if (fc) campaignName = fc.name || '';
+            }
+          }
+          return { id: o.wc_order_id, date: o.order_date, datetime: orderDatetime2, country: o.country, customer, email: o.billing_email || '', origin, fbMeasured, items, campaign_name: campaignName, revenue: Math.round(o.gross_eur * 100) / 100, profit: Math.round(o.profit * 100) / 100 };
         });
 
         return sendJSON(res, {
