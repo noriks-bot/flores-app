@@ -5605,7 +5605,9 @@ function renderDashboard(data) {
     { label: "Revenue", value: '€' + (k.revenue||0).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}), icon: 'fas fa-euro-sign', color: '#10b981' },
     { label: "Profit", value: '€' + (k.profit||0).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}) + '<div style="font-size:12px;font-weight:700;color:#374151;margin-top:3px">€' + (k.profitPerOrder||0).toFixed(2) + '/order</div>', icon: 'fas fa-chart-line', color: k.profit >= 0 ? '#10b981' : '#ef4444' },
     { label: "CPA", value: '€' + (k.cpa||0).toFixed(2), icon: 'fas fa-bullseye', color: k.cpa < 15 ? '#10b981' : k.cpa < 25 ? '#f59e0b' : '#ef4444' },
-    { label: "Active Campaigns", value: k.activeCampaigns || 0, icon: 'fas fa-bullhorn', color: '#2563eb' }
+    { label: "Campaigns", value: k.campaigns || 0, icon: 'fas fa-bullhorn', color: '#2563eb' },
+    { label: "Adsets", value: k.adsets || 0, icon: 'fas fa-layer-group', color: '#7c3aed' },
+    { label: "Ads", value: k.ads || 0, icon: 'fas fa-ad', color: '#0891b2' }
   ].map(c => `<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="${c.icon}" style="margin-right:6px;color:${c.color}"></i>${c.label}</div><div class="dash-kpi-value" style="color:${c.color}">${c.value}</div></div>`).join('');
   
   // FB KPI Cards

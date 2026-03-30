@@ -3442,7 +3442,9 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             weekProfit: Math.round(((weekStats?.profit || 0) - fbSpend7d) * 100) / 100,
             spend: Math.round(fbSpendRange * 100) / 100,
             cpa: todayStats.orders > 0 ? Math.round((fbSpendRange / todayStats.orders) * 100) / 100 : 0,
-            activeCampaigns: Array.isArray(topCampaignsRaw) ? topCampaignsRaw.filter(c => c.status === "ACTIVE").length : 0,
+            campaigns: Array.isArray(topCampaignsRaw) ? topCampaignsRaw.filter(c => parseFloat(c.insights?.spend) > 0).length : 0,
+            adsets: await (async () => { try { let cnt = 0; for (const acct of Object.values(AD_ACCOUNTS_MAP)) { const ins = await metaGetAll(acct + '/insights', { level: 'adset', fields: 'spend', time_range: JSON.stringify({since:dashFrom,until:dashTo}), limit:'200' }); cnt += ins.filter(a => parseFloat(a.spend) > 0).length; } return cnt; } catch(e) { return 0; } })(),
+            ads: await (async () => { try { let cnt = 0; for (const acct of Object.values(AD_ACCOUNTS_MAP)) { const ins = await metaGetAll(acct + '/insights', { level: 'ad', fields: 'spend', time_range: JSON.stringify({since:dashFrom,until:dashTo}), limit:'500' }); cnt += ins.filter(a => parseFloat(a.spend) > 0).length; } return cnt; } catch(e) { return 0; } })(),
             weekSpend: Math.round(fbSpend7d * 100) / 100
           },
           topCampaigns: enrichedCampaigns,
