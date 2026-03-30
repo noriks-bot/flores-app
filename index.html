@@ -1197,6 +1197,22 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
             <div class="table-header"><span class="table-title">🎨 Top Creatives (Today)</span></div>
             <div style="padding:0;overflow-x:auto"><table class="dash-mini-table" id="dashTopCreatives" style="min-width:600px;width:100%"><thead><tr><th style="text-align:left;padding:8px 12px">Creative</th><th>Spend</th><th>Orders</th><th>Revenue</th><th>Profit</th><th>CPA</th></tr></thead><tbody></tbody></table></div>
           </div>
+        <!-- Orders Table -->
+        <div class="table-card" style="margin-top:20px">
+          <div class="table-header"><span class="table-title">📋 Orders (Today)</span></div>
+          <div style="padding:0;overflow-x:auto"><table class="dash-mini-table" id="dashOrdersTable" style="width:100%">
+            <thead><tr>
+              <th style="text-align:left;padding:8px 12px">Date</th>
+              <th style="text-align:left">Country</th>
+              <th style="text-align:left">Customer</th>
+              <th style="text-align:left">Origin</th>
+              <th style="text-align:right">Revenue</th>
+              <th style="text-align:right">Profit</th>
+            </tr></thead>
+            <tbody id="dashOrdersBody"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">Loading...</td></tr></tbody>
+          </table></div>
+        </div>
+
         </div>
       </div>
     </div>
@@ -5645,6 +5661,25 @@ function renderDashboard(data) {
     }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
   } catch(crErr) { console.error('Top Creatives render error:', crErr); crBody.innerHTML = '<tr><td colspan="6">Render error: ' + crErr.message + '</td></tr>'; }
   
+  // Orders table
+  var obody = document.getElementById('dashOrdersBody');
+  if (obody && data.orders_list && data.orders_list.length > 0) {
+    obody.innerHTML = data.orders_list.map(function(o) {
+      var profitColor = o.profit >= 0 ? '#10b981' : '#ef4444';
+      var origin = o.origin || '—';
+      return '<tr>' +
+        '<td style="text-align:left;padding:6px 12px;font-size:12px;white-space:nowrap">' + (o.date || '—') + '</td>' +
+        '<td style="text-align:left;font-size:12px">' + (o.country || '—') + '</td>' +
+        '<td style="text-align:left;font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (o.customer || '—') + '</td>' +
+        '<td style="text-align:left;font-size:12px">' + origin + '</td>' +
+        '<td style="text-align:right;font-size:12px">€' + (o.revenue||0).toFixed(2) + '</td>' +
+        '<td style="text-align:right;font-size:12px;font-weight:600;color:' + profitColor + '">€' + (o.profit||0).toFixed(2) + '</td>' +
+        '</tr>';
+    }).join('');
+  } else if (obody) {
+    obody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">No orders</td></tr>';
+  }
+
   // Chart
   if (data.chartData && data.chartData.length > 0) {
     const ctx = document.getElementById('dashChart').getContext('2d');

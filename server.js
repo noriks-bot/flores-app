@@ -3386,7 +3386,21 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           }
         }
 
+        // Orders list for table
+        const ordersList = db.prepare("SELECT wc_order_id, order_date, country, gross_eur, profit, utm_source, utm_medium, is_fb_attributed, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ? ORDER BY order_date DESC, wc_order_id DESC").all(dashFrom, dashTo);
+        const ordersListFormatted = ordersList.map(o => {
+          let origin = 'Organic';
+          if (o.is_fb_attributed === 1) origin = 'Facebook';
+          else if (o.utm_source === 'callcenter') origin = 'Call Center';
+          else if ((o.utm_source || '').includes('google') || o.utm_medium === 'cpc') origin = 'Google';
+          else if ((o.utm_source || '').includes('klaviyo') || (o.utm_source || '').includes('email')) origin = 'Klaviyo';
+          let customer = '';
+          try { const m = JSON.parse(o.raw_meta || '{}'); customer = (m.billing?.first_name || '') + ' ' + (m.billing?.last_name || ''); customer = customer.trim(); } catch(e) {}
+          return { id: o.wc_order_id, date: o.order_date, country: o.country, customer: customer || '#' + o.wc_order_id, origin, revenue: Math.round(o.gross_eur * 100) / 100, profit: Math.round(o.profit * 100) / 100 };
+        });
+
         return sendJSON(res, {
+          orders_list: ordersListFormatted,
           kpis: {
             orders: todayStats.orders || 0,
             revenue: Math.round((todayStats.revenue || 0) * 100) / 100,
