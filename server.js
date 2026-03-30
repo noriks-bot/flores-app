@@ -3148,7 +3148,8 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           }
         } catch(e) { console.warn('Dashboard FB spend read error:', e.message); }
         
-        // Enrich top campaigns with spend/purchases from campaign cache
+        // Enrich top campaigns with FB data
+        let enrichedCampaigns = topCampaigns.map(c => ({ name: c.name, orders: c.orders, revenue: Math.round(c.revenue * 100) / 100, profit: Math.round(c.profit * 100) / 100 }));
         try {          const campData = await getCampaigns(today, today);          if (Array.isArray(campData)) {            enrichedCampaigns = enrichedCampaigns.map(c => {              const fbCamp = campData.find(fb => fb.id === c.name);              if (fbCamp) {                const spend = parseFloat(fbCamp.insights?.spend) || 0;                return { ...c, displayName: fbCamp.name, spend: Math.round(spend * 100) / 100, cpa: c.orders > 0 ? Math.round(spend / c.orders * 100) / 100 : 0 };              }              return c;            });          }        } catch(e) { /* graceful */ }
         
         return sendJSON(res, {
