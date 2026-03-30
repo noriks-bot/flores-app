@@ -4545,23 +4545,23 @@ function renderOptimizer() {
     return;
   }
   // Auto-expand multi-country campaigns when country filter is active
-  if (optCountry !== 'ALL') {
-    for (const c of filtered) {
-      const name = (c.name||'').toUpperCase();
-      const ccMatch = name.match(/CC:([A-Z+]+)/);
-      if (ccMatch && ccMatch[1].includes('+') && !optExpanded[c.id]) {
-        optExpanded[c.id] = { adsets: [], loading: true };
-        const {from,to} = getOptDateRange();
-        fetch('/api/adsets?campaign_id='+c.id+'&date_from='+from+'&date_to='+to)
-          .then(r=>r.json()).then(adsets => {
-            if (!adsets.error && optExpanded[c.id]) {
-              optExpanded[c.id] = { adsets };
-              renderOptimizer();
-            }
-          }).catch(()=>{});
-      }
-    }
-  }
+//  if (optCountry !== 'ALL') {
+//    for (const c of filtered) {
+//      const name = (c.name||'').toUpperCase();
+//      const ccMatch = name.match(/CC:([A-Z+]+)/);
+//      if (ccMatch && ccMatch[1].includes('+') && !optExpanded[c.id]) {
+//        optExpanded[c.id] = { adsets: [], loading: true };
+//        const {from,to} = getOptDateRange();
+//        fetch('/api/adsets?campaign_id='+c.id+'&date_from='+from+'&date_to='+to)
+//          .then(r=>r.json()).then(adsets => {
+//            if (!adsets.error && optExpanded[c.id]) {
+//              optExpanded[c.id] = { adsets };
+//              renderOptimizer();
+//            }
+//          }).catch(()=>{});
+//      }
+//    }
+//  }
   let html = '';
   for (const c of filtered) {
     const spend = parseFloat(c.insights?.spend||0);
