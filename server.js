@@ -650,7 +650,10 @@ async function syncCountry(country) {
       const wcSessionEntry = (meta.find(m => m.key === '_wc_order_attribution_session_entry')?.value || '').toLowerCase();
 
       // Best values (flores plugin takes priority)
-      const utmSource = floresUtmSource || wcUtmSource;
+      let utmSource = floresUtmSource || wcUtmSource;
+      // If flores says "direct" but WC has a more specific source, use WC
+      if (utmSource === 'direct' && wcUtmSource && wcUtmSource !== 'direct') utmSource = wcUtmSource;
+      if (!utmSource && wcReferrer.includes('google')) utmSource = 'google';
       const utmMedium = floresUtmMedium || '';
 
       // Campaign ID: flores plugin > WC utm_campaign > session entry extraction
@@ -666,8 +669,9 @@ async function syncCountry(country) {
                    srcLower.includes('ig') || srcLower.includes('meta') ||
                    wcReferrer.includes('facebook.com') || wcReferrer.includes('fb.com') ||
                    wcReferrer.includes('instagram.com') || wcReferrer.includes('fbclid') ||
-                   wcSessionEntry.includes('fbclid') || wcSessionEntry.includes('campaignid') ||
-                   !!floresCampaignId;  // If flores plugin captured a campaign ID, it's from FB
+                   wcSessionEntry.includes('fbclid') ||
+                   (wcSessionEntry.includes('campaignid') && !wcReferrer.includes('google')) ||
+                   (!!floresCampaignId && !wcReferrer.includes('google'));  // campaignid from google is not FB
 
       const calc = calculateOrderProfit(order, country);
       const ptype = detectProductType(order.line_items || []);
