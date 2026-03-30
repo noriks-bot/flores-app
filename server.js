@@ -3400,13 +3400,11 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         const ordersList = db.prepare("SELECT wc_order_id, order_date, order_datetime, country, gross_eur, profit, utm_source, utm_medium, is_fb_attributed, billing_name, billing_city, billing_email, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ? ORDER BY order_datetime DESC, wc_order_id DESC").all(dashFrom, dashTo);
         const ordersListFormatted = ordersList.map(o => {
           let origin = 'Organic';
-          if (o.is_fb_attributed === 1) {
-            const hasUtm = o.utm_campaign && o.utm_campaign !== '' && !o.utm_campaign.startsWith('google');
-            origin = hasUtm ? 'Facebook (Measured)' : 'Facebook (Not Measured)';
-          }
+          if (o.is_fb_attributed === 1) origin = 'Facebook';
           else if (o.utm_source === 'callcenter') origin = 'Call Center';
           else if ((o.utm_source || '').includes('google') || o.utm_medium === 'cpc') origin = 'Google';
           else if ((o.utm_source || '').includes('klaviyo') || (o.utm_source || '').includes('email')) origin = 'Klaviyo';
+          const fbMeasured = o.is_fb_attributed === 1 ? (o.utm_campaign && o.utm_campaign !== '' && !o.utm_campaign.startsWith('google') ? 'Measured' : 'Not Measured') : null;
           const customer = (o.billing_name || '').trim() || '#' + o.wc_order_id;
           const datetime = (o.order_datetime || o.order_date || '').slice(0, 16);
           return { id: o.wc_order_id, date: o.order_date, datetime, country: o.country, customer, email: o.billing_email || '', origin, revenue: Math.round(o.gross_eur * 100) / 100, profit: Math.round(o.profit * 100) / 100 };
