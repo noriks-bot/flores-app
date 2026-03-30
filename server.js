@@ -3397,7 +3397,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         }
 
         // Orders list for table
-        const ordersList = db.prepare("SELECT wc_order_id, order_date, order_datetime, country, gross_eur, profit, utm_source, utm_medium, is_fb_attributed, billing_name, billing_city, billing_email FROM wc_orders WHERE order_date >= ? AND order_date <= ? ORDER BY order_datetime DESC, wc_order_id DESC").all(dashFrom, dashTo);
+        const ordersList = db.prepare("SELECT wc_order_id, order_date, order_datetime, country, gross_eur, profit, utm_source, utm_medium, is_fb_attributed, billing_name, billing_city, billing_email, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ? ORDER BY order_datetime DESC, wc_order_id DESC").all(dashFrom, dashTo);
         const ordersListFormatted = ordersList.map(o => {
           let origin = 'Organic';
           if (o.is_fb_attributed === 1) origin = 'Facebook';
