@@ -1210,7 +1210,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <div style="margin-top:20px;background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px">
           <div style="padding:14px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border-color)">📋 Orders</div>
           <table id="dashOrdersTable" border="0" cellpadding="4" cellspacing="0" style="width:100%;font-size:12px">
-            <tr><th>#</th><th>Date</th><th>Country</th><th>Customer</th><th>Items</th><th>Origin</th><th style="text-align:right">Amount</th></tr>
+            <tr><th>#</th><th>Date</th><th>Country</th><th>Origin</th><th>Customer</th><th>Items</th><th style="text-align:right">Profit</th><th style="text-align:right">Amount</th></tr>
             <tbody id="dashOrdersBody"></tbody>
           </table>
         </div>
@@ -5671,9 +5671,10 @@ function renderDashboard(data) {
       var bg = oc[o.origin]||'#6b7280';
       var dt = o.datetime || o.date || '';
       var dateStr = dt.length >= 16 ? dt.slice(0,16).replace('T',' ') : dt;
-      return '<tr><td>'+(i+1)+'</td><td style="white-space:nowrap">'+dateStr+'</td><td>'+(fl[o.country]||'')+' '+(o.country||'')+'</td><td>'+(o.customer||'#'+o.id)+'</td><td style="font-size:11px;color:#6b7280">'+(o.items||'')+'</td><td><span style="background:'+bg+';color:#fff;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600">'+(o.origin||'')+'</span>'+(o.fbMeasured ? ' <span style="font-size:9px;padding:1px 4px;border-radius:3px;background:'+(o.fbMeasured==='Measured'?'#dcfce7':'#fef3c7')+';color:'+(o.fbMeasured==='Measured'?'#166534':'#92400e')+'">'+o.fbMeasured+'</span>' : '')+'</td><td style="text-align:right;font-weight:600">'+(o.revenue||0).toFixed(2)+' EUR</td></tr>';
+      var pfColor = o.profit >= 0 ? '#10b981' : '#ef4444';
+      return '<tr><td>'+(i+1)+'</td><td style="white-space:nowrap">'+dateStr+'</td><td>'+(fl[o.country]||'')+' '+(o.country||'')+'</td><td><span style="background:'+bg+';color:#fff;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600">'+(o.origin||'')+'</span>'+(o.fbMeasured ? ' <span style="font-size:9px;padding:1px 4px;border-radius:3px;background:'+(o.fbMeasured==='Measured'?'#dcfce7':'#fef3c7')+';color:'+(o.fbMeasured==='Measured'?'#166534':'#92400e')+'">'+o.fbMeasured+'</span>' : '')+'</td><td>'+(o.customer||'#'+o.id)+'</td><td style="font-size:11px;color:#6b7280">'+(o.items||'')+'</td><td style="text-align:right;color:'+pfColor+';font-weight:600">'+(o.profit||0).toFixed(2)+' EUR</td><td style="text-align:right;font-weight:600">'+(o.revenue||0).toFixed(2)+' EUR</td></tr>';
     }).join('');
-  } else if (obody) { obody.innerHTML = '<tr><td colspan="7">No orders</td></tr>'; }
+  } else if (obody) { obody.innerHTML = '<tr><td colspan="8">No orders</td></tr>'; }
 
   // Chart
   if (data.chartData && data.chartData.length > 0) {
