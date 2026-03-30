@@ -1201,19 +1201,9 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <!-- Orders Table (full width, outside grid) -->
         <div class="table-card" style="margin-top:20px">
           <div class="table-header"><span class="table-title">📋 Orders</span></div>
-          <div style="padding:0"><table id="dashOrdersTable" style="width:100%;border-collapse:collapse;font-size:12px">
-            
-            <thead>
-              <tr style="border-bottom:1px solid #e5e7eb">
-                <th style="text-align:center;padding:6px 2px;font-size:11px;font-weight:600;color:#6b7280">#</th>
-                <th style="text-align:left;padding:6px 2px;font-size:11px;font-weight:600;color:#6b7280">Date</th>
-                <th style="text-align:left;padding:6px 2px;font-size:11px;font-weight:600;color:#6b7280">Country</th>
-                <th style="text-align:left;padding:6px 4px;font-size:11px;font-weight:600;color:#6b7280">Customer</th>
-                <th style="text-align:left;padding:6px 2px;font-size:11px;font-weight:600;color:#6b7280">Origin</th>
-                <th style="text-align:right;padding:6px 6px;font-size:11px;font-weight:600;color:#6b7280">Amount</th>
-              </tr>
-            </thead>
-            <tbody id="dashOrdersBody"><tr><td colspan="6" style="text-align:center;padding:20px;color:#9ca3af">Loading...</td></tr></tbody>
+          <div><table id="dashOrdersTable" style="width:100%">
+            <thead><tr><th>#</th><th>Date</th><th>Country</th><th>Customer</th><th>Origin</th><th style="text-align:right">Amount</th></tr></thead>
+            <tbody id="dashOrdersBody"></tbody>
           </table></div>
         </div>
 
@@ -5667,27 +5657,13 @@ function renderDashboard(data) {
   // Orders table
   var obody = document.getElementById('dashOrdersBody');
   if (obody && data.orders_list && data.orders_list.length > 0) {
-    var flags = {HR:'\ud83c\udded\ud83c\uddf7',CZ:'\ud83c\udde8\ud83c\uddff',PL:'\ud83c\uddf5\ud83c\uddf1',GR:'\ud83c\uddec\ud83c\uddf7',SK:'\ud83c\uddf8\ud83c\uddf0',IT:'\ud83c\uddee\ud83c\uddf9',HU:'\ud83c\udded\ud83c\uddfa'};
-    var originStyle = function(o) {
-      var colors = {Facebook:'#1877f2',CallCenter:'#f59e0b','Call Center':'#f59e0b',Google:'#34a853',Organic:'#6b7280',Klaviyo:'#6b21a8'};
-      var bg = colors[o] || '#6b7280';
-      return 'display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;background:' + bg + ';color:#fff;white-space:nowrap';
-    };
-    obody.innerHTML = data.orders_list.map(function(o, i) {
-      var dt = (o.date || '').slice(5).replace(/-/g,'.');
-      var flag = flags[o.country] || '';
-      var name = o.customer || '#' + o.id;
-      return '<tr style="border-bottom:1px solid #f3f4f6">' +
-        '<td style="text-align:center;padding:5px 2px;color:#9ca3af;font-size:11px;white-space:nowrap">' + (i+1) + '</td>' +
-        '<td style="padding:5px 2px;font-size:11px;color:#6b7280;white-space:nowrap">' + dt + '</td>' +
-        '<td style="padding:5px 2px;font-size:11px;white-space:nowrap">' + flag + (o.country||'') + '</td>' +
-        '<td style="padding:5px 4px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + name + '</td>' +
-        '<td style="padding:5px 2px;white-space:nowrap"><span style="' + originStyle(o.origin) + '">' + (o.origin||'') + '</span></td>' +
-        '<td style="text-align:right;padding:5px 6px;font-size:12px;font-weight:600;white-space:nowrap">\u20ac' + (o.revenue||0).toFixed(2) + '</td>' +
-        '</tr>';
+    var fl = {HR:'\ud83c\udded\ud83c\uddf7',CZ:'\ud83c\udde8\ud83c\uddff',PL:'\ud83c\uddf5\ud83c\uddf1',GR:'\ud83c\uddec\ud83c\uddf7',SK:'\ud83c\uddf8\ud83c\uddf0',IT:'\ud83c\uddee\ud83c\uddf9',HU:'\ud83c\udded\ud83c\uddfa'};
+    var oc = {Facebook:'#1877f2','Call Center':'#f59e0b',Google:'#34a853',Organic:'#6b7280',Klaviyo:'#6b21a8'};
+    obody.innerHTML = data.orders_list.map(function(o,i){
+      var bg = oc[o.origin]||'#6b7280';
+      return '<tr><td>'+(i+1)+'</td><td>'+(o.date||'').slice(5).replace(/-/g,'.')+'</td><td>'+(fl[o.country]||'')+' '+(o.country||'')+'</td><td>'+(o.customer||'#'+o.id)+'</td><td><span style="background:'+bg+';color:#fff;padding:1px 6px;border-radius:3px;font-size:10px">'+(o.origin||'')+'</span></td><td style="text-align:right;font-weight:600">\u20ac'+(o.revenue||0).toFixed(2)+'</td></tr>';
     }).join('');
-  } else if (obody) {
-    obody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#9ca3af">No orders</td></tr>';
+  } else if (obody) { obody.innerHTML = '<tr><td colspan="6">No orders</td></tr>'; }
   }
 
   // Chart
