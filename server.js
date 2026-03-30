@@ -679,6 +679,12 @@ async function syncCountry(country) {
           relevantMeta[m.key] = m.value;
         }
       }
+      // Store line_items summary and date_created for display
+      relevantMeta.line_items = (order.line_items || []).map(li => ({ name: li.name, quantity: li.quantity, sku: li.sku }));
+      relevantMeta.date_created = order.date_created || '';
+      relevantMeta.billing_email = order.billing?.email || '';
+      {
+      }
 
       upsertOrder.run({
         country,
@@ -3407,8 +3413,9 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           const fbMeasured = o.is_fb_attributed === 1 ? (o.utm_campaign && o.utm_campaign !== '' && !o.utm_campaign.startsWith('google') ? 'Measured' : 'Not Measured') : null;
           const customer = (o.billing_name || '').trim() || '#' + o.wc_order_id;
           const datetime = (o.order_datetime || o.order_date || '').slice(0, 16);
-          const typeLabels = {shirts:'T-Shirts',boxers:'Boxers',kompleti:'Komplet',socks:'Socks'};
-          const items = typeLabels[o.product_type] || o.product_type || '';
+          let items = '';
+          try { const mm = JSON.parse(o.raw_meta || '{}'); if (mm.line_items && mm.line_items.length) items = mm.line_items.map(li => (li.quantity||1) + 'x ' + (li.name||'').slice(0,30)).join(', '); } catch(e5) {}
+          if (!items) { const tl = {shirts:'T-Shirts',boxers:'Boxers',kompleti:'Komplet',socks:'Socks'}; items = tl[o.product_type] || o.product_type || ''; }
           let orderDatetime2 = datetime;
           if (!orderDatetime2 || orderDatetime2.length < 11) {
             try { const mm2 = JSON.parse(o.raw_meta || '{}'); if (mm2.date_created) orderDatetime2 = mm2.date_created.replace('T',' ').slice(0,16); } catch(e6) {}
