@@ -3367,16 +3367,10 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
 
         // FB KPI data
         const fbAttributedProfit = db.prepare('SELECT COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1').get(dashFrom, dashTo);
-        let fbMeasuredOrders = 0;
-        if (Array.isArray(topCampaignsRaw)) {
-          for (const camp of topCampaignsRaw) {
-            const pAct = (camp.insights?.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
-            if (pAct) fbMeasuredOrders += parseInt(pAct.value) || 0;
-          }
-        }
         const fbOrderCount = fbOrders?.orders || 0;
-        fbMeasuredOrders = Math.min(fbMeasuredOrders, fbOrderCount);
-        const fbUnmeasuredOrders = Math.max(0, fbOrderCount - fbMeasuredOrders);
+        const fbMeasuredResult = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo);
+        const fbMeasuredOrders = fbMeasuredResult?.cnt || 0;
+        const fbUnmeasuredOrders = fbOrderCount - fbMeasuredOrders;
         const fbCpa = fbOrderCount > 0 ? Math.round((fbSpendRange / fbOrderCount) * 100) / 100 : 0;
         const fbProfit = Math.round(((fbAttributedProfit.profit || 0) - fbSpendRange) * 100) / 100;
 
