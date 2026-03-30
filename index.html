@@ -1158,6 +1158,9 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <div class="dash-loading" id="dashLoading" style="text-align:center;padding:60px;color:var(--text-muted)"><i class="fas fa-spinner fa-spin"></i> Loading dashboard...</div>
       <div id="dashContent" style="display:none">
         <!-- KPI Cards -->
+        <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+          <button onclick="refreshDashboard(this)" style="padding:8px 18px;border:none;background:#2563eb;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#fff;display:flex;align-items:center;gap:6px"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
         <div class="dash-kpis" id="dashKpis"></div>
         <!-- Quick Actions -->
         <div class="dash-quick-actions" style="display:none">
@@ -5543,6 +5546,13 @@ async function toggleOptAds(adsetId, campaignId) {
 /* ═══ DASHBOARD ═══ */
 
 let dashChart = null;
+
+async function refreshDashboard(btn) {
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="fas fa-sync-alt fa-spin"></i> Refreshing...';}
+  dashboardLoaded=false;
+  await loadDashboard();
+  if(btn){btn.disabled=false;btn.innerHTML='<i class="fas fa-sync-alt"></i> Refresh';}
+}
 
 async function loadDashboard() {
   document.getElementById('dashLoading').style.display = 'block';
