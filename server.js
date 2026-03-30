@@ -3194,33 +3194,39 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           enrichedCampaigns = enrichedCampaigns.slice(0, 10);
         }
 
-        // Top creatives — ad-level from Meta Insights API
+        // Top creatives — ad-level: FB spend + WC orders/revenue/profit
         let topCreativesData = [];
         try {
           const adsInsights = await metaGetAll(AD_ACCOUNT + '/insights', {
             level: 'ad',
             fields: 'ad_name,ad_id,spend,actions,action_values',
-            time_range: JSON.stringify({since: today, until: today}),
+            time_range: JSON.stringify({since: dashFrom, until: dashTo}),
             sort: 'spend_descending',
-            limit: '10'
+            limit: '50'
           });
+          // Get WC orders per ad_id from SQLite
+          const wcAdOrders = db.prepare("SELECT ad_id, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND ad_id IS NOT NULL AND ad_id != '' GROUP BY ad_id").all(dashFrom, dashTo);
+          const wcAdMap = {};
+          for (const row of wcAdOrders) { wcAdMap[row.ad_id] = row; }
+          
           for (const ad of (adsInsights || [])) {
             const spend = parseFloat(ad.spend) || 0;
             if (spend <= 0) continue;
             const pAct = (ad.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
             const purchases = pAct ? parseInt(pAct.value) : 0;
-            const rvAct = (ad.action_values || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
-            const revenue = rvAct ? Math.round(parseFloat(rvAct.value) * 100) / 100 : 0;
-            const profit = Math.round((revenue - spend) * 100) / 100;
+            const wc = wcAdMap[ad.ad_id] || {};
+            const orders = wc.orders || purchases;
+            const revenue = wc.revenue ? Math.round(wc.revenue * 100) / 100 : 0;
+            const profit = Math.round(((wc.profit || 0) - spend) * 100) / 100;
             topCreativesData.push({
               id: ad.ad_id,
               name: ad.ad_name,
               spend: Math.round(spend * 100) / 100,
               purchases,
-              orders: purchases,
+              orders,
               revenue,
               profit,
-              cpa: purchases > 0 ? Math.round(spend / purchases * 100) / 100 : 0
+              cpa: orders > 0 ? Math.round(spend / orders * 100) / 100 : 0
             });
           }
           topCreativesData.sort((a, b) => b.purchases - a.purchases || b.spend - a.spend);
