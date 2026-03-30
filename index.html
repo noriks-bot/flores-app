@@ -2441,6 +2441,7 @@ function navigateTo(section) {
     initAIHintsIfNeeded();
   }
   // Auto-load dashboard
+  if (section === 'ads-manager') { loadData(); }
   if (section === 'dashboard' && !dashboardLoaded) {
     loadDashboard();
   }
@@ -3719,7 +3720,7 @@ function applySearchFilter() {
   }
 }
 
-loadData();
+// loadData(); // Moved to navigateTo ads-manager
 
 /* ═══ CREATIVE REPORTING ═══ */
 let crData = null;
