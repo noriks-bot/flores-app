@@ -3331,23 +3331,23 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         }
         const fbOrderCount = fbOrders?.orders || 0;
         const fbUnmeasuredOrders = Math.max(0, fbOrderCount - fbMeasuredOrders);
-        const fbCpa = fbOrderCount > 0 ? Math.round((fbSpendToday / fbOrderCount) * 100) / 100 : 0;
+        const fbCpa = fbOrderCount > 0 ? Math.round((fbSpendRange / fbOrderCount) * 100) / 100 : 0;
         const fbProfit = Math.round(((fbAttributedProfit.profit || 0) - fbSpendRange) * 100) / 100;
 
         // Alerts
         const alerts = [];
         // Global CPA alert
-        if (fbSpendToday > 0 && todayStats.orders > 0) {
-          const todayCPA = fbSpendToday / todayStats.orders;
+        if (fbSpendRange > 0 && todayStats.orders > 0) {
+          const todayCPA = fbSpendRange / todayStats.orders;
           if (todayCPA > 25) alerts.push({ type: 'high_cpa', message: 'CPA today is €' + todayCPA.toFixed(2) + ' — above €25 threshold' });
         }
         // Global ROAS alert
-        if (fbSpendToday > 50 && todayStats.revenue > 0) {
-          const roas = todayStats.revenue / fbSpendToday;
+        if (fbSpendRange > 50 && todayStats.revenue > 0) {
+          const roas = todayStats.revenue / fbSpendRange;
           if (roas < 1.5) alerts.push({ type: 'low_roas', message: 'ROAS today is ' + roas.toFixed(2) + 'x — below 1.5x threshold' });
         }
         // Global no-orders alert
-        if (fbSpendToday > 100 && todayStats.orders === 0) {
+        if (fbSpendRange > 100 && todayStats.orders === 0) {
           alerts.push({ type: 'no_orders', message: '€' + fbSpendToday.toFixed(0) + ' spent today with 0 orders' });
         }
         // Per-campaign high CPA alert
@@ -3416,8 +3416,8 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             weekOrders: weekStats?.orders || 0,
             weekRevenue: Math.round((weekStats?.revenue || 0) * 100) / 100,
             weekProfit: Math.round(((weekStats?.profit || 0) - fbSpend7d) * 100) / 100,
-            spend: Math.round(fbSpendToday * 100) / 100,
-            cpa: todayStats.orders > 0 ? Math.round((fbSpendToday / todayStats.orders) * 100) / 100 : 0,
+            spend: Math.round(fbSpendRange * 100) / 100,
+            cpa: todayStats.orders > 0 ? Math.round((fbSpendRange / todayStats.orders) * 100) / 100 : 0,
             activeCampaigns: Array.isArray(topCampaignsRaw) ? topCampaignsRaw.filter(c => c.status === "ACTIVE").length : 0,
             weekSpend: Math.round(fbSpend7d * 100) / 100
           },
