@@ -5671,7 +5671,7 @@ function renderDashboard(data) {
       var bg = oc[o.origin]||'#6b7280';
       var dt = o.datetime || o.date || '';
       var dateStr = dt.length >= 16 ? dt.slice(0,16).replace('T',' ') : dt;
-      return '<tr><td>'+(i+1)+'</td><td style="white-space:nowrap">'+dateStr+'</td><td>'+(fl[o.country]||'')+' '+(o.country||'')+'</td><td>'+(o.customer||'#'+o.id)+'</td><td style="font-size:11px;color:#6b7280">'+(o.items||'')+'</td><td><span style="background:'+bg+';color:#fff;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600">'+(o.origin||'')+'</span></td><td style="text-align:right;font-weight:600">'+(o.revenue||0).toFixed(2)+' EUR</td></tr>';
+      return '<tr><td>'+(i+1)+'</td><td style="white-space:nowrap">'+dateStr+'</td><td>'+(fl[o.country]||'')+' '+(o.country||'')+'</td><td>'+(o.customer||'#'+o.id)+'</td><td style="font-size:11px;color:#6b7280">'+(o.items||'')+'</td><td><span style="background:'+bg+';color:#fff;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600">'+(o.origin||'')+'</span>'+(o.fbMeasured ? ' <span style="font-size:9px;padding:1px 4px;border-radius:3px;background:'+(o.fbMeasured==='Measured'?'#dcfce7':'#fef3c7')+';color:'+(o.fbMeasured==='Measured'?'#166534':'#92400e')+'">'+o.fbMeasured+'</span>' : '')+'</td><td style="text-align:right;font-weight:600">'+(o.revenue||0).toFixed(2)+' EUR</td></tr>';
     }).join('');
   } else if (obody) { obody.innerHTML = '<tr><td colspan="7">No orders</td></tr>'; }
 
