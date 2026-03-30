@@ -3243,13 +3243,25 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         // Top creatives — ad-level: FB spend + WC orders/revenue/profit
         let topCreativesData = [];
         try {
-          const adsInsights = await metaGetAll(AD_ACCOUNT + '/insights', {
+          let adsInsights = await metaGetAll(AD_ACCOUNT + '/insights', {
             level: 'ad',
             fields: 'ad_name,ad_id,spend,actions,action_values',
             time_range: JSON.stringify({since: dashFrom, until: dashTo}),
             sort: 'spend_descending',
             limit: '50'
           });
+          // Also fetch from second ad account
+          for (const acct of Object.values(AD_ACCOUNTS_MAP)) {
+            if (acct === AD_ACCOUNT) continue;
+            try {
+              const ads2 = await metaGetAll(acct + '/insights', {
+                level: 'ad', fields: 'ad_name,ad_id,spend,actions,action_values',
+                time_range: JSON.stringify({since: dashFrom, until: dashTo}),
+                sort: 'spend_descending', limit: '50'
+              });
+              adsInsights = adsInsights.concat(ads2);
+            } catch(e) {}
+          }
           // Get WC orders per ad_id from SQLite
           const wcAdOrders = db.prepare("SELECT ad_id, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND ad_id IS NOT NULL AND ad_id != '' GROUP BY ad_id").all(dashFrom, dashTo);
           const wcAdMap = {};
@@ -3257,11 +3269,12 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           
           for (const ad of (adsInsights || [])) {
             const spend = parseFloat(ad.spend) || 0;
-            if (spend <= 0) continue;
             const pAct = (ad.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
             const purchases = pAct ? parseInt(pAct.value) : 0;
+            const hasPurchases = purchases > 0;
+            if (spend <= 0 && !hasPurchases) continue;
             const wc = wcAdMap[ad.ad_id] || {};
-            const orders = wc.orders || purchases;
+            const orders = Math.max(wc.orders || 0, purchases);
             const revenue = wc.revenue ? Math.round(wc.revenue * 100) / 100 : 0;
             const profit = Math.round(((wc.profit || 0) - spend) * 100) / 100;
             topCreativesData.push({
