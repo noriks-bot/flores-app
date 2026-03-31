@@ -2831,6 +2831,9 @@ function makeRow(item,level) {
     const ppo=wc.profit/wc.orders;
     ppoCls=ppo>=0?'cell-pl-green':'cell-pl-red';
     ppoHtml=fmtEur(ppo);
+  } else if(wc?.profit!==undefined && wc.profit<0) {
+    ppoCls='cell-pl-red';
+    ppoHtml='—';
   }
 
   // Flores CPA
