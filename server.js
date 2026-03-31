@@ -1290,17 +1290,22 @@ async function getMultiPeriodProfit() {
 
   const result = {};
 
+  const allAccounts = Object.values(AD_ACCOUNTS_MAP);
   for (const [period, range] of Object.entries(periods)) {
-    // Get campaign insights for this period
-    const insights = await metaGetAll(`${AD_ACCOUNT}/insights`, {
-      fields: 'spend,campaign_id,campaign_name',
-      level: 'campaign',
-      time_range: JSON.stringify({ since: range.from, until: range.to }),
-      limit: 500
-    });
+    let allInsights = [];
+    for (const acct of allAccounts) {
+      try {
+        const ins = await metaGetAll(`${acct}/insights`, {
+          fields: 'spend,campaign_id,campaign_name',
+          level: 'campaign',
+          time_range: JSON.stringify({ since: range.from, until: range.to }),
+          limit: 500
+        });
+        allInsights = allInsights.concat(ins);
+      } catch(e) { console.warn('[multiProfit] Account error:', acct, e.message); }
+    }
 
-    // Build temporary campaign objects for enrichment
-    const camps = insights.map(i => ({
+    const camps = allInsights.map(i => ({
       id: i.campaign_id,
       name: i.campaign_name || i.campaign_id,
       insights: { spend: i.spend }
