@@ -3266,21 +3266,35 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         // 7-day totals
         const weekStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ?').get(d7ago);
         
-        // FB spend from dash-cache
+        // FB spend: live from Meta campaigns (primary), dash-cache (fallback for 7d)
         let fbSpendToday = 0, fbSpend7d = 0, fbSpendRange = 0;
         let dashCacheData = null;
+        // Primary: compute spend from live campaign data (topCampaignsRaw already fetched above)
+        if (Array.isArray(topCampaignsRaw) && topCampaignsRaw.length > 0) {
+          fbSpendRange = topCampaignsRaw.reduce((s, c) => s + parseFloat(c.insights?.spend || 0), 0);
+          if (dashFrom === today) fbSpendToday = fbSpendRange;
+        }
+        // Dash-cache for 7d totals and today spend (if not from live data)
         try {
           const dc = JSON.parse(fs.readFileSync(DASH_CACHE_FILE, 'utf8'));
           dashCacheData = dc.data || {};
-          const td = dashCacheData[today] || {};
-          for (const [,v] of Object.entries(td)) { if (v && typeof v.spend === 'number') fbSpendToday += v.spend; }
+          if (fbSpendToday === 0) {
+            const td = dashCacheData[today] || {};
+            for (const [,v] of Object.entries(td)) { if (v && typeof v.spend === 'number') fbSpendToday += v.spend; }
+          }
           for (const [date, countries] of Object.entries(dashCacheData)) {
             if (date >= d7ago && date <= today) {
               for (const [,v] of Object.entries(countries)) { if (v && typeof v.spend === 'number') fbSpend7d += v.spend; }
             }
-            if (date >= dashFrom && date <= dashTo) {
+            // Only use dash-cache for range if no live data
+            if (fbSpendRange === 0 && date >= dashFrom && date <= dashTo) {
               for (const [,v] of Object.entries(countries)) { if (v && typeof v.spend === 'number') fbSpendRange += v.spend; }
             }
+          }
+          // For 7d: override today's portion with live data if available
+          if (Array.isArray(topCampaignsRaw) && topCampaignsRaw.length > 0 && dashFrom === today) {
+            const staleTodaySpend = Object.values(dashCacheData[today] || {}).reduce((s, v) => s + (v && typeof v.spend === 'number' ? v.spend : 0), 0);
+            fbSpend7d = fbSpend7d - staleTodaySpend + fbSpendRange;
           }
         } catch(e) {}
 
