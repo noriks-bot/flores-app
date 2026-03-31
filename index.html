@@ -2703,9 +2703,6 @@ function updateSummary() {
   });
   const totCpcLink=totLinkClicks>0?(spend/totLinkClicks).toFixed(2)+' €':'0 €';
   const totFlorexCpa=wcOrders>0?(spend/wcOrders).toFixed(2)+' €':'0 €';
-  const totFlorexMaxCpa=wcOrders>0?((wcRevenue/wcOrders)*0.4).toFixed(2)+' €':'0 €';
-  const totFlorexMaxSpend=wcOrders>0?(((wcRevenue/wcOrders)*0.4)*wcOrders).toFixed(2)+' €':'0 €';
-  const totScore=spend>0?((wcProfit/spend)*1000).toFixed(0):'0';
   const fpaCount=campaigns.filter(c=>(c.wc?.orders||0)>0).length;
   document.getElementById('tableTotals').innerHTML=`<tr class="totals-row">
     <td></td><td></td><td></td><td style="text-align:left"><strong>Totals</strong></td>
@@ -2716,9 +2713,6 @@ function updateSummary() {
     <td>${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
     <td>${wcRevenue.toFixed(2)} €</td>
     <td>${totFlorexCpa}</td>
-    <td>${totFlorexMaxCpa}</td>
-    <td>${totFlorexMaxSpend}</td>
-    <td>${totScore}</td>
     <td>${roas}</td>
     <td>${totPcv>0?totPcv.toFixed(2)+' €':'0 €'}</td>
     <td>${cpa}</td>
