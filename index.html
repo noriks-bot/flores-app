@@ -1393,25 +1393,24 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <button class="preset-tab" data-range="all" onclick="setLogDate(this,'all')">All</button>
       </div>
     </div>
-    <div class="content" style="padding:12px 24px">
-      <div class="table-card">
-        <div class="table-scroll" style="max-height:calc(100vh - 240px)">
-          <table style="width:100%;table-layout:fixed">
+    <div class="content" style="padding:12px 16px">
+      <div class="table-card" style="overflow:hidden">
+        <div style="overflow-y:auto;max-height:calc(100vh - 240px)">
+          <table style="width:100%;table-layout:fixed;font-size:11px">
             <thead><tr>
-              <th style="text-align:left;width:140px">Time</th>
-              <th style="text-align:left;width:60px">User</th>
-              <th style="text-align:left;width:60px">Type</th>
-              <th style="text-align:left;width:50px">Country</th>
-              <th style="text-align:left;width:160px">Campaign ID</th>
-              <th style="text-align:left;width:auto">Campaign Name</th>
-              <th style="text-align:center;width:80px">Old</th>
-              <th style="text-align:center;width:20px"></th>
-              <th style="text-align:center;width:80px">New</th>
-              <th style="text-align:right;width:70px">Spend</th>
-              <th style="text-align:right;width:50px">Orders</th>
-              <th style="text-align:right;width:70px">Profit</th>
+              <th style="text-align:left;width:120px">Time</th>
+              <th style="text-align:left;width:50px">User</th>
+              <th style="text-align:left;width:50px">Type</th>
+              <th style="text-align:left;width:35px">CC</th>
+              <th style="text-align:left;width:130px">Campaign ID</th>
+              <th style="text-align:left">Campaign Name</th>
+              <th style="text-align:center;width:55px">Old</th>
+              <th style="text-align:center;width:55px">New</th>
+              <th style="text-align:right;width:55px">Spend</th>
+              <th style="text-align:right;width:40px">Ord</th>
+              <th style="text-align:right;width:55px">Profit</th>
             </tr></thead>
-            <tbody id="logBody"><tr><td colspan="12" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
+            <tbody id="logBody"><tr><td colspan="11" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -2579,7 +2578,7 @@ async function loadChangeLog() {
       rows = rows.filter(r => (r.timestamp||'').slice(0,10) >= cutoff);
     }
     if (!rows.length) {
-      document.getElementById('logBody').innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:#9ca3af">No changes in this period</td></tr>';
+      document.getElementById('logBody').innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#9ca3af">No changes in this period</td></tr>';
       return;
     }
     const profitColor = v => v > 0 ? '#22c55e' : v < 0 ? '#ef4444' : '#666';
@@ -2593,7 +2592,6 @@ async function loadChangeLog() {
       <td style="text-align:left;font-size:10px;font-family:monospace;color:#64748b">${r.entity_id}</td>
       <td style="text-align:left;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(r.entity_name||'').replace(/"/g,'&quot;')}">${r.entity_name || '—'}</td>
       <td style="text-align:center;font-size:12px;font-weight:700;background:${oldBg};color:#ef4444">${r.old_value || '—'}</td>
-      <td style="text-align:center;font-size:14px;color:#9ca3af">→</td>
       <td style="text-align:center;font-size:12px;font-weight:700;background:${newBg};color:#22c55e">${r.new_value || '—'}</td>
       <td style="text-align:right;font-size:11px">${r.spend_at_change ? r.spend_at_change.toFixed(2) + '€' : '—'}</td>
       <td style="text-align:right;font-size:11px">${r.orders_at_change || 0}</td>
