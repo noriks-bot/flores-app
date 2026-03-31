@@ -3467,7 +3467,8 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           } catch(eO) {
             if (o.is_fb_attributed === 1) origin = 'Facebook';
             else if (o.utm_source === 'callcenter') origin = 'Call Center';
-            else if ((o.utm_source || '').includes('google')) origin = 'Google Paid';
+            else if ((o.utm_source || '').includes('google') && (o.utm_medium === 'cpc' || o.utm_medium === 'paid')) origin = 'Google Paid';
+            else if ((o.utm_source || '').includes('google')) origin = 'Google Organic';
           }
           const fbMeasured = o.is_fb_attributed === 1 ? (o.utm_campaign && o.utm_campaign !== '' && !o.utm_campaign.startsWith('google') ? 'Measured' : 'Not Measured') : null;
           const customer = (o.billing_name || '').trim() || '#' + o.wc_order_id;
