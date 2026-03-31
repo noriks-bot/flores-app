@@ -1091,7 +1091,7 @@ async function getCampaigns(dateFrom, dateTo) {
     insightCampaigns[cid] = {
       id: cid,
       name: i.campaign_name || campaignMap[cid]?.name || cid,
-      status: campaignMap[cid]?.status || 'UNKNOWN',
+      status: campaignMap[cid]?.status || 'PAUSED',
       objective: campaignMap[cid]?.objective || '',
       daily_budget: campaignMap[cid]?.daily_budget || '0',
       insights: i
@@ -1138,7 +1138,7 @@ async function getCampaigns(dateFrom, dateTo) {
           result.push({
             id: i.campaign_id,
             name: i.campaign_name || cmap2[i.campaign_id]?.name || i.campaign_id,
-            status: cmap2[i.campaign_id]?.status || 'UNKNOWN',
+            status: cmap2[i.campaign_id]?.status || 'PAUSED',
             objective: cmap2[i.campaign_id]?.objective || '',
             daily_budget: cmap2[i.campaign_id]?.daily_budget || '0',
             insights: i
@@ -1252,7 +1252,7 @@ async function getAds(adsetId, dateFrom, dateTo) {
   const result = insights.filter(i => i.adset_id === adsetId).map(i => ({
     id: i.ad_id,
     name: adMeta[i.ad_id]?.name || i.ad_name || i.ad_id,
-    status: adMeta[i.ad_id]?.status || 'UNKNOWN',
+    status: adMeta[i.ad_id]?.status || 'PAUSED',
     insights: i
   }));
 
@@ -1350,7 +1350,7 @@ async function getAllAdsets(dateFrom, dateTo) {
     name: i.adset_name || adsetMeta[i.adset_id]?.name || i.adset_id,
     campaign_id: i.campaign_id,
     campaign_name: i.campaign_name,
-    status: adsetMeta[i.adset_id]?.status || 'UNKNOWN',
+    status: adsetMeta[i.adset_id]?.status || 'PAUSED',
     daily_budget: adsetMeta[i.adset_id]?.daily_budget || '0',
     insights: i
   }));
@@ -1421,7 +1421,7 @@ async function getAllAds(dateFrom, dateTo) {
     adset_name: i.adset_name,
     campaign_id: i.campaign_id,
     campaign_name: i.campaign_name,
-    status: adMeta[i.ad_id]?.status || 'UNKNOWN',
+    status: adMeta[i.ad_id]?.status || 'PAUSED',
     insights: i
   }));
 
