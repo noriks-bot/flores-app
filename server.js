@@ -1094,6 +1094,7 @@ async function getCampaigns(dateFrom, dateTo) {
       status: campaignMap[cid]?.status || 'PAUSED',
       objective: campaignMap[cid]?.objective || '',
       daily_budget: campaignMap[cid]?.daily_budget || '0',
+      lifetime_budget: campaignMap[cid]?.lifetime_budget || '0',
       insights: i
     };
   }
