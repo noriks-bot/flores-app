@@ -2804,7 +2804,7 @@ function makeRow(item,level) {
 
   // Budget
   const budgetVal=item.daily_budget?parseFloat(item.daily_budget)/100:0;
-  const budgetHtml=budgetVal>0?`<div>${Math.round(budgetVal)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`:'<span class="muted">\u2014</span>';
+  const budgetHtml=budgetVal>0?`<div>${Math.round(budgetVal)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`:'<span style="font-size:10px;font-weight:600;color:#666">ABO</span>';
   // Bid strategy
   const bidMap={'LOWEST_COST_WITHOUT_CAP':'Lowest cost','LOWEST_COST_WITH_BID_CAP':'Bid cap','COST_CAP':'Cost cap','LOWEST_COST_WITH_MIN_ROAS':'Min ROAS'};
   const bidLabel=bidMap[item.bid_strategy||'']||'Lowest cost';
@@ -3312,7 +3312,7 @@ function makeFlatRow(item, level) {
   const editBtn = `<a class="edit-btn" href="${fbEditUrl}" target="_blank" title="Open in FB Ads Manager" onclick="event.stopPropagation()">${editSvg}</a>`;
   // Budget & bid
   const budgetVal=item.daily_budget?parseFloat(item.daily_budget)/100:0;
-  const budgetHtml=budgetVal>0?`<div>${Math.round(budgetVal)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`:'<span class="muted">\u2014</span>';
+  const budgetHtml=budgetVal>0?`<div>${Math.round(budgetVal)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`:'<span style="font-size:10px;font-weight:600;color:#666">ABO</span>';
   const bidMap={'LOWEST_COST_WITHOUT_CAP':'Lowest cost','LOWEST_COST_WITH_BID_CAP':'Bid cap','COST_CAP':'Cost cap','LOWEST_COST_WITH_MIN_ROAS':'Min ROAS'};
   const bidLabel=bidMap[item.bid_strategy||'']||'Lowest cost';
   // FPA
