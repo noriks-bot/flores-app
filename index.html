@@ -1273,6 +1273,13 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     </button>
   </div>
 
+  <!-- LEVEL TABS -->
+  <div class="level-tabs" style="padding:0 16px;background:var(--card-bg);border-bottom:1px solid var(--border-color);margin:0 0 0 0">
+    <button class="level-tab active" data-level="campaigns" onclick="switchTab('campaigns')">Campaigns <span class="tab-count" id="tab-count-campaigns">—</span></button>
+    <button class="level-tab" data-level="adsets" onclick="switchTab('adsets')">Ad Sets <span class="tab-count" id="tab-count-adsets">—</span></button>
+    <button class="level-tab" data-level="ads" onclick="switchTab('ads')">Ads <span class="tab-count" id="tab-count-ads">—</span></button>
+  </div>
+
   <!-- SEARCH + FILTER PILLS -->
   <div id="campaignSearchBar" style="background:linear-gradient(135deg,#f0f4ff,#e8efff);border:1px solid #c7d2fe;border-radius:10px;margin:12px 16px;box-shadow:0 2px 8px rgba(30,58,95,0.06);padding:10px 16px">
     <div class="search-wrap" style="position:relative;margin-bottom:8px">
@@ -1311,11 +1318,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 
   <div class="content">
     <!-- LEVEL TABS (moved below filters) -->
-  <div class="level-tabs" style="padding:0 24px;background:var(--card-bg);border-bottom:2px solid var(--border-color)">
-    <button class="level-tab active" data-level="campaigns" onclick="switchTab('campaigns')">🔷 Campaigns <span class="tab-count" id="tab-count-campaigns">—</span></button>
-    <button class="level-tab" data-level="adsets" onclick="switchTab('adsets')">📦 Ad Sets <span class="tab-count" id="tab-count-adsets">—</span></button>
-    <button class="level-tab" data-level="ads" onclick="switchTab('ads')">📋 Ads <span class="tab-count" id="tab-count-ads">—</span></button>
-  </div>
+
 
     <!-- TABLE -->
     <div class="table-card">
