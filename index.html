@@ -1314,7 +1314,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           <thead>
             <tr>
               <th style="width:32px;cursor:default"><input type="checkbox" class="master-select" onchange="toggleSelectAll(this)" style="cursor:pointer"></th>
-              <th style="width:24px"></th>
+              <th style="width:32px"></th>
               <th data-sort="status" style="width:50px">Status</th>
               <th data-sort="name">Name</th>
               <th data-sort="country">Country</th>
@@ -3230,7 +3230,7 @@ function switchTab(tab) {
 function renderCampaignHeaders() {
   document.querySelector('thead tr').innerHTML = `
     <th style="width:32px;cursor:default"><input type="checkbox" class="master-select" onchange="toggleSelectAll(this)" style="cursor:pointer"></th>
-    <th style="width:24px"></th>
+    <th style="width:32px"></th>
     <th data-sort="status" style="width:50px">Status</th>
     <th data-sort="name">Name</th>
     <th data-sort="country">Country</th>
@@ -3259,7 +3259,7 @@ function renderCampaignHeaders() {
 
 const FLAT_HEADERS = `
     <th style="width:32px;cursor:default"></th>
-    <th style="width:24px"></th>
+    <th style="width:32px"></th>
     <th data-sort="status" style="width:50px">Status</th>
     <th data-sort="name">Name</th>
     <th data-sort="country">Country</th>
