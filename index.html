@@ -1273,15 +1273,13 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     </button>
   </div>
 
-  <!-- LEVEL TABS -->
-  <div class="level-tabs" style="padding:0 16px;background:var(--card-bg);border-bottom:1px solid var(--border-color);margin:0 0 0 0">
-    <button class="level-tab active" data-level="campaigns" onclick="switchTab('campaigns')">Campaigns <span class="tab-count" id="tab-count-campaigns">—</span></button>
-    <button class="level-tab" data-level="adsets" onclick="switchTab('adsets')">Ad Sets <span class="tab-count" id="tab-count-adsets">—</span></button>
-    <button class="level-tab" data-level="ads" onclick="switchTab('ads')">Ads <span class="tab-count" id="tab-count-ads">—</span></button>
-  </div>
-
-  <!-- SEARCH + FILTER PILLS -->
-  <div id="campaignSearchBar" style="background:linear-gradient(135deg,#f0f4ff,#e8efff);border:1px solid #c7d2fe;border-radius:10px;margin:12px 16px;box-shadow:0 2px 8px rgba(30,58,95,0.06);padding:10px 16px">
+  <!-- TABS + SEARCH + FILTER PILLS (one blue container) -->
+  <div id="campaignSearchBar" style="background:linear-gradient(135deg,#f0f4ff,#e8efff);border:1px solid #c7d2fe;border-radius:10px;margin:12px 16px;box-shadow:0 2px 8px rgba(30,58,95,0.06);padding:0 16px 10px 16px">
+    <div class="level-tabs" style="padding:0;background:transparent;border-bottom:1px solid #c7d2fe;margin-bottom:10px">
+      <button class="level-tab active" data-level="campaigns" onclick="switchTab('campaigns')">Campaigns <span class="tab-count" id="tab-count-campaigns">—</span></button>
+      <button class="level-tab" data-level="adsets" onclick="switchTab('adsets')">Ad Sets <span class="tab-count" id="tab-count-adsets">—</span></button>
+      <button class="level-tab" data-level="ads" onclick="switchTab('ads')">Ads <span class="tab-count" id="tab-count-ads">—</span></button>
+    </div>
     <div class="search-wrap" style="position:relative;margin-bottom:8px">
       <i class="fas fa-search search-icon"></i>
       <input type="text" id="campaignSearch" placeholder="Search..." oninput="filterCampaigns()" style="width:100%;font-size:12px;padding:7px 8px 7px 30px;border:1px solid #c7d2fe;border-radius:6px;background:#fff;box-sizing:border-box">
