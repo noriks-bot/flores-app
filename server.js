@@ -684,11 +684,26 @@ async function syncCountry(country) {
       if (!utmSource && wcReferrer.includes('facebook')) utmSource = 'fb';
       const utmMedium = floresUtmMedium || '';
 
-      // Campaign ID: flores plugin > WC utm_campaign > session entry extraction
+      // Campaign ID: flores plugin > WC utm_campaign > session entry > referrer extraction
       let campaignId = floresCampaignId || wcUtmCampaign;
       if (!campaignId) {
         const match = wcSessionEntry.match(/campaignid=(\d+)/i);
         if (match) campaignId = match[1];
+      }
+      // Fallback: extract campaign/adset/ad IDs from referrer URL (internal pages with FB params)
+      if (!campaignId) {
+        const refMatch = wcReferrer.match(/campaignid=(\d+)/i);
+        if (refMatch) campaignId = refMatch[1];
+      }
+      let adsetId = floresAdsetId;
+      if (!adsetId) {
+        const m1 = wcSessionEntry.match(/adsetid=(\d+)/i) || wcReferrer.match(/adsetid=(\d+)/i);
+        if (m1) adsetId = m1[1];
+      }
+      let adId = floresAdId;
+      if (!adId) {
+        const m2 = wcSessionEntry.match(/adid=(\d+)/i) || wcReferrer.match(/adid=(\d+)/i);
+        if (m2) adId = m2[1];
       }
 
       // Origin classification using dash logic
@@ -731,8 +746,8 @@ async function syncCountry(country) {
         utm_campaign: campaignId,
         is_fb_attributed: isFB ? 1 : 0,
         raw_meta: JSON.stringify(relevantMeta),
-        adset_id: floresAdsetId,
-        ad_id: floresAdId,
+        adset_id: adsetId || floresAdsetId,
+        ad_id: adId || floresAdId,
         campaign_name: floresCampaignName,
         adset_name: floresAdsetName,
         ad_name: floresAdName,
