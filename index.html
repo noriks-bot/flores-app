@@ -1040,6 +1040,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 #section-ads-manager .level-tab .tab-count { background: #e0e7ff; color: #3730a3; border: none; }
 
 #section-ads-manager td .toggle { vertical-align: middle; display: inline-flex; align-items: center; }
+#section-ads-manager .toggle .slider:before { top: 50%; transform: translateY(-50%); }
+
 
 #section-ads-manager tr.level-campaign .name-text { font-size: 12px; font-weight: 400; color: #111; }
 #section-ads-manager tr.level-campaign td:nth-child(4) .name-text { font-size: 12px; font-weight: 400; color: #111; }
@@ -2802,7 +2804,7 @@ function makeRow(item,level) {
   const cpc=ins?parseFloat(ins.cpc||0):0;
   const purchases=getPurchases(ins);
   const cpp=getCostPerPurchase(ins);
-  const isActive=item.status==='ACTIVE';
+  const isActive=item.status==='ACTIVE'||(item.status==='UNKNOWN'&&parseFloat(item.insights?.spend||0)>0);
   const statusHtml=`<label class="toggle"><input type="checkbox" ${isActive?'checked':''} disabled><span class="slider"></span></label>`;
   const hasChildren=level!=='ad';
   const isExpanded=level==='campaign'?expandedCampaigns[item.id]:expandedAdsets[item.id];
