@@ -1077,7 +1077,6 @@ async function getCampaigns(dateFrom, dateTo) {
   // Get all campaigns for status info
   const campaigns = await metaGetAll(`${AD_ACCOUNT}/campaigns`, {
     fields: 'id,name,status,objective,daily_budget,lifetime_budget',
-    filtering: JSON.stringify([{field:'spend',operator:'GREATER_THAN',value:0}]),
     limit: 500
   });
 
@@ -1142,6 +1141,7 @@ async function getCampaigns(dateFrom, dateTo) {
             status: cmap2[i.campaign_id]?.status || 'PAUSED',
             objective: cmap2[i.campaign_id]?.objective || '',
             daily_budget: cmap2[i.campaign_id]?.daily_budget || '0',
+            lifetime_budget: cmap2[i.campaign_id]?.lifetime_budget || '0',
             insights: i
           });
         }
