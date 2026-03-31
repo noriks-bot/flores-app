@@ -1047,6 +1047,13 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
   .cmd-palette-box { max-width: 95%; }
 }
 #section-ads-manager .content { padding: 0; }
+#section-ads-manager table tbody tr:nth-child(even) td { background-color: #f8f9fa; }
+#section-ads-manager table tbody tr:nth-child(even) td.cell-pl-green { background: #4db87a !important; }
+#section-ads-manager table tbody tr:nth-child(even) td.cell-pl-red { background: #e85555 !important; }
+#section-ads-manager table tbody tr.totals-row td { background: #1E3A5F !important; }
+#section-ads-manager table tbody td .name-text { white-space: normal !important; word-break: break-word; }
+#section-ads-manager table { font-size: 11px; }
+#section-ads-manager table thead th { font-size: 10px; }
 </style>
 </head>
 <body>
@@ -1311,6 +1318,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <th style="width:30px;cursor:default"><input type="checkbox" class="master-select" onchange="toggleSelectAll(this)" style="cursor:pointer"></th>
               <th data-sort="status" style="width:50px">Status</th>
               <th data-sort="name">Name</th>
+              <th data-sort="country">Country</th>
+              <th data-sort="product">Product</th>
               <th data-sort="budget">Budget</th>
               <th data-sort="spend">Spend</th>
               <th data-sort="wc_orders">Flores purchases</th>
@@ -1506,6 +1515,13 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     .opt-action-btn:hover { background:rgba(0,0,0,0.05); }
     .opt-range-cell { font-size:11px; color:#9ca3af; text-align:center; line-height:1.4; white-space:nowrap; min-width:80px; }
   #section-ads-manager .content { padding: 0; }
+#section-ads-manager table tbody tr:nth-child(even) td { background-color: #f8f9fa; }
+#section-ads-manager table tbody tr:nth-child(even) td.cell-pl-green { background: #4db87a !important; }
+#section-ads-manager table tbody tr:nth-child(even) td.cell-pl-red { background: #e85555 !important; }
+#section-ads-manager table tbody tr.totals-row td { background: #1E3A5F !important; }
+#section-ads-manager table tbody td .name-text { white-space: normal !important; word-break: break-word; }
+#section-ads-manager table { font-size: 11px; }
+#section-ads-manager table thead th { font-size: 10px; }
 </style>
   <!-- Merged header bar -->
   <div class="opt-header-bar">
@@ -2850,6 +2866,8 @@ function makeRow(item,level) {
     <td>${selectCb}${expandHtml}</td>
     <td>${statusHtml}</td>
     <td><div class="name-cell">${nameHtml(item.name,level)}${actionBtns}</div></td>
+    <td style="font-size:10px">${(() => { const t=parseCampTags(item.name); return t.countries.map(c=>'<span style="background:#e0e7ff;color:#3730a3;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">'+c+'</span>').join(' '); })()}</td>
+    <td style="font-size:10px">${(() => { const n=(item.name||'').toUpperCase(); if(n.includes('SHIRT')||n.includes('TSHIRT')||n.includes('MAJIC')) return '<span style="background:#dcfce7;color:#166534;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">Shirts</span>'; if(n.includes('BOXER')) return '<span style="background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">Boxers</span>'; if(n.includes('SOCK')) return '<span style="background:#fce7f3;color:#9d174d;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">Socks</span>'; if(n.includes('KOMPLET')||n.includes('BUNDLE')||n.includes('SET')) return '<span style="background:#e0e7ff;color:#3730a3;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">Bundle</span>'; return '<span class="muted">—</span>'; })()}</td>
     <td class="cell-budget">${budgetHtml}</td>
     <td>${spend>0?fmtEur(spend):'<span class="muted">—</span>'}</td>
     <td>${wcCount>0?fmtNum(wcCount):'<span class="muted">—</span>'}</td>
@@ -3240,6 +3258,8 @@ function renderCampaignHeaders() {
     <th style="width:30px;cursor:default"><input type="checkbox" class="master-select" onchange="toggleSelectAll(this)" style="cursor:pointer"></th>
     <th data-sort="status" style="width:50px">Status</th>
     <th data-sort="name">Name</th>
+    <th data-sort="country">Country</th>
+    <th data-sort="product">Product</th>
     <th data-sort="budget">Budget</th>
     <th data-sort="spend">Spend</th>
     <th data-sort="wc_orders">Flores purchases</th>
