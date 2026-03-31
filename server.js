@@ -355,9 +355,14 @@ db.exec(`
     timestamp TEXT NOT NULL DEFAULT (datetime('now')),
     change_type TEXT NOT NULL,
     entity_id TEXT NOT NULL,
+    entity_name TEXT DEFAULT '',
+    country TEXT DEFAULT '',
     old_value TEXT,
     new_value TEXT,
-    user TEXT DEFAULT 'noriks'
+    user TEXT DEFAULT 'noriks',
+    spend_at_change REAL DEFAULT 0,
+    orders_at_change INTEGER DEFAULT 0,
+    profit_at_change REAL DEFAULT 0
   );
 `);
 
@@ -2037,10 +2042,16 @@ const server = http.createServer(async (req, res) => {
           return sendJSON(res, { ok: result.success === true || !!result });
         } catch(e) { return sendJSON(res, { error: e.message }, 500); }
       }
+      // Add new log columns if missing
+      try { db.exec("ALTER TABLE change_log ADD COLUMN entity_name TEXT DEFAULT ''"); } catch(e) {}
+      try { db.exec("ALTER TABLE change_log ADD COLUMN country TEXT DEFAULT ''"); } catch(e) {}
+      try { db.exec("ALTER TABLE change_log ADD COLUMN spend_at_change REAL DEFAULT 0"); } catch(e) {}
+      try { db.exec("ALTER TABLE change_log ADD COLUMN orders_at_change INTEGER DEFAULT 0"); } catch(e) {}
+      try { db.exec("ALTER TABLE change_log ADD COLUMN profit_at_change REAL DEFAULT 0"); } catch(e) {}
       if (urlPath === '/api/log' && req.method === 'POST') {
         const body = await new Promise((res,rej)=>{ let d=''; req.on('data',c=>d+=c); req.on('end',()=>res(JSON.parse(d))); req.on('error',rej); });
-        const { changeType, entityId, oldValue, newValue } = body;
-        db.prepare('INSERT INTO change_log (change_type, entity_id, old_value, new_value) VALUES (?, ?, ?, ?)').run(changeType, entityId, oldValue || '', newValue || '');
+        const { changeType, entityId, oldValue, newValue, entityName, country, user, spendAtChange, ordersAtChange, profitAtChange } = body;
+        db.prepare('INSERT INTO change_log (change_type, entity_id, entity_name, country, old_value, new_value, user, spend_at_change, orders_at_change, profit_at_change) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(changeType, entityId, entityName || '', country || '', oldValue || '', newValue || '', user || 'noriks', spendAtChange || 0, ordersAtChange || 0, profitAtChange || 0);
         return sendJSON(res, { ok: true });
       }
       if (urlPath === '/api/log' && req.method === 'GET') {

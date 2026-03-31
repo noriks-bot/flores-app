@@ -1395,7 +1395,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <th style="text-align:left">Old Value</th>
               <th style="text-align:left">New Value</th>
             </tr></thead>
-            <tbody id="logBody"><tr><td colspan="5" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
+            <tbody id="logBody"><tr><td colspan="10" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -2547,15 +2547,20 @@ async function loadChangeLog() {
     const res = await fetch('/api/log?limit=200');
     const rows = await res.json();
     if (!rows.length) {
-      document.getElementById('logBody').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:#9ca3af">No changes yet</td></tr>';
+      document.getElementById('logBody').innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#9ca3af">No changes yet</td></tr>';
       return;
     }
     document.getElementById('logBody').innerHTML = rows.map(r => `<tr>
       <td style="text-align:left;font-size:12px">${r.timestamp}</td>
+      <td style="text-align:left;font-size:12px">${r.user || 'noriks'}</td>
       <td style="text-align:left"><span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">${r.change_type}</span></td>
-      <td style="text-align:left;font-size:11px;font-family:monospace">${r.entity_id}</td>
+      <td style="text-align:left;font-size:11px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(r.entity_name||'').replace(/"/g,'&quot;')}">${r.entity_name || r.entity_id}</td>
+      <td style="text-align:left;font-size:12px">${r.country || '—'}</td>
       <td style="text-align:left;font-size:12px;color:#ef4444">${r.old_value || '—'}</td>
       <td style="text-align:left;font-size:12px;color:#22c55e">${r.new_value || '—'}</td>
+      <td style="text-align:right;font-size:11px">${r.spend_at_change ? r.spend_at_change.toFixed(2) + ' €' : '—'}</td>
+      <td style="text-align:right;font-size:11px">${r.orders_at_change || 0}</td>
+      <td style="text-align:right;font-size:11px">${r.profit_at_change ? r.profit_at_change.toFixed(2) + ' €' : '—'}</td>
     </tr>`).join('');
   } catch(e) {
     document.getElementById('logBody').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:#ef4444">Error: '+e.message+'</td></tr>';
@@ -2824,11 +2829,13 @@ function getProductTag(name) {
   return '<span class="muted">—</span>';
 }
 
-function logChange(type, entityId, oldVal, newVal) {
+function logChange(type, entityId, oldVal, newVal, extra) {
+  const data = { changeType: type, entityId: entityId, oldValue: oldVal, newValue: newVal };
+  if (extra) { data.entityName = extra.name; data.country = extra.country; data.user = extra.user; data.spendAtChange = extra.spend; data.ordersAtChange = extra.orders; data.profitAtChange = extra.profit; }
   fetch('/api/log', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ changeType: type, entityId: entityId, oldValue: oldVal, newValue: newVal })
+    body: JSON.stringify(data)
   }).catch(()=>{});
 }
 
@@ -2885,7 +2892,7 @@ function inlineEditName(campId, currentName) {
       body: JSON.stringify({campaignId: campId, name: val})
     }).then(r=>r.json()).then(d=>{
       if(d.ok) {
-        logChange('rename', campId, currentName, val);
+        { const _c2=campaigns.find(x=>x.id===campId); const _cc2=((_c2?.name||'').match(/cc:([A-Z+]+)/i)||[])[1]||''; logChange('rename', campId, currentName, val, {name:currentName,country:_cc2,user:'noriks',spend:parseFloat(_c2?.insights?.spend||0),orders:_c2?.wc?.orders||0,profit:_c2?.wc?.profit||0}); }
         const c = campaigns.find(x=>x.id===campId);
         if(c) c.name = val;
         done(true, 'Campaign renamed!');
@@ -2908,7 +2915,7 @@ function inlineEditBudget(campId, currentBudget, isLifetime) {
       body: JSON.stringify(body)
     }).then(r=>r.json()).then(d=>{
       if(d.ok) {
-        logChange('budget', campId, currentBudget + '€', val + '€');
+        { const _c=campaigns.find(x=>x.id===campId); const _cc=((_c?.name||'').match(/cc:([A-Z+]+)/i)||[])[1]||''; logChange('budget', campId, currentBudget + '€', val + '€', {name:_c?.name||'',country:_cc,user:'noriks',spend:parseFloat(_c?.insights?.spend||0),orders:_c?.wc?.orders||0,profit:_c?.wc?.profit||0}); }
         const c = campaigns.find(x=>x.id===campId);
         if(c) { if(isLifetime) c.lifetime_budget=String(budgetCents); else c.daily_budget=String(budgetCents); }
         done(true, 'Budget updated!');
@@ -2931,7 +2938,7 @@ function inlineEditAdsetBudget(adsetId, currentBudget, isLifetime) {
       body: JSON.stringify(body)
     }).then(r=>r.json()).then(d=>{
       if(d.ok) {
-        logChange('budget', adsetId, currentBudget + '€', val + '€');
+        { let _as=null;for(const cid of Object.keys(adsetCache)){_as=adsetCache[cid]?.find(a=>a.id===adsetId);if(_as)break;} logChange('budget', adsetId, currentBudget + '€', val + '€', {name:_as?.name||'',country:'',user:'noriks',spend:parseFloat(_as?.insights?.spend||0),orders:_as?.wc?.orders||0,profit:_as?.wc?.profit||0}); }
         for(const cid of Object.keys(adsetCache)){const as=adsetCache[cid]?.find(a=>a.id===adsetId);if(as){if(isLifetime)as.lifetime_budget=String(budgetCents);else as.daily_budget=String(budgetCents);break;}}
         done(true, 'Adset budget updated!');
       }
