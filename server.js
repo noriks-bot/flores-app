@@ -1994,6 +1994,18 @@ const server = http.createServer(async (req, res) => {
           return sendJSON(res, { ok: result.success === true || !!result });
         } catch(e) { return sendJSON(res, { error: e.message }, 500); }
       }
+      if (urlPath === '/api/adset/budget' && req.method === 'POST') {
+        const body = await new Promise((res,rej)=>{ let d=''; req.on('data',c=>d+=c); req.on('end',()=>res(JSON.parse(d))); req.on('error',rej); });
+        const { adsetId, dailyBudget, lifetimeBudget } = body;
+        if (!adsetId) return sendJSON(res, {error:'Missing adsetId'}, 400);
+        try {
+          const params = {};
+          if (dailyBudget !== undefined) params.daily_budget = String(dailyBudget);
+          if (lifetimeBudget !== undefined) params.lifetime_budget = String(lifetimeBudget);
+          const result = await fbPost(`/${adsetId}`, params);
+          return sendJSON(res, { ok: result.success === true || !!result });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
       if (urlPath === '/api/campaign-orders') {
         if (!query.campaign_id) return sendJSON(res, { error: 'campaign_id required' }, 400);
         const campaignId = query.campaign_id;

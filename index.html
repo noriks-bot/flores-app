@@ -254,7 +254,7 @@ tr.level-campaign.row-expanded td:first-child { box-shadow: none !important; }
 /* Toggle - FloreX style */
 .toggle { position: relative; width: 38px; height: 22px; display: inline-block; }
 .toggle input { display: none; }
-.toggle .slider { position: absolute; inset: 0; background: #fecaca; border-radius: 18px; cursor: default; transition: .2s; }
+.toggle .slider { position: absolute; inset: 0; background: #ef4444; border-radius: 18px; cursor: default; transition: .2s; }
 .toggle input:checked + .slider { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.4); }
 .toggle input:checked + .slider:before { left: 18px; }
 .toggle .slider:before {
@@ -1054,18 +1054,11 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 #section-ads-manager table { font-size: 12px; }
 #section-ads-manager table thead th { font-size: 11px; font-weight: 600; color: #111; padding: 8px 10px; white-space: nowrap; }
 #section-ads-manager table tbody td { padding: 8px 10px; font-size: 12px; font-weight: 400; color: #111; white-space: nowrap; border-bottom: 1px solid #e8e8e8; }
-#section-ads-manager table tbody tr:nth-child(even):not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
-#section-ads-manager table tbody tr.level-campaign:nth-child(even) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
-/* Adset/Ad rows inherit parent campaign background via ci-even/ci-odd classes */
-#section-ads-manager table tbody tr.level-adset.ci-even > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
-#section-ads-manager table tbody tr.level-adset.ci-odd > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #fff !important; }
-#section-ads-manager table tbody tr.level-ad.ci-even > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
-#section-ads-manager table tbody tr.level-ad.ci-odd > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #fff !important; }
-/* Disable default nth-child zebra for adsets/ads (handled by ci- classes above) */
-#section-ads-manager table tbody tr.level-adset:nth-child(even) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: inherit; }
-#section-ads-manager table tbody tr.level-ad:nth-child(even) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: inherit; }
-#section-ads-manager table tbody tr.campaign-profit:nth-child(even) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
-#section-ads-manager table tbody tr.campaign-loss:nth-child(even) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
+/* Campaign rows: zebra by ci-even/ci-odd (set in JS based on campaign index) */
+#section-ads-manager table tbody tr.ci-even:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
+#section-ads-manager table tbody tr.ci-odd:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #fff !important; }
+/* Override global nth-child zebra — ci- classes are source of truth */
+#section-ads-manager table tbody tr:nth-child(even):not(.totals-row):not(.ci-even):not(.ci-odd) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
 #section-ads-manager td.cell-pl-green { background: #4db87a !important; color: #fff !important; font-weight: 400; text-align: right; }
 #section-ads-manager td.cell-pl-red { background: #e85555 !important; color: #fff !important; font-weight: 400; text-align: right; }
 #section-ads-manager tr:hover td.cell-pl-green { background: #43a86e !important; }
@@ -2807,6 +2800,24 @@ function inlineEditBudget(campId, currentBudget) {
     else showToast('Error: '+(d.error||'failed'), 'error');
   }).catch(e=>showToast('Error: '+e.message, 'error'));
 }
+function inlineEditAdsetBudget(adsetId, currentBudget, isLifetime) {
+  const label = isLifetime ? 'lifetime budget' : 'daily budget';
+  const newBudget = prompt('New ' + label + ' (EUR):', currentBudget > 0 ? currentBudget : '');
+  if (newBudget === null) return;
+  const budgetCents = Math.round(parseFloat(newBudget) * 100);
+  if (isNaN(budgetCents) || budgetCents < 0) { showToast('Invalid budget', 'error'); return; }
+  const body = { adsetId };
+  if (isLifetime) body.lifetimeBudget = budgetCents;
+  else body.dailyBudget = budgetCents;
+  fetch('/api/adset/budget', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  }).then(r=>r.json()).then(d=>{
+    if(d.ok) { showToast('Adset budget updated!'); clearCacheAndReload(); }
+    else showToast('Error: '+(d.error||'failed'), 'error');
+  }).catch(e=>showToast('Error: '+e.message, 'error'));
+}
 function renderHoverActions(name, id) {
   const escaped = (name||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
   return `<span class="hover-actions">
@@ -2894,7 +2905,7 @@ function makeRow(item,level,bgClass) {
     <td style="text-align:left"><div class="name-cell">${nameHtml(item.name,level)}${level==='campaign'?`<button class="edit-inline-btn" onclick="event.stopPropagation();inlineEditName('${item.id}','${(item.name||'').replace(/'/g,"\\'").replace(/\`/g,'\\`')}')" title="Rename campaign" style="margin-left:4px;border:none;background:none;cursor:pointer;color:#bbb;font-size:10px;padding:0 2px">✎</button>`:''}</div></td>
     <td>${getCountryTags(item.name)}</td>
     <td>${getProductTag(item.name)}</td>
-    <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal})" title="Edit budget" style="display:block;border:none;background:none;cursor:pointer;color:#444;font-size:11px;padding:0;margin-top:1px">✎</button>`:''}</td>
+    <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal})" title="Edit budget" style="display:block;border:none;background:none;cursor:pointer;color:#444;font-size:11px;padding:0;margin-top:1px">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="display:block;border:none;background:none;cursor:pointer;color:#444;font-size:11px;padding:0;margin-top:1px">✎</button>`:''}</td>
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${wcCount||0}</td>
@@ -2984,7 +2995,7 @@ function renderTable() {
   campaigns.forEach(c=>{
     // Assign campaign index so child rows inherit same background
     const ci=campIdx++;
-    const bgClass=ci%2===0?'ci-even':'ci-odd';
+    const bgClass=ci%2===0?'ci-odd':'ci-even';
     html+=makeRow(c,'campaign',bgClass);
     if(expandedCampaigns[c.id]){
       let childRows=[];
@@ -3403,7 +3414,7 @@ function makeFlatRow(item, level) {
     <td>${statusHtml}</td>
     <td><div class="name-cell"><span class="name-text" title="${(item.name||'').replace(/"/g,'&quot;')}">${item.name || '\u2014'}</span></div></td>
     <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(item.campaign_name||'').replace(/"/g,'&quot;')}">${campTagsHtml}${campLabel}</td>
-    <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal})" title="Edit budget" style="display:block;border:none;background:none;cursor:pointer;color:#444;font-size:11px;padding:0;margin-top:1px">✎</button>`:''}</td>
+    <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal})" title="Edit budget" style="display:block;border:none;background:none;cursor:pointer;color:#444;font-size:11px;padding:0;margin-top:1px">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="display:block;border:none;background:none;cursor:pointer;color:#444;font-size:11px;padding:0;margin-top:1px">✎</button>`:''}</td>
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${wcCount||0}</td>
