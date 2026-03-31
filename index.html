@@ -2836,7 +2836,9 @@ function makeRow(item,level) {
   return `<tr class="level-${level} ${rowClass} ${expandedClass}" data-id="${item.id}">
     <td>${selectCb}${expandHtml}</td>
     <td>${statusHtml}</td>
-    <td><div class="name-cell">${nameHtml(item.name,level)}${editBtn}</div></td>
+    <td style="text-align:left"><div class="name-cell">${nameHtml(item.name,level)}${editBtn}</div></td>
+    <td>${getCountryTags(item.name)}</td>
+    <td>${getProductTag(item.name)}</td>
     <td>${budgetHtml}</td>
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
