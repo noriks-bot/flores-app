@@ -2884,7 +2884,12 @@ function inlineEditName(campId, currentName) {
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({campaignId: campId, name: val})
     }).then(r=>r.json()).then(d=>{
-      if(d.ok) { logChange('rename', campId, currentName, val); done(true, 'Campaign renamed!'); }
+      if(d.ok) {
+        logChange('rename', campId, currentName, val);
+        const c = campaigns.find(x=>x.id===campId);
+        if(c) c.name = val;
+        done(true, 'Campaign renamed!');
+      }
       else done(false, d.error || 'Failed');
     }).catch(e=>done(false, e.message));
   });
@@ -2902,7 +2907,12 @@ function inlineEditBudget(campId, currentBudget, isLifetime) {
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify(body)
     }).then(r=>r.json()).then(d=>{
-      if(d.ok) { logChange('budget', campId, currentBudget + '€', val + '€'); done(true, 'Budget updated!'); }
+      if(d.ok) {
+        logChange('budget', campId, currentBudget + '€', val + '€');
+        const c = campaigns.find(x=>x.id===campId);
+        if(c) { if(isLifetime) c.lifetime_budget=String(budgetCents); else c.daily_budget=String(budgetCents); }
+        done(true, 'Budget updated!');
+      }
       else done(false, d.error || 'Failed');
     }).catch(e=>done(false, e.message));
   });
@@ -2920,7 +2930,11 @@ function inlineEditAdsetBudget(adsetId, currentBudget, isLifetime) {
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify(body)
     }).then(r=>r.json()).then(d=>{
-      if(d.ok) { logChange('budget', adsetId, currentBudget + '€', val + '€'); done(true, 'Adset budget updated!'); }
+      if(d.ok) {
+        logChange('budget', adsetId, currentBudget + '€', val + '€');
+        for(const cid of Object.keys(adsetCache)){const as=adsetCache[cid]?.find(a=>a.id===adsetId);if(as){if(isLifetime)as.lifetime_budget=String(budgetCents);else as.daily_budget=String(budgetCents);break;}}
+        done(true, 'Adset budget updated!');
+      }
       else done(false, d.error || 'Failed');
     }).catch(e=>done(false, e.message));
   });
