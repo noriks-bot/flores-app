@@ -2846,12 +2846,7 @@ function isNewCampaign(item) {
   const mm=String(today.getMonth()+1).padStart(2,'0');
   const yyyy=today.getFullYear();
   const todayStr=dd+'.'+mm+'.'+yyyy;
-  if(!(item.name||'').includes(todayStr)) return false;
-  const mp=multiProfitData[item.id];
-  if(!mp) return true;
-  const todaySpend=parseFloat(item.insights?.spend||0);
-  const lifetimeSpend=mp.lifetime?.spend||0;
-  return todaySpend>0 && lifetimeSpend<=todaySpend*1.05;
+  return (item.name||'').includes(todayStr);
 }
 function makeRow(item,level,bgClass) {
   const ins=item.insights;
