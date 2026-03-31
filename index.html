@@ -2915,7 +2915,7 @@ function inlineEditBudget(campId, currentBudget, isLifetime) {
       body: JSON.stringify(body)
     }).then(r=>r.json()).then(d=>{
       if(d.ok) {
-        { const _c=campaigns.find(x=>x.id===campId); const _cc=((_c?.name||'').match(/cc:([A-Z+]+)/i)||[])[1]||''; try{logChange('budget', campId, currentBudget + '€', val + '€', {name:_c?.name||'',country:_cc,user:'noriks',spend:parseFloat(_c?.insights?.spend||0),orders:_c?.wc?.orders||0,profit:_c?.wc?.profit||0});}catch(e){console.error('logChange error',e);}
+        try{ const _c=campaigns.find(x=>x.id===campId); const _cc=((_c?.name||'').match(/cc:([A-Z+]+)/i)||[])[1]||''; logChange('budget', campId, currentBudget + '€', val + '€', {name:_c?.name||'',country:_cc,user:'noriks',spend:parseFloat(_c?.insights?.spend||0),orders:_c?.wc?.orders||0,profit:_c?.wc?.profit||0}); }catch(e){console.error('logChange error',e);}
         const c = campaigns.find(x=>x.id===campId);
         if(c) { if(isLifetime) c.lifetime_budget=String(budgetCents); else c.daily_budget=String(budgetCents); }
         done(true, 'Budget updated!');
