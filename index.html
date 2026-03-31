@@ -2871,12 +2871,12 @@ function makeRow(item,level,bgClass) {
   if(level==='ad'){
     budgetHtml='<span class="muted">\u2014</span>';
   } else if(level==='adset'){
-    if(budgetDailyVal>0) budgetHtml=`<div>${Math.round(budgetDailyVal)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`;
-    else if(budgetLifetimeVal>0) budgetHtml=`<div>${Math.round(budgetLifetimeVal)} \u20ac</div><div style="font-size:9px;color:#999">lifetime</div>`;
+    if(budgetDailyVal>0) budgetHtml=`<span>${Math.round(budgetDailyVal)} \u20ac</span> <span style="font-size:9px;color:#999">daily</span>`;
+    else if(budgetLifetimeVal>0) budgetHtml=`<span>${Math.round(budgetLifetimeVal)} \u20ac</span> <span style="font-size:9px;color:#999">lifetime</span>`;
     else budgetHtml='<span style="font-size:10px;font-weight:600;color:#666">CBO</span>';
   } else {
-    if(budgetDailyVal>0) budgetHtml=`<div>${Math.round(budgetDailyVal)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`;
-    else if(budgetLifetimeVal>0) budgetHtml=`<div>${Math.round(budgetLifetimeVal)} \u20ac</div><div style="font-size:9px;color:#999">lifetime</div>`;
+    if(budgetDailyVal>0) budgetHtml=`<span>${Math.round(budgetDailyVal)} \u20ac</span> <span style="font-size:9px;color:#999">daily</span>`;
+    else if(budgetLifetimeVal>0) budgetHtml=`<span>${Math.round(budgetLifetimeVal)} \u20ac</span> <span style="font-size:9px;color:#999">lifetime</span>`;
     else budgetHtml='<span style="font-size:10px;font-weight:600;color:#666">ABO</span>';
   }
   // Bid strategy
@@ -2916,7 +2916,7 @@ function makeRow(item,level,bgClass) {
     <td style="text-align:left;${level==='adset'?'padding-left:50px;':level==='ad'?'padding-left:100px;':''}"><div class="name-cell">${level==='adset'?'↳ ':level==='ad'?'↳ ':''}${nameHtml(item.name,level)}${level==='campaign'?`<button class="edit-inline-btn" onclick="event.stopPropagation();inlineEditName('${item.id}','${(item.name||'').replace(/'/g,"\\'").replace(/\`/g,'\\`')}')" title="Rename campaign" style="margin-left:4px;border:none;background:none;cursor:pointer;color:#bbb;font-size:10px;padding:0 2px">✎</button>`:''}</div></td>
     <td>${getCountryTags(item.name)}</td>
     <td>${getProductTag(item.name)}</td>
-    <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal})" title="Edit budget" style="display:block;border:none;background:none;cursor:pointer;color:#444;font-size:11px;padding:0;margin-top:1px">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="display:block;border:none;background:none;cursor:pointer;color:#444;font-size:11px;padding:0;margin-top:1px">✎</button>`:''}</td>
+    <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal})" title="Edit budget" style="display:inline;border:none;background:none;cursor:pointer;color:#999;font-size:11px;padding:0;margin-left:3px;vertical-align:middle">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="display:inline;border:none;background:none;cursor:pointer;color:#999;font-size:11px;padding:0;margin-left:3px;vertical-align:middle">✎</button>`:''}</td>
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${wcCount||0}</td>
@@ -3394,12 +3394,12 @@ function makeFlatRow(item, level) {
   if(level==='ad'){
     budgetHtml='<span class="muted">\u2014</span>';
   } else if(level==='adset'){
-    if(budgetDailyVal2>0) budgetHtml=`<div>${Math.round(budgetDailyVal2)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`;
-    else if(budgetLifetimeVal2>0) budgetHtml=`<div>${Math.round(budgetLifetimeVal2)} \u20ac</div><div style="font-size:9px;color:#999">lifetime</div>`;
+    if(budgetDailyVal2>0) budgetHtml=`<span>${Math.round(budgetDailyVal2)} \u20ac</span> <span style="font-size:9px;color:#999">daily</span>`;
+    else if(budgetLifetimeVal2>0) budgetHtml=`<span>${Math.round(budgetLifetimeVal2)} \u20ac</span> <span style="font-size:9px;color:#999">lifetime</span>`;
     else budgetHtml='<span style="font-size:10px;font-weight:600;color:#666">CBO</span>';
   } else {
-    if(budgetDailyVal2>0) budgetHtml=`<div>${Math.round(budgetDailyVal2)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`;
-    else if(budgetLifetimeVal2>0) budgetHtml=`<div>${Math.round(budgetLifetimeVal2)} \u20ac</div><div style="font-size:9px;color:#999">lifetime</div>`;
+    if(budgetDailyVal2>0) budgetHtml=`<span>${Math.round(budgetDailyVal2)} \u20ac</span> <span style="font-size:9px;color:#999">daily</span>`;
+    else if(budgetLifetimeVal2>0) budgetHtml=`<span>${Math.round(budgetLifetimeVal2)} \u20ac</span> <span style="font-size:9px;color:#999">lifetime</span>`;
     else budgetHtml='<span style="font-size:10px;font-weight:600;color:#666">ABO</span>';
   }
   const bidMap={'LOWEST_COST_WITHOUT_CAP':'Lowest cost','LOWEST_COST_WITH_BID_CAP':'Bid cap','COST_CAP':'Cost cap','LOWEST_COST_WITH_MIN_ROAS':'Min ROAS'};
@@ -3436,7 +3436,7 @@ function makeFlatRow(item, level) {
     <td>${statusHtml}</td>
     <td><div class="name-cell"><span class="name-text" title="${(item.name||'').replace(/"/g,'&quot;')}">${item.name || '\u2014'}</span></div></td>
     <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(item.campaign_name||'').replace(/"/g,'&quot;')}">${campTagsHtml}${campLabel}</td>
-    <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal})" title="Edit budget" style="display:block;border:none;background:none;cursor:pointer;color:#444;font-size:11px;padding:0;margin-top:1px">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="display:block;border:none;background:none;cursor:pointer;color:#444;font-size:11px;padding:0;margin-top:1px">✎</button>`:''}</td>
+    <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal})" title="Edit budget" style="display:inline;border:none;background:none;cursor:pointer;color:#999;font-size:11px;padding:0;margin-left:3px;vertical-align:middle">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="display:inline;border:none;background:none;cursor:pointer;color:#999;font-size:11px;padding:0;margin-left:3px;vertical-align:middle">✎</button>`:''}</td>
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${wcCount||0}</td>
