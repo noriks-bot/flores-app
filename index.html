@@ -1347,13 +1347,13 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <th data-sort="wc_revenue">Flores revenue</th>
               <th data-sort="wc_cpa">Flores CPA</th>
               <th data-sort="wc_roas">ROAS</th>
-              <th class="sep" data-sort="pcv">Purchase conversion value</th>
-              <th data-sort="cpa">Cost per purchase</th>
-              <th data-sort="purchases">Purchase</th>
-              <th data-sort="checkouts">Checkouts Initiated</th>
-              <th data-sort="atc">Add to carts</th>
-              <th data-sort="cpc">CPC All</th>
-              <th data-sort="cpc_link">CPC Link</th>
+              <th class="sep" data-sort="pcv" style="color:#60a5fa">Purchase conversion value</th>
+              <th data-sort="cpa" style="color:#60a5fa">Cost per purchase</th>
+              <th data-sort="purchases" style="color:#60a5fa">Purchase</th>
+              <th data-sort="checkouts" style="color:#60a5fa">Checkouts Initiated</th>
+              <th data-sort="atc" style="color:#60a5fa">Add to carts</th>
+              <th data-sort="cpc" style="color:#60a5fa">CPC All</th>
+              <th data-sort="cpc_link" style="color:#60a5fa">CPC Link</th>
             </tr>
           </thead>
           <tbody id="tableTotals"></tbody>
@@ -3307,13 +3307,13 @@ function renderCampaignHeaders() {
     <th data-sort="wc_revenue">Flores revenue</th>
     <th data-sort="wc_cpa">Flores CPA</th>
     <th data-sort="wc_roas">ROAS</th>
-    <th class="sep" data-sort="pcv">Purchase conversion value</th>
-    <th data-sort="cpa">Cost per purchase</th>
-    <th data-sort="purchases">Purchase</th>
-    <th data-sort="checkouts">Checkouts Initiated</th>
-    <th data-sort="atc">Add to carts</th>
-    <th data-sort="cpc">CPC All</th>
-    <th data-sort="cpc_link">CPC Link</th>`;
+    <th class="sep" data-sort="pcv" style="color:#60a5fa">Purchase conversion value</th>
+    <th data-sort="cpa" style="color:#60a5fa">Cost per purchase</th>
+    <th data-sort="purchases" style="color:#60a5fa">Purchase</th>
+    <th data-sort="checkouts" style="color:#60a5fa">Checkouts Initiated</th>
+    <th data-sort="atc" style="color:#60a5fa">Add to carts</th>
+    <th data-sort="cpc" style="color:#60a5fa">CPC All</th>
+    <th data-sort="cpc_link" style="color:#60a5fa">CPC Link</th>`;
 }
 
 const FLAT_HEADERS = `
@@ -3333,13 +3333,13 @@ const FLAT_HEADERS = `
     <th data-sort="wc_revenue">Flores revenue</th>
     <th data-sort="wc_cpa">Flores CPA</th>
     <th data-sort="wc_roas">ROAS</th>
-    <th class="sep" data-sort="pcv">Purchase conversion value</th>
-    <th data-sort="cpa">Cost per purchase</th>
-    <th data-sort="purchases">Purchase</th>
-    <th data-sort="checkouts">Checkouts Initiated</th>
-    <th data-sort="atc">Add to carts</th>
-    <th data-sort="cpc">CPC All</th>
-    <th data-sort="cpc_link">CPC Link</th>`;
+    <th class="sep" data-sort="pcv" style="color:#60a5fa">Purchase conversion value</th>
+    <th data-sort="cpa" style="color:#60a5fa">Cost per purchase</th>
+    <th data-sort="purchases" style="color:#60a5fa">Purchase</th>
+    <th data-sort="checkouts" style="color:#60a5fa">Checkouts Initiated</th>
+    <th data-sort="atc" style="color:#60a5fa">Add to carts</th>
+    <th data-sort="cpc" style="color:#60a5fa">CPC All</th>
+    <th data-sort="cpc_link" style="color:#60a5fa">CPC Link</th>`;
 
 function renderAdsetHeaders() { document.querySelector('thead tr').innerHTML = FLAT_HEADERS.replace('Name', 'Ad Set'); }
 function renderAdHeaders() { document.querySelector('thead tr').innerHTML = FLAT_HEADERS.replace('Name', 'Ad') + '\n    <th data-sort="adset_name">Ad Set</th>'; }
