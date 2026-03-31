@@ -212,10 +212,10 @@ tbody tr.level-campaign:nth-child(even) td { background: #fff; }
 /* Row levels */
 tr.level-campaign td { font-weight: 400; font-size: 13px; }
 tr.level-campaign td:nth-child(2) .name-text { font-size: 13px; font-weight: 500; color: #111827; }
-tr.level-adset td { font-size: 12px; color: #4b5563; font-weight: 400; background: #f9fafb; }
+tr.level-adset td { font-size: 12px; color: #4b5563; font-weight: 400; }
 tr.level-adset td:nth-child(2) { padding-left: 32px; border-left: 2px solid #e5e7eb; }
-tr.level-adset:hover td { background: #f3f4f6 !important; }
-tr.level-ad td { font-size: 11.5px; color: #6b7280; font-weight: 400; background: #f3f4f6; }
+tr.level-adset:hover td { background: #e8eaf0 !important; }
+tr.level-ad td { font-size: 11.5px; color: #6b7280; font-weight: 400; }
 tr.level-ad td:nth-child(2) { padding-left: 52px; border-left: 2px solid #d1d5db; }
 tr.level-ad:hover td { background: #e5e7eb !important; }
 tr.level-adset .name-text { font-weight: 400; color: #4b5563; }
@@ -327,8 +327,8 @@ tr.campaign-loss td:nth-child(1), tr.campaign-loss td:nth-child(2) { background:
 tr.campaign-profit:hover td:nth-child(1), tr.campaign-profit:hover td:nth-child(2) { background: #f3f4f6 !important; }
 tr.campaign-loss:hover td:nth-child(1), tr.campaign-loss:hover td:nth-child(2) { background: #f3f4f6 !important; }
 tbody tr:hover td:nth-child(1), tbody tr:hover td:nth-child(2) { background: #f3f4f6 !important; }
-tr.level-adset td:nth-child(1), tr.level-adset td:nth-child(2) { background: #f9fafb; }
-tr.level-ad td:nth-child(1), tr.level-ad td:nth-child(2) { background: #f3f4f6; }
+tr.level-adset td:nth-child(1), tr.level-adset td:nth-child(2) { background: inherit; }
+tr.level-ad td:nth-child(1), tr.level-ad td:nth-child(2) { background: inherit; }
 tr.totals-row td:nth-child(1), tr.totals-row td:nth-child(2) { background: #1a2332 !important; }
 thead th:nth-child(1), thead th:nth-child(2) { background: #f6f7f8; }
 tbody td:nth-child(1), tbody td:nth-child(2) { background: inherit; }
@@ -2847,8 +2847,10 @@ function makeRow(item,level) {
   const editBtn=`<a class="edit-btn" href="${fbEditUrl}" target="_blank" title="Open in FB Ads Manager" onclick="event.stopPropagation()">${editSvg}</a>`;
 
   // Budget
-  const budgetVal=item.daily_budget?parseFloat(item.daily_budget)/100:0;
-  const budgetHtml=budgetVal>0?`<div>${Math.round(budgetVal)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`:'<span style="font-size:10px;font-weight:600;color:#666">ABO</span>';
+  const budgetDailyVal=item.daily_budget?parseFloat(item.daily_budget)/100:0;
+  const budgetLifetimeVal=item.lifetime_budget?parseFloat(item.lifetime_budget)/100:0;
+  const budgetVal=budgetDailyVal>0?budgetDailyVal:budgetLifetimeVal;
+  const budgetHtml=budgetDailyVal>0?`<div>${Math.round(budgetDailyVal)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`:budgetLifetimeVal>0?`<div>${Math.round(budgetLifetimeVal)} \u20ac</div><div style="font-size:9px;color:#999">lifetime</div>`:'<span style="font-size:10px;font-weight:600;color:#666">ABO</span>';
   // Bid strategy
   const bidMap={'LOWEST_COST_WITHOUT_CAP':'Lowest cost','LOWEST_COST_WITH_BID_CAP':'Bid cap','COST_CAP':'Cost cap','LOWEST_COST_WITH_MIN_ROAS':'Min ROAS'};
   const bidLabel=bidMap[item.bid_strategy||'']||'Lowest cost';
@@ -3352,8 +3354,10 @@ function makeFlatRow(item, level) {
   const editSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
   const editBtn = `<a class="edit-btn" href="${fbEditUrl}" target="_blank" title="Open in FB Ads Manager" onclick="event.stopPropagation()">${editSvg}</a>`;
   // Budget & bid
-  const budgetVal=item.daily_budget?parseFloat(item.daily_budget)/100:0;
-  const budgetHtml=budgetVal>0?`<div>${Math.round(budgetVal)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`:'<span style="font-size:10px;font-weight:600;color:#666">ABO</span>';
+  const budgetDailyVal2=item.daily_budget?parseFloat(item.daily_budget)/100:0;
+  const budgetLifetimeVal2=item.lifetime_budget?parseFloat(item.lifetime_budget)/100:0;
+  const budgetVal=budgetDailyVal2>0?budgetDailyVal2:budgetLifetimeVal2;
+  const budgetHtml=budgetDailyVal2>0?`<div>${Math.round(budgetDailyVal2)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`:budgetLifetimeVal2>0?`<div>${Math.round(budgetLifetimeVal2)} \u20ac</div><div style="font-size:9px;color:#999">lifetime</div>`:'<span style="font-size:10px;font-weight:600;color:#666">ABO</span>';
   const bidMap={'LOWEST_COST_WITHOUT_CAP':'Lowest cost','LOWEST_COST_WITH_BID_CAP':'Bid cap','COST_CAP':'Cost cap','LOWEST_COST_WITH_MIN_ROAS':'Min ROAS'};
   const bidLabel=bidMap[item.bid_strategy||'']||'Lowest cost';
   // FPA

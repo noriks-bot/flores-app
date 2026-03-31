@@ -1193,6 +1193,7 @@ async function getAdsets(campaignId, dateFrom, dateTo) {
       name: i.adset_name || adsetMeta[aid]?.name || aid,
       status: adsetMeta[aid]?.status || 'ACTIVE',
       daily_budget: adsetMeta[aid]?.daily_budget || '0',
+      lifetime_budget: adsetMeta[aid]?.lifetime_budget || '0',
       insights: i
     };
   }
@@ -1200,7 +1201,7 @@ async function getAdsets(campaignId, dateFrom, dateTo) {
   // Add active adsets without spend
   for (const [id, meta] of Object.entries(adsetMeta)) {
     if (!insightAdsets[id] && meta.status === 'ACTIVE') {
-      insightAdsets[id] = { ...meta, insights: null };
+      insightAdsets[id] = { ...meta, lifetime_budget: meta.lifetime_budget || '0', insights: null };
     }
   }
 
