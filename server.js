@@ -1046,7 +1046,8 @@ const INSIGHT_FIELDS = 'spend,impressions,clicks,reach,cpm,cpc,ctr,actions,cost_
 
 async function getCampaigns(dateFrom, dateTo) {
   const cacheKey = `campaigns_${dateFrom}_${dateTo}`;
-  let cached = getCached(cacheKey);
+  const isToday = dateTo === new Date().toISOString().slice(0,10);
+  let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
   if (cached) return cached;
   try {
 
@@ -1144,7 +1145,8 @@ async function getCampaigns(dateFrom, dateTo) {
 
 async function getAdsets(campaignId, dateFrom, dateTo) {
   const cacheKey = `adsets_${campaignId}_${dateFrom}_${dateTo}`;
-  let cached = getCached(cacheKey);
+  const isToday = dateTo === new Date().toISOString().slice(0,10);
+  let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
   if (cached) return cached;
   try {
 
@@ -1205,7 +1207,8 @@ async function getAdsets(campaignId, dateFrom, dateTo) {
 
 async function getAds(adsetId, dateFrom, dateTo) {
   const cacheKey = `ads_${adsetId}_${dateFrom}_${dateTo}`;
-  let cached = getCached(cacheKey);
+  const isToday = dateTo === new Date().toISOString().slice(0,10);
+  let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
   if (cached) return cached;
   try {
 
@@ -1251,7 +1254,8 @@ async function getAds(adsetId, dateFrom, dateTo) {
 // Multi-period profit: returns {campaignId: {yesterday, d3, d7, d14, lifetime}} 
 async function getMultiPeriodProfit() {
   const cacheKey = 'multiprofit_' + new Date().toISOString().slice(0,10);
-  let cached = getCached(cacheKey);
+  const isToday = dateTo === new Date().toISOString().slice(0,10);
+  let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
   if (cached) return cached;
 
   const today = new Date();
@@ -1303,7 +1307,8 @@ async function getMultiPeriodProfit() {
 // Fetch ALL adsets across the account (flat list for Ad Sets tab)
 async function getAllAdsets(dateFrom, dateTo) {
   const cacheKey = `all_adsets_${dateFrom}_${dateTo}`;
-  let cached = getCached(cacheKey);
+  const isToday = dateTo === new Date().toISOString().slice(0,10);
+  let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
   if (cached) return cached;
 
   const insights = await metaGetAll(`${AD_ACCOUNT}/insights`, {
@@ -1373,7 +1378,8 @@ async function getAllAdsets(dateFrom, dateTo) {
 // Fetch ALL ads across the account (flat list for Ads tab)
 async function getAllAds(dateFrom, dateTo) {
   const cacheKey = `all_ads_${dateFrom}_${dateTo}`;
-  let cached = getCached(cacheKey);
+  const isToday = dateTo === new Date().toISOString().slice(0,10);
+  let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
   if (cached) return cached;
 
   const insights = await metaGetAll(`${AD_ACCOUNT}/insights`, {
@@ -1440,7 +1446,8 @@ async function getAllAds(dateFrom, dateTo) {
 
 async function getInsights(level, dateFrom, dateTo, breakdown) {
   const cacheKey = `insights_${level}_${dateFrom}_${dateTo}_${breakdown || 'none'}`;
-  let cached = getCached(cacheKey);
+  const isToday = dateTo === new Date().toISOString().slice(0,10);
+  let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
   if (cached) return cached;
 
   const params = {
