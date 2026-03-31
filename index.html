@@ -2873,11 +2873,11 @@ function makeRow(item,level,bgClass) {
   } else if(level==='adset'){
     if(budgetDailyVal>0) budgetHtml=`<div>${Math.round(budgetDailyVal)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`;
     else if(budgetLifetimeVal>0) budgetHtml=`<div>${Math.round(budgetLifetimeVal)} \u20ac</div><div style="font-size:9px;color:#999">lifetime</div>`;
-    else budgetHtml='<span style="font-size:10px;font-weight:600;color:#3b82f6">CBO</span>';
+    else budgetHtml='<span style="font-size:10px;font-weight:600;color:#666">CBO</span>';
   } else {
     if(budgetDailyVal>0) budgetHtml=`<div>${Math.round(budgetDailyVal)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`;
     else if(budgetLifetimeVal>0) budgetHtml=`<div>${Math.round(budgetLifetimeVal)} \u20ac</div><div style="font-size:9px;color:#999">lifetime</div>`;
-    else budgetHtml='<span style="font-size:10px;font-weight:600;color:#7c3aed">ABO</span>';
+    else budgetHtml='<span style="font-size:10px;font-weight:600;color:#666">ABO</span>';
   }
   // Bid strategy
   const bidMap={'LOWEST_COST_WITHOUT_CAP':'Lowest cost','LOWEST_COST_WITH_BID_CAP':'Bid cap','COST_CAP':'Cost cap','LOWEST_COST_WITH_MIN_ROAS':'Min ROAS'};
@@ -3396,11 +3396,11 @@ function makeFlatRow(item, level) {
   } else if(level==='adset'){
     if(budgetDailyVal2>0) budgetHtml=`<div>${Math.round(budgetDailyVal2)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`;
     else if(budgetLifetimeVal2>0) budgetHtml=`<div>${Math.round(budgetLifetimeVal2)} \u20ac</div><div style="font-size:9px;color:#999">lifetime</div>`;
-    else budgetHtml='<span style="font-size:10px;font-weight:600;color:#3b82f6">CBO</span>';
+    else budgetHtml='<span style="font-size:10px;font-weight:600;color:#666">CBO</span>';
   } else {
     if(budgetDailyVal2>0) budgetHtml=`<div>${Math.round(budgetDailyVal2)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`;
     else if(budgetLifetimeVal2>0) budgetHtml=`<div>${Math.round(budgetLifetimeVal2)} \u20ac</div><div style="font-size:9px;color:#999">lifetime</div>`;
-    else budgetHtml='<span style="font-size:10px;font-weight:600;color:#7c3aed">ABO</span>';
+    else budgetHtml='<span style="font-size:10px;font-weight:600;color:#666">ABO</span>';
   }
   const bidMap={'LOWEST_COST_WITHOUT_CAP':'Lowest cost','LOWEST_COST_WITH_BID_CAP':'Bid cap','COST_CAP':'Cost cap','LOWEST_COST_WITH_MIN_ROAS':'Min ROAS'};
   const bidLabel=bidMap[item.bid_strategy||'']||'Lowest cost';
