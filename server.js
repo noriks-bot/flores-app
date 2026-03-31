@@ -1272,8 +1272,7 @@ async function getAds(adsetId, dateFrom, dateTo) {
 // Multi-period profit: returns {campaignId: {yesterday, d3, d7, d14, lifetime}} 
 async function getMultiPeriodProfit() {
   const cacheKey = 'multiprofit_' + new Date().toISOString().slice(0,10);
-  const isToday = dateTo === new Date().toISOString().slice(0,10);
-  let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
+  let cached = getCached(cacheKey, 600000);
   if (cached) return cached;
 
   const today = new Date();
