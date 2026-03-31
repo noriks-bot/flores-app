@@ -5070,8 +5070,8 @@ function renderOptimizer() {
     const flags = optGetFlags(c.name);
     html += '<tr class="opt-campaign-row" onclick="toggleOpt(this.dataset.cid)" data-cid="'+c.id+'">';
     html += '<td style="text-align:center"><span class="opt-expand opt-expand-campaign">'+(isExp?'▾':'▸')+'</span></td>';
-    html += '<td style="text-align:center">'+flags+'</td>';
-    html += '<td style="text-align:left;font-weight:700;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+c.name.replace(/"/g,'&quot;')+'">'+c.name+'</td>';
+    html += '<td style="text-align:right">'+flags+'</td>';
+    html += '<td style="text-align:left;font-weight:400;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+c.name.replace(/"/g,'&quot;')+'">'+c.name+'</td>';
     html += '<td style="text-align:center" onclick="event.stopPropagation()"><label class="opt-toggle"><input type="checkbox" '+(c.status==='ACTIVE'?'checked':'')+' onchange="toggleCampaignStatus(\''+c.id+'\',this.checked)"><span class="opt-toggle-slider"></span></label></td>';
     html += '<td style="text-align:right">'+(budget?budget+' €':'—')+' <button class="opt-budget-edit" title="Coming soon" onclick="event.stopPropagation()">✏️</button></td>';
     html += '<td style="text-align:right">'+spend.toFixed(2)+' €</td>';
