@@ -2009,10 +2009,16 @@ const server = http.createServer(async (req, res) => {
       }
       if (urlPath === '/api/campaign/budget' && req.method === 'POST') {
         const body = await new Promise((res,rej)=>{ let d=''; req.on('data',c=>d+=c); req.on('end',()=>res(JSON.parse(d))); req.on('error',rej); });
-        const { campaignId, dailyBudget } = body;
-        if (!campaignId || dailyBudget === undefined) return sendJSON(res, {error:'Missing params'}, 400);
+        const { campaignId, dailyBudget, lifetimeBudget } = body;
+        if (!campaignId) return sendJSON(res, {error:'Missing campaignId'}, 400);
         try {
-          const result = await fbPost(`/${campaignId}`, { daily_budget: String(dailyBudget) });
+          const params = {};
+          if (dailyBudget !== undefined) params.daily_budget = String(dailyBudget);
+          if (lifetimeBudget !== undefined) params.lifetime_budget = String(lifetimeBudget);
+          const result = await fbPost(`/${campaignId}`, params);
+          // Clear cache so new value shows immediately
+          const files = fs.readdirSync(CACHE_DIR).filter(f => f.startsWith("campaigns_"));
+          files.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
           return sendJSON(res, { ok: result.success === true || !!result });
         } catch(e) { return sendJSON(res, { error: e.message }, 500); }
       }
@@ -2025,6 +2031,9 @@ const server = http.createServer(async (req, res) => {
           if (dailyBudget !== undefined) params.daily_budget = String(dailyBudget);
           if (lifetimeBudget !== undefined) params.lifetime_budget = String(lifetimeBudget);
           const result = await fbPost(`/${adsetId}`, params);
+          // Clear adset cache
+          const files2 = fs.readdirSync(CACHE_DIR).filter(f => f.startsWith("adsets_") || f.startsWith("campaigns_"));
+          files2.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
           return sendJSON(res, { ok: result.success === true || !!result });
         } catch(e) { return sendJSON(res, { error: e.message }, 500); }
       }

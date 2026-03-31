@@ -2889,14 +2889,18 @@ function inlineEditName(campId, currentName) {
     }).catch(e=>done(false, e.message));
   });
 }
-function inlineEditBudget(campId, currentBudget) {
-  openEditModal('Edit Campaign Daily Budget (€)', currentBudget > 0 ? currentBudget : '', (val, done) => {
+function inlineEditBudget(campId, currentBudget, isLifetime) {
+  const label = isLifetime ? 'Edit Campaign Lifetime Budget (€)' : 'Edit Campaign Daily Budget (€)';
+  openEditModal(label, currentBudget > 0 ? currentBudget : '', (val, done) => {
     const budgetCents = Math.round(parseFloat(val) * 100);
     if (isNaN(budgetCents) || budgetCents < 0) { done(false, 'Invalid budget'); return; }
+    const body = {campaignId: campId};
+    if (isLifetime) body.lifetimeBudget = budgetCents;
+    else body.dailyBudget = budgetCents;
     fetch('/api/campaign/budget', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({campaignId: campId, dailyBudget: budgetCents})
+      body: JSON.stringify(body)
     }).then(r=>r.json()).then(d=>{
       if(d.ok) { logChange('budget', campId, currentBudget + '€', val + '€'); done(true, 'Budget updated!'); }
       else done(false, d.error || 'Failed');
@@ -3035,7 +3039,7 @@ function makeRow(item,level,bgClass) {
     <td style="text-align:left;${level==='adset'?'padding-left:50px;':level==='ad'?'padding-left:100px;':''}"><div class="name-cell">${level==='adset'?'↳ ':level==='ad'?'↳ ':''}${isNewCampaign(item)?'<span style="background:#3b82f6;color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;margin-right:4px;vertical-align:middle">NEW</span>':''}${nameHtml(item.name,level)}<button onclick="event.stopPropagation();navigator.clipboard.writeText('${item.id}');this.textContent='✓';this.style.background='#22c55e';setTimeout(()=>{this.textContent='ID';this.style.background='#333'},1000)" title="Copy ID: ${item.id}" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">ID</button>${level==='campaign'?`<button class="edit-inline-btn" onclick="event.stopPropagation();inlineEditName('${item.id}','${(item.name||'').replace(/'/g,"\\'").replace(/\`/g,'\\`')}')" title="Rename campaign" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}</div></td>
     <td>${getCountryTags(item.name)}</td>
     <td>${getProductTag(item.name)}</td>
-    <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal})" title="Edit budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}</td>
+    <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}</td>
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${wcCount||0}</td>
@@ -3538,7 +3542,7 @@ function makeFlatRow(item, level) {
     <td>${statusHtml}</td>
     <td><div class="name-cell"><span class="name-text" title="${(item.name||'').replace(/"/g,'&quot;')}">${item.name || '\u2014'}</span></div></td>
     <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(item.campaign_name||'').replace(/"/g,'&quot;')}">${campTagsHtml}${campLabel}</td>
-    <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal})" title="Edit budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}</td>
+    <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}</td>
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${wcCount||0}</td>
