@@ -2830,7 +2830,7 @@ function makeRow(item,level) {
     ppoHtml=fmtEur(ppo);
   } else if(wc?.profit!==undefined && wc.profit<0) {
     ppoCls='cell-pl-red';
-    ppoHtml='—';
+    ppoHtml=fmtEur(wc.profit);
   }
 
   // Flores CPA
