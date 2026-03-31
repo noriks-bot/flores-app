@@ -1628,8 +1628,11 @@ function parseVideoFilename(name) {
   return { creativeId: idMatch ? idMatch[1] : null, country: foundCountry || null, productType, fileDate };
 }
 
-// --- Auth ---
-const sessionStore = {}; // token -> { username, role, userId, displayName, orgId }
+// --- Auth (persist sessions to file so restart doesn't log out users) ---
+const SESSION_FILE = path.join(DB_DIR, 'sessions.json');
+let sessionStore = {};
+try { if (fs.existsSync(SESSION_FILE)) sessionStore = JSON.parse(fs.readFileSync(SESSION_FILE, 'utf8')); } catch(e) {}
+function saveSessions() { try { fs.writeFileSync(SESSION_FILE, JSON.stringify(sessionStore)); } catch(e) {} }
 
 function parseCookies(req) {
   const c = {}; (req.headers.cookie || '').split(';').forEach(p => { const [k,v] = p.trim().split('='); if(k) c[k]=v; }); return c;
@@ -1712,6 +1715,7 @@ const server = http.createServer(async (req, res) => {
           }
           const token = crypto.randomBytes(32).toString('hex');
           sessionStore[token] = { username: user.username, role: user.role, userId: user.id, displayName: user.display_name, orgId: user.org_id || 1 };
+          saveSessions();
           db.prepare('UPDATE flores_users SET last_login = datetime(\'now\') WHERE id = ?').run(user.id);
           // Log login activity
           try { logActivity.run(user.id, user.username, 'login', 'User logged in', 'user', String(user.id), user.org_id || 1); } catch(e) {}
@@ -1728,6 +1732,7 @@ const server = http.createServer(async (req, res) => {
 
   if (urlPath === '/api/logout') {
     delete sessionStore[parseCookies(req).flores_session];
+    saveSessions();
     res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': 'flores_session=; Path=/; Max-Age=0' });
     res.end(JSON.stringify({ ok: true }));
     return;
@@ -1764,6 +1769,7 @@ const server = http.createServer(async (req, res) => {
         // Auto-login
         const token = crypto.randomBytes(32).toString('hex');
         sessionStore[token] = { username, role: 'admin', userId, displayName: company_name + ' Admin', orgId };
+          saveSessions();
         // Log
         try { logActivity.run(userId, username, 'register', `New organization: ${company_name}`, 'organization', String(orgId), orgId); } catch(e) {}
         // Notify super admins
