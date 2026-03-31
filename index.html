@@ -1044,7 +1044,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 
 #section-ads-manager .content { padding: 0; }
 #section-ads-manager table { font-size: 12px; }
-#section-ads-manager table thead th { font-size: 11px; font-weight: 600; color: #888; padding: 8px 10px; white-space: nowrap; }
+#section-ads-manager table thead th { font-size: 11px; font-weight: 600; color: #111; padding: 8px 10px; white-space: nowrap; }
 #section-ads-manager table tbody td { padding: 8px 10px; font-size: 12px; font-weight: 400; color: #111; white-space: nowrap; border-bottom: 1px solid #e8e8e8; }
 #section-ads-manager table tbody tr:nth-child(even):not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
 #section-ads-manager table tbody tr.level-campaign:nth-child(even) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
@@ -1332,15 +1332,14 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <th data-sort="budget">Budget</th>
               <th data-sort="bid_strategy">Bid strategy</th>
               <th class="sep" data-sort="spend">Spend</th>
-              <th data-sort="wc_orders">Florex purchases</th>
-              <th data-sort="fpa">FPA</th>
+              <th data-sort="wc_orders">Flores purchases</th>
               <th data-sort="wc_profit">Profit/loss</th>
               <th data-sort="wc_ppo">Profit per order</th>
-              <th data-sort="wc_revenue">Florex revenue</th>
-              <th data-sort="wc_cpa">Florex CPA</th>
-              <th data-sort="wc_maxcpa">Florex Max CPA</th>
-              <th data-sort="wc_maxspend">Florex Total MAX Spend</th>
-              <th data-sort="wc_score">Florex score</th>
+              <th data-sort="wc_revenue">Flores revenue</th>
+              <th data-sort="wc_cpa">Flores CPA</th>
+              <th data-sort="wc_maxcpa">Flores Max CPA</th>
+              <th data-sort="wc_maxspend">Flores Total MAX Spend</th>
+              <th data-sort="wc_score">Flores score</th>
               <th data-sort="wc_roas">ROAS</th>
               <th class="sep" data-sort="pcv">Purchase conversion value</th>
               <th data-sort="cpa">Cost per purchase</th>
@@ -2707,7 +2706,6 @@ function updateSummary() {
     <td></td><td></td><td></td><td></td>
     <td>${spend.toFixed(2)} €</td>
     <td>${wcOrders}</td>
-    <td>${fpaCount}</td>
     <td>${wcProfit.toFixed(2)} €</td>
     <td>${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
     <td>${wcRevenue.toFixed(2)} €</td>
@@ -2855,7 +2853,6 @@ function makeRow(item,level) {
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${wcCount||0}</td>
-    <td style="text-align:center">${fpaHtml}</td>
     <td class="${plCls}">${plHtml}</td>
     <td class="${ppoCls}">${ppoHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
@@ -3248,15 +3245,14 @@ function renderCampaignHeaders() {
     <th data-sort="budget">Budget</th>
     <th data-sort="bid_strategy">Bid strategy</th>
     <th class="sep" data-sort="spend">Spend</th>
-    <th data-sort="wc_orders">Florex purchases</th>
-    <th data-sort="fpa">FPA</th>
+    <th data-sort="wc_orders">Flores purchases</th>
     <th data-sort="wc_profit">Profit/loss</th>
     <th data-sort="wc_ppo">Profit per order</th>
-    <th data-sort="wc_revenue">Florex revenue</th>
-    <th data-sort="wc_cpa">Florex CPA</th>
-    <th data-sort="wc_maxcpa">Florex Max CPA</th>
-    <th data-sort="wc_maxspend">Florex Total MAX Spend</th>
-    <th data-sort="wc_score">Florex score</th>
+    <th data-sort="wc_revenue">Flores revenue</th>
+    <th data-sort="wc_cpa">Flores CPA</th>
+    <th data-sort="wc_maxcpa">Flores Max CPA</th>
+    <th data-sort="wc_maxspend">Flores Total MAX Spend</th>
+    <th data-sort="wc_score">Flores score</th>
     <th data-sort="wc_roas">ROAS</th>
     <th class="sep" data-sort="pcv">Purchase conversion value</th>
     <th data-sort="cpa">Cost per purchase</th>
@@ -3278,15 +3274,14 @@ const FLAT_HEADERS = `
     <th data-sort="budget">Budget</th>
     <th data-sort="bid_strategy">Bid strategy</th>
     <th class="sep" data-sort="spend">Spend</th>
-    <th data-sort="wc_orders">Florex purchases</th>
-    <th data-sort="fpa">FPA</th>
+    <th data-sort="wc_orders">Flores purchases</th>
     <th data-sort="wc_profit">Profit/loss</th>
     <th data-sort="wc_ppo">Profit per order</th>
-    <th data-sort="wc_revenue">Florex revenue</th>
-    <th data-sort="wc_cpa">Florex CPA</th>
-    <th data-sort="wc_maxcpa">Florex Max CPA</th>
-    <th data-sort="wc_maxspend">Florex Total MAX Spend</th>
-    <th data-sort="wc_score">Florex score</th>
+    <th data-sort="wc_revenue">Flores revenue</th>
+    <th data-sort="wc_cpa">Flores CPA</th>
+    <th data-sort="wc_maxcpa">Flores Max CPA</th>
+    <th data-sort="wc_maxspend">Flores Total MAX Spend</th>
+    <th data-sort="wc_score">Flores score</th>
     <th data-sort="wc_roas">ROAS</th>
     <th class="sep" data-sort="pcv">Purchase conversion value</th>
     <th data-sort="cpa">Cost per purchase</th>
@@ -3361,7 +3356,6 @@ function makeFlatRow(item, level) {
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${wcCount||0}</td>
-    <td style="text-align:center">${fpaHtml}</td>
     <td class="${plCls}">${plHtml}</td>
     <td class="${ppoCls}">${ppoHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
