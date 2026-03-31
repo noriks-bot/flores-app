@@ -1285,6 +1285,7 @@ async function getMultiPeriodProfit() {
     d3: { from: fmt(addD(today,-2)), to: fmt(today) },
     d7: { from: fmt(addD(today,-6)), to: fmt(today) },
     d14: { from: fmt(addD(today,-13)), to: fmt(today) },
+    d30: { from: fmt(addD(today,-29)), to: fmt(today) },
     lifetime: { from: '2025-01-01', to: fmt(today) }
   };
 

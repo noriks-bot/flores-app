@@ -1347,6 +1347,12 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <th data-sort="wc_revenue">Flores revenue</th>
               <th data-sort="wc_cpa">Flores CPA</th>
               <th data-sort="wc_roas">ROAS</th>
+              <th class="sep" data-sort="p_yesterday">P/L Yesterday</th>
+              <th data-sort="p_d3">P/L 3D</th>
+              <th data-sort="p_d7">P/L 7D</th>
+              <th data-sort="p_d14">P/L 14D</th>
+              <th data-sort="p_d30">P/L 30D</th>
+              <th data-sort="p_lifetime">P/L Max</th>
               <th class="sep" data-sort="pcv" style="background:#dbeafe;color:#111">Purchase conversion value</th>
               <th data-sort="cpa" style="background:#dbeafe;color:#111">Cost per purchase</th>
               <th data-sort="purchases" style="background:#dbeafe;color:#111">Purchase</th>
@@ -1358,7 +1364,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           </thead>
           <tbody id="tableTotals"></tbody>
           <tbody id="tableBody">
-            <tr><td colspan="22"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>
+            <tr><td colspan="28"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>
           </tbody>
           <tbody id="tableTotalsBottom"></tbody>
         </table>
@@ -2624,6 +2630,7 @@ function getSortValue(item,key) {
     case 'p_d3': return multiProfitData[item.id]?.d3?.profit??-Infinity;
     case 'p_d7': return multiProfitData[item.id]?.d7?.profit??-Infinity;
     case 'p_d14': return multiProfitData[item.id]?.d14?.profit??-Infinity;
+    case 'p_d30': return multiProfitData[item.id]?.d30?.profit??-Infinity;
     case 'p_lifetime': return multiProfitData[item.id]?.lifetime?.profit??-Infinity;
     default: return 0;
   }
@@ -2649,11 +2656,11 @@ document.addEventListener('click', e => {
 
 async function loadData() {
   const {from,to}=getDateRange();
-  document.getElementById('tableBody').innerHTML='<tr><td colspan="22"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>';
+  document.getElementById('tableBody').innerHTML='<tr><td colspan="28"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>';
   try {
     const res=await fetch(`/api/campaigns?date_from=${from}&date_to=${to}`);
     campaigns=await res.json();
-    if(campaigns.error){document.getElementById('tableBody').innerHTML=`<tr><td colspan="22"><div class="loading-state">Error: ${campaigns.error}</div></td></tr>`;return;}
+    if(campaigns.error){document.getElementById('tableBody').innerHTML=`<tr><td colspan="28"><div class="loading-state">Error: ${campaigns.error}</div></td></tr>`;return;}
     campaigns.sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0));
     expandedCampaigns={}; expandedAdsets={}; adsetCache={}; adCache={};
     allAdsets=[]; allAds=[];
@@ -2671,7 +2678,7 @@ async function loadData() {
     } else {
       renderAdHeaders(); loadAds();
     }
-  } catch(e){ document.getElementById('tableBody').innerHTML=`<tr><td colspan="22"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
+  } catch(e){ document.getElementById('tableBody').innerHTML=`<tr><td colspan="28"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
 }
 
 function updateSummary() {
@@ -2689,7 +2696,7 @@ function updateSummary() {
   const roas=spend>0?(wcRevenue/spend).toFixed(2)+'x':'—';
   const profitBadge=wcProfit===0?`<span class="badge-neutral">— €0.00</span>`:wcProfit>0?`<span class="badge-profit">▲ ${fmtEur(wcProfit)}</span>`:`<span class="badge-loss">▼ ${fmtEur(Math.abs(wcProfit))}</span>`;
   // Aggregate multi-period totals
-  const mpTotals={yesterday:0,d3:0,d7:0,d14:0,lifetime:0};
+  const mpTotals={yesterday:0,d3:0,d7:0,d14:0,d30:0,lifetime:0};
   campaigns.forEach(c=>{const mp=multiProfitData[c.id];if(mp){for(const k of Object.keys(mpTotals)) mpTotals[k]+=(mp[k]?.profit||0);}});
   // Compute totals for new columns
   let totCheckouts=0,totAtc=0,totPcv=0,totLinkClicks=0;
@@ -2714,6 +2721,7 @@ function updateSummary() {
     <td>${wcRevenue.toFixed(2)} €</td>
     <td>${totFlorexCpa}</td>
     <td>${roas}</td>
+    <td>${profitPill(mpTotals.yesterday)}</td><td>${profitPill(mpTotals.d3)}</td><td>${profitPill(mpTotals.d7)}</td><td>${profitPill(mpTotals.d14)}</td><td>${profitPill(mpTotals.d30)}</td><td>${profitPill(mpTotals.lifetime)}</td>
     <td>${totPcv>0?totPcv.toFixed(2)+' €':'0 €'}</td>
     <td>${cpa}</td>
     <td>${purchases}</td>
@@ -2826,10 +2834,10 @@ function profitPill(val) {
 }
 
 function profitPeriodCells(item,level) {
-  if(level!=='campaign') return '<td></td><td></td><td></td><td></td><td></td>';
+  if(level!=='campaign') return '<td></td><td></td><td></td><td></td><td></td><td></td>';
   const mp=multiProfitData[item.id];
-  if(!mp) return '<td><span class="muted">—</span></td>'.repeat(5);
-  return `<td>${profitPill(mp.yesterday?.profit)}</td><td>${profitPill(mp.d3?.profit)}</td><td>${profitPill(mp.d7?.profit)}</td><td>${profitPill(mp.d14?.profit)}</td><td>${profitPill(mp.lifetime?.profit)}</td>`;
+  if(!mp) return '<td><span class="muted">—</span></td>'.repeat(6);
+  return `<td>${profitPill(mp.yesterday?.profit)}</td><td>${profitPill(mp.d3?.profit)}</td><td>${profitPill(mp.d7?.profit)}</td><td>${profitPill(mp.d14?.profit)}</td><td>${profitPill(mp.d30?.profit)}</td><td>${profitPill(mp.lifetime?.profit)}</td>`;
 }
 
 function makeRow(item,level,bgClass) {
@@ -2914,6 +2922,7 @@ function makeRow(item,level,bgClass) {
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${florexCpa}</td>
     <td>${roas}</td>
+    ${profitPeriodCells(item,level)}
     <td>${fbPcv>0?fbPcv.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${cpp>0?cpp.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${purchases||0}</td>
@@ -2997,14 +3006,14 @@ function renderTable() {
     if(expandedCampaigns[c.id]){
       let childRows=[];
       if(!adsetCache[c.id]){
-        childRows.push(`<tr class="level-adset ${bgClass}"><td></td><td colspan="21" style="padding:12px 40px;color:var(--text-muted)"><div class="spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading adsets...</td></tr>`);
+        childRows.push(`<tr class="level-adset ${bgClass}"><td></td><td colspan="27" style="padding:12px 40px;color:var(--text-muted)"><div class="spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading adsets...</td></tr>`);
       } else {
         const adsets=adsetCache[c.id].filter(a=>a.insights||a.status==='ACTIVE').sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0));
         adsets.forEach(as=>{
           childRows.push(makeRow(as,'adset',bgClass));
           if(expandedAdsets[as.id]){
             if(!adCache[as.id]){
-              childRows.push(`<tr class="level-ad ${bgClass}"><td></td><td colspan="21" style="padding:12px 58px;color:var(--text-muted)"><div class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading ads...</td></tr>`);
+              childRows.push(`<tr class="level-ad ${bgClass}"><td></td><td colspan="27" style="padding:12px 58px;color:var(--text-muted)"><div class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading ads...</td></tr>`);
             } else {
               adCache[as.id].filter(a=>a.insights||a.status==='ACTIVE').sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0)).forEach(ad=>{childRows.push(makeRow(ad,'ad',bgClass));});
             }
@@ -3018,7 +3027,7 @@ function renderTable() {
       html+=childRows.join('');
     }
   });
-  if(!html) html='<tr><td colspan="22"><div class="loading-state">No campaigns found</div></td></tr>';
+  if(!html) html='<tr><td colspan="28"><div class="loading-state">No campaigns found</div></td></tr>';
   document.getElementById('tableBody').innerHTML=html;
   if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL') applySearchFilter();
 }
