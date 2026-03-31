@@ -1102,6 +1102,9 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <a class="nav-item" data-section="optimizer" onclick="navigateTo('optimizer')">
         <i class="fas fa-sliders-h"></i><span class="nav-item-text">Optimizer</span>
       </a>
+      <a class="nav-item" data-section="log" onclick="navigateTo('log')">
+        <i class="fas fa-history"></i><span class="nav-item-text">Log</span>
+      </a>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Analytics</div>
@@ -1370,6 +1373,34 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     </div>
   </div>
   </div><!-- /section-ads-manager -->
+
+  <div id="section-log" class="content-section">
+    <div style="background:linear-gradient(135deg,#fafbff,#f0f4ff);border:1px solid #c7d2fe;border-radius:12px;padding:20px 24px;margin:16px 24px;box-shadow:0 4px 16px rgba(30,58,95,0.06)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;background:linear-gradient(135deg,#1E3A5F,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">📋</div>
+        <div>
+          <div style="font-size:18px;font-weight:800;color:#1E3A5F">Change Log</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:1px">All changes made through Flores</div>
+        </div>
+      </div>
+    </div>
+    <div class="content" style="padding:20px 24px">
+      <div class="table-card">
+        <div class="table-scroll" style="max-height:calc(100vh - 200px)">
+          <table>
+            <thead><tr>
+              <th style="text-align:left">Timestamp</th>
+              <th style="text-align:left">Type</th>
+              <th style="text-align:left">Entity ID</th>
+              <th style="text-align:left">Old Value</th>
+              <th style="text-align:left">New Value</th>
+            </tr></thead>
+            <tbody id="logBody"><tr><td colspan="5" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- BASE REPORT -->
   <div id="section-base-report" class="content-section">
@@ -2460,7 +2491,7 @@ const sectionTitles = {
   'organizations': 'Organizations',
   'saas-dashboard': 'SaaS Dashboard',
   'activity-log': 'Activity Log',
-  'activity-log': 'Activity Log'
+  'log': 'Change Log'
 };
 
 var dashboardLoaded = false;
@@ -2507,6 +2538,27 @@ function navigateTo(section) {
   // Auto-load activity log
   if (section === 'activity-log') {
     loadActivityLog(1);
+  }
+  if (section === 'log') { loadChangeLog(); }
+}
+
+async function loadChangeLog() {
+  try {
+    const res = await fetch('/api/log?limit=200');
+    const rows = await res.json();
+    if (!rows.length) {
+      document.getElementById('logBody').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:#9ca3af">No changes yet</td></tr>';
+      return;
+    }
+    document.getElementById('logBody').innerHTML = rows.map(r => `<tr>
+      <td style="text-align:left;font-size:12px">${r.timestamp}</td>
+      <td style="text-align:left"><span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">${r.change_type}</span></td>
+      <td style="text-align:left;font-size:11px;font-family:monospace">${r.entity_id}</td>
+      <td style="text-align:left;font-size:12px;color:#ef4444">${r.old_value || '—'}</td>
+      <td style="text-align:left;font-size:12px;color:#22c55e">${r.new_value || '—'}</td>
+    </tr>`).join('');
+  } catch(e) {
+    document.getElementById('logBody').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:#ef4444">Error: '+e.message+'</td></tr>';
   }
 }
 
@@ -2772,49 +2824,102 @@ function getProductTag(name) {
   return '<span class="muted">—</span>';
 }
 
-function inlineEditName(campId, currentName) {
-  const newName = prompt('Rename campaign:', currentName);
-  if (!newName || newName === currentName) return;
-  fetch('/api/campaign/rename', {
+function logChange(type, entityId, oldVal, newVal) {
+  fetch('/api/log', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({campaignId: campId, name: newName})
-  }).then(r=>r.json()).then(d=>{
-    if(d.ok) { showToast('Campaign renamed!'); clearCacheAndReload(); }
-    else showToast('Error: '+(d.error||'failed'), 'error');
-  }).catch(e=>showToast('Error: '+e.message, 'error'));
+    body: JSON.stringify({ changeType: type, entityId: entityId, oldValue: oldVal, newValue: newVal })
+  }).catch(()=>{});
+}
+
+function openEditModal(title, currentValue, onSave) {
+  const modal = document.getElementById('editModal');
+  document.getElementById('editModalTitle').textContent = title;
+  const input = document.getElementById('editModalInput');
+  input.value = currentValue;
+  document.getElementById('editModalStatus').style.display = 'none';
+  modal.style.display = 'flex';
+  input.focus();
+  input.select();
+  
+  const saveBtn = document.getElementById('editModalSave');
+  const newSaveBtn = saveBtn.cloneNode(true);
+  saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+  newSaveBtn.id = 'editModalSave';
+  
+  newSaveBtn.onclick = () => {
+    const val = input.value.trim();
+    if (!val) return;
+    newSaveBtn.disabled = true;
+    newSaveBtn.textContent = 'Saving...';
+    const status = document.getElementById('editModalStatus');
+    status.style.display = 'block';
+    status.textContent = 'Sending to Facebook...';
+    status.style.color = '#666';
+    onSave(val, (ok, msg) => {
+      if (ok) {
+        status.textContent = '✓ ' + (msg || 'Saved!');
+        status.style.color = '#22c55e';
+        setTimeout(() => { closeEditModal(); clearCacheAndReload(); }, 800);
+      } else {
+        status.textContent = '✗ ' + (msg || 'Error');
+        status.style.color = '#ef4444';
+        newSaveBtn.disabled = false;
+        newSaveBtn.textContent = 'Save';
+      }
+    });
+  };
+  
+  input.onkeydown = (e) => { if (e.key === 'Enter') newSaveBtn.click(); if (e.key === 'Escape') closeEditModal(); };
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').style.display = 'none';
+}
+
+function inlineEditName(campId, currentName) {
+  openEditModal('Rename Campaign', currentName, (val, done) => {
+    fetch('/api/campaign/rename', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({campaignId: campId, name: val})
+    }).then(r=>r.json()).then(d=>{
+      if(d.ok) { logChange('rename', campId, currentName, val); done(true, 'Campaign renamed!'); }
+      else done(false, d.error || 'Failed');
+    }).catch(e=>done(false, e.message));
+  });
 }
 function inlineEditBudget(campId, currentBudget) {
-  const newBudget = prompt('New daily budget (EUR):', currentBudget > 0 ? currentBudget : '');
-  if (newBudget === null) return;
-  const budgetCents = Math.round(parseFloat(newBudget) * 100);
-  if (isNaN(budgetCents) || budgetCents < 0) { showToast('Invalid budget', 'error'); return; }
-  fetch('/api/campaign/budget', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({campaignId: campId, dailyBudget: budgetCents})
-  }).then(r=>r.json()).then(d=>{
-    if(d.ok) { showToast('Budget updated!'); clearCacheAndReload(); }
-    else showToast('Error: '+(d.error||'failed'), 'error');
-  }).catch(e=>showToast('Error: '+e.message, 'error'));
+  openEditModal('Edit Campaign Daily Budget (€)', currentBudget > 0 ? currentBudget : '', (val, done) => {
+    const budgetCents = Math.round(parseFloat(val) * 100);
+    if (isNaN(budgetCents) || budgetCents < 0) { done(false, 'Invalid budget'); return; }
+    fetch('/api/campaign/budget', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({campaignId: campId, dailyBudget: budgetCents})
+    }).then(r=>r.json()).then(d=>{
+      if(d.ok) { logChange('budget', campId, currentBudget + '€', val + '€'); done(true, 'Budget updated!'); }
+      else done(false, d.error || 'Failed');
+    }).catch(e=>done(false, e.message));
+  });
 }
 function inlineEditAdsetBudget(adsetId, currentBudget, isLifetime) {
-  const label = isLifetime ? 'lifetime budget' : 'daily budget';
-  const newBudget = prompt('New ' + label + ' (EUR):', currentBudget > 0 ? currentBudget : '');
-  if (newBudget === null) return;
-  const budgetCents = Math.round(parseFloat(newBudget) * 100);
-  if (isNaN(budgetCents) || budgetCents < 0) { showToast('Invalid budget', 'error'); return; }
-  const body = { adsetId };
-  if (isLifetime) body.lifetimeBudget = budgetCents;
-  else body.dailyBudget = budgetCents;
-  fetch('/api/adset/budget', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify(body)
-  }).then(r=>r.json()).then(d=>{
-    if(d.ok) { showToast('Adset budget updated!'); clearCacheAndReload(); }
-    else showToast('Error: '+(d.error||'failed'), 'error');
-  }).catch(e=>showToast('Error: '+e.message, 'error'));
+  const label = isLifetime ? 'Edit Adset Lifetime Budget (€)' : 'Edit Adset Daily Budget (€)';
+  openEditModal(label, currentBudget > 0 ? currentBudget : '', (val, done) => {
+    const budgetCents = Math.round(parseFloat(val) * 100);
+    if (isNaN(budgetCents) || budgetCents < 0) { done(false, 'Invalid budget'); return; }
+    const body = { adsetId };
+    if (isLifetime) body.lifetimeBudget = budgetCents;
+    else body.dailyBudget = budgetCents;
+    fetch('/api/adset/budget', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    }).then(r=>r.json()).then(d=>{
+      if(d.ok) { logChange('budget', adsetId, currentBudget + '€', val + '€'); done(true, 'Adset budget updated!'); }
+      else done(false, d.error || 'Failed');
+    }).catch(e=>done(false, e.message));
+  });
 }
 function renderHoverActions(name, id) {
   const escaped = (name||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
@@ -6494,5 +6599,16 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
+<div id="editModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:24px;width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+    <div id="editModalTitle" style="font-size:15px;font-weight:700;margin-bottom:16px"></div>
+    <input id="editModalInput" type="text" style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;color:#111" />
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button onclick="closeEditModal()" style="padding:8px 20px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;font-family:inherit">Cancel</button>
+      <button id="editModalSave" style="padding:8px 20px;border:none;border-radius:8px;background:#333;color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">Save</button>
+    </div>
+    <div id="editModalStatus" style="margin-top:12px;font-size:12px;color:#666;display:none"></div>
+  </div>
+</div>
 </body>
 </html>
