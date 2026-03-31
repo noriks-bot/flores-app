@@ -1353,12 +1353,10 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <th data-sort="p_d14">P/L 14D</th>
               <th data-sort="p_d30">P/L 30D</th>
               <th data-sort="p_lifetime">P/L Max</th>
-              <th class="sep" data-sort="pcv" style="background:#dbeafe;color:#111">Purchase conversion value</th>
               <th data-sort="cpa" style="background:#dbeafe;color:#111">Cost per purchase</th>
               <th data-sort="purchases" style="background:#dbeafe;color:#111">Purchase</th>
               <th data-sort="checkouts" style="background:#dbeafe;color:#111">Checkouts Initiated</th>
               <th data-sort="atc" style="background:#dbeafe;color:#111">Add to carts</th>
-              <th data-sort="cpc" style="background:#dbeafe;color:#111">CPC All</th>
               <th data-sort="cpc_link" style="background:#dbeafe;color:#111">CPC Link</th>
             </tr>
           </thead>
@@ -2722,12 +2720,11 @@ function updateSummary() {
     <td>${totFlorexCpa}</td>
     <td>${roas}</td>
     <td></td><td></td><td></td><td></td><td></td><td></td>
-    <td>${totPcv>0?totPcv.toFixed(2)+' €':'0 €'}</td>
     <td>${cpa}</td>
     <td>${purchases}</td>
     <td>${totCheckouts}</td>
     <td>${totAtc}</td>
-    <td>${cpc}</td>
+    
     <td>${totCpcLink}</td>
   </tr>`;
   document.getElementById('tableTotalsBottom').innerHTML = document.getElementById('tableTotals').innerHTML;
@@ -2931,12 +2928,10 @@ function makeRow(item,level,bgClass) {
     <td>${florexCpa}</td>
     <td>${roas}</td>
     ${profitPeriodCells(item,level)}
-    <td>${fbPcv>0?fbPcv.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${cpp>0?cpp.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${purchases||0}</td>
     <td>${fbCheckouts||0}</td>
     <td>${fbAtc||0}</td>
-    <td>${cpc>0?cpc.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${cpcLink}</td>
   </tr>`;
 }
@@ -3325,12 +3320,10 @@ function renderCampaignHeaders() {
     <th data-sort="wc_revenue">Flores revenue</th>
     <th data-sort="wc_cpa">Flores CPA</th>
     <th data-sort="wc_roas">ROAS</th>
-    <th class="sep" data-sort="pcv" style="background:#dbeafe;color:#111">Purchase conversion value</th>
     <th data-sort="cpa" style="background:#dbeafe;color:#111">Cost per purchase</th>
     <th data-sort="purchases" style="background:#dbeafe;color:#111">Purchase</th>
     <th data-sort="checkouts" style="background:#dbeafe;color:#111">Checkouts Initiated</th>
     <th data-sort="atc" style="background:#dbeafe;color:#111">Add to carts</th>
-    <th data-sort="cpc" style="background:#dbeafe;color:#111">CPC All</th>
     <th data-sort="cpc_link" style="background:#dbeafe;color:#111">CPC Link</th>`;
 }
 
@@ -3351,12 +3344,10 @@ const FLAT_HEADERS = `
     <th data-sort="wc_revenue">Flores revenue</th>
     <th data-sort="wc_cpa">Flores CPA</th>
     <th data-sort="wc_roas">ROAS</th>
-    <th class="sep" data-sort="pcv" style="background:#dbeafe;color:#111">Purchase conversion value</th>
     <th data-sort="cpa" style="background:#dbeafe;color:#111">Cost per purchase</th>
     <th data-sort="purchases" style="background:#dbeafe;color:#111">Purchase</th>
     <th data-sort="checkouts" style="background:#dbeafe;color:#111">Checkouts Initiated</th>
     <th data-sort="atc" style="background:#dbeafe;color:#111">Add to carts</th>
-    <th data-sort="cpc" style="background:#dbeafe;color:#111">CPC All</th>
     <th data-sort="cpc_link" style="background:#dbeafe;color:#111">CPC Link</th>`;
 
 function renderAdsetHeaders() { document.querySelector('thead tr').innerHTML = FLAT_HEADERS.replace('Name', 'Ad Set'); }
@@ -3439,12 +3430,10 @@ function makeFlatRow(item, level) {
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${florexCpa}</td>
     <td>${roas}</td>
-    <td>${fbPcv>0?fbPcv.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${cpp>0?cpp.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${purchases||0}</td>
     <td>${fbCheckouts||0}</td>
     <td>${fbAtc||0}</td>
-    <td>${cpc>0?cpc.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${cpcLink}</td>
     ${extra}
   </tr>`;
@@ -3470,7 +3459,7 @@ function makeFlatTotals(items, colSpan) {
     <td>${fmtEur(spend)}</td><td>${fmtInt(wcOrders)}</td><td>${fmtEur(wcRevenue)}</td>
     <td>${profitBadge}</td><td>${wcOrders > 0 ? fmtEur(wcProfit / wcOrders) : '—'}</td><td>${wcOrders > 0 ? fmtEur(spend / wcOrders) : '—'}</td><td>${roas}</td>
     <td>${fmtInt(purchases)}</td><td>${cpa}</td><td>${cr}</td>
-    <td>${fmtCompact(clicks)}</td><td>${ctr}</td><td>${cpm}</td><td>${cpc}</td>
+    <td>${fmtCompact(clicks)}</td><td>${ctr}</td><td>${cpm}</td>
     ${colSpan ? '<td></td>' : ''}
   </tr>`;
 }
