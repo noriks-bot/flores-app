@@ -1032,6 +1032,9 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 }
 
 /* ═══ ADS MANAGER REDESIGN (scoped) ═══ */
+#section-ads-manager .name-cell { text-align: left; }
+#section-ads-manager td .name-text { text-align: left; }
+
 #section-ads-manager .content { padding: 0; }
 #section-ads-manager table { font-size: 11px; }
 #section-ads-manager table thead th { font-size: 10px; font-weight: 600; color: #555; padding: 7px 6px; white-space: nowrap; }
@@ -1313,6 +1316,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <th style="width:32px;cursor:default"><input type="checkbox" class="master-select" onchange="toggleSelectAll(this)" style="cursor:pointer"></th>
               <th data-sort="status" style="width:50px">Status</th>
               <th data-sort="name">Name</th>
+              <th data-sort="country">Country</th>
+              <th data-sort="product">Product</th>
               <th data-sort="budget">Budget</th>
               <th data-sort="bid_strategy">Bid strategy</th>
               <th class="sep" data-sort="spend">Spend</th>
@@ -1337,7 +1342,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           </thead>
           <tbody id="tableTotals"></tbody>
           <tbody id="tableBody">
-            <tr><td colspan="24"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>
+            <tr><td colspan="26"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>
           </tbody>
           <tbody id="tableTotalsBottom"></tbody>
         </table>
@@ -2628,11 +2633,11 @@ document.addEventListener('click', e => {
 
 async function loadData() {
   const {from,to}=getDateRange();
-  document.getElementById('tableBody').innerHTML='<tr><td colspan="24"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>';
+  document.getElementById('tableBody').innerHTML='<tr><td colspan="26"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>';
   try {
     const res=await fetch(`/api/campaigns?date_from=${from}&date_to=${to}`);
     campaigns=await res.json();
-    if(campaigns.error){document.getElementById('tableBody').innerHTML=`<tr><td colspan="24"><div class="loading-state">Error: ${campaigns.error}</div></td></tr>`;return;}
+    if(campaigns.error){document.getElementById('tableBody').innerHTML=`<tr><td colspan="26"><div class="loading-state">Error: ${campaigns.error}</div></td></tr>`;return;}
     campaigns.sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0));
     expandedCampaigns={}; expandedAdsets={}; adsetCache={}; adCache={};
     allAdsets=[]; allAds=[];
@@ -2650,7 +2655,7 @@ async function loadData() {
     } else {
       renderAdHeaders(); loadAds();
     }
-  } catch(e){ document.getElementById('tableBody').innerHTML=`<tr><td colspan="24"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
+  } catch(e){ document.getElementById('tableBody').innerHTML=`<tr><td colspan="26"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
 }
 
 function updateSummary() {
@@ -2688,7 +2693,7 @@ function updateSummary() {
   const fpaCount=campaigns.filter(c=>(c.wc?.orders||0)>0).length;
   document.getElementById('tableTotals').innerHTML=`<tr class="totals-row">
     <td></td><td></td><td style="text-align:left"><strong>Totals</strong></td>
-    <td></td><td></td>
+    <td></td><td></td><td></td><td></td>
     <td>${spend.toFixed(2)} €</td>
     <td>${wcOrders}</td>
     <td>${fpaCount}</td>
@@ -2735,12 +2740,20 @@ function parseCampTags(name) {
 }
 
 function nameHtml(name,level) {
-  if(level!=='campaign') return `<span class="name-text" title="${(name||'').replace(/"/g,'&quot;')}">${name||'—'}</span>`;
+  return `<span class="name-text" title="${(name||'').replace(/"/g,'&quot;')}">${name||'—'}</span>`;
+}
+function getCountryTags(name) {
   const t=parseCampTags(name);
-  let tags='';
-  const flags={HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'}; t.countries.forEach(c=>{tags+=`<span class="country-tag country-tag-${c}">${flags[c]||''} ${c}</span>`;});
-  if(t.type) tags+=`<span class="type-tag ${t.type}">${t.typeLabel}</span>`;
-  return `${tags}<span class="name-text" title="${(name||'').replace(/"/g,'&quot;')}">${name||'—'}</span>`;
+  const flags={HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
+  return t.countries.map(c=>`<span style="display:block;white-space:nowrap;font-size:10px"><span style="background:#e0e7ff;color:#3730a3;padding:1px 4px;border-radius:3px;font-size:9px;font-weight:600">${flags[c]||''} ${c}</span></span>`).join('');
+}
+function getProductTag(name) {
+  const n=(name||'').toUpperCase();
+  if(n.includes('SHIRT')||n.includes('TSHIRT')||n.includes('MAJIC')) return '<span style="background:#dcfce7;color:#166534;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">Shirts</span>';
+  if(n.includes('BOXER')) return '<span style="background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">Boxers</span>';
+  if(n.includes('SOCK')) return '<span style="background:#fce7f3;color:#9d174d;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">Socks</span>';
+  if(n.includes('KOMPLET')||n.includes('BUNDLE')||n.includes('SET')) return '<span style="background:#e0e7ff;color:#3730a3;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">Bundle</span>';
+  return '<span class="muted">—</span>';
 }
 
 function renderHoverActions(name, id) {
@@ -2916,14 +2929,14 @@ function renderTable() {
     if(expandedCampaigns[c.id]){
       let childRows=[];
       if(!adsetCache[c.id]){
-        childRows.push('<tr class="level-adset"><td></td><td colspan="23" style="padding:12px 40px;color:var(--text-muted)"><div class="spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading adsets...</td></tr>');
+        childRows.push('<tr class="level-adset"><td></td><td colspan="25" style="padding:12px 40px;color:var(--text-muted)"><div class="spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading adsets...</td></tr>');
       } else {
         const adsets=adsetCache[c.id].filter(a=>a.insights||a.status==='ACTIVE').sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0));
         adsets.forEach(as=>{
           childRows.push(makeRow(as,'adset'));
           if(expandedAdsets[as.id]){
             if(!adCache[as.id]){
-              childRows.push('<tr class="level-ad"><td></td><td colspan="23" style="padding:12px 58px;color:var(--text-muted)"><div class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading ads...</td></tr>');
+              childRows.push('<tr class="level-ad"><td></td><td colspan="25" style="padding:12px 58px;color:var(--text-muted)"><div class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading ads...</td></tr>');
             } else {
               adCache[as.id].filter(a=>a.insights||a.status==='ACTIVE').sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0)).forEach(ad=>{childRows.push(makeRow(ad,'ad'));});
             }
@@ -2937,7 +2950,7 @@ function renderTable() {
       html+=childRows.join('');
     }
   });
-  if(!html) html='<tr><td colspan="24"><div class="loading-state">No campaigns found</div></td></tr>';
+  if(!html) html='<tr><td colspan="26"><div class="loading-state">No campaigns found</div></td></tr>';
   document.getElementById('tableBody').innerHTML=html;
   if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL') applySearchFilter();
 }
@@ -3215,6 +3228,8 @@ function renderCampaignHeaders() {
     <th style="width:32px;cursor:default"><input type="checkbox" class="master-select" onchange="toggleSelectAll(this)" style="cursor:pointer"></th>
     <th data-sort="status" style="width:50px">Status</th>
     <th data-sort="name">Name</th>
+    <th data-sort="country">Country</th>
+    <th data-sort="product">Product</th>
     <th data-sort="budget">Budget</th>
     <th data-sort="bid_strategy">Bid strategy</th>
     <th class="sep" data-sort="spend">Spend</th>
@@ -3241,6 +3256,8 @@ const FLAT_HEADERS = `
     <th style="width:32px;cursor:default"></th>
     <th data-sort="status" style="width:50px">Status</th>
     <th data-sort="name">Name</th>
+    <th data-sort="country">Country</th>
+    <th data-sort="product">Product</th>
     <th data-sort="campaign_name">Campaign</th>
     <th data-sort="budget">Budget</th>
     <th data-sort="bid_strategy">Bid strategy</th>
