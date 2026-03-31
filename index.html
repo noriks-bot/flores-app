@@ -334,7 +334,7 @@ thead th:nth-child(1), thead th:nth-child(2) { background: #f6f7f8; }
 tbody td:nth-child(1), tbody td:nth-child(2) { background: inherit; }
 
 /* Name */
-.name-cell { display: flex; align-items: center; gap: 5px; max-width: 350px; overflow: hidden; }
+.name-cell { display: flex; align-items: center; gap: 5px; max-width: 700px; overflow: hidden; }
 .name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #374151; }
 tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827; }
 .country-tag { display: inline-block; padding: 0px 3px; font-size: 9px; font-weight: 600; border-radius: 3px; letter-spacing: 0.2px; flex-shrink: 0; opacity: 0.7; }
@@ -1335,7 +1335,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <th style="width:32px;cursor:default"><input type="checkbox" class="master-select" onchange="toggleSelectAll(this)" style="cursor:pointer"></th>
               <th style="width:32px"></th>
               <th data-sort="status" style="width:50px">Status</th>
-              <th data-sort="name">Name</th>
+              <th data-sort="name" style="min-width:400px">Name</th>
               <th data-sort="country">Country</th>
               <th data-sort="product">Product</th>
               <th data-sort="budget">Budget</th>
@@ -3305,7 +3305,7 @@ function renderCampaignHeaders() {
     <th style="width:32px;cursor:default"><input type="checkbox" class="master-select" onchange="toggleSelectAll(this)" style="cursor:pointer"></th>
     <th style="width:32px"></th>
     <th data-sort="status" style="width:50px">Status</th>
-    <th data-sort="name">Name</th>
+    <th data-sort="name" style="min-width:400px">Name</th>
     <th data-sort="country">Country</th>
     <th data-sort="product">Product</th>
     <th data-sort="budget">Budget</th>
@@ -3330,7 +3330,7 @@ const FLAT_HEADERS = `
     <th style="width:32px;cursor:default"></th>
     <th style="width:32px"></th>
     <th data-sort="status" style="width:50px">Status</th>
-    <th data-sort="name">Name</th>
+    <th data-sort="name" style="min-width:400px">Name</th>
     <th data-sort="country">Country</th>
     <th data-sort="product">Product</th>
     <th data-sort="campaign_name">Campaign</th>
