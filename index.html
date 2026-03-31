@@ -2806,7 +2806,7 @@ function makeRow(item,level) {
   const editBtn=`<a class="edit-btn" href="${fbEditUrl}" target="_blank" title="Open in FB Ads Manager">${editSvg}</a>`;
   const infoBtn=level==='campaign'?`<button class="info-btn" onclick="event.stopPropagation();showCampaignInfo('${item.id}',this)" title="Campaign Performance">ℹ</button>`:'';
   const ordersBtn=level==='campaign'&&wcCount>0?`<button class="orders-btn" onclick="event.stopPropagation();showCampaignOrders('${item.id}')" title="View Orders">${wcCount} Order${wcCount!==1?'s':''}</button>`:'';
-  const hoverActs=level==='campaign'?renderHoverActions(item.name,item.id):'';
+  const hoverActs='';
   const actionBtns=editBtn+infoBtn+ordersBtn+hoverActs;
 
   // Budget
