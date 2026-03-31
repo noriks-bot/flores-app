@@ -2913,7 +2913,7 @@ function makeRow(item,level,bgClass) {
     <td>${selectCb}</td>
     <td>${expandHtml}</td>
     <td>${statusHtml}</td>
-    <td style="text-align:left"><div class="name-cell">${nameHtml(item.name,level)}${level==='campaign'?`<button class="edit-inline-btn" onclick="event.stopPropagation();inlineEditName('${item.id}','${(item.name||'').replace(/'/g,"\\'").replace(/\`/g,'\\`')}')" title="Rename campaign" style="margin-left:4px;border:none;background:none;cursor:pointer;color:#bbb;font-size:10px;padding:0 2px">✎</button>`:''}</div></td>
+    <td style="text-align:left;${level==='adset'?'padding-left:50px;':level==='ad'?'padding-left:100px;':''}"><div class="name-cell">${level==='adset'?'↳ ':level==='ad'?'↳ ':''}${nameHtml(item.name,level)}${level==='campaign'?`<button class="edit-inline-btn" onclick="event.stopPropagation();inlineEditName('${item.id}','${(item.name||'').replace(/'/g,"\\'").replace(/\`/g,'\\`')}')" title="Rename campaign" style="margin-left:4px;border:none;background:none;cursor:pointer;color:#bbb;font-size:10px;padding:0 2px">✎</button>`:''}</div></td>
     <td>${getCountryTags(item.name)}</td>
     <td>${getProductTag(item.name)}</td>
     <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal})" title="Edit budget" style="display:block;border:none;background:none;cursor:pointer;color:#444;font-size:11px;padding:0;margin-top:1px">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="display:block;border:none;background:none;cursor:pointer;color:#444;font-size:11px;padding:0;margin-top:1px">✎</button>`:''}</td>
