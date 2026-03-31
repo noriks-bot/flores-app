@@ -1358,7 +1358,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           </thead>
           <tbody id="tableTotals"></tbody>
           <tbody id="tableBody">
-            <tr><td colspan="27"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>
+            <tr><td colspan="22"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>
           </tbody>
           <tbody id="tableTotalsBottom"></tbody>
         </table>
@@ -2649,11 +2649,11 @@ document.addEventListener('click', e => {
 
 async function loadData() {
   const {from,to}=getDateRange();
-  document.getElementById('tableBody').innerHTML='<tr><td colspan="27"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>';
+  document.getElementById('tableBody').innerHTML='<tr><td colspan="22"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>';
   try {
     const res=await fetch(`/api/campaigns?date_from=${from}&date_to=${to}`);
     campaigns=await res.json();
-    if(campaigns.error){document.getElementById('tableBody').innerHTML=`<tr><td colspan="27"><div class="loading-state">Error: ${campaigns.error}</div></td></tr>`;return;}
+    if(campaigns.error){document.getElementById('tableBody').innerHTML=`<tr><td colspan="22"><div class="loading-state">Error: ${campaigns.error}</div></td></tr>`;return;}
     campaigns.sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0));
     expandedCampaigns={}; expandedAdsets={}; adsetCache={}; adCache={};
     allAdsets=[]; allAds=[];
@@ -2671,7 +2671,7 @@ async function loadData() {
     } else {
       renderAdHeaders(); loadAds();
     }
-  } catch(e){ document.getElementById('tableBody').innerHTML=`<tr><td colspan="27"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
+  } catch(e){ document.getElementById('tableBody').innerHTML=`<tr><td colspan="22"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
 }
 
 function updateSummary() {
@@ -2996,14 +2996,14 @@ function renderTable() {
     if(expandedCampaigns[c.id]){
       let childRows=[];
       if(!adsetCache[c.id]){
-        childRows.push(`<tr class="level-adset ${bgClass}"><td></td><td colspan="26" style="padding:12px 40px;color:var(--text-muted)"><div class="spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading adsets...</td></tr>`);
+        childRows.push(`<tr class="level-adset ${bgClass}"><td></td><td colspan="21" style="padding:12px 40px;color:var(--text-muted)"><div class="spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading adsets...</td></tr>`);
       } else {
         const adsets=adsetCache[c.id].filter(a=>a.insights||a.status==='ACTIVE').sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0));
         adsets.forEach(as=>{
           childRows.push(makeRow(as,'adset',bgClass));
           if(expandedAdsets[as.id]){
             if(!adCache[as.id]){
-              childRows.push(`<tr class="level-ad ${bgClass}"><td></td><td colspan="26" style="padding:12px 58px;color:var(--text-muted)"><div class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading ads...</td></tr>`);
+              childRows.push(`<tr class="level-ad ${bgClass}"><td></td><td colspan="21" style="padding:12px 58px;color:var(--text-muted)"><div class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading ads...</td></tr>`);
             } else {
               adCache[as.id].filter(a=>a.insights||a.status==='ACTIVE').sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0)).forEach(ad=>{childRows.push(makeRow(ad,'ad',bgClass));});
             }
@@ -3017,7 +3017,7 @@ function renderTable() {
       html+=childRows.join('');
     }
   });
-  if(!html) html='<tr><td colspan="27"><div class="loading-state">No campaigns found</div></td></tr>';
+  if(!html) html='<tr><td colspan="22"><div class="loading-state">No campaigns found</div></td></tr>';
   document.getElementById('tableBody').innerHTML=html;
   if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL') applySearchFilter();
 }
