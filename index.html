@@ -2882,10 +2882,10 @@ function makeRow(item,level) {
     <td>${selectCb}</td>
     <td>${expandHtml}</td>
     <td>${statusHtml}</td>
-    <td style="text-align:left"><div class="name-cell">${nameHtml(item.name,level)}${editBtn}${level==='campaign'?`<button class="edit-inline-btn" onclick="event.stopPropagation();inlineEditName('${item.id}','${(item.name||'').replace(/'/g,"\\'").replace(/\`/g,'\\`')}')" title="Rename campaign" style="margin-left:4px;border:none;background:none;cursor:pointer;color:#bbb;font-size:10px;padding:0 2px">✎</button>`:''}</div></td>
+    <td style="text-align:left"><div class="name-cell">${nameHtml(item.name,level)}${level==='campaign'?`<button class="edit-inline-btn" onclick="event.stopPropagation();inlineEditName('${item.id}','${(item.name||'').replace(/'/g,"\\'").replace(/\`/g,'\\`')}')" title="Rename campaign" style="margin-left:4px;border:none;background:none;cursor:pointer;color:#bbb;font-size:10px;padding:0 2px">✎</button>`:''}</div></td>
     <td>${getCountryTags(item.name)}</td>
     <td>${getProductTag(item.name)}</td>
-    <td>${budgetHtml}${level==='campaign'?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal})" title="Edit budget" style="display:block;border:none;background:none;cursor:pointer;color:#bbb;font-size:9px;padding:0;margin-top:1px">✎ edit</button>`:''}</td>
+    <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal})" title="Edit budget" style="display:block;border:none;background:none;cursor:pointer;color:#444;font-size:11px;padding:0;margin-top:1px">✎</button>`:''}</td>
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${wcCount||0}</td>
@@ -3386,9 +3386,9 @@ function makeFlatRow(item, level) {
     <td></td>
     <td></td>
     <td>${statusHtml}</td>
-    <td><div class="name-cell"><span class="name-text" title="${(item.name||'').replace(/"/g,'&quot;')}">${item.name || '\u2014'}</span>${editBtn}</div></td>
+    <td><div class="name-cell"><span class="name-text" title="${(item.name||'').replace(/"/g,'&quot;')}">${item.name || '\u2014'}</span></div></td>
     <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(item.campaign_name||'').replace(/"/g,'&quot;')}">${campTagsHtml}${campLabel}</td>
-    <td>${budgetHtml}${level==='campaign'?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal})" title="Edit budget" style="display:block;border:none;background:none;cursor:pointer;color:#bbb;font-size:9px;padding:0;margin-top:1px">✎ edit</button>`:''}</td>
+    <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal})" title="Edit budget" style="display:block;border:none;background:none;cursor:pointer;color:#444;font-size:11px;padding:0;margin-top:1px">✎</button>`:''}</td>
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${wcCount||0}</td>
