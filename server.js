@@ -2233,7 +2233,7 @@ const server = http.createServer(async (req, res) => {
 
         // Classify each order into an origin category
         const rows = db.prepare(`
-          SELECT order_date, gross_eur, profit, is_fb_attributed, utm_source, utm_medium, utm_campaign
+          SELECT order_date, gross_eur, profit, is_fb_attributed, utm_source, utm_medium, utm_campaign, raw_meta
           FROM wc_orders WHERE order_date >= ? AND order_date <= ?
         `).all(start, end);
 
@@ -2242,13 +2242,36 @@ const server = http.createServer(async (req, res) => {
           const med = (r.utm_medium || '').toLowerCase();
           const camp = (r.utm_campaign || '').trim();
 
+          // Parse raw_meta for deeper attribution signals
+          let meta = {};
+          try { meta = JSON.parse(r.raw_meta || '{}'); } catch(e) {}
+          const referrer = (meta._wc_order_attribution_referrer || '').toLowerCase();
+          const entry = (meta._wc_order_attribution_session_entry || '').toLowerCase();
+          const sourceType = (meta._wc_order_attribution_source_type || '').toLowerCase();
+
+          // Call Center
+          if (meta._call_center === 'yes') return 'Call Center';
+          if (src.includes('callcenter') || src.includes('call_center') || src.includes('call-center') || src.includes('phone')) return 'Call Center';
+
+          // Facebook
           if (r.is_fb_attributed === 1 && camp !== '') return 'FB Measured';
           if (r.is_fb_attributed === 1) return 'FB Unmeasured';
+
+          // Google Paid: check utm_medium, campaign name, gclid in referrer/entry
           if (src.includes('google') && (med.includes('cpc') || med.includes('paid') || med.includes('ppc'))) return 'Google Ads';
-          if (src.includes('google') && (med === '' || med.includes('organic') || med.includes('referral'))) return 'Google Organic';
+          if (camp.toLowerCase().includes('google_cpc') || camp.toLowerCase().includes('google_ads')) return 'Google Ads';
+          if (referrer.includes('gclid') || entry.includes('gclid')) return 'Google Ads';
+          if (src.includes('google') && referrer.includes('google.com') && (referrer.includes('ads') || entry.includes('gad_source'))) return 'Google Ads';
+
+          // Google Organic
+          if (src.includes('google')) return 'Google Organic';
+          if (referrer.includes('google.com')) return 'Google Organic';
+
+          // Klaviyo
           if (src.includes('klaviyo') || src.includes('email') || src.includes('newsletter')) return 'Klaviyo';
-          if (src.includes('callcenter') || src.includes('call_center') || src.includes('call-center') || src.includes('phone')) return 'Call Center';
-          if (src === '' || src === 'direct' || src === '(direct)') return 'Direct';
+
+          // Direct
+          if (src === '' || src === 'direct' || src === '(direct)' || src === 'undefined') return 'Direct';
           return 'Other';
         }
 
