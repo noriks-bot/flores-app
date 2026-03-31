@@ -1281,11 +1281,11 @@ async function getMultiPeriodProfit() {
   
   const periods = {
     yesterday: { from: fmt(addD(today,-1)), to: fmt(addD(today,-1)) },
-    d3: { from: fmt(addD(today,-2)), to: fmt(today) },
-    d7: { from: fmt(addD(today,-6)), to: fmt(today) },
-    d14: { from: fmt(addD(today,-13)), to: fmt(today) },
-    d30: { from: fmt(addD(today,-29)), to: fmt(today) },
-    lifetime: { from: '2025-01-01', to: fmt(today) }
+    d3: { from: fmt(addD(today,-3)), to: fmt(addD(today,-1)) },
+    d7: { from: fmt(addD(today,-7)), to: fmt(addD(today,-1)) },
+    d14: { from: fmt(addD(today,-14)), to: fmt(addD(today,-1)) },
+    d30: { from: fmt(addD(today,-30)), to: fmt(addD(today,-1)) },
+    lifetime: { from: '2025-01-01', to: fmt(addD(today,-1)) }
   };
 
   const result = {};
