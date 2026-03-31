@@ -1115,12 +1115,7 @@ async function getCampaigns(dateFrom, dateTo) {
     };
   }
 
-  // Add active campaigns without spend
-  for (const c of campaigns) {
-    if (!insightCampaigns[c.id] && c.status === 'ACTIVE') {
-      insightCampaigns[c.id] = { ...c, insights: null };
-    }
-  }
+  // Only show campaigns with spend in the selected period
 
   const result = Object.values(insightCampaigns);
 
