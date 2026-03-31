@@ -1128,7 +1128,8 @@ async function getCampaigns(dateFrom, dateTo) {
         limit: 500
       });
       const camps2 = await metaGetAll(acct + '/campaigns', {
-        fields: 'id,name,status,objective,daily_budget,lifetime_budget',
+        fields: 'id,name,status,objective,daily_budget,lifetime_budget,bid_strategy',
+        filtering: JSON.stringify([{field:'effective_status',operator:'IN',value:['ACTIVE','PAUSED','IN_PROCESS','WITH_ISSUES']}]),
         limit: 500
       });
       const cmap2 = {}; for (const cc of camps2) cmap2[cc.id] = cc;
