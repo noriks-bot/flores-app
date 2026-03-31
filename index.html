@@ -2670,7 +2670,7 @@ async function loadData() {
       renderCampaignHeaders();
       updateSummary(); updateSortHeaders(); renderTable();
       // Load multi-period profit in background
-      fetch('/api/multi-profit').then(r=>r.json()).then(d=>{if(!d.error){multiProfitData=d;renderTable();}}).catch(()=>{});
+      fetch('/api/multi-profit').then(r=>r.json()).then(d=>{console.log('[Flores] multi-profit loaded',Object.keys(d).length,'campaigns');if(!d.error){multiProfitData=d;renderTable();}}).catch(e=>{console.error('[Flores] multi-profit error',e);});
     } else if(activeTab==='adsets') {
       renderAdsetHeaders(); loadAdsets();
     } else {
