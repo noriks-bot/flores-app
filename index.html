@@ -1384,18 +1384,34 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         </div>
       </div>
     </div>
-    <div class="content" style="padding:20px 24px">
+    <div class="filters-bar">
+      <span class="filter-label">Period</span>
+      <div class="preset-tabs" id="logPresetTabs">
+        <button class="preset-tab active" data-range="today" onclick="setLogDate(this,'today')">Today</button>
+        <button class="preset-tab" data-range="7d" onclick="setLogDate(this,'7d')">7D</button>
+        <button class="preset-tab" data-range="30d" onclick="setLogDate(this,'30d')">30D</button>
+        <button class="preset-tab" data-range="all" onclick="setLogDate(this,'all')">All</button>
+      </div>
+    </div>
+    <div class="content" style="padding:12px 24px">
       <div class="table-card">
-        <div class="table-scroll" style="max-height:calc(100vh - 200px)">
-          <table>
+        <div class="table-scroll" style="max-height:calc(100vh - 240px)">
+          <table style="width:100%;table-layout:fixed">
             <thead><tr>
-              <th style="text-align:left">Timestamp</th>
-              <th style="text-align:left">Type</th>
-              <th style="text-align:left">Entity ID</th>
-              <th style="text-align:left">Old Value</th>
-              <th style="text-align:left">New Value</th>
+              <th style="text-align:left;width:140px">Time</th>
+              <th style="text-align:left;width:60px">User</th>
+              <th style="text-align:left;width:60px">Type</th>
+              <th style="text-align:left;width:50px">Country</th>
+              <th style="text-align:left;width:160px">Campaign ID</th>
+              <th style="text-align:left;width:auto">Campaign Name</th>
+              <th style="text-align:center;width:80px">Old</th>
+              <th style="text-align:center;width:20px"></th>
+              <th style="text-align:center;width:80px">New</th>
+              <th style="text-align:right;width:70px">Spend</th>
+              <th style="text-align:right;width:50px">Orders</th>
+              <th style="text-align:right;width:70px">Profit</th>
             </tr></thead>
-            <tbody id="logBody"><tr><td colspan="10" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
+            <tbody id="logBody"><tr><td colspan="12" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -2542,28 +2558,50 @@ function navigateTo(section) {
   if (section === 'log') { loadChangeLog(); }
 }
 
+let logDateFilter = 'today';
+function setLogDate(btn, range) {
+  document.querySelectorAll('#logPresetTabs .preset-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  logDateFilter = range;
+  loadChangeLog();
+}
 async function loadChangeLog() {
   try {
-    const res = await fetch('/api/log?limit=200');
-    const rows = await res.json();
+    const res = await fetch('/api/log?limit=500');
+    let rows = await res.json();
+    // Date filter
+    if (logDateFilter !== 'all') {
+      const now = new Date();
+      let cutoff;
+      if (logDateFilter === 'today') cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString().slice(0,10);
+      else if (logDateFilter === '7d') { const d=new Date(now); d.setDate(d.getDate()-7); cutoff=d.toISOString().slice(0,10); }
+      else if (logDateFilter === '30d') { const d=new Date(now); d.setDate(d.getDate()-30); cutoff=d.toISOString().slice(0,10); }
+      rows = rows.filter(r => (r.timestamp||'').slice(0,10) >= cutoff);
+    }
     if (!rows.length) {
-      document.getElementById('logBody').innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#9ca3af">No changes yet</td></tr>';
+      document.getElementById('logBody').innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:#9ca3af">No changes in this period</td></tr>';
       return;
     }
-    document.getElementById('logBody').innerHTML = rows.map(r => `<tr>
-      <td style="text-align:left;font-size:12px">${r.timestamp}</td>
-      <td style="text-align:left;font-size:12px">${r.user || 'noriks'}</td>
-      <td style="text-align:left"><span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">${r.change_type}</span></td>
-      <td style="text-align:left;font-size:11px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(r.entity_name||'').replace(/"/g,'&quot;')}">${r.entity_name || r.entity_id}</td>
-      <td style="text-align:left;font-size:12px">${r.country || '—'}</td>
-      <td style="text-align:left;font-size:12px;color:#ef4444">${r.old_value || '—'}</td>
-      <td style="text-align:left;font-size:12px;color:#22c55e">${r.new_value || '—'}</td>
-      <td style="text-align:right;font-size:11px">${r.spend_at_change ? r.spend_at_change.toFixed(2) + ' €' : '—'}</td>
+    const profitColor = v => v > 0 ? '#22c55e' : v < 0 ? '#ef4444' : '#666';
+    document.getElementById('logBody').innerHTML = rows.map(r => {
+      const oldBg = '#fef2f2'; const newBg = '#f0fdf4';
+      return `<tr style="border-bottom:1px solid #f0f0f0">
+      <td style="text-align:left;font-size:11px;color:#666;white-space:nowrap">${r.timestamp}</td>
+      <td style="text-align:left;font-size:11px;font-weight:600">${r.user || 'noriks'}</td>
+      <td style="text-align:left"><span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">${r.change_type}</span></td>
+      <td style="text-align:left;font-size:11px;font-weight:600">${r.country || '—'}</td>
+      <td style="text-align:left;font-size:10px;font-family:monospace;color:#64748b">${r.entity_id}</td>
+      <td style="text-align:left;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(r.entity_name||'').replace(/"/g,'&quot;')}">${r.entity_name || '—'}</td>
+      <td style="text-align:center;font-size:12px;font-weight:700;background:${oldBg};color:#ef4444">${r.old_value || '—'}</td>
+      <td style="text-align:center;font-size:14px;color:#9ca3af">→</td>
+      <td style="text-align:center;font-size:12px;font-weight:700;background:${newBg};color:#22c55e">${r.new_value || '—'}</td>
+      <td style="text-align:right;font-size:11px">${r.spend_at_change ? r.spend_at_change.toFixed(2) + '€' : '—'}</td>
       <td style="text-align:right;font-size:11px">${r.orders_at_change || 0}</td>
-      <td style="text-align:right;font-size:11px">${r.profit_at_change ? r.profit_at_change.toFixed(2) + ' €' : '—'}</td>
-    </tr>`).join('');
+      <td style="text-align:right;font-size:11px;font-weight:600;color:${profitColor(r.profit_at_change||0)}">${r.profit_at_change ? r.profit_at_change.toFixed(2) + '€' : '—'}</td>
+    </tr>`;
+    }).join('');
   } catch(e) {
-    document.getElementById('logBody').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:#ef4444">Error: '+e.message+'</td></tr>';
+    document.getElementById('logBody').innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:#ef4444">Error: '+e.message+'</td></tr>';
   }
 }
 
