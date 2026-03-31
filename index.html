@@ -2867,7 +2867,7 @@ function openEditModal(title, currentValue, onSave) {
       if (ok) {
         status.textContent = '✓ ' + (msg || 'Saved!');
         status.style.color = '#22c55e';
-        setTimeout(() => { closeEditModal(); clearCacheAndReload(); }, 800);
+        setTimeout(() => { closeEditModal(); renderTable(); updateSummary(); }, 800);
       } else {
         status.textContent = '✗ ' + (msg || 'Error');
         status.style.color = '#ef4444';
