@@ -1056,8 +1056,14 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 #section-ads-manager table tbody td { padding: 8px 10px; font-size: 12px; font-weight: 400; color: #111; white-space: nowrap; border-bottom: 1px solid #e8e8e8; }
 #section-ads-manager table tbody tr:nth-child(even):not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
 #section-ads-manager table tbody tr.level-campaign:nth-child(even) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
-#section-ads-manager table tbody tr.level-adset:nth-child(even) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
-#section-ads-manager table tbody tr.level-ad:nth-child(even) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
+/* Adset/Ad rows inherit parent campaign background via ci-even/ci-odd classes */
+#section-ads-manager table tbody tr.level-adset.ci-even > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
+#section-ads-manager table tbody tr.level-adset.ci-odd > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #fff !important; }
+#section-ads-manager table tbody tr.level-ad.ci-even > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
+#section-ads-manager table tbody tr.level-ad.ci-odd > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #fff !important; }
+/* Disable default nth-child zebra for adsets/ads (handled by ci- classes above) */
+#section-ads-manager table tbody tr.level-adset:nth-child(even) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: inherit; }
+#section-ads-manager table tbody tr.level-ad:nth-child(even) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: inherit; }
 #section-ads-manager table tbody tr.campaign-profit:nth-child(even) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
 #section-ads-manager table tbody tr.campaign-loss:nth-child(even) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
 #section-ads-manager td.cell-pl-green { background: #4db87a !important; color: #fff !important; font-weight: 400; text-align: right; }
@@ -2823,7 +2829,7 @@ function profitPeriodCells(item,level) {
   return `<td>${profitPill(mp.yesterday?.profit)}</td><td>${profitPill(mp.d3?.profit)}</td><td>${profitPill(mp.d7?.profit)}</td><td>${profitPill(mp.d14?.profit)}</td><td>${profitPill(mp.lifetime?.profit)}</td>`;
 }
 
-function makeRow(item,level) {
+function makeRow(item,level,bgClass) {
   const ins=item.insights;
   const spend=ins?parseFloat(ins.spend||0):0;
   const clicks=ins?parseInt(ins.clicks||0):0;
@@ -2880,7 +2886,8 @@ function makeRow(item,level) {
   const cpcLink=linkClicks>0?(spend/linkClicks).toFixed(2)+' \u20ac':'0 \u20ac';
 
   const expandedClass=(level==='campaign'&&expandedCampaigns[item.id])?'row-expanded':'';
-  return `<tr class="level-${level} ${rowClass} ${expandedClass}" data-id="${item.id}">
+  const bgClassStr=bgClass||'';
+  return `<tr class="level-${level} ${rowClass} ${expandedClass} ${bgClassStr}" data-id="${item.id}">
     <td>${selectCb}</td>
     <td>${expandHtml}</td>
     <td>${statusHtml}</td>
@@ -2973,21 +2980,25 @@ function clearSelection() {
 
 function renderTable() {
   let html='';
+  let campIdx=0;
   campaigns.forEach(c=>{
-    html+=makeRow(c,'campaign');
+    // Assign campaign index so child rows inherit same background
+    const ci=campIdx++;
+    const bgClass=ci%2===0?'ci-even':'ci-odd';
+    html+=makeRow(c,'campaign',bgClass);
     if(expandedCampaigns[c.id]){
       let childRows=[];
       if(!adsetCache[c.id]){
-        childRows.push('<tr class="level-adset"><td></td><td colspan="26" style="padding:12px 40px;color:var(--text-muted)"><div class="spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading adsets...</td></tr>');
+        childRows.push(`<tr class="level-adset ${bgClass}"><td></td><td colspan="26" style="padding:12px 40px;color:var(--text-muted)"><div class="spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading adsets...</td></tr>`);
       } else {
         const adsets=adsetCache[c.id].filter(a=>a.insights||a.status==='ACTIVE').sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0));
         adsets.forEach(as=>{
-          childRows.push(makeRow(as,'adset'));
+          childRows.push(makeRow(as,'adset',bgClass));
           if(expandedAdsets[as.id]){
             if(!adCache[as.id]){
-              childRows.push('<tr class="level-ad"><td></td><td colspan="26" style="padding:12px 58px;color:var(--text-muted)"><div class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading ads...</td></tr>');
+              childRows.push(`<tr class="level-ad ${bgClass}"><td></td><td colspan="26" style="padding:12px 58px;color:var(--text-muted)"><div class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading ads...</td></tr>`);
             } else {
-              adCache[as.id].filter(a=>a.insights||a.status==='ACTIVE').sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0)).forEach(ad=>{childRows.push(makeRow(ad,'ad'));});
+              adCache[as.id].filter(a=>a.insights||a.status==='ACTIVE').sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0)).forEach(ad=>{childRows.push(makeRow(ad,'ad',bgClass));});
             }
           }
         });
