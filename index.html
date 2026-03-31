@@ -2837,8 +2837,8 @@ function profitCell(p) {
   const spend=p.spend||0;
   const cpa=orders>0?(spend/orders).toFixed(1)+'€':'—';
   const pill=profitPill(profit);
-  const ordTag=orders>0?`<span style="display:block;font-size:9px;color:#666;margin-top:1px">${orders} orders</span>`:'';
-  const cpaTag=orders>0?`<span style="display:block;font-size:9px;color:#666">${cpa} CPA</span>`:'';
+  const ordTag=`<span style="display:block;font-size:9px;color:#666;margin-top:1px">${orders} orders</span>`;
+  const cpaTag=`<span style="display:block;font-size:9px;color:#666">${cpa} CPA</span>`;
   return `<td style="line-height:1.2">${pill}${ordTag}${cpaTag}</td>`;
 }
 function profitPeriodCells(item,level) {
