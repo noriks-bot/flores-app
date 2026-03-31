@@ -548,14 +548,8 @@ function classifySourceDash(meta, coupons) {
         const klaviyoCoupons = ['shop20', 'welcome', 'email'];
         if (coupons.some(c => klaviyoCoupons.some(k => c.toLowerCase().includes(k)))) return 'Klaviyo';
     }
-    // Only attribute to Facebook from referrer/entry if it's actually an external FB/IG source
-    // Skip if referrer is internal (noriks.com) — fbclid in internal URLs is from previous sessions
-    const isInternalReferrer = referrer.includes('noriks.com') || referrer.includes('noriks.cz') || referrer.includes('noriks.hr') || referrer.includes('noriks.gr') || referrer.includes('noriks.hu') || referrer.includes('noriks.pl') || referrer.includes('noriks.it') || referrer.includes('noriks.sk');
-    const isInternalEntry = entry.includes('noriks.com') || entry.includes('noriks.cz') || entry.includes('noriks.hr');
-    if (!isInternalReferrer && (referrer.includes('fbclid') || referrer.includes('utm_source=fb') || referrer.includes('utm_source=ig') || referrer.includes('facebook.com'))) return 'Facebook';
-    if (!isInternalEntry && (entry.includes('fbclid') || entry.includes('utm_source=fb') || entry.includes('utm_source=ig'))) return 'Facebook';
-    // Internal referrer with fbclid but source_type is typein/organic = Direct, not FB
-    if (isInternalReferrer && stype === 'typein') return 'Direct';
+    if (referrer.includes('fbclid') || referrer.includes('utm_source=fb') || referrer.includes('utm_source=ig') || referrer.includes('facebook.com')) return 'Facebook';
+    if (entry.includes('fbclid') || entry.includes('utm_source=fb') || entry.includes('utm_source=ig')) return 'Facebook';
     if (referrer.includes('google.com') && (referrer.includes('gclid') || referrer.includes('ads'))) return 'Google Paid';
     if (referrer.includes('google.com')) return 'Google Organic';
     return 'Direct';
