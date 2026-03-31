@@ -1969,6 +1969,29 @@ const server = http.createServer(async (req, res) => {
         const data = await getAds(query.adset_id, dateFrom, dateTo);
         return sendJSON(res, data);
       }
+      if (urlPath === '/api/campaign/rename' && req.method === 'POST') {
+        const body = await new Promise((res,rej)=>{ let d=''; req.on('data',c=>d+=c); req.on('end',()=>res(JSON.parse(d))); req.on('error',rej); });
+        const { campaignId, name } = body;
+        if (!campaignId || !name) return sendJSON(res, {error:'Missing campaignId or name'}, 400);
+        // Find which account owns this campaign
+        let acct = AD_ACCOUNT;
+        for (const [,a] of Object.entries(AD_ACCOUNTS_MAP)) {
+          try { const r = await metaGet(campaignId, {fields:'id'}); if(r.id) { acct = a; break; } } catch(e) {}
+        }
+        try {
+          const result = await fbPost(`/${campaignId}`, { name });
+          return sendJSON(res, { ok: result.success === true || !!result });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+      if (urlPath === '/api/campaign/budget' && req.method === 'POST') {
+        const body = await new Promise((res,rej)=>{ let d=''; req.on('data',c=>d+=c); req.on('end',()=>res(JSON.parse(d))); req.on('error',rej); });
+        const { campaignId, dailyBudget } = body;
+        if (!campaignId || dailyBudget === undefined) return sendJSON(res, {error:'Missing params'}, 400);
+        try {
+          const result = await fbPost(`/${campaignId}`, { daily_budget: String(dailyBudget) });
+          return sendJSON(res, { ok: result.success === true || !!result });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
       if (urlPath === '/api/campaign-orders') {
         if (!query.campaign_id) return sendJSON(res, { error: 'campaign_id required' }, 400);
         const campaignId = query.campaign_id;

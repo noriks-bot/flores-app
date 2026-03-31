@@ -1327,7 +1327,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 
 
     <!-- TABLE -->
-    <div class="table-card">
+    <div class="table-card" style="margin:0 16px 16px 16px">
       <!-- campaign count moved to topbar -->
       <div class="table-scroll">
         <table>
@@ -2775,6 +2775,32 @@ function getProductTag(name) {
   return '<span class="muted">—</span>';
 }
 
+function inlineEditName(campId, currentName) {
+  const newName = prompt('Rename campaign:', currentName);
+  if (!newName || newName === currentName) return;
+  fetch('/api/campaign/rename', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({campaignId: campId, name: newName})
+  }).then(r=>r.json()).then(d=>{
+    if(d.ok) { showToast('Campaign renamed!'); clearCacheAndReload(); }
+    else showToast('Error: '+(d.error||'failed'), 'error');
+  }).catch(e=>showToast('Error: '+e.message, 'error'));
+}
+function inlineEditBudget(campId, currentBudget) {
+  const newBudget = prompt('New daily budget (EUR):', currentBudget > 0 ? currentBudget : '');
+  if (newBudget === null) return;
+  const budgetCents = Math.round(parseFloat(newBudget) * 100);
+  if (isNaN(budgetCents) || budgetCents < 0) { showToast('Invalid budget', 'error'); return; }
+  fetch('/api/campaign/budget', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({campaignId: campId, dailyBudget: budgetCents})
+  }).then(r=>r.json()).then(d=>{
+    if(d.ok) { showToast('Budget updated!'); clearCacheAndReload(); }
+    else showToast('Error: '+(d.error||'failed'), 'error');
+  }).catch(e=>showToast('Error: '+e.message, 'error'));
+}
 function renderHoverActions(name, id) {
   const escaped = (name||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
   return `<span class="hover-actions">
@@ -2856,7 +2882,7 @@ function makeRow(item,level) {
     <td>${selectCb}</td>
     <td>${expandHtml}</td>
     <td>${statusHtml}</td>
-    <td style="text-align:left"><div class="name-cell">${nameHtml(item.name,level)}${editBtn}</div></td>
+    <td style="text-align:left"><div class="name-cell">${nameHtml(item.name,level)}${editBtn}${level==='campaign'?`<button class="edit-inline-btn" onclick="event.stopPropagation();inlineEditName('${item.id}','${(item.name||'').replace(/'/g,"\\'").replace(/\`/g,'\\`')}')" title="Rename campaign" style="margin-left:4px;border:none;background:none;cursor:pointer;color:#bbb;font-size:10px;padding:0 2px">✎</button>`:''}</div></td>
     <td>${getCountryTags(item.name)}</td>
     <td>${getProductTag(item.name)}</td>
     <td>${budgetHtml}</td>
