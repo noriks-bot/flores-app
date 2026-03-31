@@ -2830,11 +2830,22 @@ function profitPill(val) {
   return `<span class="pill-red">${fmtEur(val)}</span>`;
 }
 
+function profitCell(p) {
+  if(!p) return '<td><span class="muted">—</span></td>';
+  const profit=p.profit||0;
+  const orders=p.orders||0;
+  const spend=p.spend||0;
+  const cpa=orders>0?(spend/orders).toFixed(1)+'€':'—';
+  const pill=profitPill(profit);
+  const ordTag=orders>0?`<span style="display:block;font-size:9px;color:#666;margin-top:1px">${orders} orders</span>`:'';
+  const cpaTag=orders>0?`<span style="display:block;font-size:9px;color:#666">${cpa} CPA</span>`:'';
+  return `<td style="line-height:1.2">${pill}${ordTag}${cpaTag}</td>`;
+}
 function profitPeriodCells(item,level) {
   if(level!=='campaign') return '<td></td><td></td><td></td><td></td><td></td><td></td>';
   const mp=multiProfitData[item.id];
   if(!mp) return '<td><span class="muted">—</span></td>'.repeat(6);
-  return `<td>${profitPill(mp.yesterday?.profit)}</td><td>${profitPill(mp.d3?.profit)}</td><td>${profitPill(mp.d7?.profit)}</td><td>${profitPill(mp.d14?.profit)}</td><td>${profitPill(mp.d30?.profit)}</td><td>${profitPill(mp.lifetime?.profit)}</td>`;
+  return `${profitCell(mp.yesterday)}${profitCell(mp.d3)}${profitCell(mp.d7)}${profitCell(mp.d14)}${profitCell(mp.d30)}${profitCell(mp.lifetime)}`;
 }
 
 function isNewCampaign(item) {
