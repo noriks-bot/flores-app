@@ -1030,6 +1030,25 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
   .notif-dropdown { width: 300px; right: -40px; }
   .cmd-palette-box { max-width: 95%; }
 }
+
+/* ═══ ADS MANAGER REDESIGN (scoped) ═══ */
+#section-ads-manager .content { padding: 0; }
+#section-ads-manager table { font-size: 11px; }
+#section-ads-manager table thead th { font-size: 10px; font-weight: 600; color: #555; padding: 7px 6px; white-space: nowrap; }
+#section-ads-manager table tbody td { padding: 6px 6px; font-size: 11px; font-weight: 400; color: #333; white-space: nowrap; }
+#section-ads-manager table tbody tr:nth-child(even):not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #f7f7f7 !important; }
+#section-ads-manager table tbody tr.campaign-profit:nth-child(even) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #f7f7f7 !important; }
+#section-ads-manager table tbody tr.campaign-loss:nth-child(even) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #f7f7f7 !important; }
+#section-ads-manager td.cell-pl-green { background: #4db87a !important; color: #fff !important; font-weight: 400; text-align: right; }
+#section-ads-manager td.cell-pl-red { background: #e85555 !important; color: #fff !important; font-weight: 400; text-align: right; }
+#section-ads-manager tr:hover td.cell-pl-green { background: #43a86e !important; }
+#section-ads-manager tr:hover td.cell-pl-red { background: #d04545 !important; }
+#section-ads-manager .totals-row td { background: #2D8B7A !important; color: #fff !important; font-weight: 700; position: static; }
+#section-ads-manager .totals-row td.cell-pl-green, #section-ads-manager .totals-row td.cell-pl-red { background: #2D8B7A !important; }
+#section-ads-manager tr.totals-row td:nth-child(1), #section-ads-manager tr.totals-row td:nth-child(2) { background: #2D8B7A !important; }
+#section-ads-manager .name-cell .name-text { white-space: normal !important; word-break: break-word; }
+#section-ads-manager .name-cell .info-btn, #section-ads-manager .name-cell .orders-btn { display: none; }
+#section-ads-manager tr:hover .name-cell .info-btn, #section-ads-manager tr:hover .name-cell .orders-btn { display: inline-flex; }
 </style>
 </head>
 <body>
@@ -1241,18 +1260,15 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     </button>
   </div>
 
-  <!-- SEARCH BAR -->
-  <div class="search-bar" id="campaignSearchBar">
-    <div class="search-wrap">
+  <!-- SEARCH + FILTER PILLS -->
+  <div class="filter-pills-bar" id="campaignSearchBar" style="padding:10px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:linear-gradient(135deg,#f0f4ff,#e8efff);border:1px solid #c7d2fe;border-radius:10px;margin:12px 16px;box-shadow:0 2px 8px rgba(30,58,95,0.06)">
+    <div class="search-wrap" style="flex:1;min-width:180px;position:relative">
       <i class="fas fa-search search-icon"></i>
-      <input type="text" id="campaignSearch" placeholder="Search campaigns..." oninput="filterCampaigns()">
+      <input type="text" id="campaignSearch" placeholder="Search..." oninput="filterCampaigns()" style="width:100%;font-size:11px;padding:5px 8px 5px 26px;border:1px solid #c7d2fe;border-radius:6px;background:#fff">
       <button class="search-clear" id="searchClear" onclick="clearSearch()">×</button>
     </div>
-    <span class="search-count" id="searchCount"></span>
-  </div>
-
-  <!-- FILTER PILLS -->
-  <div class="filter-pills-bar" style="padding:8px 24px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:var(--card-bg);border-bottom:1px solid var(--border-color)">
+    <span class="search-count" id="searchCount" style="font-size:10px"></span>
+    <span style="width:1px;height:20px;background:#c7d2fe;margin:0 2px"></span>
     <span style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-right:4px">Country:</span>
     <button class="fpill fpill-active" data-ft="country" data-fv="ALL" onclick="toggleFilterPill(this)">All</button>
     <button class="fpill" data-ft="country" data-fv="HR" onclick="toggleFilterPill(this)">🇭🇷 HR</button>
@@ -1295,32 +1311,33 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           <thead>
             <tr>
               <th style="width:32px;cursor:default"><input type="checkbox" class="master-select" onchange="toggleSelectAll(this)" style="cursor:pointer"></th>
-              <th data-sort="name">Campaign</th>
-              <th data-sort="status">Status</th>
+              <th data-sort="status" style="width:50px">Status</th>
+              <th data-sort="name">Name</th>
+              <th data-sort="budget">Budget</th>
+              <th data-sort="bid_strategy">Bid strategy</th>
               <th class="sep" data-sort="spend">Spend</th>
-              <th class="wc-col sep" data-sort="wc_orders">Orders</th>
-              <th class="wc-col" data-sort="wc_revenue">Revenue</th>
-              <th class="wc-col" data-sort="wc_profit">Profit</th>
-              <th class="wc-col" data-sort="wc_ppo">P/Order</th>
-              <th class="wc-col" data-sort="wc_cpa">Real CPA</th>
-              <th class="wc-col" data-sort="wc_roas">ROAS</th>
-              <th class="fb-col sep" data-sort="purchases">FB_Purchases</th>
-              <th class="fb-col" data-sort="cpa">FB_CPA</th>
-              <th class="fb-col" data-sort="cr">FB_CR</th>
-              <th class="fb-col sep" data-sort="clicks">FB_Clicks</th>
-              <th class="fb-col" data-sort="ctr">FB_CTR</th>
-              <th class="fb-col" data-sort="cpm">FB_CPM</th>
-              <th class="fb-col" data-sort="cpc">FB_CPC</th>
-              <th class="sep profit-col" data-sort="p_yesterday">Yest. P/L</th>
-              <th class="profit-col" data-sort="p_d3">3D P/L</th>
-              <th class="profit-col" data-sort="p_d7">7D P/L</th>
-              <th class="profit-col" data-sort="p_d14">14D P/L</th>
-              <th class="profit-col" data-sort="p_lifetime">Lifetime P/L</th>
+              <th data-sort="wc_orders">Florex purchases</th>
+              <th data-sort="fpa">FPA</th>
+              <th data-sort="wc_profit">Profit/loss</th>
+              <th data-sort="wc_ppo">Profit per order</th>
+              <th data-sort="wc_revenue">Florex revenue</th>
+              <th data-sort="wc_cpa">Florex CPA</th>
+              <th data-sort="wc_maxcpa">Florex Max CPA</th>
+              <th data-sort="wc_maxspend">Florex Total MAX Spend</th>
+              <th data-sort="wc_score">Florex score</th>
+              <th data-sort="wc_roas">ROAS</th>
+              <th class="sep" data-sort="pcv">Purchase conversion value</th>
+              <th data-sort="cpa">Cost per purchase</th>
+              <th data-sort="purchases">Purchase</th>
+              <th data-sort="checkouts">Checkouts Initiated</th>
+              <th data-sort="atc">Add to carts</th>
+              <th data-sort="cpc">CPC All</th>
+              <th data-sort="cpc_link">CPC Link</th>
             </tr>
           </thead>
           <tbody id="tableTotals"></tbody>
           <tbody id="tableBody">
-            <tr><td colspan="22"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>
+            <tr><td colspan="24"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>
           </tbody>
           <tbody id="tableTotalsBottom"></tbody>
         </table>
@@ -2611,11 +2628,11 @@ document.addEventListener('click', e => {
 
 async function loadData() {
   const {from,to}=getDateRange();
-  document.getElementById('tableBody').innerHTML='<tr><td colspan="22"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>';
+  document.getElementById('tableBody').innerHTML='<tr><td colspan="24"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>';
   try {
     const res=await fetch(`/api/campaigns?date_from=${from}&date_to=${to}`);
     campaigns=await res.json();
-    if(campaigns.error){document.getElementById('tableBody').innerHTML=`<tr><td colspan="22"><div class="loading-state">Error: ${campaigns.error}</div></td></tr>`;return;}
+    if(campaigns.error){document.getElementById('tableBody').innerHTML=`<tr><td colspan="24"><div class="loading-state">Error: ${campaigns.error}</div></td></tr>`;return;}
     campaigns.sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0));
     expandedCampaigns={}; expandedAdsets={}; adsetCache={}; adCache={};
     allAdsets=[]; allAds=[];
@@ -2633,7 +2650,7 @@ async function loadData() {
     } else {
       renderAdHeaders(); loadAds();
     }
-  } catch(e){ document.getElementById('tableBody').innerHTML=`<tr><td colspan="22"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
+  } catch(e){ document.getElementById('tableBody').innerHTML=`<tr><td colspan="24"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
 }
 
 function updateSummary() {
@@ -2653,14 +2670,43 @@ function updateSummary() {
   // Aggregate multi-period totals
   const mpTotals={yesterday:0,d3:0,d7:0,d14:0,lifetime:0};
   campaigns.forEach(c=>{const mp=multiProfitData[c.id];if(mp){for(const k of Object.keys(mpTotals)) mpTotals[k]+=(mp[k]?.profit||0);}});
+  // Compute totals for new columns
+  let totCheckouts=0,totAtc=0,totPcv=0,totLinkClicks=0;
+  campaigns.forEach(c=>{
+    const acts=c.insights?.actions||[];const avals=c.insights?.action_values||[];
+    const ga=(arr,types)=>{for(const t of types){const a=arr.find(x=>x.action_type===t);if(a)return parseFloat(a.value)||0;}return 0;};
+    totCheckouts+=ga(acts,['omni_initiated_checkout','initiate_checkout']);
+    totAtc+=ga(acts,['omni_add_to_cart','add_to_cart']);
+    totPcv+=ga(avals,['omni_purchase','offsite_conversion.fb_pixel_purchase','purchase']);
+    totLinkClicks+=ga(acts,['link_click']);
+  });
+  const totCpcLink=totLinkClicks>0?(spend/totLinkClicks).toFixed(2)+' €':'0 €';
+  const totFlorexCpa=wcOrders>0?(spend/wcOrders).toFixed(2)+' €':'0 €';
+  const totFlorexMaxCpa=wcOrders>0?((wcRevenue/wcOrders)*0.4).toFixed(2)+' €':'0 €';
+  const totFlorexMaxSpend=wcOrders>0?(((wcRevenue/wcOrders)*0.4)*wcOrders).toFixed(2)+' €':'0 €';
+  const totScore=spend>0?((wcProfit/spend)*1000).toFixed(0):'0';
+  const fpaCount=campaigns.filter(c=>(c.wc?.orders||0)>0).length;
   document.getElementById('tableTotals').innerHTML=`<tr class="totals-row">
-    <td></td><td style="text-align:left"><strong>TOTAL (${campaigns.length})</strong></td>
-    <td>${active}/${campaigns.length}</td>
-    <td>${fmtEur(spend)}</td><td>${fmtInt(wcOrders)}</td><td>${fmtEur(wcRevenue)}</td>
-    <td>${profitBadge}</td><td>${wcOrders>0?fmtEur(wcProfit/wcOrders):'—'}</td><td>${wcOrders>0?fmtEur(spend/wcOrders):'—'}</td><td>${roas}</td>
-    <td>${fmtInt(purchases)}</td><td>${cpa}</td><td>${cr}</td>
-    <td>${fmtCompact(clicks)}</td><td>${ctr}</td><td>${cpm}</td><td>${cpc}</td>
-    <td>${profitPill(mpTotals.yesterday)}</td><td>${profitPill(mpTotals.d3)}</td><td>${profitPill(mpTotals.d7)}</td><td>${profitPill(mpTotals.d14)}</td><td>${profitPill(mpTotals.lifetime)}</td>
+    <td></td><td></td><td style="text-align:left"><strong>Totals</strong></td>
+    <td></td><td></td>
+    <td>${spend.toFixed(2)} €</td>
+    <td>${wcOrders}</td>
+    <td>${fpaCount}</td>
+    <td>${wcProfit.toFixed(2)} €</td>
+    <td>${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
+    <td>${wcRevenue.toFixed(2)} €</td>
+    <td>${totFlorexCpa}</td>
+    <td>${totFlorexMaxCpa}</td>
+    <td>${totFlorexMaxSpend}</td>
+    <td>${totScore}</td>
+    <td>${roas}</td>
+    <td>${totPcv>0?totPcv.toFixed(2)+' €':'0 €'}</td>
+    <td>${cpa}</td>
+    <td>${purchases}</td>
+    <td>${totCheckouts}</td>
+    <td>${totAtc}</td>
+    <td>${cpc}</td>
+    <td>${totCpcLink}</td>
   </tr>`;
   document.getElementById('tableTotalsBottom').innerHTML = document.getElementById('tableTotals').innerHTML;
   document.getElementById('lastUpdated').textContent='Updated '+new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
@@ -2723,53 +2769,81 @@ function makeRow(item,level) {
   const ins=item.insights;
   const spend=ins?parseFloat(ins.spend||0):0;
   const clicks=ins?parseInt(ins.clicks||0):0;
-  const ctr=ins?parseFloat(ins.ctr||0):0;
-  const cpm=ins?parseFloat(ins.cpm||0):0;
   const cpc=ins?parseFloat(ins.cpc||0):0;
   const purchases=getPurchases(ins);
   const cpp=getCostPerPurchase(ins);
-  const cr=clicks>0&&purchases>0?purchases/clicks*100:0;
   const isActive=item.status==='ACTIVE';
   const statusHtml=`<label class="toggle"><input type="checkbox" ${isActive?'checked':''} disabled><span class="slider"></span></label>`;
   const hasChildren=level!=='ad';
   const isExpanded=level==='campaign'?expandedCampaigns[item.id]:expandedAdsets[item.id];
   const selectCb=level==='campaign'?`<input type="checkbox" class="camp-select" onclick="event.stopPropagation();toggleCampaignSelect('${item.id}',this)" ${selectedCampaigns.has(item.id)?'checked':''}>`:'';
-  const expandHtml=hasChildren?`<button class="expand-btn ${isExpanded?'expanded':''}" onclick="event.stopPropagation();toggle('${level}','${item.id}')">${isExpanded?'▾':'▸'}</button>`:'<span style="width:24px;display:inline-block"></span>';
+  const expandHtml=hasChildren?`<button class="expand-btn ${isExpanded?'expanded':''}" onclick="event.stopPropagation();toggle('${level}','${item.id}')">${isExpanded?'\u25be':'\u25b8'}</button>`:'<span style="width:24px;display:inline-block"></span>';
   const rowClass=profitClass(item.wc);
   const wc=item.wc;
-  const pc=wc?.profit>=0?'cell-profit':'cell-loss';
   const wcCount=item.wc?.orders||0;
-  const editSvg=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+  const editSvg=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
   let fbEditUrl='';
   if(level==='campaign') fbEditUrl=`https://adsmanager.facebook.com/adsmanager/manage/campaigns/edit?act=1922887421998222&selected_campaign_ids=${item.id}`;
   else if(level==='adset') fbEditUrl=`https://adsmanager.facebook.com/adsmanager/manage/adsets/edit?act=1922887421998222&selected_adset_ids=${item.id}`;
   else fbEditUrl=`https://adsmanager.facebook.com/adsmanager/manage/ads/edit?act=1922887421998222&selected_ad_ids=${item.id}`;
-  const editBtn=`<a class="edit-btn" href="${fbEditUrl}" target="_blank" title="Open in FB Ads Manager">${editSvg}</a>`;
-  const infoBtn=level==='campaign'?`<button class="info-btn" onclick="event.stopPropagation();showCampaignInfo('${item.id}',this)" title="Campaign Performance">ℹ</button>`:'';
-  const ordersBtn=level==='campaign'&&wcCount>0?`<button class="orders-btn" onclick="event.stopPropagation();showCampaignOrders('${item.id}')" title="View Orders">${wcCount} Order${wcCount!==1?'s':''}</button>`:'';
-  const hoverActs=level==='campaign'?renderHoverActions(item.name,item.id):'';
-  const actionBtns=editBtn+infoBtn+ordersBtn+hoverActs;
+  const editBtn=`<a class="edit-btn" href="${fbEditUrl}" target="_blank" title="Open in FB Ads Manager" onclick="event.stopPropagation()">${editSvg}</a>`;
 
-  const expandedClass = (level==='campaign' && expandedCampaigns[item.id]) ? 'row-expanded' : '';
+  // Budget
+  const budgetVal=item.daily_budget?parseFloat(item.daily_budget)/100:0;
+  const budgetHtml=budgetVal>0?`<div>${Math.round(budgetVal)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`:'<span class="muted">\u2014</span>';
+  // Bid strategy
+  const bidMap={'LOWEST_COST_WITHOUT_CAP':'Lowest cost','LOWEST_COST_WITH_BID_CAP':'Bid cap','COST_CAP':'Cost cap','LOWEST_COST_WITH_MIN_ROAS':'Min ROAS'};
+  const bidLabel=bidMap[item.bid_strategy||'']||'Lowest cost';
+  // FPA
+  const fpaHtml=wcCount>0?'<span style="color:#4db87a;font-size:13px">\u25cf</span>':'<span style="color:#ccc;font-size:13px">\u2298</span>';
+  // Profit/loss cell
+  let plCls='', plHtml='<span class="muted">\u2014</span>';
+  if(wc?.profit!==undefined&&wc.profit!==0){ plCls=wc.profit>0?'cell-pl-green':'cell-pl-red'; plHtml=(wc.profit>0?'':'')+wc.profit.toFixed(2)+' \u20ac'; }
+  else if(wc?.profit===0){ plHtml='0 \u20ac'; }
+  // Profit per order
+  let ppoCls='', ppoHtml='<span class="muted">\u2014</span>';
+  if(wc?.orders>0){ const ppo=wc.profit/wc.orders; ppoCls=ppo>=0?'cell-pl-green':'cell-pl-red'; ppoHtml=ppo.toFixed(2)+' \u20ac'; }
+  else if(wc?.profit!==undefined&&wc.profit<0){ ppoCls='cell-pl-red'; ppoHtml=wc.profit.toFixed(2)+' \u20ac'; }
+  // Florex metrics
+  const florexCpa=wc?.orders>0?(spend/wc.orders).toFixed(2)+' \u20ac':'0 \u20ac';
+  const florexMaxCpa=wc?.orders>0?((wc.revenueGross/wc.orders)*0.4).toFixed(2)+' \u20ac':'0 \u20ac';
+  const florexMaxSpend=wc?.orders>0?(((wc.revenueGross/wc.orders)*0.4)*wc.orders).toFixed(2)+' \u20ac':'0 \u20ac';
+  const florexScore=spend>0?((wc?.profit||0)/spend*1000).toFixed(0):'0';
+  const roas=spend>0&&wc?.revenueGross?(wc.revenueGross/spend).toFixed(2):'0';
+  // FB actions
+  const acts=ins?.actions||[];const avals=ins?.action_values||[];
+  const ga=(arr,types)=>{for(const t of types){const a=arr.find(x=>x.action_type===t);if(a)return parseFloat(a.value)||0;}return 0;};
+  const fbPcv=ga(avals,['omni_purchase','offsite_conversion.fb_pixel_purchase','purchase']);
+  const fbCheckouts=ga(acts,['omni_initiated_checkout','initiate_checkout']);
+  const fbAtc=ga(acts,['omni_add_to_cart','add_to_cart']);
+  const linkClicks=ga(acts,['link_click']);
+  const cpcLink=linkClicks>0?(spend/linkClicks).toFixed(2)+' \u20ac':'0 \u20ac';
+
+  const expandedClass=(level==='campaign'&&expandedCampaigns[item.id])?'row-expanded':'';
   return `<tr class="level-${level} ${rowClass} ${expandedClass}" data-id="${item.id}">
     <td>${selectCb}${expandHtml}</td>
-    <td><div class="name-cell">${nameHtml(item.name,level)}${actionBtns}</div></td>
     <td>${statusHtml}</td>
-    <td>${spend>0?fmtEur(spend):'<span class="muted">—</span>'}</td>
-    <td class="cell-wc">${wc?.orders?fmtNum(wc.orders):'<span class="muted">—</span>'}</td>
-    <td class="cell-wc">${wc?.revenueGross?fmtEur(wc.revenueGross):'<span class="muted">—</span>'}</td>
-    <td>${wc?.profit!==undefined?(wc.profit===0?`<span class="badge-neutral">— €0.00</span>`:wc.profit>0?`<span class="badge-profit">▲ ${fmtEur(wc.profit)}</span>`:`<span class="badge-loss">▼ ${fmtEur(Math.abs(wc.profit))}</span>`):'<span class="muted">—</span>'}</td>
-    <td class="${wc?.orders>0?(wc.profit/wc.orders>=0?'cell-profit':'cell-loss'):'muted'}">${wc?.orders>0?fmtEur(wc.profit/wc.orders):'<span class="muted">—</span>'}</td>
-    <td class="cell-wc">${wc?.orders>0?fmtEur(spend/wc.orders):'<span class="muted">—</span>'}</td>
-    <td>${wc?.roas?`<span class="badge-roas">${wc.roas.toFixed(2)}x</span>`:'<span class="muted">—</span>'}</td>
-    <td>${purchases>0?fmtInt(purchases):'<span class="muted">—</span>'}</td>
-    <td>${cpp>0?fmtEur(cpp):'<span class="muted">—</span>'}</td>
-    <td>${cr>0?fmtPct(cr):'<span class="muted">—</span>'}</td>
-    <td>${clicks>0?fmtInt(clicks):'<span class="muted">—</span>'}</td>
-    <td>${ctr>0?fmtPct(ctr):'<span class="muted">—</span>'}</td>
-    <td>${cpm>0?fmtEur(cpm):'<span class="muted">—</span>'}</td>
-    <td>${cpc>0?fmtEur(cpc):'<span class="muted">—</span>'}</td>
-    ${profitPeriodCells(item,level)}
+    <td><div class="name-cell">${nameHtml(item.name,level)}${editBtn}</div></td>
+    <td>${budgetHtml}</td>
+    <td style="font-size:10px">${bidLabel}</td>
+    <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
+    <td>${wcCount||0}</td>
+    <td style="text-align:center">${fpaHtml}</td>
+    <td class="${plCls}">${plHtml}</td>
+    <td class="${ppoCls}">${ppoHtml}</td>
+    <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
+    <td>${florexCpa}</td>
+    <td>${florexMaxCpa}</td>
+    <td>${florexMaxSpend}</td>
+    <td>${florexScore}</td>
+    <td>${roas}</td>
+    <td>${fbPcv>0?fbPcv.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
+    <td>${cpp>0?cpp.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
+    <td>${purchases||0}</td>
+    <td>${fbCheckouts||0}</td>
+    <td>${fbAtc||0}</td>
+    <td>${cpc>0?cpc.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
+    <td>${cpcLink}</td>
   </tr>`;
 }
 
@@ -2842,14 +2916,14 @@ function renderTable() {
     if(expandedCampaigns[c.id]){
       let childRows=[];
       if(!adsetCache[c.id]){
-        childRows.push('<tr class="level-adset"><td></td><td colspan="21" style="padding:12px 40px;color:var(--text-muted)"><div class="spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading adsets...</td></tr>');
+        childRows.push('<tr class="level-adset"><td></td><td colspan="23" style="padding:12px 40px;color:var(--text-muted)"><div class="spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading adsets...</td></tr>');
       } else {
         const adsets=adsetCache[c.id].filter(a=>a.insights||a.status==='ACTIVE').sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0));
         adsets.forEach(as=>{
           childRows.push(makeRow(as,'adset'));
           if(expandedAdsets[as.id]){
             if(!adCache[as.id]){
-              childRows.push('<tr class="level-ad"><td></td><td colspan="21" style="padding:12px 58px;color:var(--text-muted)"><div class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading ads...</td></tr>');
+              childRows.push('<tr class="level-ad"><td></td><td colspan="23" style="padding:12px 58px;color:var(--text-muted)"><div class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading ads...</td></tr>');
             } else {
               adCache[as.id].filter(a=>a.insights||a.status==='ACTIVE').sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0)).forEach(ad=>{childRows.push(makeRow(ad,'ad'));});
             }
@@ -2863,7 +2937,7 @@ function renderTable() {
       html+=childRows.join('');
     }
   });
-  if(!html) html='<tr><td colspan="22"><div class="loading-state">No campaigns found</div></td></tr>';
+  if(!html) html='<tr><td colspan="24"><div class="loading-state">No campaigns found</div></td></tr>';
   document.getElementById('tableBody').innerHTML=html;
   if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL') applySearchFilter();
 }
@@ -3138,49 +3212,56 @@ function switchTab(tab) {
 
 function renderCampaignHeaders() {
   document.querySelector('thead tr').innerHTML = `
-    <th style="width:32px;cursor:default"></th>
-    <th data-sort="name">Campaign</th>
-    <th data-sort="status">Status</th>
+    <th style="width:32px;cursor:default"><input type="checkbox" class="master-select" onchange="toggleSelectAll(this)" style="cursor:pointer"></th>
+    <th data-sort="status" style="width:50px">Status</th>
+    <th data-sort="name">Name</th>
+    <th data-sort="budget">Budget</th>
+    <th data-sort="bid_strategy">Bid strategy</th>
     <th class="sep" data-sort="spend">Spend</th>
-    <th class="wc-col sep" data-sort="wc_orders">Orders</th>
-    <th class="wc-col" data-sort="wc_revenue">Revenue</th>
-    <th class="wc-col" data-sort="wc_profit">Profit</th>
-    <th class="wc-col" data-sort="wc_ppo">P/Order</th>
-    <th class="wc-col" data-sort="wc_cpa">Real CPA</th>
-    <th class="wc-col" data-sort="wc_roas">ROAS</th>
-    <th class="fb-col sep" data-sort="purchases">FB_Purchases</th>
-    <th class="fb-col" data-sort="cpa">FB_CPA</th>
-    <th class="fb-col" data-sort="cr">FB_CR</th>
-    <th class="fb-col sep" data-sort="clicks">FB_Clicks</th>
-    <th class="fb-col" data-sort="ctr">FB_CTR</th>
-    <th class="fb-col" data-sort="cpm">FB_CPM</th>
-    <th class="fb-col" data-sort="cpc">FB_CPC</th>
-    <th class="sep profit-col" data-sort="p_yesterday">Yest. P/L</th>
-    <th class="profit-col" data-sort="p_d3">3D P/L</th>
-    <th class="profit-col" data-sort="p_d7">7D P/L</th>
-    <th class="profit-col" data-sort="p_d14">14D P/L</th>
-    <th class="profit-col" data-sort="p_lifetime">Lifetime P/L</th>`;
+    <th data-sort="wc_orders">Florex purchases</th>
+    <th data-sort="fpa">FPA</th>
+    <th data-sort="wc_profit">Profit/loss</th>
+    <th data-sort="wc_ppo">Profit per order</th>
+    <th data-sort="wc_revenue">Florex revenue</th>
+    <th data-sort="wc_cpa">Florex CPA</th>
+    <th data-sort="wc_maxcpa">Florex Max CPA</th>
+    <th data-sort="wc_maxspend">Florex Total MAX Spend</th>
+    <th data-sort="wc_score">Florex score</th>
+    <th data-sort="wc_roas">ROAS</th>
+    <th class="sep" data-sort="pcv">Purchase conversion value</th>
+    <th data-sort="cpa">Cost per purchase</th>
+    <th data-sort="purchases">Purchase</th>
+    <th data-sort="checkouts">Checkouts Initiated</th>
+    <th data-sort="atc">Add to carts</th>
+    <th data-sort="cpc">CPC All</th>
+    <th data-sort="cpc_link">CPC Link</th>`;
 }
 
 const FLAT_HEADERS = `
     <th style="width:32px;cursor:default"></th>
+    <th data-sort="status" style="width:50px">Status</th>
     <th data-sort="name">Name</th>
     <th data-sort="campaign_name">Campaign</th>
-    <th data-sort="status">Status</th>
+    <th data-sort="budget">Budget</th>
+    <th data-sort="bid_strategy">Bid strategy</th>
     <th class="sep" data-sort="spend">Spend</th>
-    <th class="wc-col sep" data-sort="wc_orders">Orders</th>
-    <th class="wc-col" data-sort="wc_revenue">Revenue</th>
-    <th class="wc-col" data-sort="wc_profit">Profit</th>
-    <th class="wc-col" data-sort="wc_ppo">P/Order</th>
-    <th class="wc-col" data-sort="wc_cpa">Real CPA</th>
-    <th class="wc-col" data-sort="wc_roas">ROAS</th>
-    <th class="fb-col sep" data-sort="purchases">FB_Purchases</th>
-    <th class="fb-col" data-sort="cpa">FB_CPA</th>
-    <th class="fb-col" data-sort="cr">FB_CR</th>
-    <th class="fb-col sep" data-sort="clicks">FB_Clicks</th>
-    <th class="fb-col" data-sort="ctr">FB_CTR</th>
-    <th class="fb-col" data-sort="cpm">FB_CPM</th>
-    <th class="fb-col" data-sort="cpc">FB_CPC</th>`;
+    <th data-sort="wc_orders">Florex purchases</th>
+    <th data-sort="fpa">FPA</th>
+    <th data-sort="wc_profit">Profit/loss</th>
+    <th data-sort="wc_ppo">Profit per order</th>
+    <th data-sort="wc_revenue">Florex revenue</th>
+    <th data-sort="wc_cpa">Florex CPA</th>
+    <th data-sort="wc_maxcpa">Florex Max CPA</th>
+    <th data-sort="wc_maxspend">Florex Total MAX Spend</th>
+    <th data-sort="wc_score">Florex score</th>
+    <th data-sort="wc_roas">ROAS</th>
+    <th class="sep" data-sort="pcv">Purchase conversion value</th>
+    <th data-sort="cpa">Cost per purchase</th>
+    <th data-sort="purchases">Purchase</th>
+    <th data-sort="checkouts">Checkouts Initiated</th>
+    <th data-sort="atc">Add to carts</th>
+    <th data-sort="cpc">CPC All</th>
+    <th data-sort="cpc_link">CPC Link</th>`;
 
 function renderAdsetHeaders() { document.querySelector('thead tr').innerHTML = FLAT_HEADERS.replace('Name', 'Ad Set'); }
 function renderAdHeaders() { document.querySelector('thead tr').innerHTML = FLAT_HEADERS.replace('Name', 'Ad') + '\n    <th data-sort="adset_name">Ad Set</th>'; }
@@ -3189,52 +3270,79 @@ function makeFlatRow(item, level) {
   const ins = item.insights;
   const spend = ins ? parseFloat(ins.spend || 0) : 0;
   const clicks = ins ? parseInt(ins.clicks || 0) : 0;
-  const ctr = ins ? parseFloat(ins.ctr || 0) : 0;
-  const cpm = ins ? parseFloat(ins.cpm || 0) : 0;
   const cpc = ins ? parseFloat(ins.cpc || 0) : 0;
   const purchases = getPurchases(ins);
   const cpp = getCostPerPurchase(ins);
-  const cr = clicks > 0 && purchases > 0 ? purchases / clicks * 100 : 0;
   const isActive = item.status === 'ACTIVE';
   const statusHtml = `<label class="toggle"><input type="checkbox" ${isActive ? 'checked' : ''} disabled><span class="slider"></span></label>`;
   const wc = item.wc;
   const rowClass = profitClass(item);
-  const campCid = item.campaign_id || '';
+  const wcCount = wc?.orders || 0;
   const campTags = parseCampTags(item.campaign_name);
   let campLabel = (item.campaign_name || '').slice(0, 40);
   let campTagsHtml = '';
   campTags.countries.forEach(c => { campTagsHtml += `<span class="country-tag">${c}</span> `; });
-
   let fbEditUrl = level === 'adset'
     ? `https://adsmanager.facebook.com/adsmanager/manage/adsets/edit?act=1922887421998222&selected_adset_ids=${item.id}`
     : `https://adsmanager.facebook.com/adsmanager/manage/ads/edit?act=1922887421998222&selected_ad_ids=${item.id}`;
-  const editSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
-  const editBtn = `<a class="edit-btn" href="${fbEditUrl}" target="_blank" title="Open in FB Ads Manager">${editSvg}</a>`;
+  const editSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+  const editBtn = `<a class="edit-btn" href="${fbEditUrl}" target="_blank" title="Open in FB Ads Manager" onclick="event.stopPropagation()">${editSvg}</a>`;
+  // Budget & bid
+  const budgetVal=item.daily_budget?parseFloat(item.daily_budget)/100:0;
+  const budgetHtml=budgetVal>0?`<div>${Math.round(budgetVal)} \u20ac</div><div style="font-size:9px;color:#999">daily</div>`:'<span class="muted">\u2014</span>';
+  const bidMap={'LOWEST_COST_WITHOUT_CAP':'Lowest cost','LOWEST_COST_WITH_BID_CAP':'Bid cap','COST_CAP':'Cost cap','LOWEST_COST_WITH_MIN_ROAS':'Min ROAS'};
+  const bidLabel=bidMap[item.bid_strategy||'']||'Lowest cost';
+  // FPA
+  const fpaHtml=wcCount>0?'<span style="color:#4db87a;font-size:13px">\u25cf</span>':'<span style="color:#ccc;font-size:13px">\u2298</span>';
+  // Profit cells
+  let plCls='',plHtml='<span class="muted">\u2014</span>';
+  if(wc?.profit!==undefined&&wc.profit!==0){ plCls=wc.profit>0?'cell-pl-green':'cell-pl-red'; plHtml=wc.profit.toFixed(2)+' \u20ac'; }
+  else if(wc?.profit===0){ plHtml='0 \u20ac'; }
+  let ppoCls='',ppoHtml='<span class="muted">\u2014</span>';
+  if(wcCount>0){ const ppo=wc.profit/wc.orders; ppoCls=ppo>=0?'cell-pl-green':'cell-pl-red'; ppoHtml=ppo.toFixed(2)+' \u20ac'; }
+  else if(wc?.profit!==undefined&&wc.profit<0){ ppoCls='cell-pl-red'; ppoHtml=wc.profit.toFixed(2)+' \u20ac'; }
+  const florexCpa=wcCount>0?(spend/wc.orders).toFixed(2)+' \u20ac':'0 \u20ac';
+  const florexMaxCpa=wcCount>0?((wc.revenueGross/wc.orders)*0.4).toFixed(2)+' \u20ac':'0 \u20ac';
+  const florexMaxSpend=wcCount>0?(((wc.revenueGross/wc.orders)*0.4)*wcCount).toFixed(2)+' \u20ac':'0 \u20ac';
+  const florexScore=spend>0?((wc?.profit||0)/spend*1000).toFixed(0):'0';
+  const roas=spend>0&&wc?.revenueGross?(wc.revenueGross/spend).toFixed(2):'0';
+  const acts=ins?.actions||[];const avals=ins?.action_values||[];
+  const ga=(arr,types)=>{for(const t of types){const a=arr.find(x=>x.action_type===t);if(a)return parseFloat(a.value)||0;}return 0;};
+  const fbPcv=ga(avals,['omni_purchase','offsite_conversion.fb_pixel_purchase','purchase']);
+  const fbCheckouts=ga(acts,['omni_initiated_checkout','initiate_checkout']);
+  const fbAtc=ga(acts,['omni_add_to_cart','add_to_cart']);
+  const linkClicks=ga(acts,['link_click']);
+  const cpcLink=linkClicks>0?(spend/linkClicks).toFixed(2)+' \u20ac':'0 \u20ac';
 
   let extra = '';
   if (level === 'ad') {
-    extra = `<td style="font-size:11px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(item.adset_name||'').replace(/"/g,'&quot;')}">${item.adset_name || '—'}</td>`;
+    extra = `<td style="font-size:11px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(item.adset_name||'').replace(/"/g,'&quot;')}">${item.adset_name || '\u2014'}</td>`;
   }
-
   return `<tr class="${rowClass}" data-id="${item.id}">
     <td></td>
-    <td><div class="name-cell"><span class="name-text" title="${(item.name||'').replace(/"/g,'&quot;')}">${item.name || '—'}</span>${editBtn}</div></td>
-    <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(item.campaign_name||'').replace(/"/g,'&quot;')}">${campTagsHtml}${campLabel}</td>
     <td>${statusHtml}</td>
-    <td>${spend > 0 ? fmtEur(spend) : '<span class="muted">—</span>'}</td>
-    <td class="cell-wc">${wc?.orders ? fmtNum(wc.orders) : '<span class="muted">—</span>'}</td>
-    <td class="cell-wc">${wc?.revenueGross ? fmtEur(wc.revenueGross) : '<span class="muted">—</span>'}</td>
-    <td>${wc?.profit !== undefined ? (wc.profit === 0 ? '<span class="badge-neutral">— €0.00</span>' : wc.profit > 0 ? `<span class="badge-profit">▲ ${fmtEur(wc.profit)}</span>` : `<span class="badge-loss">▼ ${fmtEur(Math.abs(wc.profit))}</span>`) : '<span class="muted">—</span>'}</td>
-    <td class="${wc?.orders > 0 ? (wc.profit / wc.orders >= 0 ? 'cell-profit' : 'cell-loss') : 'muted'}">${wc?.orders > 0 ? fmtEur(wc.profit / wc.orders) : '<span class="muted">—</span>'}</td>
-    <td class="cell-wc">${wc?.orders > 0 ? fmtEur(spend / wc.orders) : '<span class="muted">—</span>'}</td>
-    <td>${wc?.roas ? `<span class="badge-roas">${wc.roas.toFixed(2)}x</span>` : '<span class="muted">—</span>'}</td>
-    <td>${purchases > 0 ? fmtInt(purchases) : '<span class="muted">—</span>'}</td>
-    <td>${cpp > 0 ? fmtEur(cpp) : '<span class="muted">—</span>'}</td>
-    <td>${cr > 0 ? fmtPct(cr) : '<span class="muted">—</span>'}</td>
-    <td>${clicks > 0 ? fmtInt(clicks) : '<span class="muted">—</span>'}</td>
-    <td>${ctr > 0 ? fmtPct(ctr) : '<span class="muted">—</span>'}</td>
-    <td>${cpm > 0 ? fmtEur(cpm) : '<span class="muted">—</span>'}</td>
-    <td>${cpc > 0 ? fmtEur(cpc) : '<span class="muted">—</span>'}</td>
+    <td><div class="name-cell"><span class="name-text" title="${(item.name||'').replace(/"/g,'&quot;')}">${item.name || '\u2014'}</span>${editBtn}</div></td>
+    <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(item.campaign_name||'').replace(/"/g,'&quot;')}">${campTagsHtml}${campLabel}</td>
+    <td>${budgetHtml}</td>
+    <td style="font-size:10px">${bidLabel}</td>
+    <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
+    <td>${wcCount||0}</td>
+    <td style="text-align:center">${fpaHtml}</td>
+    <td class="${plCls}">${plHtml}</td>
+    <td class="${ppoCls}">${ppoHtml}</td>
+    <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
+    <td>${florexCpa}</td>
+    <td>${florexMaxCpa}</td>
+    <td>${florexMaxSpend}</td>
+    <td>${florexScore}</td>
+    <td>${roas}</td>
+    <td>${fbPcv>0?fbPcv.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
+    <td>${cpp>0?cpp.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
+    <td>${purchases||0}</td>
+    <td>${fbCheckouts||0}</td>
+    <td>${fbAtc||0}</td>
+    <td>${cpc>0?cpc.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
+    <td>${cpcLink}</td>
     ${extra}
   </tr>`;
 }
