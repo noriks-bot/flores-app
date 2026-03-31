@@ -3467,8 +3467,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           } catch(eO) {
             if (o.is_fb_attributed === 1) origin = 'Facebook';
             else if (o.utm_source === 'callcenter') origin = 'Call Center';
-            else if ((o.utm_source || '').includes('google') && (o.utm_medium === 'cpc' || o.utm_medium === 'paid')) origin = 'Google Paid';
-            else if ((o.utm_source || '').includes('google')) origin = 'Google Organic';
+            else if ((o.utm_source || '').includes('google')) origin = 'Google Paid';
           }
           const fbMeasured = o.is_fb_attributed === 1 ? (o.utm_campaign && o.utm_campaign !== '' && !o.utm_campaign.startsWith('google') ? 'Measured' : 'Not Measured') : null;
           const customer = (o.billing_name || '').trim() || '#' + o.wc_order_id;
@@ -3493,7 +3492,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             fbPixelPurchases,
             profitPerOrder: todayStats.orders > 0 ? Math.round(((todayStats.profit || 0) - fbSpendRange) / todayStats.orders * 100) / 100 : 0,
             fbProfitPerOrder: fbOrderCount > 0 ? Math.round(fbProfit / fbOrderCount * 100) / 100 : 0,
-            ordersBySource: (() => { try { const rows = db.prepare("SELECT CASE WHEN is_fb_attributed = 1 THEN 'Facebook' WHEN utm_source = 'callcenter' THEN 'Call Center' WHEN (utm_source LIKE '%google%') AND (utm_medium = 'cpc' OR utm_medium = 'paid') THEN 'Google Paid' WHEN utm_source LIKE '%google%' THEN 'Google Organic' WHEN utm_source LIKE '%klaviyo%' OR utm_source LIKE '%email%' THEN 'Klaviyo' ELSE 'Direct' END as src, COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? GROUP BY src ORDER BY cnt DESC").all(dashFrom, dashTo); const m = {}; rows.forEach(r => m[r.src] = r.cnt); return m; } catch(e) { return {}; } })(),
+            ordersBySource: (() => { try { const rows = db.prepare("SELECT CASE WHEN is_fb_attributed = 1 THEN 'Facebook' WHEN utm_source = 'callcenter' THEN 'Call Center' WHEN (utm_source LIKE '%google%') AND (utm_medium = 'cpc' OR utm_medium = 'paid') THEN 'Google Paid' WHEN utm_source LIKE '%google%' THEN 'Google Paid' WHEN utm_source LIKE '%klaviyo%' OR utm_source LIKE '%email%' THEN 'Klaviyo' ELSE 'Direct' END as src, COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? GROUP BY src ORDER BY cnt DESC").all(dashFrom, dashTo); const m = {}; rows.forEach(r => m[r.src] = r.cnt); return m; } catch(e) { return {}; } })(),
             fbMeasuredOrders,
             fbUnmeasuredOrders,
             fbCpa,
