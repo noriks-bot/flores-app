@@ -1506,30 +1506,85 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         Refresh
       </button>
     </div>
-    <div class="content">
-      <div class="cr-table-wrap">
-        <div class="cr-table-scroll">
-          <table class="cr-table" id="crTable">
-            <thead>
-              <tr>
-                <th class="cr-th" data-sort="id" style="text-align:left">Creative ID</th>
-                <th class="cr-th" data-sort="adCount">Ads</th>
-                <th class="cr-th" data-sort="totalSpend">Total ▾</th>
-                <th class="cr-th cr-country-th" data-sort="HR">🇭🇷 HR</th>
-                <th class="cr-th cr-country-th" data-sort="CZ">🇨🇿 CZ</th>
-                <th class="cr-th cr-country-th" data-sort="PL">🇵🇱 PL</th>
-                <th class="cr-th cr-country-th" data-sort="GR">🇬🇷 GR</th>
-                <th class="cr-th cr-country-th" data-sort="SK">🇸🇰 SK</th>
-                <th class="cr-th cr-country-th" data-sort="IT">🇮🇹 IT</th>
-                <th class="cr-th cr-country-th" data-sort="HU">🇭🇺 HU</th>
-              </tr>
-            </thead>
-            <tbody id="crBody">
-              <tr><td colspan="10" style="text-align:center;padding:60px;color:var(--text-muted)">Select a date range and click Load</td></tr>
-            </tbody>
-            <tfoot id="crTotals"></tfoot>
-          </table>
+    <div class="content" style="padding:16px 24px">
+      <!-- Tabs -->
+      <div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--border-color)">
+        <button class="cr-tab active" onclick="switchCrTab('big')" style="padding:10px 20px;font-size:13px;font-weight:600;background:var(--card-bg);border:1px solid var(--border-color);border-bottom:none;border-radius:8px 8px 0 0;cursor:pointer;color:var(--text-primary)">📊 Big Table</button>
+        <button class="cr-tab" onclick="switchCrTab('overview')" style="padding:10px 20px;font-size:13px;font-weight:600;background:transparent;border:1px solid transparent;border-bottom:none;border-radius:8px 8px 0 0;cursor:pointer;color:var(--text-muted)">📋 Overview</button>
+        <button class="cr-tab" onclick="switchCrTab('best')" style="padding:10px 20px;font-size:13px;font-weight:600;background:transparent;border:1px solid transparent;border-bottom:none;border-radius:8px 8px 0 0;cursor:pointer;color:var(--text-muted)">🏆 Best Kreative</button>
+        <button class="cr-tab" onclick="switchCrTab('untested')" style="padding:10px 20px;font-size:13px;font-weight:600;background:transparent;border:1px solid transparent;border-bottom:none;border-radius:8px 8px 0 0;cursor:pointer;color:var(--text-muted)">🔍 Netestirane</button>
+      </div>
+
+      <!-- Tab 1: Big Table -->
+      <div id="crTabBig">
+        <div class="cr-table-wrap">
+          <div class="cr-table-scroll">
+            <table class="cr-table" id="crTable">
+              <thead>
+                <tr>
+                  <th class="cr-th" data-sort="id" style="text-align:left">Creative ID</th>
+                  <th class="cr-th" data-sort="adCount">Ads</th>
+                  <th class="cr-th" data-sort="totalSpend">Total ▾</th>
+                  <th class="cr-th cr-country-th" data-sort="HR">🇭🇷 HR</th>
+                  <th class="cr-th cr-country-th" data-sort="CZ">🇨🇿 CZ</th>
+                  <th class="cr-th cr-country-th" data-sort="PL">🇵🇱 PL</th>
+                  <th class="cr-th cr-country-th" data-sort="GR">🇬🇷 GR</th>
+                  <th class="cr-th cr-country-th" data-sort="SK">🇸🇰 SK</th>
+                  <th class="cr-th cr-country-th" data-sort="IT">🇮🇹 IT</th>
+                  <th class="cr-th cr-country-th" data-sort="HU">🇭🇺 HU</th>
+                </tr>
+              </thead>
+              <tbody id="crBody">
+                <tr><td colspan="10" style="text-align:center;padding:60px;color:var(--text-muted)">Loading...</td></tr>
+              </tbody>
+              <tfoot id="crTotals"></tfoot>
+            </table>
+          </div>
         </div>
+      </div>
+
+      <!-- Tab 2: Overview -->
+      <div id="crTabOverview" style="display:none">
+        <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb">
+          <thead><tr style="background:#f8fafc">
+            <th style="text-align:left;padding:10px 12px;font-size:12px;font-weight:600;color:#64748b;border-bottom:1px solid #e5e7eb">Creative</th>
+            <th style="text-align:right;padding:10px 12px;font-size:12px;font-weight:600;color:#64748b;border-bottom:1px solid #e5e7eb">Prodaje</th>
+            <th style="text-align:right;padding:10px 12px;font-size:12px;font-weight:600;color:#64748b;border-bottom:1px solid #e5e7eb">CPA</th>
+            <th style="text-align:right;padding:10px 12px;font-size:12px;font-weight:600;color:#64748b;border-bottom:1px solid #e5e7eb">Spend</th>
+            <th style="text-align:left;padding:10px 12px;font-size:12px;font-weight:600;color:#64748b;border-bottom:1px solid #e5e7eb">Performira</th>
+            <th style="text-align:left;padding:10px 12px;font-size:12px;font-weight:600;color:#64748b;border-bottom:1px solid #e5e7eb">Netestirano</th>
+          </tr></thead>
+          <tbody id="crOverviewBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Tab 3: Best per country -->
+      <div id="crTabBest" style="display:none">
+        <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb">
+          <thead><tr style="background:#f8fafc">
+            <th style="text-align:left;padding:10px 12px;font-size:12px;font-weight:600;color:#64748b;border-bottom:1px solid #e5e7eb">Država</th>
+            <th style="text-align:left;padding:10px 12px;font-size:12px;font-weight:600;color:#64748b;border-bottom:1px solid #e5e7eb">Creative</th>
+            <th style="text-align:right;padding:10px 12px;font-size:12px;font-weight:600;color:#64748b;border-bottom:1px solid #e5e7eb">CPA v državi</th>
+            <th style="text-align:right;padding:10px 12px;font-size:12px;font-weight:600;color:#64748b;border-bottom:1px solid #e5e7eb">Overall CPA</th>
+            <th style="text-align:right;padding:10px 12px;font-size:12px;font-weight:600;color:#64748b;border-bottom:1px solid #e5e7eb">Prodaje</th>
+            <th style="text-align:right;padding:10px 12px;font-size:12px;font-weight:600;color:#64748b;border-bottom:1px solid #e5e7eb">Spend</th>
+          </tr></thead>
+          <tbody id="crBestBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Tab 4: Untested per country -->
+      <div id="crTabUntested" style="display:none">
+        <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb">
+          <thead><tr style="background:#f8fafc">
+            <th style="text-align:left;padding:10px 12px;font-size:12px;font-weight:600;color:#64748b;border-bottom:1px solid #e5e7eb">Država</th>
+            <th style="text-align:left;padding:10px 12px;font-size:12px;font-weight:600;color:#64748b;border-bottom:1px solid #e5e7eb">Creative</th>
+            <th style="text-align:right;padding:10px 12px;font-size:12px;font-weight:600;color:#64748b;border-bottom:1px solid #e5e7eb">Overall CPA</th>
+            <th style="text-align:right;padding:10px 12px;font-size:12px;font-weight:600;color:#64748b;border-bottom:1px solid #e5e7eb">Prodaje</th>
+            <th style="text-align:right;padding:10px 12px;font-size:12px;font-weight:600;color:#64748b;border-bottom:1px solid #e5e7eb">Spend</th>
+          </tr></thead>
+          <tbody id="crUntestedBody"></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -4214,6 +4269,71 @@ function crFmtCpa(spend, purchases) {
   return (spend / purchases).toFixed(2) + ' €';
 }
 
+
+function switchCrTab(tab) {
+  document.querySelectorAll('.cr-tab').forEach(b => { b.style.background='transparent'; b.style.border='1px solid transparent'; b.style.color='var(--text-muted)'; b.classList.remove('active'); });
+  event.target.style.background='var(--card-bg)'; event.target.style.border='1px solid var(--border-color)'; event.target.style.borderBottom='none'; event.target.style.color='var(--text-primary)'; event.target.classList.add('active');
+  document.getElementById('crTabBig').style.display = tab==='big' ? '' : 'none';
+  document.getElementById('crTabOverview').style.display = tab==='overview' ? '' : 'none';
+  document.getElementById('crTabBest').style.display = tab==='best' ? '' : 'none';
+  document.getElementById('crTabUntested').style.display = tab==='untested' ? '' : 'none';
+  if (crData && (tab==='overview'||tab==='best'||tab==='untested')) renderCrExtraTabs();
+}
+
+function renderCrExtraTabs() {
+  if (!crData || !crData.creatives) return;
+  var FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
+  var filtered = [];
+  crData.creatives.forEach(function(c) {
+    if (!c.totalPurchases) return;
+    var cpa = c.totalSpend / c.totalPurchases;
+    var countryPerf = [], untested = [], anyGood = false;
+    CR_COUNTRIES.forEach(function(cc) {
+      var cs = c.countries[cc];
+      if (!cs || cs.spend < 10) { untested.push(cc); return; }
+      if (cs.purchases > 0) {
+        var ccpa = cs.spend / cs.purchases;
+        countryPerf.push({cc:cc, cpa:ccpa});
+        if (ccpa <= 20) anyGood = true;
+      }
+    });
+    if (cpa <= 20 || anyGood) filtered.push({id:c.id, p:c.totalPurchases, cpa:cpa, spend:c.totalSpend, perf:countryPerf, unt:untested});
+  });
+  filtered.sort(function(a,b){return a.cpa-b.cpa;});
+
+  // Overview tab
+  var ovHtml = '';
+  filtered.forEach(function(r) {
+    var perfStr = r.perf.map(function(p){return FLAGS[p.cc]+p.cc+' '+p.cpa.toFixed(2);}).join(', ');
+    var untStr = r.unt.map(function(u){return FLAGS[u]+u;}).join(', ');
+    ovHtml += '<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 12px;font-weight:600;font-size:13px">'+r.id+'</td><td style="padding:8px 12px;text-align:right;font-size:13px">'+r.p+'</td><td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:600">'+r.cpa.toFixed(2)+'€</td><td style="padding:8px 12px;text-align:right;font-size:13px">'+r.spend.toFixed(2)+'€</td><td style="padding:8px 12px;font-size:12px">'+perfStr+'</td><td style="padding:8px 12px;font-size:12px;color:#94a3b8">'+untStr+'</td></tr>';
+  });
+  document.getElementById('crOverviewBody').innerHTML = ovHtml || '<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8">No data</td></tr>';
+
+  // Best per country tab
+  var bestHtml = '';
+  CR_COUNTRIES.forEach(function(cc) {
+    var tops = [];
+    filtered.forEach(function(r) { r.perf.forEach(function(p) { if (p.cc===cc && p.cpa<=20) tops.push({id:r.id,ccpa:p.cpa,cpa:r.cpa,p:r.p,spend:r.spend}); }); });
+    tops.sort(function(a,b){return a.ccpa-b.ccpa;});
+    tops.forEach(function(t,i) {
+      var bg = i===0 ? 'background:#f0fdf4;' : '';
+      bestHtml += '<tr style="border-bottom:1px solid #f0f0f0;'+bg+'"><td style="padding:8px 12px;font-size:13px;font-weight:600">'+FLAGS[cc]+' '+cc+'</td><td style="padding:8px 12px;font-size:13px;font-weight:600">'+t.id+'</td><td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:700;color:#16a34a">'+t.ccpa.toFixed(2)+'€</td><td style="padding:8px 12px;text-align:right;font-size:13px">'+t.cpa.toFixed(2)+'€</td><td style="padding:8px 12px;text-align:right;font-size:13px">'+t.p+'</td><td style="padding:8px 12px;text-align:right;font-size:13px">'+t.spend.toFixed(2)+'€</td></tr>';
+    });
+  });
+  document.getElementById('crBestBody').innerHTML = bestHtml || '<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8">No data</td></tr>';
+
+  // Untested per country tab
+  var untHtml = '';
+  CR_COUNTRIES.forEach(function(cc) {
+    var unt = filtered.filter(function(r){return r.unt.indexOf(cc)>=0;});
+    unt.sort(function(a,b){return a.cpa-b.cpa;});
+    unt.forEach(function(u) {
+      untHtml += '<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 12px;font-size:13px;font-weight:600">'+FLAGS[cc]+' '+cc+'</td><td style="padding:8px 12px;font-size:13px;font-weight:600">'+u.id+'</td><td style="padding:8px 12px;text-align:right;font-size:13px">'+u.cpa.toFixed(2)+'€</td><td style="padding:8px 12px;text-align:right;font-size:13px">'+u.p+'</td><td style="padding:8px 12px;text-align:right;font-size:13px">'+u.spend.toFixed(2)+'€</td></tr>';
+    });
+  });
+  document.getElementById('crUntestedBody').innerHTML = untHtml || '<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8">No data</td></tr>';
+}
 
 function renderCreativeTable() {
   if (!crData || !crData.creatives.length) {
