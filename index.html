@@ -4444,14 +4444,14 @@ function renderCreativeTable() {
   const t = crData.totals;
   const countryData = {};
   CR_COUNTRIES.forEach(cc => { countryData[cc] = { spend: 0, purchases: 0 }; });
-  crData.creatives.forEach(c => {
+  crData.creatives.filter(c => crMatchesFilters(c)).forEach(c => {
     CR_COUNTRIES.forEach(cc => {
       countryData[cc].spend += (c.countries[cc]?.spend || 0);
       countryData[cc].purchases += (c.countries[cc]?.purchases || 0);
     });
   });
 
-  const totalAds = crData.creatives.reduce((s,c) => s + c.adCount, 0);
+  const totalAds = crData.creatives.filter(c => crMatchesFilters(c)).reduce((s,c) => s + c.adCount, 0);
   const totalCombinedCells = CR_COUNTRIES.map(cc => {
     const d = countryData[cc];
     if (!d.spend) return '<td>\u2014</td>';
