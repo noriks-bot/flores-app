@@ -1423,6 +1423,7 @@ async function getAllAds(dateFrom, dateTo) {
       const acctInsights = await metaGetAll(`${acct}/insights`, {
         fields: INSIGHT_FIELDS + ',ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name',
         level: 'ad',
+        breakdowns: 'country',
         time_range: JSON.stringify({ since: dateFrom, until: dateTo }),
         limit: 500
       });
@@ -2465,19 +2466,20 @@ const server = http.createServer(async (req, res) => {
             creativeId = prefix.length > 40 ? prefix.substring(0, 40) : prefix;
           }
 
-          // Parse country from ad name, campaign name, or adset name
-          let adCountry = null;
-          const namesToCheck = [ad.campaign_name || '', ad.adset_name || '', name];
-          for (const n of namesToCheck) {
-            if (adCountry) break;
-            // Try cc:XX format first
-            const ccMatch = n.match(/cc[:\s]*([A-Z]{2})/i);
-            if (ccMatch && COUNTRIES.includes(ccMatch[1].toUpperCase())) { adCountry = ccMatch[1].toUpperCase(); break; }
-            // Try splitting by delimiters
-            const parts = n.split(/[_\s|]+/);
-            for (const p of parts) {
-              const upper = p.toUpperCase().replace(/[^A-Z]/g, '');
-              if (COUNTRIES.includes(upper)) { adCountry = upper; break; }
+          // Parse country - prefer Meta API country breakdown
+          const COUNTRY_MAP = { 'HR': 'HR', 'CZ': 'CZ', 'PL': 'PL', 'GR': 'GR', 'SK': 'SK', 'IT': 'IT', 'HU': 'HU' };
+          let adCountry = COUNTRY_MAP[(ins.country || '').toUpperCase()] || null;
+          if (!adCountry) {
+            const namesToCheck = [ad.campaign_name || '', ad.adset_name || '', name];
+            for (const n of namesToCheck) {
+              if (adCountry) break;
+              const ccMatch = n.match(/cc[:\s]*([A-Z]{2})/i);
+              if (ccMatch && COUNTRIES.includes(ccMatch[1].toUpperCase())) { adCountry = ccMatch[1].toUpperCase(); break; }
+              const parts = n.split(/[_\s|]+/);
+              for (const p of parts) {
+                const upper = p.toUpperCase().replace(/[^A-Z]/g, '');
+                if (COUNTRIES.includes(upper)) { adCountry = upper; break; }
+              }
             }
           }
 
