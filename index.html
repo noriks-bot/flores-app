@@ -1396,19 +1396,23 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     <div class="content" style="padding:12px 16px">
       <div class="table-card" style="overflow:hidden">
         <div style="overflow-y:auto;max-height:calc(100vh - 240px)">
-          <table style="width:100%;table-layout:fixed;font-size:11px;overflow:hidden">
+          <table style="width:100%;table-layout:fixed;font-size:11px">
+            <colgroup>
+              <col style="width:110px"><col style="width:40px"><col style="width:45px"><col style="width:22px"><col style="width:55px">
+              <col><col style="width:45px"><col style="width:45px"><col style="width:50px"><col style="width:28px"><col style="width:50px">
+            </colgroup>
             <thead><tr>
-              <th style="text-align:left;width:100px">Time</th>
-              <th style="text-align:left;width:45px">User</th>
-              <th style="text-align:left;width:50px">Type</th>
-              <th style="text-align:left;width:25px">CC</th>
-              <th style="text-align:left;width:90px">ID</th>
+              <th style="text-align:left">Time</th>
+              <th style="text-align:left">User</th>
+              <th style="text-align:left">Type</th>
+              <th>CC</th>
+              <th style="text-align:left">ID</th>
               <th style="text-align:left">Campaign</th>
-              <th style="text-align:center;width:50px">Old</th>
-              <th style="text-align:center;width:50px">New</th>
-              <th style="text-align:right;width:55px">Spend</th>
-              <th style="text-align:right;width:30px">Ord</th>
-              <th style="text-align:right;width:55px">Profit</th>
+              <th>Old</th>
+              <th>New</th>
+              <th style="text-align:right">Spend</th>
+              <th style="text-align:right">Ord</th>
+              <th style="text-align:right">Profit</th>
             </tr></thead>
             <tbody id="logBody"><tr><td colspan="11" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
           </table>
@@ -2589,8 +2593,8 @@ async function loadChangeLog() {
       <td style="text-align:left;font-size:11px;font-weight:600">${r.user || 'noriks'}</td>
       <td style="text-align:left"><span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">${r.change_type}</span></td>
       <td style="text-align:left;font-size:11px;font-weight:600">${r.country || '—'}</td>
-      <td style="text-align:left;font-size:9px;font-family:monospace;color:#64748b;word-break:break-all">${r.entity_id}</td>
-      <td style="text-align:left;font-size:10px;word-break:break-word">${r.entity_name || '—'}</td>
+      <td style="text-align:left;font-size:9px;font-family:monospace;color:#64748b;cursor:pointer" title="${r.entity_id}" onclick="navigator.clipboard.writeText('${r.entity_id}')">..${(r.entity_id||'').slice(-6)}</td>
+      <td style="text-align:left;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(r.entity_name||'').replace(/"/g,'&quot;')}">${r.entity_name || '—'}</td>
       <td style="text-align:center;font-size:12px;font-weight:700;background:${oldBg};color:#ef4444">${r.old_value || '—'}</td>
       <td style="text-align:center;font-size:12px;font-weight:700;background:${newBg};color:#22c55e">${r.new_value || '—'}</td>
       <td style="text-align:right;font-size:11px">${r.spend_at_change ? r.spend_at_change.toFixed(2) + '€' : '—'}</td>
