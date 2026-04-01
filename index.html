@@ -165,7 +165,8 @@ body { overflow-x: hidden;
 }
 
 .table-scroll { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 280px); width: 100%; }
-table { width: 100%; border-collapse: separate; border-spacing: 0; max-width: 100%; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; max-width: 100%; box-sizing: border-box; }
+.content-section table { max-width: 100% !important; min-width: 0 !important; box-sizing: border-box; }
 
 thead th {
   position: sticky; top: 0; z-index: 10;
@@ -1243,12 +1244,12 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           <!-- Top Campaigns -->
           <div class="table-card">
             <div class="table-header"><span class="table-title">🏆 Top Campaigns (Today)</span></div>
-            <div style="padding:0;overflow-x:auto"><table class="dash-mini-table" id="dashTopCampaigns" style="min-width:600px;width:100%"><thead><tr><th style="text-align:left;padding:8px 12px">Campaign</th><th>Spend</th><th>Orders</th><th>Revenue</th><th>Profit</th><th>CPA</th></tr></thead><tbody></tbody></table></div>
+            <div style="padding:0;overflow-x:auto"><table class="dash-mini-table" id="dashTopCampaigns" style="width:100%"><thead><tr><th style="text-align:left;padding:8px 12px">Campaign</th><th>Spend</th><th>Orders</th><th>Revenue</th><th>Profit</th><th>CPA</th></tr></thead><tbody></tbody></table></div>
           </div>
           <!-- Top Creatives -->
           <div class="table-card">
             <div class="table-header"><span class="table-title">🎨 Top Creatives (Today)</span></div>
-            <div style="padding:0;overflow-x:auto"><table class="dash-mini-table" id="dashTopCreatives" style="min-width:600px;width:100%"><thead><tr><th style="text-align:left;padding:8px 12px">Creative</th><th>Spend</th><th>Orders</th><th>Revenue</th><th>Profit</th><th>CPA</th></tr></thead><tbody></tbody></table></div>
+            <div style="padding:0;overflow-x:auto"><table class="dash-mini-table" id="dashTopCreatives" style="width:100%"><thead><tr><th style="text-align:left;padding:8px 12px">Creative</th><th>Spend</th><th>Orders</th><th>Revenue</th><th>Profit</th><th>CPA</th></tr></thead><tbody></tbody></table></div>
           </div>
         </div>
         <!-- Orders Table -->
@@ -1341,7 +1342,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <th style="width:32px;cursor:default"><input type="checkbox" class="master-select" onchange="toggleSelectAll(this)" style="cursor:pointer"></th>
               <th style="width:32px"></th>
               <th data-sort="status" style="width:50px">Status</th>
-              <th data-sort="name" style="min-width:400px">Name</th>
+              <th data-sort="name">Name</th>
               <th data-sort="country">Country</th>
               <th data-sort="product">Product</th>
               <th data-sort="budget">Budget</th>
@@ -1635,7 +1636,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <thead><tr>
         <th style="width:32px"></th>
         <th style="width:36px;text-align:center">🏳</th>
-        <th style="text-align:left;min-width:260px">Name</th>
+        <th style="text-align:left">Name</th>
         <th style="text-align:center">Status</th>
         <th style="text-align:right">Budget</th>
         <th style="text-align:right">Spend</th>
@@ -3507,7 +3508,7 @@ function renderCampaignHeaders() {
     <th style="width:32px;cursor:default"><input type="checkbox" class="master-select" onchange="toggleSelectAll(this)" style="cursor:pointer"></th>
     <th style="width:32px"></th>
     <th data-sort="status" style="width:50px">Status</th>
-    <th data-sort="name" style="min-width:400px">Name</th>
+    <th data-sort="name">Name</th>
     <th data-sort="country">Country</th>
     <th data-sort="product">Product</th>
     <th data-sort="budget">Budget</th>
@@ -3530,7 +3531,7 @@ const FLAT_HEADERS = `
     <th style="width:32px;cursor:default"></th>
     <th style="width:32px"></th>
     <th data-sort="status" style="width:50px">Status</th>
-    <th data-sort="name" style="min-width:400px">Name</th>
+    <th data-sort="name">Name</th>
     <th data-sort="country">Country</th>
     <th data-sort="product">Product</th>
     <th data-sort="campaign_name">Campaign</th>
