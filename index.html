@@ -639,8 +639,8 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
   background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   overflow: hidden; border: 1px solid #e5e7eb;
 }
-.cr-table-scroll { overflow-x: auto; max-height: calc(100vh - 200px); }
-.cr-table { border-collapse: collapse; white-space: nowrap; }
+.cr-table-scroll { overflow: hidden; max-height: calc(100vh - 200px); overflow-y: auto; }
+.cr-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .cr-table thead { position: sticky; top: 0; z-index: 10; }
 .cr-th {
   padding: 6px 8px; text-align: right; font-size: 11px; font-weight: 500;
@@ -656,8 +656,9 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 .cr-table tbody tr { border-bottom: 1px solid #f0f0f0; }
 .cr-table tbody tr:hover { background: #f8fafc; }
 .cr-table tbody td {
-  padding: 5px 8px; font-size: 12px; color: #334155; text-align: right;
+  padding: 4px 6px; font-size: 11px; color: #334155; text-align: right;
   white-space: nowrap; border-right: 1px solid #eee;
+  overflow: hidden; text-overflow: ellipsis;
 }
 .cr-table tbody td:first-child { text-align: left; font-weight: 600; }
 .cr-table tbody td:last-child { border-right: none; }
