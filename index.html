@@ -165,7 +165,7 @@ body { overflow-x: hidden;
 }
 
 .table-scroll { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 280px); width: 100%; }
-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 2400px; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; }
 
 thead th {
   position: sticky; top: 0; z-index: 10;
@@ -4172,6 +4172,9 @@ const CR_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU'];
     else { crSortKey = key; crSortDir = 'desc'; }
     if (crData) { sortCreativeData(); renderCreativeTable(); }
   });
+
+  // Auto-load data on init
+  loadCreativeReport();
 })();
 
 function crGetSortVal(c, key) {
