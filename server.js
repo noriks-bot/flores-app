@@ -1416,12 +1416,19 @@ async function getAllAds(dateFrom, dateTo) {
   let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
   if (cached) return cached;
 
-  const insights = await metaGetAll(`${AD_ACCOUNT}/insights`, {
-    fields: INSIGHT_FIELDS + ',ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name',
-    level: 'ad',
-    time_range: JSON.stringify({ since: dateFrom, until: dateTo }),
-    limit: 500
-  });
+  // Fetch from ALL ad accounts
+  let insights = [];
+  for (const acct of Object.values(AD_ACCOUNTS_MAP)) {
+    try {
+      const acctInsights = await metaGetAll(`${acct}/insights`, {
+        fields: INSIGHT_FIELDS + ',ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name',
+        level: 'ad',
+        time_range: JSON.stringify({ since: dateFrom, until: dateTo }),
+        limit: 500
+      });
+      insights = insights.concat(acctInsights);
+    } catch(e) { console.error(`[getAllAds] Error fetching ${acct}:`, e.message); }
+  }
 
   let adMeta = {};
   try {
