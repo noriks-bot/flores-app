@@ -2458,12 +2458,16 @@ const server = http.createServer(async (req, res) => {
             creativeId = prefix.length > 40 ? prefix.substring(0, 40) : prefix;
           }
 
-          // Parse country from ad name (after ID and date)
+          // Parse country from ad name, campaign name, or adset name
           let adCountry = null;
-          const parts = name.split('_');
-          for (const p of parts) {
-            const upper = p.toUpperCase();
-            if (COUNTRIES.includes(upper)) { adCountry = upper; break; }
+          const namesToCheck = [name, ad.campaign_name || '', ad.adset_name || ''];
+          for (const n of namesToCheck) {
+            if (adCountry) break;
+            const parts = n.split(/[_\s|]+/);
+            for (const p of parts) {
+              const upper = p.toUpperCase().replace(/[^A-Z]/g, '');
+              if (COUNTRIES.includes(upper)) { adCountry = upper; break; }
+            }
           }
 
           if (!creativeMap[creativeId]) {
