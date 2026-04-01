@@ -640,13 +640,13 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
   overflow: hidden; border: 1px solid #e5e7eb;
 }
 .cr-table-scroll { overflow-x: auto; max-height: calc(100vh - 200px); }
-.cr-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.cr-table { border-collapse: collapse; white-space: nowrap; }
 .cr-table thead { position: sticky; top: 0; z-index: 10; }
 .cr-th {
-  padding: 4px 4px; text-align: right; font-size: 10px; font-weight: 500;
+  padding: 6px 8px; text-align: right; font-size: 11px; font-weight: 500;
   color: #64748b; background: #f5f7fa; border-bottom: 1px solid #eee;
   cursor: pointer; white-space: nowrap; user-select: none;
-  border-right: 1px solid #eee; overflow: hidden; text-overflow: ellipsis;
+  border-right: 1px solid #eee;
 }
 .cr-th:first-child { text-align: left; }
 .cr-th:last-child { border-right: none; }
@@ -656,8 +656,8 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 .cr-table tbody tr { border-bottom: 1px solid #f0f0f0; }
 .cr-table tbody tr:hover { background: #f8fafc; }
 .cr-table tbody td {
-  padding: 3px 4px; font-size: 11px; color: #334155; text-align: right;
-  white-space: nowrap; border-right: 1px solid #eee; overflow: hidden; text-overflow: ellipsis;
+  padding: 5px 8px; font-size: 12px; color: #334155; text-align: right;
+  white-space: nowrap; border-right: 1px solid #eee;
 }
 .cr-table tbody td:first-child { text-align: left; font-weight: 600; }
 .cr-table tbody td:last-child { border-right: none; }
@@ -677,7 +677,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 
 /* Totals bar at bottom */
 .cr-table tfoot td {
-  padding: 4px 4px; font-size: 11px; font-weight: 600; color: #fff;
+  padding: 5px 8px; font-size: 12px; font-weight: 600; color: #fff;
   text-align: right; white-space: nowrap;
   background: linear-gradient(135deg, #1a5276, #2e86c1);
   border-right: 1px solid rgba(255,255,255,0.12);
@@ -1516,16 +1516,16 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           <table class="cr-table" id="crTable">
             <thead>
               <tr>
-                <th class="cr-th" data-sort="id" style="text-align:left;width:7%">Creative ID</th>
-                <th class="cr-th" data-sort="adCount" style="width:3%">Ads</th>
-                <th class="cr-th" data-sort="totalSpend" style="width:14%">Total ▾</th>
-                <th class="cr-th cr-country-th" data-sort="HR" style="width:12%">🇭🇷 HR</th>
-                <th class="cr-th cr-country-th" data-sort="CZ" style="width:12%">🇨🇿 CZ</th>
-                <th class="cr-th cr-country-th" data-sort="PL" style="width:12%">🇵🇱 PL</th>
-                <th class="cr-th cr-country-th" data-sort="GR" style="width:10%">🇬🇷 GR</th>
-                <th class="cr-th cr-country-th" data-sort="SK" style="width:10%">🇸🇰 SK</th>
-                <th class="cr-th cr-country-th" data-sort="IT" style="width:10%">🇮🇹 IT</th>
-                <th class="cr-th cr-country-th" data-sort="HU" style="width:10%">🇭🇺 HU</th>
+                <th class="cr-th" data-sort="id" style="text-align:left">Creative ID</th>
+                <th class="cr-th" data-sort="adCount">Ads</th>
+                <th class="cr-th" data-sort="totalSpend">Total ▾</th>
+                <th class="cr-th cr-country-th" data-sort="HR">🇭🇷 HR</th>
+                <th class="cr-th cr-country-th" data-sort="CZ">🇨🇿 CZ</th>
+                <th class="cr-th cr-country-th" data-sort="PL">🇵🇱 PL</th>
+                <th class="cr-th cr-country-th" data-sort="GR">🇬🇷 GR</th>
+                <th class="cr-th cr-country-th" data-sort="SK">🇸🇰 SK</th>
+                <th class="cr-th cr-country-th" data-sort="IT">🇮🇹 IT</th>
+                <th class="cr-th cr-country-th" data-sort="HU">🇭🇺 HU</th>
               </tr>
             </thead>
             <tbody id="crBody">
