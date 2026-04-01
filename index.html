@@ -165,8 +165,7 @@ body { overflow-x: hidden;
 }
 
 .table-scroll { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 280px); width: 100%; }
-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-#section-ads-manager table { min-width: 2400px; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 2400px; }
 
 thead th {
   position: sticky; top: 0; z-index: 10;
@@ -640,11 +639,11 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
   background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   overflow: hidden; border: 1px solid #e5e7eb;
 }
-.cr-table-scroll { overflow: hidden; max-height: calc(100vh - 200px); overflow-y: auto; }
-.cr-table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 0 !important; }
+.cr-table-scroll { overflow-x: auto; max-height: calc(100vh - 200px); }
+.cr-table { width: 100%; border-collapse: collapse; min-width: 900px; }
 .cr-table thead { position: sticky; top: 0; z-index: 10; }
 .cr-th {
-  padding: 6px 8px; text-align: right; font-size: 11px; font-weight: 500;
+  padding: 6px 10px; text-align: right; font-size: 11px; font-weight: 500;
   color: #64748b; background: #f5f7fa; border-bottom: 1px solid #eee;
   cursor: pointer; white-space: nowrap; user-select: none;
   border-right: 1px solid #eee;
@@ -657,9 +656,8 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 .cr-table tbody tr { border-bottom: 1px solid #f0f0f0; }
 .cr-table tbody tr:hover { background: #f8fafc; }
 .cr-table tbody td {
-  padding: 4px 6px; font-size: 11px; color: #334155; text-align: right;
+  padding: 5px 10px; font-size: 12px; color: #334155; text-align: right;
   white-space: nowrap; border-right: 1px solid #eee;
-  overflow: hidden; text-overflow: ellipsis;
 }
 .cr-table tbody td:first-child { text-align: left; font-weight: 600; }
 .cr-table tbody td:last-child { border-right: none; }
@@ -679,7 +677,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 
 /* Totals bar at bottom */
 .cr-table tfoot td {
-  padding: 5px 8px; font-size: 12px; font-weight: 600; color: #fff;
+  padding: 6px 10px; font-size: 12px; font-weight: 600; color: #fff;
   text-align: right; white-space: nowrap;
   background: linear-gradient(135deg, #1a5276, #2e86c1);
   border-right: 1px solid rgba(255,255,255,0.12);
@@ -801,8 +799,6 @@ input:focus, select:focus, textarea:focus {
 
 /* CR table improvements */
 .cr-table-wrap { border-radius: 14px; border: 1px solid rgba(0,0,0,0.06); box-shadow: var(--card-shadow); }
-#section-creative-reporting table.cr-table { min-width: 0 !important; width: 100% !important; table-layout: fixed !important; border-collapse: collapse !important; border-spacing: 0 !important; }
-#section-creative-reporting .cr-table-scroll { overflow-x: hidden !important; }
 
 /* Better select styling */
 select {
@@ -1264,6 +1260,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       </div>
     </div>
 
+  </div>
   <div id="section-ads-manager" class="content-section">
   <!-- FILTERS -->
   <div class="filters-bar">
@@ -1378,12 +1375,6 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
   </div><!-- /section-ads-manager -->
 
   <div id="section-log" class="content-section">
-  <style>
-    #section-log table.log-tbl { width:100% !important; min-width:0 !important; table-layout:fixed !important; border-collapse:collapse; font-size:10px; }
-    #section-log .log-wrap { overflow:hidden !important; overflow-y:auto; max-height:calc(100vh - 240px); width:100%; }
-    #section-log table.log-tbl td, #section-log table.log-tbl th { padding:5px 3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; border-bottom:1px solid #eee; }
-    #section-log table.log-tbl th { background:#f5f7f8; font-weight:600; font-size:10px; color:#666; border-bottom:1px solid #ddd; position:sticky; top:0; z-index:1; }
-  </style>
     <div style="background:linear-gradient(135deg,#fafbff,#f0f4ff);border:1px solid #c7d2fe;border-radius:12px;padding:20px 24px;margin:16px 24px;box-shadow:0 4px 16px rgba(30,58,95,0.06)">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="width:36px;height:36px;background:linear-gradient(135deg,#1E3A5F,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">📋</div>
@@ -1402,26 +1393,29 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <button class="preset-tab" data-range="all" onclick="setLogDate(this,'all')">All</button>
       </div>
     </div>
-    <div class="content" style="padding:12px 16px;overflow:hidden">
-      <div class="log-wrap" style="border:1px solid #e6e8ea;border-radius:4px">
-          <table class="log-tbl">
-            <colgroup>
-              <col style="width:16%"><col style="width:8%"><col style="width:4%">
-              <col style="width:40%"><col style="width:16%"><col style="width:16%">
-            </colgroup>
-            <thead><tr style="background:#f5f7f8;border-bottom:1px solid #ddd">
-              <th style="text-align:left;padding:6px 4px">Time / User</th>
-              <th style="text-align:left;padding:6px 2px">Type</th>
-              <th style="padding:6px 2px">CC</th>
-              <th style="text-align:left;padding:6px 2px">Campaign</th>
-              <th style="text-align:center;padding:6px 2px">Change</th>
-              <th style="text-align:right;padding:6px 4px">Result</th>
+    <div class="content" style="padding:12px 16px">
+      <div class="table-card" style="overflow:hidden">
+        <div style="overflow-y:auto;max-height:calc(100vh - 240px)">
+          <table style="width:100%;table-layout:fixed;font-size:11px">
+            <thead><tr>
+              <th style="text-align:left;width:120px">Time</th>
+              <th style="text-align:left;width:50px">User</th>
+              <th style="text-align:left;width:50px">Type</th>
+              <th style="text-align:left;width:35px">CC</th>
+              <th style="text-align:left;width:130px">Campaign ID</th>
+              <th style="text-align:left">Campaign Name</th>
+              <th style="text-align:center;width:55px">Old</th>
+              <th style="text-align:center;width:55px">New</th>
+              <th style="text-align:right;width:55px">Spend</th>
+              <th style="text-align:right;width:40px">Ord</th>
+              <th style="text-align:right;width:55px">Profit</th>
             </tr></thead>
             <tbody id="logBody"><tr><td colspan="11" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
     </div>
+  </div>
 
   <!-- BASE REPORT -->
   <div id="section-base-report" class="content-section">
@@ -1509,25 +1503,13 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       </div>
       <button class="refresh-btn" onclick="loadCreativeReport()" style="margin-left:auto">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-        Refresh
+        Load
       </button>
     </div>
     <div class="content">
       <div class="cr-table-wrap">
         <div class="cr-table-scroll">
           <table class="cr-table" id="crTable">
-            <colgroup>
-              <col style="width:6%">
-              <col style="width:3%">
-              <col style="width:13%">
-              <col style="width:11.1%">
-              <col style="width:11.1%">
-              <col style="width:11.1%">
-              <col style="width:11.1%">
-              <col style="width:11.1%">
-              <col style="width:11.1%">
-              <col style="width:11.1%">
-            </colgroup>
             <thead>
               <tr>
                 <th class="cr-th" data-sort="id" style="text-align:left">Creative ID</th>
@@ -1543,7 +1525,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               </tr>
             </thead>
             <tbody id="crBody">
-              <tr><td colspan="10" style="text-align:center;padding:60px;color:var(--text-muted)">Loading creative data...</td></tr>
+              <tr><td colspan="10" style="text-align:center;padding:60px;color:var(--text-muted)">Select a date range and click Load</td></tr>
             </tbody>
             <tfoot id="crTotals"></tfoot>
           </table>
@@ -1671,11 +1653,11 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
   <div style="background:linear-gradient(135deg,#fafbff,#f0f4ff);border:1px solid #c7d2fe;border-radius:12px;padding:20px 24px;margin:16px 24px;box-shadow:0 4px 16px rgba(30,58,95,0.06)"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:linear-gradient(135deg,#1E3A5F,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">🤖</div><div><div style="font-size:18px;font-weight:800;color:#1E3A5F">AI Hints</div><div style="font-size:11px;color:#6b7280;margin-top:1px">AI-powered campaign optimization</div></div></div></div>
     <div class="content" style="padding:20px 24px">
       <!-- Mode tabs -->
-      <div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--border-color);flex-wrap:wrap">
-        <button class="ah-mode-tab active" onclick="switchAHMode('campaign')" id="ahModeCampaign" style="padding:10px 18px;font-size:13px;font-weight:700;background:linear-gradient(135deg,#1E3A5F,#2563eb);border:none;border-radius:10px;color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(30,58,95,0.25);transition:all .2s;margin-right:4px">🎯 Campaign Analysis</button>
-        <button class="ah-mode-tab" onclick="switchAHMode('general')" id="ahModeGeneral" style="padding:10px 18px;font-size:13px;font-weight:600;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;color:#6b7280;cursor:pointer;transition:all .2s;margin-right:4px">📊 General Analysis</button>
-        <button class="ah-mode-tab" onclick="switchAHMode('fatigue')" id="ahModeFatigue" style="padding:10px 18px;font-size:13px;font-weight:600;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;color:#6b7280;cursor:pointer;transition:all .2s;margin-right:4px">📉 Creative Fatigue</button>
-        <button class="ah-mode-tab" onclick="switchAHMode('agent')" id="ahModeAgent" style="padding:10px 18px;font-size:13px;font-weight:600;background:linear-gradient(135deg,#7c3aed,#a855f7);border:none;border-radius:10px;color:#fff;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(124,58,237,0.3)">🧠 Ask Dominik</button>
+      <div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--border-color)">
+        <button class="ah-mode-tab active" onclick="switchAHMode('campaign')" id="ahModeCampaign" style="padding:12px 28px;font-size:14px;font-weight:700;background:linear-gradient(135deg,#1E3A5F,#2563eb);border:none;border-radius:10px;color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(30,58,95,0.25);transition:all .2s;margin-right:8px">🎯 Campaign Analysis</button>
+        <button class="ah-mode-tab" onclick="switchAHMode('general')" id="ahModeGeneral" style="padding:12px 28px;font-size:14px;font-weight:600;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;color:#6b7280;cursor:pointer;transition:all .2s;margin-right:8px">📊 General Analysis</button>
+        <button class="ah-mode-tab" onclick="switchAHMode('fatigue')" id="ahModeFatigue" style="padding:12px 28px;font-size:14px;font-weight:600;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;color:#6b7280;cursor:pointer;transition:all .2s">📉 Creative Fatigue</button>
+        <button class="ah-mode-tab" onclick="switchAHMode('agent')" id="ahModeAgent" style="padding:12px 28px;font-size:14px;font-weight:600;background:linear-gradient(135deg,#7c3aed,#a855f7);border:none;border-radius:10px;color:#fff;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(124,58,237,0.3)">🧠 Ask Dominik</button>
       </div>
 
       <!-- Campaign Analysis mode -->
@@ -2453,11 +2435,11 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <div class="table-scroll" style="max-height:calc(100vh - 260px)">
           <table style="min-width:800px">
             <thead><tr>
-              <th style="text-align:left">Timestamp</th>
-              <th style="text-align:left">User</th>
-              <th style="text-align:left">Action</th>
+              <th style="text-align:left;width:160px">Timestamp</th>
+              <th style="text-align:left;width:100px">User</th>
+              <th style="text-align:left;width:140px">Action</th>
               <th style="text-align:left">Details</th>
-              <th style="text-align:left">Entity</th>
+              <th style="text-align:left;width:100px">Entity</th>
             </tr></thead>
             <tbody id="alBody"></tbody>
           </table>
@@ -2467,7 +2449,6 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     </div>
   </div>
 
-</div>
 </div>
 </div>
 
@@ -2603,17 +2584,22 @@ async function loadChangeLog() {
     const profitColor = v => v > 0 ? '#22c55e' : v < 0 ? '#ef4444' : '#666';
     document.getElementById('logBody').innerHTML = rows.map(r => {
       const oldBg = '#fef2f2'; const newBg = '#f0fdf4';
-      return `<tr style="border-bottom:1px solid #eee">
-      <td style="text-align:left;font-size:10px;color:#666">${r.timestamp}<br><span style="font-weight:600;color:#333">${r.user || 'noriks'}</span></td>
-      <td><span style="background:#e0e7ff;color:#3730a3;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700">${r.change_type}</span></td>
-      <td style="font-size:10px;font-weight:600;text-align:center">${r.country || '—'}</td>
-      <td style="text-align:left;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" title="${r.entity_id}" onclick="navigator.clipboard.writeText('${r.entity_id}')">${r.entity_name || r.entity_id || '—'}<br><span style="font-size:8px;color:#94a3b8;font-family:monospace">${r.entity_id}</span></td>
-      <td style="text-align:center;font-size:11px"><span style="color:#ef4444;font-weight:700">${r.old_value || '—'}</span> → <span style="color:#22c55e;font-weight:700">${r.new_value || '—'}</span></td>
-      <td style="text-align:right;font-size:10px">${r.spend_at_change ? r.spend_at_change.toFixed(2)+'€' : '—'} / ${r.orders_at_change || 0}ord<br><span style="font-weight:600;color:${profitColor(r.profit_at_change||0)}">${r.profit_at_change ? r.profit_at_change.toFixed(2)+'€' : '—'} profit</span></td>
+      return `<tr style="border-bottom:1px solid #f0f0f0">
+      <td style="text-align:left;font-size:11px;color:#666;white-space:nowrap">${r.timestamp}</td>
+      <td style="text-align:left;font-size:11px;font-weight:600">${r.user || 'noriks'}</td>
+      <td style="text-align:left"><span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">${r.change_type}</span></td>
+      <td style="text-align:left;font-size:11px;font-weight:600">${r.country || '—'}</td>
+      <td style="text-align:left;font-size:10px;font-family:monospace;color:#64748b">${r.entity_id}</td>
+      <td style="text-align:left;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(r.entity_name||'').replace(/"/g,'&quot;')}">${r.entity_name || '—'}</td>
+      <td style="text-align:center;font-size:12px;font-weight:700;background:${oldBg};color:#ef4444">${r.old_value || '—'}</td>
+      <td style="text-align:center;font-size:12px;font-weight:700;background:${newBg};color:#22c55e">${r.new_value || '—'}</td>
+      <td style="text-align:right;font-size:11px">${r.spend_at_change ? r.spend_at_change.toFixed(2) + '€' : '—'}</td>
+      <td style="text-align:right;font-size:11px">${r.orders_at_change || 0}</td>
+      <td style="text-align:right;font-size:11px;font-weight:600;color:${profitColor(r.profit_at_change||0)}">${r.profit_at_change ? r.profit_at_change.toFixed(2) + '€' : '—'}</td>
     </tr>`;
     }).join('');
   } catch(e) {
-    document.getElementById('logBody').innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#ef4444">Error: '+e.message+'</td></tr>';
+    document.getElementById('logBody').innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:#ef4444">Error: '+e.message+'</td></tr>';
   }
 }
 
@@ -4132,7 +4118,7 @@ function applySearchFilter() {
 // loadData(); // Moved to navigateTo ads-manager
 
 /* ═══ CREATIVE REPORTING ═══ */
-var crData = null;
+let crData = null;
 let crSortKey = 'totalSpend';
 let crSortDir = 'desc';
 const CR_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU'];
@@ -4172,9 +4158,6 @@ const CR_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU'];
     else { crSortKey = key; crSortDir = 'desc'; }
     if (crData) { sortCreativeData(); renderCreativeTable(); }
   });
-
-  // Auto-load data on init
-  loadCreativeReport();
 })();
 
 function crGetSortVal(c, key) {
@@ -4216,9 +4199,8 @@ async function loadCreativeReport() {
 function crCpaStyle(spend, purchases) {
   if (!purchases || purchases === 0) return '';
   const cpa = spend / purchases;
-  if (cpa <= 18) return 'background:#4caf50;color:#fff;font-weight:600';
-  if (cpa <= 24) return 'background:#81c784;color:#fff;font-weight:600';
-  if (cpa <= 35) return 'background:#f59e0b;color:#fff;font-weight:600';
+  if (cpa <= 15) return 'background:#4caf50;color:#fff;font-weight:600';
+  if (cpa <= 25) return 'background:#f59e0b;color:#fff;font-weight:600';
   return 'background:#ef5350;color:#fff;font-weight:600';
 }
 
