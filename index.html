@@ -4119,6 +4119,7 @@ function applySearchFilter() {
 
 /* ═══ CREATIVE REPORTING ═══ */
 var crData = null;
+function crFmtSpend(v) { return v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(2); }
 let crSortKey = 'totalSpend';
 let crSortDir = 'desc';
 const CR_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU'];
@@ -4213,7 +4214,6 @@ function crFmtCpa(spend, purchases) {
   return (spend / purchases).toFixed(2) + ' €';
 }
 
-function crFmtSpend(v) { return v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(2); }
 
 function renderCreativeTable() {
   if (!crData || !crData.creatives.length) {
