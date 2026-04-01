@@ -1403,21 +1403,16 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <div class="log-wrap" style="border:1px solid #e6e8ea;border-radius:4px">
           <table class="log-tbl">
             <colgroup>
-              <col style="width:95px"><col style="width:35px"><col style="width:40px"><col style="width:20px"><col style="width:115px">
-              <col><col style="width:38px"><col style="width:38px"><col style="width:44px"><col style="width:24px"><col style="width:44px">
+              <col style="width:130px"><col style="width:50px"><col style="width:22px">
+              <col><col style="width:80px"><col style="width:100px">
             </colgroup>
             <thead><tr style="background:#f5f7f8;border-bottom:1px solid #ddd">
-              <th style="text-align:left;padding:6px 4px">Time</th>
-              <th style="text-align:left;padding:6px 2px">User</th>
+              <th style="text-align:left;padding:6px 4px">Time / User</th>
               <th style="text-align:left;padding:6px 2px">Type</th>
               <th style="padding:6px 2px">CC</th>
-              <th style="text-align:left;padding:6px 2px">ID</th>
               <th style="text-align:left;padding:6px 2px">Campaign</th>
-              <th style="padding:6px 2px">Old</th>
-              <th style="padding:6px 2px">New</th>
-              <th style="text-align:right;padding:6px 2px">Spend</th>
-              <th style="text-align:right;padding:6px 2px">Ord</th>
-              <th style="text-align:right;padding:6px 4px">Profit</th>
+              <th style="text-align:center;padding:6px 2px">Change</th>
+              <th style="text-align:right;padding:6px 4px">Result</th>
             </tr></thead>
             <tbody id="logBody"><tr><td colspan="11" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
           </table>
@@ -2593,18 +2588,13 @@ async function loadChangeLog() {
     const profitColor = v => v > 0 ? '#22c55e' : v < 0 ? '#ef4444' : '#666';
     document.getElementById('logBody').innerHTML = rows.map(r => {
       const oldBg = '#fef2f2'; const newBg = '#f0fdf4';
-      return `<tr style="border-bottom:1px solid #f0f0f0">
-      <td style="text-align:left;font-size:10px;color:#666;word-break:break-all">${r.timestamp}</td>
-      <td style="text-align:left;font-size:11px;font-weight:600">${r.user || 'noriks'}</td>
-      <td style="text-align:left"><span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">${r.change_type}</span></td>
-      <td style="text-align:left;font-size:11px;font-weight:600">${r.country || '—'}</td>
-      <td style="text-align:left;font-size:8px;font-family:monospace;color:#64748b;cursor:pointer" title="${r.entity_id}" onclick="navigator.clipboard.writeText('${r.entity_id}')">${r.entity_id}</td>
-      <td style="text-align:left;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(r.entity_name||'').replace(/"/g,'&quot;')}">${r.entity_name || '—'}</td>
-      <td style="text-align:center;font-size:12px;font-weight:700;background:${oldBg};color:#ef4444">${r.old_value || '—'}</td>
-      <td style="text-align:center;font-size:12px;font-weight:700;background:${newBg};color:#22c55e">${r.new_value || '—'}</td>
-      <td style="text-align:right;font-size:11px">${r.spend_at_change ? r.spend_at_change.toFixed(2) + '€' : '—'}</td>
-      <td style="text-align:right;font-size:11px">${r.orders_at_change || 0}</td>
-      <td style="text-align:right;font-size:11px;font-weight:600;color:${profitColor(r.profit_at_change||0)}">${r.profit_at_change ? r.profit_at_change.toFixed(2) + '€' : '—'}</td>
+      return `<tr style="border-bottom:1px solid #eee">
+      <td style="text-align:left;font-size:10px;color:#666">${r.timestamp}<br><span style="font-weight:600;color:#333">${r.user || 'noriks'}</span></td>
+      <td><span style="background:#e0e7ff;color:#3730a3;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700">${r.change_type}</span></td>
+      <td style="font-size:10px;font-weight:600;text-align:center">${r.country || '—'}</td>
+      <td style="text-align:left;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" title="${r.entity_id}" onclick="navigator.clipboard.writeText('${r.entity_id}')">${r.entity_name || r.entity_id || '—'}<br><span style="font-size:8px;color:#94a3b8;font-family:monospace">${r.entity_id}</span></td>
+      <td style="text-align:center;font-size:11px"><span style="color:#ef4444;font-weight:700">${r.old_value || '—'}</span> → <span style="color:#22c55e;font-weight:700">${r.new_value || '—'}</span></td>
+      <td style="text-align:right;font-size:10px">${r.spend_at_change ? r.spend_at_change.toFixed(2)+'€' : '—'} / ${r.orders_at_change || 0}ord<br><span style="font-weight:600;color:${profitColor(r.profit_at_change||0)}">${r.profit_at_change ? r.profit_at_change.toFixed(2)+'€' : '—'} profit</span></td>
     </tr>`;
     }).join('');
   } catch(e) {
