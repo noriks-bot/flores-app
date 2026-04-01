@@ -4199,8 +4199,9 @@ async function loadCreativeReport() {
 function crCpaStyle(spend, purchases) {
   if (!purchases || purchases === 0) return '';
   const cpa = spend / purchases;
-  if (cpa <= 15) return 'background:#4caf50;color:#fff;font-weight:600';
-  if (cpa <= 25) return 'background:#f59e0b;color:#fff;font-weight:600';
+  if (cpa <= 18) return 'background:#4caf50;color:#fff;font-weight:600';
+  if (cpa <= 22) return 'background:#81c784;color:#fff;font-weight:600';
+  if (cpa <= 28) return 'background:#f59e0b;color:#fff;font-weight:600';
   return 'background:#ef5350;color:#fff;font-weight:600';
 }
 
