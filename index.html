@@ -3167,7 +3167,7 @@ function makeRow(item,level,bgClass) {
     <td>${selectCb}</td>
     <td>${expandHtml}</td>
     <td>${statusHtml}</td>
-    <td style="text-align:left;${level==='adset'?'padding-left:50px;':level==='ad'?'padding-left:100px;':''}"><div class="name-cell">${level==='adset'?'↳ ':level==='ad'?'↳ ':''}${isNewCampaign(item)?'<span style="background:#3b82f6;color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;margin-right:4px;vertical-align:middle">NEW</span>':''}${nameHtml(item.name,level)}<button onclick="event.stopPropagation();navigator.clipboard.writeText('${item.id}');this.textContent='✓';this.style.background='#22c55e';setTimeout(()=>{this.textContent='ID';this.style.background='#333'},1000)" title="Copy ID: ${item.id}" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">ID</button>${level==='campaign'?`<button class="edit-inline-btn" onclick="event.stopPropagation();inlineEditName('${item.id}','${(item.name||'').replace(/'/g,"\\'").replace(/\`/g,'\\`')}')" title="Rename campaign" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}</div></td>
+    <td style="text-align:left;${level==='adset'?'padding-left:50px;':level==='ad'?'padding-left:100px;':''}"><div class="name-cell">${level==='adset'?'↳ ':level==='ad'?'↳ ':''}${isNewCampaign(item)?'<span style="background:#3b82f6;color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;margin-right:4px;vertical-align:middle">NEW</span>':''}${nameHtml(item.name,level)}<button onclick="event.stopPropagation();navigator.clipboard.writeText('${item.id}');this.textContent='✓';this.style.background='#22c55e';setTimeout(()=>{this.textContent='ID';this.style.background='#333'},1000)" title="Copy ID: ${item.id}" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">ID</button>${level==='campaign'?`<button class="edit-inline-btn" onclick="event.stopPropagation();inlineEditName('${item.id}','${(item.name||'').replace(/'/g,"\\'").replace(/\`/g,'\\`')}')" title="Rename campaign" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}<button onclick="event.stopPropagation();openTrendChart('${item.id}','${(item.name||'').replace(/'/g,"\\'").substring(0,60)}','${level}')" title="Trend chart" style="border:none;background:#1E3A5F;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">📊</button></div></td>
     <td>${getCountryTags(item.name)}</td>
     <td>${getProductTag(item.name)}</td>
     <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}</td>
@@ -6851,6 +6851,71 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(initSaasAdminMode, 100);
 });
 
+// Trend Chart
+var trendChartInstance = null;
+function closeTrendModal() { document.getElementById('trendModal').style.display='none'; if(trendChartInstance){trendChartInstance.destroy();trendChartInstance=null;} }
+
+async function openTrendChart(id, name, level) {
+  var modal = document.getElementById('trendModal');
+  modal.style.display = 'flex';
+  document.getElementById('trendTitle').textContent = name;
+  document.getElementById('trendSubtitle').textContent = level.toUpperCase() + ' · ' + id;
+  document.getElementById('trendLoading').style.display = 'block';
+  document.getElementById('trendChart').style.display = 'none';
+  if (trendChartInstance) { trendChartInstance.destroy(); trendChartInstance = null; }
+
+  try {
+    var end = new Date().toISOString().slice(0,10);
+    var start = new Date(Date.now()-30*86400000).toISOString().slice(0,10);
+    var url = '/api/meta-proxy?edge=' + encodeURIComponent(id + '/insights') + '&params=' + encodeURIComponent(JSON.stringify({
+      fields: 'spend,actions,impressions,clicks',
+      time_range: JSON.stringify({since:start,until:end}),
+      time_increment: 1,
+      limit: 100
+    }));
+    var res = await fetch(url);
+    var data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    var days = [], spends = [], purchases = [], cpas = [];
+    (data.data || data).forEach(function(d) {
+      days.push(d.date_start ? d.date_start.slice(5) : '');
+      var sp = parseFloat(d.spend || 0);
+      spends.push(sp);
+      var purch = 0;
+      (d.actions || []).forEach(function(a) { if (a.action_type==='offsite_conversion.fb_pixel_purchase'||a.action_type==='purchase'||a.action_type==='omni_purchase') purch=parseInt(a.value); });
+      purchases.push(purch);
+      cpas.push(purch > 0 ? Math.round(sp/purch*100)/100 : null);
+    });
+
+    document.getElementById('trendLoading').style.display = 'none';
+    document.getElementById('trendChart').style.display = 'block';
+    var ctx = document.getElementById('trendChart').getContext('2d');
+    trendChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: days,
+        datasets: [
+          { label: 'Spend \u20ac', data: spends, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.3, yAxisID: 'y' },
+          { label: 'Purchases', data: purchases, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', fill: false, tension: 0.3, yAxisID: 'y1' },
+          { label: 'CPA \u20ac', data: cpas, borderColor: '#f59e0b', borderDash: [5,5], fill: false, tension: 0.3, yAxisID: 'y', spanGaps: true }
+        ]
+      },
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { position: 'top', labels: { font: { size: 12 } } } },
+        scales: {
+          y: { position: 'left', title: { display: true, text: '\u20ac' }, grid: { color: '#f0f0f0' } },
+          y1: { position: 'right', title: { display: true, text: 'Purchases' }, grid: { drawOnChartArea: false } }
+        }
+      }
+    });
+  } catch(e) {
+    document.getElementById('trendLoading').innerHTML = '<span style="color:#ef4444">Error: ' + e.message + '</span>';
+  }
+}
+
 </script>
 <div id="editModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:12px;padding:24px;width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
@@ -6861,6 +6926,20 @@ document.addEventListener('DOMContentLoaded', function() {
       <button id="editModalSave" style="padding:8px 20px;border:none;border-radius:8px;background:#333;color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">Save</button>
     </div>
     <div id="editModalStatus" style="margin-top:12px;font-size:12px;color:#666;display:none"></div>
+  </div>
+</div>
+<!-- Trend Chart Modal -->
+<div id="trendModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:none;align-items:center;justify-content:center" onclick="if(event.target===this)closeTrendModal()">
+  <div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:800px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div>
+        <div id="trendTitle" style="font-size:16px;font-weight:700;color:#1E3A5F"></div>
+        <div id="trendSubtitle" style="font-size:12px;color:#6b7280;margin-top:2px"></div>
+      </div>
+      <button onclick="closeTrendModal()" style="border:none;background:none;font-size:20px;cursor:pointer;color:#9ca3af;padding:4px 8px">✕</button>
+    </div>
+    <canvas id="trendChart" height="300"></canvas>
+    <div id="trendLoading" style="text-align:center;padding:40px;color:#9ca3af;display:none"><i class="fas fa-spinner fa-spin"></i> Loading trend data...</div>
   </div>
 </div>
 </body>

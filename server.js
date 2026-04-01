@@ -2431,6 +2431,17 @@ const server = http.createServer(async (req, res) => {
           byOrigin
         });
       }
+      // Meta API proxy for trend charts
+      if (urlPath === '/api/meta-proxy') {
+        try {
+          const edge = query.edge;
+          const params = JSON.parse(query.params || '{}');
+          if (!edge) return sendJSON(res, { error: 'edge required' }, 400);
+          const data = await metaGetAll(edge, params);
+          return sendJSON(res, data);
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+
       if (urlPath === '/api/creative-report') {
         function getPurchases(ins) {
           const p = (ins.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase');
