@@ -2467,9 +2467,13 @@ const server = http.createServer(async (req, res) => {
 
           // Parse country from ad name, campaign name, or adset name
           let adCountry = null;
-          const namesToCheck = [name, ad.campaign_name || '', ad.adset_name || ''];
+          const namesToCheck = [ad.campaign_name || '', ad.adset_name || '', name];
           for (const n of namesToCheck) {
             if (adCountry) break;
+            // Try cc:XX format first
+            const ccMatch = n.match(/cc[:\s]*([A-Z]{2})/i);
+            if (ccMatch && COUNTRIES.includes(ccMatch[1].toUpperCase())) { adCountry = ccMatch[1].toUpperCase(); break; }
+            // Try splitting by delimiters
             const parts = n.split(/[_\s|]+/);
             for (const p of parts) {
               const upper = p.toUpperCase().replace(/[^A-Z]/g, '');
