@@ -4158,6 +4158,9 @@ const CR_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU'];
     else { crSortKey = key; crSortDir = 'desc'; }
     if (crData) { sortCreativeData(); renderCreativeTable(); }
   });
+
+  // Auto-load on init
+  loadCreativeReport();
 })();
 
 function crGetSortVal(c, key) {
