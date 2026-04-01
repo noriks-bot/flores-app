@@ -4213,6 +4213,8 @@ function crFmtCpa(spend, purchases) {
   return (spend / purchases).toFixed(2) + ' €';
 }
 
+function crFmtSpend(v) { return v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(2); }
+
 function renderCreativeTable() {
   if (!crData || !crData.creatives.length) {
     document.getElementById('crBody').innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted)">No creative data found</td></tr>';
@@ -4236,7 +4238,6 @@ function renderCreativeTable() {
 
   const rows = crData.creatives.map(c => {
     // Combined cell per country: spend / purchases / cpa
-    function crFmtSpend(v) { return v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(2); }
     function crCombinedCell(cs) {
       if (!cs || cs.spend === 0) return '<td><span class="cr-country-zero">\u2014</span></td>';
       const spend = crFmtSpend(cs.spend);
