@@ -6866,7 +6866,7 @@ async function openTrendChart(id, name, level) {
 
   try {
     var end = new Date().toISOString().slice(0,10);
-    var start = new Date(Date.now()-30*86400000).toISOString().slice(0,10);
+    var start = '2025-01-01';
     var url = '/api/meta-proxy?edge=' + encodeURIComponent(id + '/insights') + '&params=' + encodeURIComponent(JSON.stringify({
       fields: 'spend,actions,impressions,clicks',
       time_range: JSON.stringify({since:start,until:end}),
