@@ -4240,7 +4240,7 @@ function renderCreativeTable() {
     // Combined cell per country: spend / purchases / cpa
     function crCombinedCell(cs) {
       if (!cs || cs.spend === 0) return '<td><span class="cr-country-zero">\u2014</span></td>';
-      const spend = crFmtSpend(cs.spend);
+      const spend = (cs.spend >= 1000 ? (cs.spend/1000).toFixed(1)+'k' : cs.spend.toFixed(2));
       if (!cs.purchases) return '<td style="font-size:12px">' + spend + '\u20ac</td>';
       const cpa = (cs.spend / cs.purchases).toFixed(2);
       const style = crCpaStyle(cs.spend, cs.purchases);
@@ -4249,7 +4249,7 @@ function renderCreativeTable() {
     const combinedCells = CR_COUNTRIES.map(cc => crCombinedCell(c.countries[cc])).join('');
 
     // Total combined cell
-    const totalSpendFmt = crFmtSpend(c.totalSpend);
+    const totalSpendFmt = (c.totalSpend >= 1000 ? (c.totalSpend/1000).toFixed(1)+'k' : c.totalSpend.toFixed(2));
     let totalCombined;
     if (c.totalPurchases > 0) {
       const totalCpa = (c.totalSpend / c.totalPurchases).toFixed(2);
@@ -4284,14 +4284,14 @@ function renderCreativeTable() {
   const totalCombinedCells = CR_COUNTRIES.map(cc => {
     const d = countryData[cc];
     if (!d.spend) return '<td>\u2014</td>';
-    const spFmt = crFmtSpend(d.spend);
+    const spFmt = (d.spend >= 1000 ? (d.spend/1000).toFixed(1)+'k' : d.spend.toFixed(2));
     if (!d.purchases) return '<td style="font-size:12px">' + spFmt + '\u20ac</td>';
     const cpa = (d.spend / d.purchases).toFixed(2);
     const style = crCpaStyle(d.spend, d.purchases);
     return '<td style="font-size:12px;' + style + '">' + spFmt + '\u20ac / ' + d.purchases + 'p / ' + cpa + '\u20ac</td>';
   }).join('');
 
-  const tSpFmt = crFmtSpend(t.spend);
+  const tSpFmt = (t.spend >= 1000 ? (t.spend/1000).toFixed(1)+'k' : t.spend.toFixed(2));
   let totalCell;
   if (t.purchases > 0) {
     const overallCpaStyle = crCpaStyle(t.spend, t.purchases);
