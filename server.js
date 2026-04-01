@@ -1959,7 +1959,7 @@ const server = http.createServer(async (req, res) => {
 
   // Serve the app (authenticated SPA)
   if (urlPath === '/app' || urlPath === '/app/') {
-    const appHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8').replace('</head>', '<meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"></head>');
+    const appHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8').replace('</head>', '<meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"></head>').replace('</body>', '<script>/* v' + Date.now() + ' */</script></body>');
     res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' });
     res.end(appHtml);
     return;
