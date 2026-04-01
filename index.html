@@ -448,13 +448,14 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 .info-stat .val { font-size: 16px; font-weight: 700; margin-top: 2px; }
 
 /* Loading */
-.loading-state { display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;color:var(--text-muted);min-height:200px; }
+.loading-state { display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;color:var(--text-muted);min-height:300px;position:sticky;left:0;width:calc(100vw - var(--sidebar-width) - 48px); }
 .spinner {
-  display: inline-block; width: 36px; height: 36px;
-  border: 3px solid #e5e7eb; border-top-color: var(--primary);
-  border-radius: 50%; animation: spin .8s cubic-bezier(0.4,0,0.2,1) infinite;
+  display: inline-block; width: 44px; height: 44px;
+  border: 3px solid transparent; border-top-color: var(--primary); border-right-color: var(--primary);
+  border-radius: 50%; animation: spin .7s cubic-bezier(0.4,0,0.2,1) infinite;
+  box-shadow: 0 0 0 3px rgba(30,58,95,0.06);
 }
-.loading-text { margin-top: 12px; font-size: 13px; font-weight: 500; }
+.loading-text { margin-top: 16px; font-size: 14px; font-weight: 600; letter-spacing: -0.2px; }
 
 /* Skeleton loading */
 .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s ease-in-out infinite; border-radius: 6px; }
