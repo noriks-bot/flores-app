@@ -2451,7 +2451,7 @@ const server = http.createServer(async (req, res) => {
         const creativeMap = {};
 
         for (const ad of allAdsData) {
-          const name = (ad.name || '').replace(/\s*[\u2013\u2014-]\s*copy\s*\d*/gi, '').trim();
+          const name = (ad.name || '').replace(/\s*[\u2013\u2014-]\s*copy\s*\d*/gi, '').replace(/\s*\(\d+\)\s*$/, '').trim();
           const ins = ad.insights;
           if (!ins) continue;
 
