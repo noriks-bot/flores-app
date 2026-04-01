@@ -2447,9 +2447,16 @@ const server = http.createServer(async (req, res) => {
           const ins = ad.insights;
           if (!ins) continue;
 
-          // Parse creative ID
-          const idMatch = name.match(/^(ID\d+)/i);
-          const creativeId = idMatch ? idMatch[1].toUpperCase() : 'Other';
+          // Parse creative ID - search anywhere in name, not just start
+          const idMatch = name.match(/\b(ID\d+)/i);
+          let creativeId;
+          if (idMatch) {
+            creativeId = idMatch[1].toUpperCase();
+          } else {
+            // Group by campaign name prefix (before first |) to avoid lumping everything into "Other"
+            const prefix = name.split('|')[0].trim().split('_').slice(0, 3).join('_') || name;
+            creativeId = prefix.length > 40 ? prefix.substring(0, 40) : prefix;
+          }
 
           // Parse country from ad name (after ID and date)
           let adCountry = null;
