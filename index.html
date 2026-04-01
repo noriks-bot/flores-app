@@ -2452,13 +2452,20 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       </div>
       <div class="table-card">
         <div class="table-scroll" style="max-height:calc(100vh - 260px)">
-          <table style="min-width:800px">
+          <table style="min-width:0;width:100%;table-layout:fixed">
+            <colgroup>
+              <col style="width:15%">
+              <col style="width:10%">
+              <col style="width:15%">
+              <col style="width:50%">
+              <col style="width:10%">
+            </colgroup>
             <thead><tr>
-              <th style="text-align:left;width:160px">Timestamp</th>
-              <th style="text-align:left;width:100px">User</th>
-              <th style="text-align:left;width:140px">Action</th>
+              <th style="text-align:left">Timestamp</th>
+              <th style="text-align:left">User</th>
+              <th style="text-align:left">Action</th>
               <th style="text-align:left">Details</th>
-              <th style="text-align:left;width:100px">Entity</th>
+              <th style="text-align:left">Entity</th>
             </tr></thead>
             <tbody id="alBody"></tbody>
           </table>
