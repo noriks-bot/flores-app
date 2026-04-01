@@ -6872,7 +6872,7 @@ async function openTrendChart(id, name, level) {
       fields: 'spend,actions,impressions,clicks',
       time_range: JSON.stringify({since:start,until:end}),
       time_increment: 1,
-      limit: 100
+      limit: 1000
     }));
     var res = await fetch(url);
     var data = await res.json();
