@@ -1506,6 +1506,25 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         Refresh
       </button>
     </div>
+    <!-- Country + Product filters -->
+    <div style="display:flex;gap:8px;align-items:center;padding:8px 24px;flex-wrap:wrap">
+      <span style="font-size:11px;font-weight:600;color:var(--text-muted)">Country:</span>
+      <button class="cr-filter-btn active" onclick="setCrCountryFilter('all',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--text-primary);color:#fff">All</button>
+      <button class="cr-filter-btn" onclick="setCrCountryFilter('HR',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--card-bg);color:var(--text-muted)">🇭🇷 HR</button>
+      <button class="cr-filter-btn" onclick="setCrCountryFilter('CZ',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--card-bg);color:var(--text-muted)">🇨🇿 CZ</button>
+      <button class="cr-filter-btn" onclick="setCrCountryFilter('PL',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--card-bg);color:var(--text-muted)">🇵🇱 PL</button>
+      <button class="cr-filter-btn" onclick="setCrCountryFilter('GR',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--card-bg);color:var(--text-muted)">🇬🇷 GR</button>
+      <button class="cr-filter-btn" onclick="setCrCountryFilter('SK',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--card-bg);color:var(--text-muted)">🇸🇰 SK</button>
+      <button class="cr-filter-btn" onclick="setCrCountryFilter('IT',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--card-bg);color:var(--text-muted)">🇮🇹 IT</button>
+      <button class="cr-filter-btn" onclick="setCrCountryFilter('HU',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--card-bg);color:var(--text-muted)">🇭🇺 HU</button>
+      <span style="width:1px;height:20px;background:var(--border-color);margin:0 4px"></span>
+      <span style="font-size:11px;font-weight:600;color:var(--text-muted)">Product:</span>
+      <button class="cr-prod-btn active" onclick="setCrProductFilter('all',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--text-primary);color:#fff">All</button>
+      <button class="cr-prod-btn" onclick="setCrProductFilter('shirt',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--card-bg);color:var(--text-muted)">👕 Shirts</button>
+      <button class="cr-prod-btn" onclick="setCrProductFilter('boxer',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--card-bg);color:var(--text-muted)">🩲 Boxers</button>
+      <button class="cr-prod-btn" onclick="setCrProductFilter('starter',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--card-bg);color:var(--text-muted)">📦 Starter</button>
+      <button class="cr-prod-btn" onclick="setCrProductFilter('komplet',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--card-bg);color:var(--text-muted)">🎁 Kompleti</button>
+    </div>
     <div class="content" style="padding:16px 24px">
       <!-- Tabs -->
       <div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--border-color)">
@@ -4270,6 +4289,37 @@ function crFmtCpa(spend, purchases) {
 }
 
 
+var crCountryFilter = 'all';
+var crProductFilter = 'all';
+
+function setCrCountryFilter(val, btn) {
+  crCountryFilter = val;
+  document.querySelectorAll('.cr-filter-btn').forEach(function(b) { b.style.background='var(--card-bg)'; b.style.color='var(--text-muted)'; b.classList.remove('active'); });
+  btn.style.background='var(--text-primary)'; btn.style.color='#fff'; btn.classList.add('active');
+  if (crData) { renderCreativeTable(); renderCrExtraTabs(); }
+}
+
+function setCrProductFilter(val, btn) {
+  crProductFilter = val;
+  document.querySelectorAll('.cr-prod-btn').forEach(function(b) { b.style.background='var(--card-bg)'; b.style.color='var(--text-muted)'; b.classList.remove('active'); });
+  btn.style.background='var(--text-primary)'; btn.style.color='#fff'; btn.classList.add('active');
+  if (crData) { renderCreativeTable(); renderCrExtraTabs(); }
+}
+
+function crMatchesFilters(c) {
+  if (crCountryFilter !== 'all') {
+    if (!c.countries || !c.countries[crCountryFilter] || c.countries[crCountryFilter].spend <= 0) return false;
+  }
+  if (crProductFilter !== 'all') {
+    var name = (c.id || c.name || '').toLowerCase();
+    if (crProductFilter === 'shirt' && !(name.indexOf('shirt')>=0 || name.indexOf('tshirt')>=0 || name.indexOf('majic')>=0)) return false;
+    if (crProductFilter === 'boxer' && !(name.indexOf('boxer')>=0 || name.indexOf('boksaric')>=0)) return false;
+    if (crProductFilter === 'starter' && name.indexOf('starter')<0) return false;
+    if (crProductFilter === 'komplet' && name.indexOf('komplet')<0) return false;
+  }
+  return true;
+}
+
 function switchCrTab(tab) {
   document.querySelectorAll('.cr-tab').forEach(b => { b.style.background='transparent'; b.style.border='1px solid transparent'; b.style.color='var(--text-muted)'; b.classList.remove('active'); });
   event.target.style.background='var(--card-bg)'; event.target.style.border='1px solid var(--border-color)'; event.target.style.borderBottom='none'; event.target.style.color='var(--text-primary)'; event.target.classList.add('active');
@@ -4286,6 +4336,7 @@ function renderCrExtraTabs() {
   var filtered = [];
   crData.creatives.forEach(function(c) {
     if (!c.totalPurchases) return;
+    if (!crMatchesFilters(c)) return;
     var cpa = c.totalSpend / c.totalPurchases;
     var countryPerf = [], untested = [], anyGood = false;
     CR_COUNTRIES.forEach(function(cc) {
@@ -4356,7 +4407,7 @@ function renderCreativeTable() {
     }
   });
 
-  const rows = crData.creatives.map(c => {
+  const rows = crData.creatives.filter(c => crMatchesFilters(c)).map(c => {
     // Combined cell per country: spend / purchases / cpa
     function crCombinedCell(cs) {
       if (!cs || cs.spend === 0) return '<td><span class="cr-country-zero">\u2014</span></td>';
