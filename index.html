@@ -4363,7 +4363,8 @@ function renderCrExtraTabs() {
 
   // Best per country tab
   var bestHtml = '';
-  CR_COUNTRIES.forEach(function(cc) {
+  var bestCountries = crCountryFilter !== 'all' ? [crCountryFilter] : CR_COUNTRIES;
+  bestCountries.forEach(function(cc) {
     var tops = [];
     filtered.forEach(function(r) { r.perf.forEach(function(p) { if (p.cc===cc && p.cpa<=20) tops.push({id:r.id,ccpa:p.cpa,cpa:r.cpa,p:r.p,spend:r.spend}); }); });
     tops.sort(function(a,b){return a.ccpa-b.ccpa;});
@@ -4376,7 +4377,8 @@ function renderCrExtraTabs() {
 
   // Untested per country tab
   var untHtml = '';
-  CR_COUNTRIES.forEach(function(cc) {
+  var untCountries = crCountryFilter !== 'all' ? [crCountryFilter] : CR_COUNTRIES;
+  untCountries.forEach(function(cc) {
     var unt = filtered.filter(function(r){return r.unt.indexOf(cc)>=0;});
     unt.sort(function(a,b){return a.cpa-b.cpa;});
     unt.forEach(function(u) {
