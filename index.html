@@ -4336,7 +4336,14 @@ function renderCrExtraTabs() {
   var filtered = [];
   crData.creatives.forEach(function(c) {
     if (!c.totalPurchases) return;
-    if (!crMatchesFilters(c)) return;
+    // Only apply product filter here, country filter is handled per-tab
+    if (crProductFilter !== 'all') {
+      var nm = (c.id || c.name || '').toLowerCase();
+      if (crProductFilter === 'shirt' && !(nm.indexOf('shirt')>=0 || nm.indexOf('tshirt')>=0 || nm.indexOf('majic')>=0)) return;
+      if (crProductFilter === 'boxer' && !(nm.indexOf('boxer')>=0 || nm.indexOf('boksaric')>=0)) return;
+      if (crProductFilter === 'starter' && nm.indexOf('starter')<0) return;
+      if (crProductFilter === 'komplet' && nm.indexOf('komplet')<0) return;
+    }
     var cpa = c.totalSpend / c.totalPurchases;
     var countryPerf = [], untested = [], anyGood = false;
     CR_COUNTRIES.forEach(function(cc) {
@@ -4352,9 +4359,15 @@ function renderCrExtraTabs() {
   });
   filtered.sort(function(a,b){return a.cpa-b.cpa;});
 
-  // Overview tab
+  // Overview tab - apply country filter
+  var ovFiltered = filtered;
+  if (crCountryFilter !== 'all') {
+    ovFiltered = filtered.filter(function(r) {
+      return r.perf.some(function(p){return p.cc===crCountryFilter;}) || r.unt.indexOf(crCountryFilter)>=0;
+    });
+  }
   var ovHtml = '';
-  filtered.forEach(function(r) {
+  ovFiltered.forEach(function(r) {
     var perfStr = r.perf.map(function(p){return FLAGS[p.cc]+p.cc+' '+p.cpa.toFixed(2);}).join(', ');
     var untStr = r.unt.map(function(u){return FLAGS[u]+u;}).join(', ');
     ovHtml += '<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 12px;font-weight:600;font-size:13px">'+r.id+'</td><td style="padding:8px 12px;text-align:right;font-size:13px">'+r.p+'</td><td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:600">'+r.cpa.toFixed(2)+'€</td><td style="padding:8px 12px;text-align:right;font-size:13px">'+r.spend.toFixed(2)+'€</td><td style="padding:8px 12px;font-size:12px">'+perfStr+'</td><td style="padding:8px 12px;font-size:12px;color:#94a3b8">'+untStr+'</td></tr>';
