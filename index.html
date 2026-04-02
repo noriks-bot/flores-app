@@ -7205,7 +7205,16 @@ async function openTrendChart(id, name, level) {
           legend: { display: false },
           tooltip: {
             backgroundColor: '#1c1e21', titleFont: { size: 12 }, bodyFont: { size: 13, weight: 'bold' },
-            callbacks: { label: function(ctx) { return ctx.parsed.y + ' purchases'; } }
+            callbacks: {
+              label: function(ctx) { return ctx.parsed.y + ' purchases'; },
+              afterLabel: function(ctx) {
+                var i = ctx.dataIndex;
+                var sp = spends[i] || 0;
+                var p = purchases[i] || 0;
+                var cpa = p > 0 ? (sp/p).toFixed(2) + ' €' : '—';
+                return 'Spend: ' + sp.toFixed(2) + ' €\nCPA: ' + cpa;
+              }
+            }
           }
         },
         scales: {
