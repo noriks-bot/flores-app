@@ -7232,7 +7232,8 @@ async function openTrendChart(id, name, level) {
       var dayCpa = dayPurch > 0 ? (daySpend / dayPurch).toFixed(0) : '';
       var bg = dayPurch > 0 ? 'background:#4caf50;color:#fff' : 'background:#ef5350;color:#fff';
       var label = dayPurch > 0 ? dayPurch + '×' + dayCpa + '€' : '-' + daySpend.toFixed(0) + '€';
-      pillsHtml += '<div style="flex-shrink:0;text-align:center;line-height:1.2"><div style="display:inline-block;padding:2px 5px;border-radius:3px;font-size:9px;font-weight:700;' + bg + ';white-space:nowrap">' + label + '</div><div style="font-size:7px;color:#333;margin-top:1px;font-weight:500">' + days[di] + '</div></div>';
+      var subText = dayPurch > 0 ? dayPurch + ' ord · ' + dayCpa + '€ CPA' : 'no orders';
+      pillsHtml += '<div style="flex-shrink:0;text-align:center;line-height:1.2"><div style="display:inline-block;padding:2px 5px;border-radius:3px;font-size:9px;font-weight:700;' + bg + ';white-space:nowrap">' + label + '</div><div style="font-size:7px;color:#333;margin-top:1px;font-weight:500">' + days[di] + '</div><div style="font-size:6px;color:#999;white-space:nowrap">' + subText + '</div></div>';
     }
     pillsHtml += '</div>';
     document.getElementById('trendChart').insertAdjacentHTML('afterend', pillsHtml);
