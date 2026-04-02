@@ -5305,13 +5305,17 @@ function optGetCountryFlags(name) {
   if (ccMatch) { countries = ccMatch[1].split('+'); }
   else { for (var code in flagMap) { if (upper.includes(code)) { countries = [code]; break; } } }
   if (!countries.length) return '<span style="font-size:9px;color:#999">—</span>';
-  var html = '';
+  var items = [];
   countries.forEach(function(cc) {
     var flag = flagMap[cc] || '';
     if (!flag) return;
     var isActive = (optCountry === 'ALL' || optCountry === cc);
-    html += '<span style="font-size:13px;vertical-align:middle;' + (!isActive ? 'filter:grayscale(1) opacity(0.4)' : '') + '">' + flag + '</span>';
+    items.push('<span style="font-size:11px;white-space:nowrap;' + (!isActive ? 'filter:grayscale(1);opacity:0.4' : '') + '">' + flag + '<span style="font-size:9px;vertical-align:middle;margin-left:1px">' + cc + '</span></span>');
   });
+  if (items.length <= 2) return items.join(' ');
+  var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 4px;line-height:1.3">';
+  items.forEach(function(it) { html += it; });
+  html += '</div>';
   return html;
 }
 function optActionBtn(status) {
