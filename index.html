@@ -4234,10 +4234,20 @@ function applySearchFilter() {
       // Also check country tags
       if (!countryMatch) countryMatch = fullText.includes(activeCountryFilter);
     }
-    // Type filter
+    // Type filter — SOFI = multi-country (CC has +), CBO/ABO = exact match excluding SOFI
     let typeMatch = activeTypeFilter === 'ALL';
     if (!typeMatch) {
-      typeMatch = fullText.includes('| ' + activeTypeFilter + ' ') || fullText.includes('| ' + activeTypeFilter + '|') || fullText.includes('| ' + activeTypeFilter + '\t') || fullText.includes(' ' + activeTypeFilter + ' ');
+      const ccMatch2 = nameUpper.match(/CC:([A-Z+]+)/);
+      const isSofi = ccMatch2 && ccMatch2[1].includes('+');
+      if (activeTypeFilter === 'SOFI') {
+        typeMatch = isSofi || nameUpper.includes('SOFI');
+      } else if (activeTypeFilter === 'CBO') {
+        typeMatch = !isSofi && !nameUpper.includes('SOFI') && (nameUpper.includes('| CBO') || nameUpper.includes('CBO |'));
+      } else if (activeTypeFilter === 'ABO') {
+        typeMatch = !isSofi && !nameUpper.includes('SOFI') && (nameUpper.includes('| ABO') || nameUpper.includes('ABO |'));
+      } else {
+        typeMatch = fullText.includes(activeTypeFilter);
+      }
     }
     const match = (!searchFilter || name.includes(searchFilter) || row.textContent.toLowerCase().includes(searchFilter)) && countryMatch && typeMatch;
     row.style.display = match ? '' : 'none';
@@ -4249,8 +4259,28 @@ function applySearchFilter() {
       next = next.nextElementSibling;
     }
   });
+  // Re-apply zebra striping on visible rows
+  let visIdx = 0;
+  rows.forEach(row => {
+    if (row.style.display === 'none') return;
+    const isCampaign = row.classList.contains('level-campaign');
+    if (isCampaign) {
+      row.classList.remove('ci-odd', 'ci-even');
+      row.classList.add(visIdx % 2 === 0 ? 'ci-odd' : 'ci-even');
+      // Store current zebra class for child rows
+      row._zebraClass = visIdx % 2 === 0 ? 'ci-odd' : 'ci-even';
+      visIdx++;
+    } else {
+      // Child row — inherit parent campaign's zebra class
+      row.classList.remove('ci-odd', 'ci-even');
+      // Find parent campaign row
+      let prev = row.previousElementSibling;
+      while (prev && !prev.classList.contains('level-campaign')) prev = prev.previousElementSibling;
+      if (prev && prev._zebraClass) row.classList.add(prev._zebraClass);
+    }
+  });
   const countEl = document.getElementById('searchCount');
-  if (searchFilter) {
+  if (searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL') {
     countEl.textContent = `Showing ${shown} of ${total} campaigns`;
   } else {
     countEl.textContent = '';
