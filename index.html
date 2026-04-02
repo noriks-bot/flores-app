@@ -1347,7 +1347,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <th data-sort="budget">Budget</th>
               <th data-sort="bid_strategy">Bid strategy</th>
               <th class="sep" data-sort="spend">Spend</th>
-              <th data-sort="wc_orders" style="max-width:60px;width:60px">Flores purchases</th><th style="max-width:40px;width:40px">FPA</th>
+              <th data-sort="wc_orders" style="max-width:75px;width:75px">Flores purchases</th><th style="max-width:30px;width:30px">FPA</th>
               <th data-sort="wc_profit">Profit/loss</th>
               <th data-sort="wc_ppo">Profit per order</th>
               <th data-sort="wc_revenue">Flores revenue</th>
@@ -2982,6 +2982,7 @@ function updateSummary() {
     <td></td><td></td><td></td><td></td>
     <td>${spend.toFixed(2)} €</td>
     <td>${wcOrders}</td>
+    <td style="font-size:11px;color:#c4b5fd">${Object.values(fpaData).reduce((s,v)=>s+v,0)}</td>
     <td>${wcProfit.toFixed(2)} €</td>
     <td>${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
     <td>${wcRevenue.toFixed(2)} €</td>
@@ -3752,7 +3753,7 @@ function renderCampaignHeaders() {
     <th data-sort="budget">Budget</th>
     <th data-sort="bid_strategy">Bid strategy</th>
     <th class="sep" data-sort="spend">Spend</th>
-    <th data-sort="wc_orders" style="max-width:60px;width:60px">Flores purchases</th><th style="max-width:40px;width:40px">FPA</th>
+    <th data-sort="wc_orders" style="max-width:75px;width:75px">Flores purchases</th><th style="max-width:30px;width:30px">FPA</th>
     <th data-sort="wc_profit">Profit/loss</th>
     <th data-sort="wc_ppo">Profit per order</th>
     <th data-sort="wc_revenue">Flores revenue</th>
@@ -3776,7 +3777,7 @@ const FLAT_HEADERS = `
     <th data-sort="budget">Budget</th>
     <th data-sort="bid_strategy">Bid strategy</th>
     <th class="sep" data-sort="spend">Spend</th>
-    <th data-sort="wc_orders" style="max-width:60px;width:60px">Flores purchases</th><th style="max-width:40px;width:40px">FPA</th>
+    <th data-sort="wc_orders" style="max-width:75px;width:75px">Flores purchases</th><th style="max-width:30px;width:30px">FPA</th>
     <th data-sort="wc_profit">Profit/loss</th>
     <th data-sort="wc_ppo">Profit per order</th>
     <th data-sort="wc_revenue">Flores revenue</th>
