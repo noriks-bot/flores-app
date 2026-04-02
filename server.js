@@ -2121,24 +2121,32 @@ const server = http.createServer(async (req, res) => {
         
         // Query DB for orders matching this campaign
         const rows = db.prepare(`
-          SELECT wc_order_id, country, order_date, gross_eur, product_cost, shipping_cost, profit, product_type, adset_id, ad_id, adset_name, ad_name
+          SELECT wc_order_id, country, order_date, gross_eur, net_revenue, product_cost, shipping_cost, profit, product_type, adset_id, ad_id, adset_name, ad_name, billing_name, billing_city, raw_meta
           FROM wc_orders WHERE utm_campaign = ? AND order_date >= ? AND order_date <= ?
           ORDER BY order_date DESC
         `).all(campaignId, dateFrom, dateTo);
         
-        const allOrders = rows.map(r => ({
-          id: r.wc_order_id, number: r.wc_order_id,
-          date: r.order_date,
-          customer: '', email: '',
-          country: r.country, total: r.gross_eur, currency: 'EUR',
-          products: [{ name: r.product_type || 'unknown', qty: 1, price: r.gross_eur, sku: '' }],
-          productCost: r.product_cost,
-          profit: r.profit, qty: 1,
-          adsetId: r.adset_id || '',
-          adId: r.ad_id || '',
-          adsetName: r.adset_name || '',
-          adName: r.ad_name || ''
-        }));
+        const allOrders = rows.map(r => {
+          let items = [];
+          try { const m = JSON.parse(r.raw_meta || '{}'); items = (m.line_items || []).map(li => ({ name: li.name || '', qty: li.quantity || 1, price: parseFloat(li.total || 0) })); } catch(e) {}
+          if (!items.length) items = [{ name: r.product_type || 'unknown', qty: 1, price: r.gross_eur }];
+          const tax = r.gross_eur - (r.net_revenue || r.gross_eur);
+          return {
+            id: r.wc_order_id, number: r.wc_order_id,
+            date: r.order_date,
+            customer: r.billing_name || '', city: r.billing_city || '',
+            country: r.country, gross: r.gross_eur, net: r.net_revenue || r.gross_eur, tax: Math.round(tax*100)/100,
+            currency: 'EUR',
+            products: items,
+            productCost: r.product_cost,
+            shippingCost: r.shipping_cost,
+            profit: r.profit, qty: items.reduce((s,i)=>s+(i.qty||1),0),
+            adsetId: r.adset_id || '',
+            adId: r.ad_id || '',
+            adsetName: r.adset_name || '',
+            adName: r.ad_name || ''
+          };
+        });
         
         return sendJSON(res, allOrders);
       }

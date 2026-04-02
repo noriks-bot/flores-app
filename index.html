@@ -3330,7 +3330,7 @@ function makeRow(item,level,bgClass) {
     <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}</td>
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
-    <td>${wcCount||0}</td>
+    <td>${wcCount||0}${wcCount>0?`<button onclick="event.stopPropagation();openOrdersModal('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">📦</button>`:''}</td>
     <td class="${plCls}">${plHtml}</td>
     <td class="${ppoCls}">${ppoHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
@@ -3654,22 +3654,27 @@ async function showCampaignOrders(campaignId) {
     }
     
     let rows = orders.map(o => {
-      const prods = o.products.map(p=>`${p.qty}× ${p.name.slice(0,35)}`).join(', ');
+      const prods = o.products.map(p=>`${p.qty||1}× ${(p.name||'').slice(0,35)}`).join(', ');
       const profitColor = o.profit>=0?'var(--success)':'var(--danger)';
+      const gross = o.gross||o.total||0;
+      const tax = o.tax||0;
+      const net = o.net||(gross-tax);
+      const prodCost = o.productCost||0;
+      const shipCost = o.shippingCost||0;
+      const profit = o.profit||0;
+      const calcHtml = `<span style="font-size:9px;color:#999;display:block;margin-top:2px">${gross.toFixed(2)} - ${tax.toFixed(2)} tax - ${prodCost.toFixed(2)} cost - ${shipCost.toFixed(2)} ship</span>`;
       return `<tr>
         <td><strong>#${o.number}</strong><br><span style="font-size:10px;color:var(--text-muted)">${o.date}</span></td>
-        <td>${o.customer}<br><span style="font-size:10px;color:var(--text-muted)">${o.email}</span></td>
+        <td>${o.customer||'—'}<br><span style="font-size:10px;color:var(--text-muted)">${o.city||''} ${o.country||''}</span></td>
         <td><span class="country-tag">${o.country}</span></td>
         <td><div class="order-products" title="${prods}">${prods}</div></td>
-        <td>${o.qty}</td>
-        <td>€${o.total.toFixed(2)}</td>
-        <td>€${o.productCost.toFixed(2)}</td>
-        <td style="color:${profitColor};font-weight:700">${o.profit>=0?'+':''}€${o.profit.toFixed(2)}</td>
+        <td style="text-align:right">€${gross.toFixed(2)}</td>
+        <td style="text-align:right;color:${profitColor};font-weight:700">${profit>=0?'+':''}€${profit.toFixed(2)}${calcHtml}</td>
       </tr>`;
     }).join('');
     
     body.innerHTML = `<table>
-      <thead><tr><th>Order</th><th>Customer</th><th>Country</th><th>Products</th><th>Qty</th><th>Revenue</th><th>Cost</th><th>Profit</th></tr></thead>
+      <thead><tr><th>Order</th><th>Customer</th><th>Country</th><th>Products</th><th style="text-align:right">Gross</th><th style="text-align:right">Profit</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
     
@@ -3840,7 +3845,7 @@ function makeFlatRow(item, level) {
     <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}</td>
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
-    <td>${wcCount||0}</td>
+    <td>${wcCount||0}${wcCount>0?`<button onclick="event.stopPropagation();openOrdersModal('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">📦</button>`:''}</td>
     <td class="${plCls}">${plHtml}</td>
     <td class="${ppoCls}">${ppoHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
