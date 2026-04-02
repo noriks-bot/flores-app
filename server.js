@@ -366,6 +366,24 @@ db.exec(`
   );
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS passive_attributions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    wc_order_id INTEGER NOT NULL,
+    country TEXT DEFAULT '',
+    campaign_id TEXT DEFAULT '',
+    adset_id TEXT DEFAULT '',
+    ad_id TEXT DEFAULT '',
+    source TEXT DEFAULT '',
+    order_date TEXT DEFAULT '',
+    UNIQUE(wc_order_id, campaign_id, source)
+  );
+  CREATE INDEX IF NOT EXISTS idx_pa_campaign ON passive_attributions(campaign_id);
+  CREATE INDEX IF NOT EXISTS idx_pa_adset ON passive_attributions(adset_id);
+  CREATE INDEX IF NOT EXISTS idx_pa_ad ON passive_attributions(ad_id);
+  CREATE INDEX IF NOT EXISTS idx_pa_date ON passive_attributions(order_date);
+`);
+
 // Seed Noriks as org_id=1 if not exists
 try {
   const orgCount = db.prepare('SELECT COUNT(*) as cnt FROM organizations').get();
@@ -776,6 +794,33 @@ async function syncCountry(country) {
         billing_email: order.billing?.email || '',
         order_datetime: (order.date_created || '').replace('T', ' ').slice(0, 16)
       });
+
+      // Extract passive attributions from PixelYourSite
+      const pysData = meta.find(m => m.key === 'pys_enrich_data')?.value;
+      if (pysData && typeof pysData === 'object') {
+        const primaryCampaign = campaignId;
+        const parsePysUtm = (utmStr) => {
+          if (!utmStr) return {};
+          const result = {};
+          utmStr.split('|').forEach(part => {
+            const [k, v] = part.split(':');
+            if (k && v) result[k.trim()] = v.trim();
+          });
+          return result;
+        };
+        const pysFirst = parsePysUtm(pysData.pys_utm);
+        const pysLast = parsePysUtm(pysData.last_pys_utm);
+        const upsertPA = db.prepare('INSERT OR IGNORE INTO passive_attributions (wc_order_id, country, campaign_id, adset_id, ad_id, source, order_date) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        // First click passive
+        if (pysFirst.utm_campaign && pysFirst.utm_campaign !== primaryCampaign) {
+          upsertPA.run(order.id, country, pysFirst.utm_campaign, pysFirst.utm_term || '', pysFirst.utm_content || '', 'pys_first', orderDate);
+        }
+        // Last click passive
+        if (pysLast.utm_campaign && pysLast.utm_campaign !== primaryCampaign && pysLast.utm_campaign !== pysFirst.utm_campaign) {
+          upsertPA.run(order.id, country, pysLast.utm_campaign, pysLast.utm_term || '', pysLast.utm_content || '', 'pys_last', orderDate);
+        }
+      }
+
       count++;
     }
   });
@@ -2276,6 +2321,39 @@ const server = http.createServer(async (req, res) => {
         }
         setCache(childCacheKey, result);
         return sendJSON(res, result);
+      }
+      if (urlPath === '/api/fpa') {
+        // Flores Passive Attribution counts per campaign/adset/ad
+        const rows = db.prepare(`
+          SELECT campaign_id, adset_id, ad_id, COUNT(DISTINCT wc_order_id) as fpa_count
+          FROM passive_attributions
+          WHERE order_date >= ? AND order_date <= ?
+          GROUP BY campaign_id
+        `).all(dateFrom, dateTo);
+        const result = {};
+        rows.forEach(r => {
+          if (r.campaign_id) result[r.campaign_id] = (result[r.campaign_id] || 0) + r.fpa_count;
+        });
+        // Also by adset and ad
+        const adsetRows = db.prepare(`SELECT adset_id, COUNT(DISTINCT wc_order_id) as cnt FROM passive_attributions WHERE order_date >= ? AND order_date <= ? AND adset_id != '' GROUP BY adset_id`).all(dateFrom, dateTo);
+        adsetRows.forEach(r => { result[r.adset_id] = (result[r.adset_id] || 0) + r.cnt; });
+        const adRows = db.prepare(`SELECT ad_id, COUNT(DISTINCT wc_order_id) as cnt FROM passive_attributions WHERE order_date >= ? AND order_date <= ? AND ad_id != '' GROUP BY ad_id`).all(dateFrom, dateTo);
+        adRows.forEach(r => { result[r.ad_id] = (result[r.ad_id] || 0) + r.cnt; });
+        return sendJSON(res, result);
+      }
+      if (urlPath === '/api/fpa-orders') {
+        // Get passive attribution orders for a specific entity
+        const entityId = query.entity_id;
+        if (!entityId) return sendJSON(res, {error:'entity_id required'}, 400);
+        const rows = db.prepare(`
+          SELECT pa.wc_order_id, pa.source, pa.campaign_id, pa.adset_id, pa.ad_id, pa.order_date, pa.country,
+                 wo.billing_name, wo.gross_eur, wo.profit, wo.utm_campaign as primary_campaign
+          FROM passive_attributions pa
+          LEFT JOIN wc_orders wo ON wo.wc_order_id = pa.wc_order_id
+          WHERE (pa.campaign_id = ? OR pa.adset_id = ? OR pa.ad_id = ?) AND pa.order_date >= ? AND pa.order_date <= ?
+          ORDER BY pa.order_date DESC
+        `).all(entityId, entityId, entityId, dateFrom, dateTo);
+        return sendJSON(res, rows);
       }
       if (urlPath === '/api/insights') {
         const level = query.level || 'campaign';

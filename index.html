@@ -1347,7 +1347,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <th data-sort="budget">Budget</th>
               <th data-sort="bid_strategy">Bid strategy</th>
               <th class="sep" data-sort="spend">Spend</th>
-              <th data-sort="wc_orders" style="max-width:60px;width:60px">Flores purchases</th>
+              <th data-sort="wc_orders" style="max-width:60px;width:60px">Flores purchases</th><th style="max-width:40px;width:40px">FPA</th>
               <th data-sort="wc_profit">Profit/loss</th>
               <th data-sort="wc_ppo">Profit per order</th>
               <th data-sort="wc_revenue">Flores revenue</th>
@@ -2824,6 +2824,7 @@ let allAdsets = [];
 let allAds = [];
 let activeTab = 'campaigns'; // 'campaigns' | 'adsets' | 'ads'
 let todayBudgetChanges = {}; // entityId -> {old, new, time}
+let fpaData = {}; // entityId -> count
 
 function fmtDate(d) { return d.toISOString().slice(0,10); }
 function addDays(d,n) { const r=new Date(d); r.setDate(r.getDate()+n); return r; }
@@ -2930,8 +2931,9 @@ async function loadData() {
     document.getElementById('tab-count-adsets').textContent='—';
     document.getElementById('tab-count-ads').textContent='—';
     if(sortKey) sortCampaigns();
-    // Fetch today's budget changes in parallel
+    // Fetch today's budget changes + FPA in parallel
     loadTodayBudgetChanges().then(() => { if(activeTab==='campaigns') renderTable(); });
+    fetch(`/api/fpa?date_from=${from}&date_to=${to}`).then(r=>r.json()).then(d=>{if(!d.error){fpaData=d;if(activeTab==='campaigns')renderTable();}}).catch(()=>{});
     if(activeTab==='campaigns') {
       renderCampaignHeaders();
       updateSummary(); updateSortHeaders(); renderTable();
@@ -3345,6 +3347,7 @@ function makeRow(item,level,bgClass) {
     <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}</td>
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
+    <td style="font-size:11px;color:#8b5cf6">${fpaData[item.id]||0}</td>
     <td style="white-space:nowrap;vertical-align:middle">${wcCount>0?`<button onclick="event.stopPropagation();showCampaignOrders('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-right:5px;border-radius:4px;vertical-align:middle;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:22px;height:18px"><i class="fas fa-list-ul" style="font-size:9px"></i></button>`:''}<strong style="font-size:13px;vertical-align:middle">${wcCount||0}</strong></td>
     <td class="${plCls}">${plHtml}</td>
     <td class="${ppoCls}">${ppoHtml}</td>
@@ -3749,7 +3752,7 @@ function renderCampaignHeaders() {
     <th data-sort="budget">Budget</th>
     <th data-sort="bid_strategy">Bid strategy</th>
     <th class="sep" data-sort="spend">Spend</th>
-    <th data-sort="wc_orders" style="max-width:60px;width:60px">Flores purchases</th>
+    <th data-sort="wc_orders" style="max-width:60px;width:60px">Flores purchases</th><th style="max-width:40px;width:40px">FPA</th>
     <th data-sort="wc_profit">Profit/loss</th>
     <th data-sort="wc_ppo">Profit per order</th>
     <th data-sort="wc_revenue">Flores revenue</th>
@@ -3773,7 +3776,7 @@ const FLAT_HEADERS = `
     <th data-sort="budget">Budget</th>
     <th data-sort="bid_strategy">Bid strategy</th>
     <th class="sep" data-sort="spend">Spend</th>
-    <th data-sort="wc_orders" style="max-width:60px;width:60px">Flores purchases</th>
+    <th data-sort="wc_orders" style="max-width:60px;width:60px">Flores purchases</th><th style="max-width:40px;width:40px">FPA</th>
     <th data-sort="wc_profit">Profit/loss</th>
     <th data-sort="wc_ppo">Profit per order</th>
     <th data-sort="wc_revenue">Flores revenue</th>
@@ -3863,6 +3866,7 @@ function makeFlatRow(item, level) {
     <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(item.campaign_name||'').replace(/"/g,'&quot;')}">${campTagsHtml}${campLabel}</td>
     <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}</td>
     <td style="font-size:10px">${bidLabel}</td>
+    <td style="font-size:11px;color:#8b5cf6">${fpaData[item.id]||0}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td style="white-space:nowrap;vertical-align:middle">${wcCount>0?`<button onclick="event.stopPropagation();showCampaignOrders('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-right:5px;border-radius:4px;vertical-align:middle;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:22px;height:18px"><i class="fas fa-list-ul" style="font-size:9px"></i></button>`:''}<strong style="font-size:13px;vertical-align:middle">${wcCount||0}</strong></td>
     <td class="${plCls}">${plHtml}</td>
