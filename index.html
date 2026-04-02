@@ -2961,7 +2961,10 @@ function nameHtml(name,level) {
 function getCountryTags(name) {
   const t=parseCampTags(name);
   const flags={HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
-  return t.countries.map(c=>`<span style="display:block;white-space:nowrap;font-size:12px">${flags[c]||''} ${c}</span>`).join('');
+  const items=t.countries.map(c=>`<span style="white-space:nowrap;font-size:11px">${flags[c]||''}<span style="font-size:9px;margin-left:1px">${c}</span></span>`);
+  if(items.length<=2) return items.join(' ');
+  const half=Math.ceil(items.length/2);
+  return '<div style="display:flex;gap:6px;line-height:1.4"><div>'+items.slice(0,half).join('<br>')+'</div><div>'+items.slice(half).join('<br>')+'</div></div>';
 }
 function getProductTag(name) {
   const n=(name||'').toUpperCase();
