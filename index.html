@@ -7222,11 +7222,17 @@ async function openTrendChart(id, name, level) {
       if (daySpend <= 0 && dayPurch <= 0) continue;
       var dayCpa = dayPurch > 0 ? (daySpend / dayPurch).toFixed(2) : '—';
       var rowBg = dayPurch > 0 ? '' : 'opacity:0.4;';
-      var dayProfit = dayPurch > 0 ? daySpend * -1 : -daySpend; // rough: negative spend if no purchases
-      var pillBg = dayPurch > 0 ? '#dcfce7' : daySpend > 0 ? '#fef2f2' : '#f5f5f5';
-      var pillColor = dayPurch > 0 ? '#16a34a' : daySpend > 0 ? '#ef4444' : '#999';
-      var pillText = dayPurch > 0 ? dayPurch + ' orders · ' + dayCpa + ' € CPA' : daySpend > 0 ? '0 orders · -' + daySpend.toFixed(0) + ' €' : 'no activity';
-      tableHtml += '<tr style="border-bottom:1px solid #f0f0f0;' + rowBg + '"><td style="padding:4px 6px">' + days[di] + '</td><td style="text-align:right;padding:4px 6px">' + daySpend.toFixed(2) + ' €</td><td style="padding:4px 6px"><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:' + pillBg + ';color:' + pillColor + '">' + pillText + '</span></td></tr>';
+      var dayLoss = -daySpend;
+      var profitNum = dayPurch > 0 ? dayCpa : dayLoss.toFixed(2);
+      var profitColor = dayPurch > 0 ? '#4caf50' : daySpend > 0 ? '#ef5350' : '#999';
+      var profitBg = dayPurch > 0 ? 'background:#4caf50;color:#fff' : daySpend > 0 ? 'background:#ef5350;color:#fff' : 'background:#e5e7eb;color:#666';
+      var profitLabel = dayPurch > 0 ? dayCpa + ' €' : daySpend > 0 ? dayLoss.toFixed(2) + ' €' : '—';
+      var pillText = dayPurch + ' orders' + (dayPurch > 0 ? ' · ' + dayCpa + '€ CPA' : '');
+      tableHtml += '<tr style="border-bottom:1px solid #f0f0f0;' + rowBg + '">' +
+        '<td style="padding:4px 8px;font-weight:500">' + days[di] + '</td>' +
+        '<td style="text-align:right;padding:4px 8px">' + daySpend.toFixed(2) + ' €</td>' +
+        '<td style="padding:4px 8px"><div><span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600;' + profitBg + '">' + profitLabel + '</span></div><div style="font-size:9px;color:#999;margin-top:1px">' + pillText + '</div></td>' +
+        '</tr>';
     }
     tableHtml += '</tbody></table></div>';
     document.getElementById('trendChart').insertAdjacentHTML('afterend', tableHtml);
