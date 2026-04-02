@@ -2171,6 +2171,45 @@ const server = http.createServer(async (req, res) => {
         const data = await getMultiPeriodProfit();
         return sendJSON(res, data);
       }
+      if (urlPath === '/api/multi-profit-children') {
+        const campaignId = query.campaign_id;
+        if (!campaignId) return sendJSON(res, {error:'campaign_id required'}, 400);
+        const today = new Date();
+        const fmt = d => d.toISOString().slice(0,10);
+        const addD = (d,n) => { const r=new Date(d); r.setDate(r.getDate()+n); return r; };
+        const periods = {
+          yesterday: { from: fmt(addD(today,-1)), to: fmt(addD(today,-1)) },
+          d3: { from: fmt(addD(today,-3)), to: fmt(addD(today,-1)) },
+          d7: { from: fmt(addD(today,-7)), to: fmt(addD(today,-1)) },
+          d14: { from: fmt(addD(today,-14)), to: fmt(addD(today,-1)) },
+          d30: { from: fmt(addD(today,-30)), to: fmt(addD(today,-1)) },
+          lifetime: { from: '2025-01-01', to: fmt(today) }
+        };
+        const result = {};
+        for (const [period, range] of Object.entries(periods)) {
+          try {
+            const adsets = await getAdsets(campaignId, range.from, range.to);
+            const camp = campaigns_cache_latest?.find(c => c.id === campaignId);
+            if (camp?.wc) enrichCampaignsWithProfit([{id:campaignId,insights:{spend:'0'}}], range.from, range.to);
+            // Enrich adsets with WC profit for this period
+            const enriched = adsets.map(as => ({id:as.id, spend:parseFloat(as.insights?.spend||0)}));
+            // Get WC orders for this campaign in this period
+            const wcOrders = db.prepare("SELECT adset_id, COUNT(*) as orders, SUM(gross_eur) as revenue, SUM(profit) as profit FROM wc_orders WHERE utm_campaign = ? AND order_date >= ? AND order_date <= ? GROUP BY adset_id").all(campaignId, range.from, range.to);
+            const wcMap = {};
+            wcOrders.forEach(r => { if(r.adset_id) wcMap[r.adset_id] = {orders:r.orders, revenue:r.revenue, profit:r.profit}; });
+            for (const as of enriched) {
+              if (!result[as.id]) result[as.id] = {};
+              const wc = wcMap[as.id];
+              result[as.id][period] = {
+                spend: as.spend,
+                profit: wc ? wc.profit : (as.spend > 0 ? -as.spend : 0),
+                orders: wc ? wc.orders : 0
+              };
+            }
+          } catch(e) { console.warn('[multiProfitChildren]', period, e.message); }
+        }
+        return sendJSON(res, result);
+      }
       if (urlPath === '/api/insights') {
         const level = query.level || 'campaign';
         const data = await getInsights(level, dateFrom, dateTo, query.breakdown);

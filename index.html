@@ -3225,10 +3225,16 @@ function profitCell(p) {
   const cpaTag=`<span style="display:block;font-size:9px;color:#666">${cpa} CPA</span>`;
   return `<td style="line-height:1.2">${pill}${ordTag}${cpaTag}</td>`;
 }
+let multiProfitChildren = {}; // adsetId/adId -> {yesterday, d3, ...}
 function profitPeriodCells(item,level) {
-  if(level!=='campaign') return '<td></td><td></td><td></td><td></td><td></td><td></td>';
-  const mp=multiProfitData[item.id];
-  if(!mp) return '<td><span class="muted">—</span></td>'.repeat(6);
+  if(level==='campaign') {
+    const mp=multiProfitData[item.id];
+    if(!mp) return '<td><span class="muted">—</span></td>'.repeat(6);
+    return `${profitCell(mp.yesterday)}${profitCell(mp.d3)}${profitCell(mp.d7)}${profitCell(mp.d14)}${profitCell(mp.d30)}${profitCell(mp.lifetime)}`;
+  }
+  // Adset/ad level
+  const mp=multiProfitChildren[item.id];
+  if(!mp) return '<td><span class="muted" style="font-size:9px">...</span></td>'.repeat(6);
   return `${profitCell(mp.yesterday)}${profitCell(mp.d3)}${profitCell(mp.d7)}${profitCell(mp.d14)}${profitCell(mp.d30)}${profitCell(mp.lifetime)}`;
 }
 
@@ -3461,7 +3467,9 @@ async function toggle(level,id) {
     expandedCampaigns[id]=true;
     renderTable(); // show loading state
     if(!adsetCache[id]){
-      try{const res=await fetch(`/api/adsets?campaign_id=${id}&date_from=${from}&date_to=${to}`);adsetCache[id]=await res.json();if(adsetCache[id].error){console.error('Adset API error:',adsetCache[id].error);adsetCache[id]=[];}const c=campaigns.find(c=>c.id===id);if(c?.wc) distributeWC(c.wc,adsetCache[id]);}
+      try{const res=await fetch(`/api/adsets?campaign_id=${id}&date_from=${from}&date_to=${to}`);adsetCache[id]=await res.json();if(adsetCache[id].error){console.error('Adset API error:',adsetCache[id].error);adsetCache[id]=[];}const c=campaigns.find(c=>c.id===id);if(c?.wc) distributeWC(c.wc,adsetCache[id]);
+        // Load multi-profit for adsets in background
+        fetch('/api/multi-profit-children?campaign_id='+id).then(r=>r.json()).then(d=>{if(!d.error){Object.assign(multiProfitChildren,d);renderTable();}}).catch(()=>{});}
       catch(e){console.error('Adset fetch error:',e);adsetCache[id]=[];}
     }
   } else {
