@@ -1316,7 +1316,7 @@ async function getMultiPeriodProfit() {
     d7: { from: fmt(addD(today,-7)), to: fmt(addD(today,-1)) },
     d14: { from: fmt(addD(today,-14)), to: fmt(addD(today,-1)) },
     d30: { from: fmt(addD(today,-30)), to: fmt(addD(today,-1)) },
-    lifetime: { from: '2025-01-01', to: fmt(today) }
+    lifetime: { from: '2025-01-01', to: fmt(addD(today,-1)) }
   };
 
   const result = {};
@@ -2196,7 +2196,7 @@ const server = http.createServer(async (req, res) => {
           d7: { from: fmt(addD(today,-7)), to: fmt(addD(today,-1)) },
           d14: { from: fmt(addD(today,-14)), to: fmt(addD(today,-1)) },
           d30: { from: fmt(addD(today,-30)), to: fmt(addD(today,-1)) },
-          lifetime: { from: '2025-01-01', to: fmt(today) }
+          lifetime: { from: '2025-01-01', to: fmt(addD(today,-1)) }
         };
         const result = {};
         // Get all adset+ad IDs from WC orders for this campaign
