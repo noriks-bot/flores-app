@@ -7215,27 +7215,18 @@ async function openTrendChart(id, name, level) {
       }
     });
     // Daily breakdown table under chart
-    var tableHtml = '<div style="max-height:200px;overflow-y:auto;margin-top:12px;border-top:1px solid #e5e7eb;padding-top:8px"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="position:sticky;top:0;background:#f5f5f5"><th style="text-align:left;padding:4px 6px;font-weight:600;color:#666">Date</th><th style="text-align:right;padding:4px 6px;font-weight:600;color:#666">Spend</th><th style="text-align:left;padding:4px 6px;font-weight:600;color:#666">Result</th></tr></thead><tbody>';
-    for (var di = days.length - 1; di >= 0; di--) {
+    var pillsHtml = '<div style="margin-top:12px;border-top:1px solid #e5e7eb;padding-top:8px;display:flex;gap:3px;overflow-x:auto;padding-bottom:4px">';
+    for (var di = 0; di < days.length; di++) {
       var daySpend = spends[di] || 0;
       var dayPurch = purchases[di] || 0;
       if (daySpend <= 0 && dayPurch <= 0) continue;
-      var dayCpa = dayPurch > 0 ? (daySpend / dayPurch).toFixed(2) : '—';
-      var rowBg = dayPurch > 0 ? '' : 'opacity:0.4;';
-      var dayLoss = -daySpend;
-      var profitNum = dayPurch > 0 ? dayCpa : dayLoss.toFixed(2);
-      var profitColor = dayPurch > 0 ? '#4caf50' : daySpend > 0 ? '#ef5350' : '#999';
-      var profitBg = dayPurch > 0 ? 'background:#4caf50;color:#fff' : daySpend > 0 ? 'background:#ef5350;color:#fff' : 'background:#e5e7eb;color:#666';
-      var profitLabel = dayPurch > 0 ? dayCpa + ' €' : daySpend > 0 ? dayLoss.toFixed(2) + ' €' : '—';
-      var pillText = dayPurch + ' orders' + (dayPurch > 0 ? ' · ' + dayCpa + '€ CPA' : '');
-      tableHtml += '<tr style="border-bottom:1px solid #f0f0f0;' + rowBg + '">' +
-        '<td style="padding:4px 8px;font-weight:500">' + days[di] + '</td>' +
-        '<td style="text-align:right;padding:4px 8px">' + daySpend.toFixed(2) + ' €</td>' +
-        '<td style="padding:4px 8px"><div><span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600;' + profitBg + '">' + profitLabel + '</span></div><div style="font-size:9px;color:#999;margin-top:1px">' + pillText + '</div></td>' +
-        '</tr>';
+      var dayCpa = dayPurch > 0 ? (daySpend / dayPurch).toFixed(0) : '';
+      var bg = dayPurch > 0 ? 'background:#4caf50;color:#fff' : 'background:#ef5350;color:#fff';
+      var label = dayPurch > 0 ? dayPurch + '×' + dayCpa + '€' : '-' + daySpend.toFixed(0) + '€';
+      pillsHtml += '<div style="flex-shrink:0;text-align:center"><div style="display:inline-block;padding:2px 5px;border-radius:4px;font-size:9px;font-weight:700;' + bg + ';white-space:nowrap">' + label + '</div><div style="font-size:8px;color:#999;margin-top:1px">' + days[di] + '</div></div>';
     }
-    tableHtml += '</tbody></table></div>';
-    document.getElementById('trendChart').insertAdjacentHTML('afterend', tableHtml);
+    pillsHtml += '</div>';
+    document.getElementById('trendChart').insertAdjacentHTML('afterend', pillsHtml);
 
   } catch(e) {
     document.getElementById('trendLoading').innerHTML = '<span style="color:#ef4444">Error: ' + e.message + '</span>';
