@@ -1243,7 +1243,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           <!-- Top Campaigns -->
           <div class="table-card">
             <div class="table-header"><span class="table-title">🏆 Top Campaigns (Today)</span></div>
-            <div style="padding:0;overflow-x:auto"><table class="dash-mini-table" id="dashTopCampaigns" style="min-width:600px;width:100%"><thead><tr><th style="text-align:left;padding:8px 12px">Campaign</th><th>Spend</th><th>Orders</th><th>Revenue</th><th>Profit</th><th>CPA</th></tr></thead><tbody></tbody></table></div>
+            <div style="padding:0;overflow-x:auto"><table class="dash-mini-table" id="dashTopCampaigns" style="min-width:600px;width:100%"><thead><tr><th style="text-align:left;padding:8px 12px">Campaign</th><th style="text-align:right">Spend</th><th style="text-align:right">Orders</th><th style="text-align:right">Revenue</th><th style="text-align:right">Profit</th><th style="text-align:right">CPA</th></tr></thead><tbody></tbody></table></div>
           </div>
           <!-- Top Creatives -->
           <div class="table-card">
@@ -6459,20 +6459,20 @@ function renderDashboard(data) {
   const tcBody = document.getElementById("dashTopCampaigns")?.querySelector("tbody");
   tcBody.innerHTML = (data.topCampaigns || []).map(c => {
     const campName = c.displayName || c.name || '—';
-    const spend = c.spend != null ? '€' + c.spend.toFixed(0) : '—';
+    const spend = c.spend != null ? '€' + c.spend.toFixed(0) : '€0';
     const orders = c.orders || 0;
-    const revenue = c.revenue != null ? '€' + c.revenue.toFixed(0) : '—';
-    const profitVal = c.profit != null ? c.profit : null;
-    const profitColor = profitVal != null && profitVal > 0 ? '#10b981' : profitVal != null && profitVal < 0 ? '#ef4444' : 'inherit';
-    const profitStr = profitVal != null ? '€' + profitVal.toFixed(0) : '—';
-    const cpa = c.cpa != null && c.cpa > 0 ? '€' + c.cpa.toFixed(2) : '—';
+    const revenue = c.revenue != null ? '€' + c.revenue.toFixed(0) : '€0';
+    const profitVal = c.profit != null ? c.profit : 0;
+    const profitColor = profitVal > 0 ? '#10b981' : profitVal < 0 ? '#ef4444' : '#666';
+    const profitStr = '€' + profitVal.toFixed(0);
+    const cpa = orders > 0 ? '€' + (c.spend / orders).toFixed(2) : '—';
     return `<tr>
-      <td style="text-align:left;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${campName.replace(/"/g,'&quot;')}">${campName}</td>
-      <td>${spend}</td>
-      <td>${orders}</td>
-      <td>${revenue}</td>
-      <td style="color:${profitColor};font-weight:600">${profitStr}</td>
-      <td>${cpa}</td>
+      <td style="text-align:left;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px" title="${campName.replace(/"/g,'&quot;')}">${campName}</td>
+      <td style="text-align:right">${spend}</td>
+      <td style="text-align:right">${orders}</td>
+      <td style="text-align:right">${revenue}</td>
+      <td style="text-align:right;color:${profitColor};font-weight:600">${profitStr}</td>
+      <td style="text-align:right">${cpa}</td>
     </tr>`;
   }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
   
