@@ -5313,10 +5313,10 @@ function optGetCountryFlags(name) {
     items.push('<span style="font-size:11px;white-space:nowrap;' + (!isActive ? 'filter:grayscale(1);opacity:0.4' : '') + '">' + flag + '<span style="font-size:9px;vertical-align:middle;margin-left:1px">' + cc + '</span></span>');
   });
   if (items.length <= 2) return items.join(' ');
-  var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 4px;line-height:1.3">';
-  items.forEach(function(it) { html += it; });
-  html += '</div>';
-  return html;
+  var half = Math.ceil(items.length / 2);
+  var col1 = items.slice(0, half).join('<br>');
+  var col2 = items.slice(half).join('<br>');
+  return '<div style="display:flex;gap:6px;line-height:1.4"><div>' + col1 + '</div><div>' + col2 + '</div></div>';
 }
 function optActionBtn(status) {
   if (status === 'ACTIVE') return '<button class="opt-action-btn" title="Pause (coming soon)" onclick="event.stopPropagation()">⏸</button>';
