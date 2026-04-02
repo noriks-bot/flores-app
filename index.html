@@ -1156,9 +1156,6 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <a class="nav-item" data-section="settings" onclick="navigateTo('settings')">
         <i class="fas fa-cog"></i><span class="nav-item-text">Settings</span>
       </a>
-      <a class="nav-item" data-section="org-setup" onclick="navigateTo('org-setup')">
-        <i class="fas fa-building"></i><span class="nav-item-text">Org Setup</span>
-      </a>
       <a class="nav-item" data-section="organizations" onclick="navigateTo('organizations')">
         <i class="fas fa-sitemap"></i><span class="nav-item-text">Organizations</span>
       </a>
@@ -2472,6 +2469,23 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <div style="font-size:13px;opacity:0.7;margin-top:4px">Application configuration</div>
       </div>
 
+      <!-- Organization Setup (merged) -->
+      <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px;margin-bottom:20px">
+        <div style="font-weight:700;font-size:16px;margin-bottom:16px"><i class="fas fa-building" style="margin-right:8px;color:#10b981"></i>Organization Setup</div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+          <button class="fpill fpill-active" onclick="loadOrgTab('countries',this)">Countries</button>
+          <button class="fpill" onclick="loadOrgTab('wc_stores',this)">WC Stores</button>
+          <button class="fpill" onclick="loadOrgTab('meta_api',this)">Meta API</button>
+          <button class="fpill" onclick="loadOrgTab('product_costs',this)">Product Costs</button>
+          <button class="fpill" onclick="loadOrgTab('rejection_rates',this)">Rejection Rates</button>
+          <button class="fpill" onclick="loadOrgTab('shipping_costs',this)">Shipping Costs</button>
+          <button class="fpill" onclick="loadOrgTab('vat_rates',this)">VAT Rates</button>
+        </div>
+        <div id="orgSetupContent2" style="min-height:100px">
+          <div style="text-align:center;color:var(--text-muted);padding:20px">Select a category above</div>
+        </div>
+      </div>
+
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:20px">
         <!-- Meta API -->
         <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px">
@@ -2657,6 +2671,7 @@ function navigateTo(section) {
   if (section === 'organizations') { loadOrganizations(); }
   if (section === 'saas-dashboard') { loadSaasDashboard(); }
   if (section === 'org-setup') { loadOrgTab('countries', document.querySelector('#section-org-setup .fpill')); }
+  if (section === 'settings') { loadOrgTab('countries', document.querySelector('#section-settings .fpill')); }
   // Auto-load AI hints section init
   if (section === 'ai-hints') {
     initAIHintsIfNeeded();
@@ -6929,9 +6944,12 @@ async function loadOrganizations() {
 
 // Org Setup
 async function loadOrgTab(category, btn) {
-  document.querySelectorAll('#section-org-setup .fpill').forEach(function(b){b.classList.remove('fpill-active')});
+  // Support both org-setup and settings page
+  var parentSection = btn ? btn.closest('.content-section, [id^="section-"]') : null;
+  var scope = parentSection || document.getElementById('section-org-setup');
+  scope.querySelectorAll('.fpill').forEach(function(b){b.classList.remove('fpill-active')});
   if (btn) btn.classList.add('fpill-active');
-  var container = document.getElementById('orgSetupContent');
+  var container = scope.querySelector('#orgSetupContent2') || scope.querySelector('#orgSetupContent') || document.getElementById('orgSetupContent');
   container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted)"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
   try {
     var res = await fetch('/api/org-settings/' + category, {credentials:'same-origin'});
@@ -7000,7 +7018,7 @@ async function addOrgSetting(category) {
   try {
     var res = await fetch('/api/org-settings/' + category, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body), credentials: 'same-origin' });
     var d = await res.json();
-    if (d.ok) { document.getElementById('orgNewKey').value = ''; document.getElementById('orgNewVal').value = ''; loadOrgTab(category, document.querySelector('#section-org-setup .fpill-active')); }
+    if (d.ok) { document.getElementById('orgNewKey').value = ''; document.getElementById('orgNewVal').value = ''; loadOrgTab(category, document.querySelector('.fpill-active')); }
   } catch(e) { alert('Error: ' + e.message); }
 }
 // Auto-load organizations when navigating there
