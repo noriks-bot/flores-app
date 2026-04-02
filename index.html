@@ -6951,17 +6951,27 @@ async function loadOrgTab(category, btn) {
       });
       html += '</div>';
     } else {
-      // Table view for key-value data
-      html += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
-      html += '<thead><tr><th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--border-color);font-weight:700;color:var(--text-muted);font-size:11px;text-transform:uppercase">Key</th><th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--border-color);font-weight:700;color:var(--text-muted);font-size:11px;text-transform:uppercase">Value</th></tr></thead><tbody>';
+      // Editable table view for key-value data
+      html += '<table style="width:100%;border-collapse:collapse;font-size:13px" id="orgSettingsTable">';
+      html += '<thead><tr><th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--border-color);font-weight:700;color:var(--text-muted);font-size:11px;text-transform:uppercase;width:120px">Key</th><th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--border-color);font-weight:700;color:var(--text-muted);font-size:11px;text-transform:uppercase">Value</th><th style="width:60px"></th></tr></thead><tbody>';
       Object.keys(data).forEach(function(k) {
         var v = data[k];
         if (typeof v === 'object') v = JSON.stringify(v);
-        var masked = (k.toLowerCase().includes('token') || k.toLowerCase().includes('secret') || k.toLowerCase().includes('key')) && v.length > 20;
-        var displayVal = masked ? v.slice(0,8) + '\u2022\u2022\u2022\u2022' + v.slice(-4) : v;
-        html += '<tr style="border-bottom:1px solid var(--border-color)"><td style="padding:10px 12px;font-weight:600">'+k+'</td><td style="padding:10px 12px;font-family:monospace;font-size:12px;color:var(--text-muted)">'+displayVal+'</td></tr>';
+        var isSensitive = (k.toLowerCase().includes('token') || k.toLowerCase().includes('secret')) && v.length > 20;
+        var displayVal = isSensitive ? v.slice(0,8) + '\u2022\u2022\u2022\u2022' + v.slice(-4) : v;
+        html += '<tr style="border-bottom:1px solid var(--border-color)" data-key="'+k+'" data-category="'+category+'">';
+        html += '<td style="padding:10px 12px;font-weight:600">'+k+'</td>';
+        html += '<td style="padding:10px 12px"><input type="text" class="org-setting-input" data-key="'+k+'" value="'+v.replace(/"/g,'&quot;')+'" style="width:100%;padding:6px 10px;border:1px solid var(--border-color);border-radius:6px;font-family:monospace;font-size:11px;color:var(--text-primary);background:var(--card-bg)"></td>';
+        html += '<td style="padding:10px 4px"><button onclick="saveOrgSetting(\''+category+'\',\''+k+'\',this)" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 8px;border-radius:4px">Save</button></td>';
+        html += '</tr>';
       });
       html += '</tbody></table>';
+      // Add new key button
+      html += '<div style="margin-top:12px;display:flex;gap:8px;align-items:center">';
+      html += '<input type="text" id="orgNewKey" placeholder="New key" style="padding:6px 10px;border:1px solid var(--border-color);border-radius:6px;font-size:12px;width:120px;background:var(--card-bg);color:var(--text-primary)">';
+      html += '<input type="text" id="orgNewVal" placeholder="Value" style="padding:6px 10px;border:1px solid var(--border-color);border-radius:6px;font-size:12px;flex:1;font-family:monospace;background:var(--card-bg);color:var(--text-primary)">';
+      html += '<button onclick="addOrgSetting(\''+category+'\')" style="border:none;background:#22c55e;color:#fff;cursor:pointer;font-size:11px;padding:6px 12px;border-radius:6px;font-weight:600">+ Add</button>';
+      html += '</div>';
     }
     container.innerHTML = html;
   } catch(e) {
@@ -6969,6 +6979,30 @@ async function loadOrgTab(category, btn) {
   }
 }
 
+async function saveOrgSetting(category, key, btn) {
+  var input = btn.closest('tr').querySelector('input.org-setting-input');
+  var val = input.value;
+  btn.textContent = '...';
+  btn.disabled = true;
+  try {
+    var body = {}; body[key] = val;
+    var res = await fetch('/api/org-settings/' + category, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body), credentials: 'same-origin' });
+    var d = await res.json();
+    if (d.ok) { btn.textContent = '✓'; btn.style.background = '#22c55e'; setTimeout(function(){ btn.textContent = 'Save'; btn.style.background = '#333'; btn.disabled = false; }, 1500); }
+    else { btn.textContent = '✗'; btn.style.background = '#ef4444'; btn.disabled = false; }
+  } catch(e) { btn.textContent = '✗'; btn.style.background = '#ef4444'; btn.disabled = false; }
+}
+async function addOrgSetting(category) {
+  var key = document.getElementById('orgNewKey').value.trim();
+  var val = document.getElementById('orgNewVal').value.trim();
+  if (!key) return;
+  var body = {}; body[key] = val;
+  try {
+    var res = await fetch('/api/org-settings/' + category, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body), credentials: 'same-origin' });
+    var d = await res.json();
+    if (d.ok) { document.getElementById('orgNewKey').value = ''; document.getElementById('orgNewVal').value = ''; loadOrgTab(category, document.querySelector('#section-org-setup .fpill-active')); }
+  } catch(e) { alert('Error: ' + e.message); }
+}
 // Auto-load organizations when navigating there
 // _origNavigateTo already declared above
 // navigation hook handled via initSaasAdminMode
