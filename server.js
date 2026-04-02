@@ -1187,14 +1187,19 @@ async function getAdsets(campaignId, dateFrom, dateTo) {
     limit: 500
   });
 
-  // Get adset metadata
+  // Get adset metadata — include ALL (active, paused, archived)
   let adsetMeta = {};
   try {
-    const adsets = await metaGetAll(`${campaignId}/adsets`, {
-      fields: 'id,name,status,daily_budget,lifetime_budget',
-      limit: 500
-    });
-    for (const a of adsets) adsetMeta[a.id] = a;
+    for (const statusFilter of ['ACTIVE,PAUSED', 'ARCHIVED']) {
+      try {
+        const adsets = await metaGetAll(`${campaignId}/adsets`, {
+          fields: 'id,name,status,daily_budget,lifetime_budget',
+          filtering: JSON.stringify([{field:'effective_status',operator:'IN',value:statusFilter.split(',')}]),
+          limit: 500
+        });
+        for (const a of adsets) adsetMeta[a.id] = a;
+      } catch(e2) {}
+    }
   } catch(e) {}
 
   // Build from insights first (like campaigns)
@@ -1251,14 +1256,19 @@ async function getAds(adsetId, dateFrom, dateTo) {
     limit: 500
   });
 
-  // Try to get ad metadata
+  // Try to get ad metadata — include ALL (active, paused, archived)
   let adMeta = {};
   try {
-    const ads = await metaGetAll(`${adsetId}/ads`, {
-      fields: 'id,name,status',
-      limit: 500
-    });
-    for (const a of ads) adMeta[a.id] = a;
+    for (const statusFilter of ['ACTIVE,PAUSED', 'ARCHIVED']) {
+      try {
+        const ads = await metaGetAll(`${adsetId}/ads`, {
+          fields: 'id,name,status',
+          filtering: JSON.stringify([{field:'effective_status',operator:'IN',value:statusFilter.split(',')}]),
+          limit: 500
+        });
+        for (const a of ads) adMeta[a.id] = a;
+      } catch(e2) {}
+    }
   } catch(e) {}
 
   // Build from insights
