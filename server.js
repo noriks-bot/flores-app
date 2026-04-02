@@ -1303,7 +1303,7 @@ async function getAds(adsetId, dateFrom, dateTo) {
 // Multi-period profit: returns {campaignId: {yesterday, d3, d7, d14, lifetime}} 
 async function getMultiPeriodProfit() {
   const cacheKey = 'multiprofit_' + new Date().toISOString().slice(0,10);
-  let cached = getCached(cacheKey, 600000);
+  let cached = getCached(cacheKey, 3600000); // 1 hour cache
   if (cached) return cached;
 
   const today = new Date();
@@ -2184,6 +2184,9 @@ const server = http.createServer(async (req, res) => {
       if (urlPath === '/api/multi-profit-children') {
         const campaignId = query.campaign_id;
         if (!campaignId) return sendJSON(res, {error:'campaign_id required'}, 400);
+        const childCacheKey = `mpc_${campaignId}_${new Date().toISOString().slice(0,10)}`;
+        const childCached = getCached(childCacheKey, 3600000); // 1 hour cache
+        if (childCached) return sendJSON(res, childCached);
         const today = new Date();
         const fmt = d => d.toISOString().slice(0,10);
         const addD = (d,n) => { const r=new Date(d); r.setDate(r.getDate()+n); return r; };
@@ -2263,6 +2266,7 @@ const server = http.createServer(async (req, res) => {
             }
           }
         }
+        setCache(childCacheKey, result);
         return sendJSON(res, result);
       }
       if (urlPath === '/api/insights') {
