@@ -254,7 +254,7 @@ tr.level-campaign.row-expanded td:first-child { box-shadow: none !important; }
 /* Toggle - FloreX style */
 .toggle { position: relative; width: 38px; height: 22px; display: inline-block; }
 .toggle input { display: none; }
-.toggle .slider { position: absolute; inset: 0; background: #ef4444; border-radius: 18px; cursor: default; transition: .2s; }
+.toggle .slider { position: absolute; inset: 0; background: #ef4444; border-radius: 18px; cursor: pointer; transition: .2s; }
 .toggle input:checked + .slider { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.4); }
 .toggle input:checked + .slider:before { left: 18px; }
 .toggle .slider:before {
@@ -2973,6 +2973,42 @@ function logChange(type, entityId, oldVal, newVal, extra) {
   }).catch(()=>{});
 }
 
+async function toggleEntityStatus(level, entityId, checkbox) {
+  const newStatus = checkbox.checked ? 'ACTIVE' : 'PAUSED';
+  const oldStatus = checkbox.checked ? 'PAUSED' : 'ACTIVE';
+  checkbox.disabled = true;
+  const endpoint = level === 'campaign' ? '/api/campaign/status' : level === 'adset' ? '/api/adset/status' : '/api/ad/status';
+  const bodyKey = level === 'campaign' ? 'campaignId' : level === 'adset' ? 'adsetId' : 'adId';
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ [bodyKey]: entityId, status: newStatus })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      // Update local data
+      if (level === 'campaign') { const c = campaigns.find(x=>x.id===entityId); if(c) c.status = newStatus; }
+      else if (level === 'adset') { for(const cid of Object.keys(adsetCache)){const as=adsetCache[cid]?.find(a=>a.id===entityId);if(as){as.status=newStatus;break;}} }
+      else { for(const aid of Object.keys(adCache)){const ad=adCache[aid]?.find(a=>a.id===entityId);if(ad){ad.status=newStatus;break;}} }
+      // Log the change
+      try {
+        let name = '', country = '';
+        if (level === 'campaign') { const c = campaigns.find(x=>x.id===entityId); name = c?.name||''; country = ((name).match(/cc:([A-Z+]+)/i)||[])[1]||''; }
+        logChange('status', entityId, oldStatus, newStatus, {name, country, user:'noriks'});
+      } catch(e) {}
+      showToast(`${level.charAt(0).toUpperCase()+level.slice(1)} ${newStatus === 'ACTIVE' ? 'activated' : 'paused'}!`);
+    } else {
+      checkbox.checked = !checkbox.checked; // revert
+      showToast(d.error || 'Failed to update status', true);
+    }
+  } catch(e) {
+    checkbox.checked = !checkbox.checked; // revert
+    showToast('Error: ' + e.message, true);
+  }
+  checkbox.disabled = false;
+}
+
 function openEditModal(title, currentValue, onSave) {
   const modal = document.getElementById('editModal');
   document.getElementById('editModalTitle').textContent = title;
@@ -3133,7 +3169,7 @@ function makeRow(item,level,bgClass) {
   const purchases=getPurchases(ins);
   const cpp=getCostPerPurchase(ins);
   const isActive=item.status==='ACTIVE';
-  const statusHtml=`<label class="toggle"><input type="checkbox" ${isActive?'checked':''} disabled><span class="slider"></span></label>`;
+  const statusHtml=`<label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" ${isActive?'checked':''} onchange="toggleEntityStatus('${level}','${item.id}',this)"><span class="slider" style="cursor:pointer"></span></label>`;
   const hasChildren=level!=='ad';
   const isExpanded=level==='campaign'?expandedCampaigns[item.id]:expandedAdsets[item.id];
   const selectCb=level==='campaign'?`<input type="checkbox" class="camp-select" onclick="event.stopPropagation();toggleCampaignSelect('${item.id}',this)" ${selectedCampaigns.has(item.id)?'checked':''}>`:'';
@@ -3646,7 +3682,7 @@ function makeFlatRow(item, level) {
   const purchases = getPurchases(ins);
   const cpp = getCostPerPurchase(ins);
   const isActive = item.status === 'ACTIVE';
-  const statusHtml = `<label class="toggle"><input type="checkbox" ${isActive ? 'checked' : ''} disabled><span class="slider"></span></label>`;
+  const statusHtml = `<label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleEntityStatus('${level}','${item.id}',this)"><span class="slider" style="cursor:pointer"></span></label>`;
   const wc = item.wc;
   const rowClass = profitClass(item);
   const wcCount = wc?.orders || 0;
@@ -5399,13 +5435,13 @@ function renderOptimizer() {
 }
 
 function toggleCampaignStatus(campaignId, isActive) {
-  console.log("Toggle campaign", campaignId, isActive);
+  const cb = event.target; toggleEntityStatus('campaign', campaignId, cb);
 }
 function toggleAdsetStatus(adsetId, isActive) {
-  console.log("Toggle adset", adsetId, isActive);
+  const cb = event.target; toggleEntityStatus('adset', adsetId, cb);
 }
 function toggleAdStatus(adId, isActive) {
-  console.log("Toggle ad", adId, isActive);
+  const cb = event.target; toggleEntityStatus('ad', adId, cb);
 }
 
 function toggleOptExpandAll(checked) {

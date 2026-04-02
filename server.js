@@ -2045,6 +2045,40 @@ const server = http.createServer(async (req, res) => {
           return sendJSON(res, { ok: result.success === true || !!result });
         } catch(e) { return sendJSON(res, { error: e.message }, 500); }
       }
+      // Toggle status (campaign, adset, ad)
+      if (urlPath === '/api/campaign/status' && req.method === 'POST') {
+        const body = await new Promise((res,rej)=>{ let d=''; req.on('data',c=>d+=c); req.on('end',()=>res(JSON.parse(d))); req.on('error',rej); });
+        const { campaignId, status } = body;
+        if (!campaignId || !['ACTIVE','PAUSED'].includes(status)) return sendJSON(res, {error:'Missing campaignId or invalid status'}, 400);
+        try {
+          const result = await fbPost(`/${campaignId}`, { status });
+          const files = fs.readdirSync(CACHE_DIR).filter(f => f.startsWith("campaigns_"));
+          files.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
+          return sendJSON(res, { ok: result.success === true || !!result });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+      if (urlPath === '/api/adset/status' && req.method === 'POST') {
+        const body = await new Promise((res,rej)=>{ let d=''; req.on('data',c=>d+=c); req.on('end',()=>res(JSON.parse(d))); req.on('error',rej); });
+        const { adsetId, status } = body;
+        if (!adsetId || !['ACTIVE','PAUSED'].includes(status)) return sendJSON(res, {error:'Missing adsetId or invalid status'}, 400);
+        try {
+          const result = await fbPost(`/${adsetId}`, { status });
+          const files = fs.readdirSync(CACHE_DIR).filter(f => f.startsWith("adsets_") || f.startsWith("campaigns_"));
+          files.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
+          return sendJSON(res, { ok: result.success === true || !!result });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+      if (urlPath === '/api/ad/status' && req.method === 'POST') {
+        const body = await new Promise((res,rej)=>{ let d=''; req.on('data',c=>d+=c); req.on('end',()=>res(JSON.parse(d))); req.on('error',rej); });
+        const { adId, status } = body;
+        if (!adId || !['ACTIVE','PAUSED'].includes(status)) return sendJSON(res, {error:'Missing adId or invalid status'}, 400);
+        try {
+          const result = await fbPost(`/${adId}`, { status });
+          const files = fs.readdirSync(CACHE_DIR).filter(f => f.startsWith("ads_") || f.startsWith("adsets_") || f.startsWith("campaigns_"));
+          files.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
+          return sendJSON(res, { ok: result.success === true || !!result });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
       // Add new log columns if missing
       try { db.exec("ALTER TABLE change_log ADD COLUMN entity_name TEXT DEFAULT ''"); } catch(e) {}
       try { db.exec("ALTER TABLE change_log ADD COLUMN country TEXT DEFAULT ''"); } catch(e) {}
