@@ -2728,6 +2728,7 @@ let multiProfitData = {};
 let allAdsets = [];
 let allAds = [];
 let activeTab = 'campaigns'; // 'campaigns' | 'adsets' | 'ads'
+let todayBudgetChanges = {}; // entityId -> {old, new, time}
 
 function fmtDate(d) { return d.toISOString().slice(0,10); }
 function addDays(d,n) { const r=new Date(d); r.setDate(r.getDate()+n); return r; }
@@ -2834,6 +2835,8 @@ async function loadData() {
     document.getElementById('tab-count-adsets').textContent='—';
     document.getElementById('tab-count-ads').textContent='—';
     if(sortKey) sortCampaigns();
+    // Fetch today's budget changes in parallel
+    loadTodayBudgetChanges().then(() => { if(activeTab==='campaigns') renderTable(); });
     if(activeTab==='campaigns') {
       renderCampaignHeaders();
       updateSummary(); updateSortHeaders(); renderTable();
@@ -2940,6 +2943,26 @@ function getProductTag(name) {
   return '<span class="muted">—</span>';
 }
 
+async function loadTodayBudgetChanges() {
+  try {
+    const res = await fetch('/api/log?limit=500');
+    const rows = await res.json();
+    if (!Array.isArray(rows)) return;
+    const today = new Date().toISOString().slice(0,10);
+    todayBudgetChanges = {};
+    rows.forEach(r => {
+      if (r.change_type !== 'budget') return;
+      const ts = r.timestamp || '';
+      if (!ts.startsWith(today)) return;
+      // Keep only the latest change per entity (rows are DESC)
+      if (!todayBudgetChanges[r.entity_id]) {
+        const timePart = ts.includes('T') ? ts.slice(11,16) : ts.slice(11,16);
+        todayBudgetChanges[r.entity_id] = { old: r.old_value, new: r.new_value, time: timePart };
+      }
+    });
+  } catch(e) { console.error('loadTodayBudgetChanges error', e); }
+}
+
 function logChange(type, entityId, oldVal, newVal, extra) {
   const data = { changeType: type, entityId: entityId, oldValue: oldVal, newValue: newVal };
   if (extra) { data.entityName = extra.name; data.country = extra.country; data.user = extra.user; data.spendAtChange = extra.spend; data.ordersAtChange = extra.orders; data.profitAtChange = extra.profit; }
@@ -2964,6 +2987,8 @@ function openEditModal(title, currentValue, onSave) {
   const newSaveBtn = saveBtn.cloneNode(true);
   saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
   newSaveBtn.id = 'editModalSave';
+  newSaveBtn.disabled = false;
+  newSaveBtn.textContent = 'Save';
   
   newSaveBtn.onclick = () => {
     const val = input.value.trim();
@@ -3029,6 +3054,7 @@ function inlineEditBudget(campId, currentBudget, isLifetime) {
         try{ const _c=campaigns.find(x=>x.id===campId); const _cc=((_c?.name||'').match(/cc:([A-Z+]+)/i)||[])[1]||''; logChange('budget', campId, currentBudget + '€', val + '€', {name:_c?.name||'',country:_cc,user:'noriks',spend:parseFloat(_c?.insights?.spend||0),orders:_c?.wc?.orders||0,profit:_c?.wc?.profit||0}); }catch(e){console.error('logChange error',e);}
         const c = campaigns.find(x=>x.id===campId);
         if(c) { if(isLifetime) c.lifetime_budget=String(budgetCents); else c.daily_budget=String(budgetCents); }
+        todayBudgetChanges[campId] = { old: currentBudget+'€', new: val+'€', time: new Date().toTimeString().slice(0,5) };
         done(true, 'Budget updated!');
       }
       else done(false, d.error || 'Failed');
@@ -3051,6 +3077,7 @@ function inlineEditAdsetBudget(adsetId, currentBudget, isLifetime) {
       if(d.ok) {
         { let _as=null;for(const cid of Object.keys(adsetCache)){_as=adsetCache[cid]?.find(a=>a.id===adsetId);if(_as)break;} logChange('budget', adsetId, currentBudget + '€', val + '€', {name:_as?.name||'',country:'',user:'noriks',spend:parseFloat(_as?.insights?.spend||0),orders:_as?.wc?.orders||0,profit:_as?.wc?.profit||0}); }
         for(const cid of Object.keys(adsetCache)){const as=adsetCache[cid]?.find(a=>a.id===adsetId);if(as){if(isLifetime)as.lifetime_budget=String(budgetCents);else as.daily_budget=String(budgetCents);break;}}
+        todayBudgetChanges[adsetId] = { old: currentBudget+'€', new: val+'€', time: new Date().toTimeString().slice(0,5) };
         done(true, 'Adset budget updated!');
       }
       else done(false, d.error || 'Failed');
@@ -3136,6 +3163,11 @@ function makeRow(item,level,bgClass) {
     if(budgetDailyVal>0) budgetHtml=`<span>${Math.round(budgetDailyVal)} \u20ac</span> <span style="font-size:9px;color:#999">daily</span>`;
     else if(budgetLifetimeVal>0) budgetHtml=`<span>${Math.round(budgetLifetimeVal)} \u20ac</span> <span style="font-size:9px;color:#999">lifetime</span>`;
     else budgetHtml='<span style="font-size:10px;font-weight:600;color:#666">ABO</span>';
+  }
+  // Today's budget change note
+  const bChange = todayBudgetChanges[item.id];
+  if (bChange && (level==='campaign' || level==='adset')) {
+    budgetHtml += `<div style="font-size:9px;color:#999;margin-top:1px;white-space:nowrap">${bChange.old}→${bChange.new} @ ${bChange.time}</div>`;
   }
   // Bid strategy
   const bidMap={'LOWEST_COST_WITHOUT_CAP':'Lowest cost','LOWEST_COST_WITH_BID_CAP':'Bid cap','COST_CAP':'Cost cap','LOWEST_COST_WITH_MIN_ROAS':'Min ROAS'};
@@ -3642,6 +3674,11 @@ function makeFlatRow(item, level) {
     if(budgetDailyVal2>0) budgetHtml=`<span>${Math.round(budgetDailyVal2)} \u20ac</span> <span style="font-size:9px;color:#999">daily</span>`;
     else if(budgetLifetimeVal2>0) budgetHtml=`<span>${Math.round(budgetLifetimeVal2)} \u20ac</span> <span style="font-size:9px;color:#999">lifetime</span>`;
     else budgetHtml='<span style="font-size:10px;font-weight:600;color:#666">ABO</span>';
+  }
+  // Today's budget change note (flat view)
+  const bChange2 = todayBudgetChanges[item.id];
+  if (bChange2 && (level==='campaign' || level==='adset')) {
+    budgetHtml += `<div style="font-size:9px;color:#999;margin-top:1px;white-space:nowrap">${bChange2.old}→${bChange2.new} @ ${bChange2.time}</div>`;
   }
   const bidMap={'LOWEST_COST_WITHOUT_CAP':'Lowest cost','LOWEST_COST_WITH_BID_CAP':'Bid cap','COST_CAP':'Cost cap','LOWEST_COST_WITH_MIN_ROAS':'Min ROAS'};
   const bidLabel=bidMap[item.bid_strategy||'']||'Lowest cost';
