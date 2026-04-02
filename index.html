@@ -2709,21 +2709,23 @@ async function loadChangeLog() {
     if (logDateFilter !== 'all') {
       const now = new Date();
       let cutoffFrom, cutoffTo;
+      const pad = n => String(n).padStart(2,'0');
+      const localDate = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
       if (logDateFilter === 'today') {
-        cutoffFrom = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString().slice(0,10);
+        cutoffFrom = localDate(now);
         cutoffTo = cutoffFrom;
       } else if (logDateFilter === 'yesterday') {
         const y = new Date(now); y.setDate(y.getDate()-1);
-        cutoffFrom = y.toISOString().slice(0,10);
+        cutoffFrom = localDate(y);
         cutoffTo = cutoffFrom;
       } else if (logDateFilter === '7d') {
         const d=new Date(now); d.setDate(d.getDate()-6);
-        cutoffFrom = d.toISOString().slice(0,10);
-        cutoffTo = now.toISOString().slice(0,10);
+        cutoffFrom = localDate(d);
+        cutoffTo = localDate(now);
       } else if (logDateFilter === '30d') {
         const d=new Date(now); d.setDate(d.getDate()-29);
-        cutoffFrom = d.toISOString().slice(0,10);
-        cutoffTo = now.toISOString().slice(0,10);
+        cutoffFrom = localDate(d);
+        cutoffTo = localDate(now);
       } else if (logDateFilter === 'custom') {
         cutoffFrom = logCustomFrom;
         cutoffTo = logCustomTo;
