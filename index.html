@@ -395,37 +395,37 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 }
 @keyframes fadeIn { from { opacity: 0; } }
 .modal-box {
-  background: #fff; border-radius: 20px; width: 90vw; max-width: 900px; max-height: 85vh;
+  background: #fff; border-radius: 4px; width: 90vw; max-width: 800px; max-height: 80vh;
   display: flex; flex-direction: column;
-  box-shadow: 0 25px 80px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.05);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
   animation: popIn .25s cubic-bezier(0.16,1,0.3,1);
 }
 .modal-header {
-  padding: 20px 24px; border-bottom: 1px solid var(--border-color);
+  padding: 12px 16px; border-bottom: 1px solid var(--border-color);
   display: flex; justify-content: space-between; align-items: center;
 }
-.modal-title { font-size: 15px; font-weight: 700; }
-.modal-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-.modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted); padding: 4px 8px; border-radius: 6px; }
+.modal-title { font-size: 13px; font-weight: 700; }
+.modal-sub { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+.modal-close { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text-muted); padding: 2px 6px; border-radius: 4px; }
 .modal-close:hover { background: var(--content-bg); color: var(--text-primary); }
 .modal-body { overflow-y: auto; flex: 1; padding: 0; }
 .modal-body table { width: 100%; border-collapse: collapse; }
 .modal-body th {
-  padding: 10px 16px; font-size: 10px; font-weight: 600; text-transform: uppercase;
+  padding: 4px 8px; font-size: 9px; font-weight: 600; text-transform: uppercase;
   letter-spacing: 0.5px; color: var(--text-muted); background: var(--content-bg);
   text-align: left; position: sticky; top: 0; z-index: 1;
 }
 .modal-body th:nth-child(n+4) { text-align: right; }
-.modal-body td { padding: 10px 16px; font-size: 12px; border-bottom: 1px solid var(--border-color); }
+.modal-body td { padding: 4px 8px; font-size: 11px; border-bottom: 1px solid var(--border-color); line-height: 1.3; }
 .modal-body td:nth-child(n+4) { text-align: right; font-variant-numeric: tabular-nums; }
 .modal-body tr:hover td { background: rgba(59,130,246,0.03); }
 .modal-footer {
-  padding: 14px 24px; border-top: 1px solid var(--border-color);
-  background: var(--content-bg); display: flex; gap: 16px; font-size: 12px; font-weight: 600;
+  padding: 8px 16px; border-top: 1px solid var(--border-color);
+  background: var(--content-bg); display: flex; gap: 12px; font-size: 11px; font-weight: 600; flex-wrap: wrap;
 }
 .modal-footer .stat { display: flex; gap: 4px; }
 .modal-footer .stat-label { color: var(--text-muted); }
-.order-products { font-size: 11px; color: var(--text-secondary); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.order-products { font-size: 10px; color: var(--text-secondary); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Info Popover */
 .info-popover {
@@ -3663,7 +3663,7 @@ async function showCampaignOrders(campaignId) {
     if(orders.error) throw new Error(orders.error);
     
     let totRev=0, totProfit=0, totQty=0;
-    orders.forEach(o=>{totRev+=o.total;totProfit+=o.profit;totQty+=o.qty;});
+    orders.forEach(o=>{totRev+=(o.gross||o.total||0);totProfit+=(o.profit||0);totQty+=(o.qty||0);});
     
     const body = overlay.querySelector('.modal-body');
     if(!orders.length) {
@@ -7226,7 +7226,7 @@ async function openTrendChart(id, name, level) {
 
 </script>
 <div id="editModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:12px;padding:24px;width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+  <div style="background:#fff;border-radius:4px;padding:16px;width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
     <div id="editModalTitle" style="font-size:15px;font-weight:700;margin-bottom:16px"></div>
     <input id="editModalInput" type="text" style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;color:#111" />
     <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
@@ -7238,7 +7238,7 @@ async function openTrendChart(id, name, level) {
 </div>
 <!-- Trend Chart Modal -->
 <div id="trendModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:none;align-items:center;justify-content:center" onclick="if(event.target===this)closeTrendModal()">
-  <div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:800px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+  <div style="background:#fff;border-radius:4px;padding:16px;width:90%;max-width:800px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div>
         <div id="trendTitle" style="font-size:16px;font-weight:700;color:#1E3A5F"></div>
