@@ -3344,7 +3344,7 @@ function makeRow(item,level,bgClass) {
     <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}</td>
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
-    <td>${wcCount||0}${wcCount>0?`<button onclick="event.stopPropagation();openOrdersModal('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">📦</button>`:''}</td>
+    <td>${wcCount||0}${wcCount>0?`<button onclick="event.stopPropagation();showCampaignOrders('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1"><i class="fas fa-list-ul" style="font-size:9px"></i></button>`:''}</td>
     <td class="${plCls}">${plHtml}</td>
     <td class="${ppoCls}">${ppoHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
@@ -3636,6 +3636,10 @@ function closeModal() {
   document.querySelector('.modal-overlay')?.remove();
 }
 
+function openOrdersModal(entityId, entityName) {
+  showCampaignOrders(entityId);
+}
+
 async function showCampaignOrders(campaignId) {
   const camp = campaigns.find(c=>c.id===campaignId);
   const name = camp?.name || campaignId;
@@ -3859,7 +3863,7 @@ function makeFlatRow(item, level) {
     <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}</td>
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
-    <td>${wcCount||0}${wcCount>0?`<button onclick="event.stopPropagation();openOrdersModal('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">📦</button>`:''}</td>
+    <td>${wcCount||0}${wcCount>0?`<button onclick="event.stopPropagation();showCampaignOrders('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1"><i class="fas fa-list-ul" style="font-size:9px"></i></button>`:''}</td>
     <td class="${plCls}">${plHtml}</td>
     <td class="${ppoCls}">${ppoHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
