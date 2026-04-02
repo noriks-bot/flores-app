@@ -2323,23 +2323,15 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, result);
       }
       if (urlPath === '/api/fpa') {
-        // Flores Passive Attribution counts per campaign/adset/ad
-        const rows = db.prepare(`
-          SELECT campaign_id, adset_id, ad_id, COUNT(DISTINCT wc_order_id) as fpa_count
-          FROM passive_attributions
-          WHERE order_date >= ? AND order_date <= ?
-          GROUP BY campaign_id
-        `).all(dateFrom, dateTo);
-        const result = {};
-        rows.forEach(r => {
-          if (r.campaign_id) result[r.campaign_id] = (result[r.campaign_id] || 0) + r.fpa_count;
-        });
-        // Also by adset and ad
-        const adsetRows = db.prepare(`SELECT adset_id, COUNT(DISTINCT wc_order_id) as cnt FROM passive_attributions WHERE order_date >= ? AND order_date <= ? AND adset_id != '' GROUP BY adset_id`).all(dateFrom, dateTo);
-        adsetRows.forEach(r => { result[r.adset_id] = (result[r.adset_id] || 0) + r.cnt; });
-        const adRows = db.prepare(`SELECT ad_id, COUNT(DISTINCT wc_order_id) as cnt FROM passive_attributions WHERE order_date >= ? AND order_date <= ? AND ad_id != '' GROUP BY ad_id`).all(dateFrom, dateTo);
-        adRows.forEach(r => { result[r.ad_id] = (result[r.ad_id] || 0) + r.cnt; });
-        return sendJSON(res, result);
+        // Flores Passive Attribution counts - separate by level
+        const campRows = db.prepare(`SELECT campaign_id, COUNT(DISTINCT wc_order_id) as cnt FROM passive_attributions WHERE order_date >= ? AND order_date <= ? AND campaign_id != '' AND campaign_id != 'undefined' GROUP BY campaign_id`).all(dateFrom, dateTo);
+        const adsetRows = db.prepare(`SELECT adset_id, COUNT(DISTINCT wc_order_id) as cnt FROM passive_attributions WHERE order_date >= ? AND order_date <= ? AND adset_id != '' AND adset_id != 'undefined' GROUP BY adset_id`).all(dateFrom, dateTo);
+        const adRows = db.prepare(`SELECT ad_id, COUNT(DISTINCT wc_order_id) as cnt FROM passive_attributions WHERE order_date >= ? AND order_date <= ? AND ad_id != '' AND ad_id != 'undefined' GROUP BY ad_id`).all(dateFrom, dateTo);
+        const campaigns = {}, adsets = {}, ads = {};
+        campRows.forEach(r => { campaigns[r.campaign_id] = r.cnt; });
+        adsetRows.forEach(r => { adsets[r.adset_id] = r.cnt; });
+        adRows.forEach(r => { ads[r.ad_id] = r.cnt; });
+        return sendJSON(res, { campaigns, adsets, ads });
       }
       if (urlPath === '/api/fpa-orders') {
         // Get passive attribution orders for a specific entity

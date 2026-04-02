@@ -2824,7 +2824,7 @@ let allAdsets = [];
 let allAds = [];
 let activeTab = 'campaigns'; // 'campaigns' | 'adsets' | 'ads'
 let todayBudgetChanges = {}; // entityId -> {old, new, time}
-let fpaData = {}; // entityId -> count
+let fpaData = { campaigns:{}, adsets:{}, ads:{} }; // separated by level
 
 function fmtDate(d) { return d.toISOString().slice(0,10); }
 function addDays(d,n) { const r=new Date(d); r.setDate(r.getDate()+n); return r; }
@@ -2977,7 +2977,7 @@ function updateSummary() {
   const totCpcLink=totLinkClicks>0?(spend/totLinkClicks).toFixed(2)+' €':'0 €';
   const totFlorexCpa=wcOrders>0?(spend/wcOrders).toFixed(2)+' €':'0 €';
   const fpaCount=campaigns.filter(c=>(c.wc?.orders||0)>0).length;
-  const fpaTotal=Object.values(fpaData).reduce((s,v)=>s+v,0);
+  const fpaTotal=Object.values(fpaData.campaigns||{}).reduce((s,v)=>s+v,0);
   document.getElementById('tableTotals').innerHTML=`<tr class="totals-row">
     <td></td><td></td><td></td><td style="text-align:left"><strong>Totals</strong></td>
     <td></td><td></td><td></td><td></td>
@@ -3349,7 +3349,7 @@ function makeRow(item,level,bgClass) {
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td style="white-space:nowrap;vertical-align:middle">${wcCount>0?`<button onclick="event.stopPropagation();showCampaignOrders('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-right:5px;border-radius:4px;vertical-align:middle;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:22px;height:18px"><i class="fas fa-list-ul" style="font-size:9px"></i></button>`:''}<strong style="font-size:13px;vertical-align:middle">${wcCount||0}</strong></td>
-    <td style="font-size:11px;color:#8b5cf6">${fpaData[item.id]||0}</td>
+    <td style="font-size:11px;color:#8b5cf6">${(fpaData[level==="campaign"?"campaigns":level==="adset"?"adsets":"ads"][item.id])||0}</td>
     <td class="${plCls}">${plHtml}</td>
     <td class="${ppoCls}">${ppoHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
@@ -3869,7 +3869,7 @@ function makeFlatRow(item, level) {
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td style="white-space:nowrap;vertical-align:middle">${wcCount>0?`<button onclick="event.stopPropagation();showCampaignOrders('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-right:5px;border-radius:4px;vertical-align:middle;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:22px;height:18px"><i class="fas fa-list-ul" style="font-size:9px"></i></button>`:''}<strong style="font-size:13px;vertical-align:middle">${wcCount||0}</strong></td>
-    <td style="font-size:11px;color:#8b5cf6">${fpaData[item.id]||0}</td>
+    <td style="font-size:11px;color:#8b5cf6">${(fpaData[level==="campaign"?"campaigns":level==="adset"?"adsets":"ads"][item.id])||0}</td>
     <td class="${plCls}">${plHtml}</td>
     <td class="${ppoCls}">${ppoHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
