@@ -7215,7 +7215,7 @@ async function openTrendChart(id, name, level) {
       }
     });
     // Daily breakdown table under chart
-    var pillsHtml = '<div style="margin-top:12px;border-top:1px solid #e5e7eb;padding-top:8px;display:flex;gap:3px;overflow-x:auto;padding-bottom:4px">';
+    var pillsHtml = '<div style="margin-top:8px;border-top:1px solid #e5e7eb;padding-top:6px;display:flex;gap:2px;overflow-x:auto;padding-bottom:2px;flex-wrap:wrap">';
     for (var di = 0; di < days.length; di++) {
       var daySpend = spends[di] || 0;
       var dayPurch = purchases[di] || 0;
@@ -7223,7 +7223,7 @@ async function openTrendChart(id, name, level) {
       var dayCpa = dayPurch > 0 ? (daySpend / dayPurch).toFixed(0) : '';
       var bg = dayPurch > 0 ? 'background:#4caf50;color:#fff' : 'background:#ef5350;color:#fff';
       var label = dayPurch > 0 ? dayPurch + '×' + dayCpa + '€' : '-' + daySpend.toFixed(0) + '€';
-      pillsHtml += '<div style="flex-shrink:0;text-align:center"><div style="display:inline-block;padding:2px 5px;border-radius:4px;font-size:9px;font-weight:700;' + bg + ';white-space:nowrap">' + label + '</div><div style="font-size:8px;color:#999;margin-top:1px">' + days[di] + '</div></div>';
+      pillsHtml += '<div style="flex-shrink:0;text-align:center;line-height:1.2"><div style="display:inline-block;padding:1px 3px;border-radius:3px;font-size:7px;font-weight:700;' + bg + ';white-space:nowrap">' + label + '</div><div style="font-size:6px;color:#bbb;margin-top:0px">' + days[di] + '</div></div>';
     }
     pillsHtml += '</div>';
     document.getElementById('trendChart').insertAdjacentHTML('afterend', pillsHtml);
