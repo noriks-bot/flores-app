@@ -1101,7 +1101,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <i class="fas fa-bullhorn"></i><span class="nav-item-text">Ads Manager</span>
       </a>
       <a class="nav-item" data-section="optimizer" onclick="navigateTo('optimizer')">
-        <i class="fas fa-sliders-h"></i><span class="nav-item-text">Optimizer</span>
+        <i class="fas fa-sliders-h"></i><span class="nav-item-text">Report</span>
       </a>
       <a class="nav-item" data-section="log" onclick="navigateTo('log')">
         <i class="fas fa-history"></i><span class="nav-item-text">Log</span>
@@ -1109,12 +1109,6 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Analytics</div>
-      <a class="nav-item" data-section="origin-report" onclick="navigateTo('origin-report')">
-        <i class="fas fa-sitemap"></i><span class="nav-item-text">Origin Report</span>
-      </a>
-      <a class="nav-item" data-section="base-report" onclick="navigateTo('base-report')">
-        <i class="fas fa-chart-bar"></i><span class="nav-item-text">Base Report</span>
-      </a>
       <a class="nav-item" data-section="creative-reporting" onclick="navigateTo('creative-reporting')">
         <i class="fas fa-palette"></i><span class="nav-item-text">Creative Reporting</span>
       </a>
@@ -1129,7 +1123,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       </a>
     </div>
     <div class="nav-section">
-      <div class="nav-section-label">Data</div>
+      <div class="nav-section-label">Upload</div>
       <a class="nav-item" data-section="upload" onclick="navigateTo('upload')">
         <i class="fas fa-cloud-upload-alt"></i><span class="nav-item-text">Upload Planer</span>
       </a>
@@ -1139,9 +1133,18 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <a class="nav-item" data-section="videos" onclick="navigateTo('videos')">
         <i class="fas fa-video"></i><span class="nav-item-text">Videos</span>
       </a>
+      <a class="nav-item" data-section="upload-settings" onclick="navigateTo('upload-settings')">
+        <i class="fas fa-cog"></i><span class="nav-item-text">Upload Settings</span>
+      </a>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Admin</div>
+      <a class="nav-item" data-section="origin-report" onclick="navigateTo('origin-report')">
+        <i class="fas fa-sitemap"></i><span class="nav-item-text">Origin Report</span>
+      </a>
+      <a class="nav-item" data-section="base-report" onclick="navigateTo('base-report')">
+        <i class="fas fa-chart-bar"></i><span class="nav-item-text">Base Report</span>
+      </a>
       <a class="nav-item" data-section="fb-integration" onclick="navigateTo('fb-integration')">
         <i class="fab fa-facebook"></i><span class="nav-item-text">FB Integration</span>
       </a>
@@ -2185,6 +2188,21 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <!-- Grid -->
       <div id="vidGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px"></div>
       <div id="vidEmpty" style="display:none;text-align:center;padding:60px;color:var(--text-muted)"><i class="fas fa-film" style="font-size:40px;margin-bottom:12px;display:block;opacity:0.4"></i>No videos found</div>
+    </div>
+  </div>
+
+  <!-- UPLOAD SETTINGS -->
+  <div id="section-upload-settings" class="content-section">
+    <div class="content" style="padding:20px 24px">
+      <div style="background:linear-gradient(135deg,#1E3A5F,#2a5a8f);border-radius:var(--card-radius);padding:20px 24px;margin-bottom:20px;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:20px;font-weight:800"><i class="fas fa-cog" style="margin-right:8px"></i>Upload Settings</div>
+          <div style="font-size:12px;opacity:0.7;margin-top:4px">Configure upload defaults and preferences</div>
+        </div>
+      </div>
+      <div class="table-card" style="padding:24px">
+        <p style="color:var(--text-muted);text-align:center;padding:40px">Upload settings coming soon...</p>
+      </div>
     </div>
   </div>
 
