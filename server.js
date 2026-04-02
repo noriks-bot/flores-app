@@ -2196,27 +2196,72 @@ const server = http.createServer(async (req, res) => {
           lifetime: { from: '2025-01-01', to: fmt(today) }
         };
         const result = {};
-        for (const [period, range] of Object.entries(periods)) {
-          try {
-            const adsets = await getAdsets(campaignId, range.from, range.to);
-            const camp = campaigns_cache_latest?.find(c => c.id === campaignId);
-            if (camp?.wc) enrichCampaignsWithProfit([{id:campaignId,insights:{spend:'0'}}], range.from, range.to);
-            // Enrich adsets with WC profit for this period
-            const enriched = adsets.map(as => ({id:as.id, spend:parseFloat(as.insights?.spend||0)}));
-            // Get WC orders for this campaign in this period
-            const wcOrders = db.prepare("SELECT adset_id, COUNT(*) as orders, SUM(gross_eur) as revenue, SUM(profit) as profit FROM wc_orders WHERE utm_campaign = ? AND order_date >= ? AND order_date <= ? GROUP BY adset_id").all(campaignId, range.from, range.to);
-            const wcMap = {};
-            wcOrders.forEach(r => { if(r.adset_id) wcMap[r.adset_id] = {orders:r.orders, revenue:r.revenue, profit:r.profit}; });
-            for (const as of enriched) {
-              if (!result[as.id]) result[as.id] = {};
-              const wc = wcMap[as.id];
-              result[as.id][period] = {
-                spend: as.spend,
-                profit: wc ? wc.profit : (as.spend > 0 ? -as.spend : 0),
-                orders: wc ? wc.orders : 0
-              };
+        // Get all adset+ad IDs from WC orders for this campaign
+        const allEntityIds = new Set();
+        // Fetch FB spend per adset per period via single insights call with time_increment
+        let adsetSpendByPeriod = {};
+        try {
+          for (const [period, range] of Object.entries(periods)) {
+            const ins = await metaGetAll(`${campaignId}/insights`, {
+              fields: 'spend,adset_id',
+              level: 'adset',
+              time_range: JSON.stringify({ since: range.from, until: range.to }),
+              limit: 500
+            });
+            for (const i of ins) {
+              if (!adsetSpendByPeriod[i.adset_id]) adsetSpendByPeriod[i.adset_id] = {};
+              adsetSpendByPeriod[i.adset_id][period] = parseFloat(i.spend || 0);
+              allEntityIds.add(i.adset_id);
             }
-          } catch(e) { console.warn('[multiProfitChildren]', period, e.message); }
+          }
+        } catch(e) { console.warn('[multiProfitChildren] insights error:', e.message); }
+        // Get WC orders grouped by adset_id per period
+        for (const [period, range] of Object.entries(periods)) {
+          const wcRows = db.prepare("SELECT adset_id, ad_id, COUNT(*) as orders, SUM(gross_eur) as revenue, SUM(profit) as profit FROM wc_orders WHERE utm_campaign = ? AND order_date >= ? AND order_date <= ? GROUP BY adset_id").all(campaignId, range.from, range.to);
+          for (const r of wcRows) {
+            const id = r.adset_id || 'unknown';
+            allEntityIds.add(id);
+            if (!result[id]) result[id] = {};
+            const spend = adsetSpendByPeriod[id]?.[period] || 0;
+            result[id][period] = { spend, profit: r.profit, orders: r.orders };
+          }
+          // Add adsets with spend but no WC orders
+          for (const [asId, spendMap] of Object.entries(adsetSpendByPeriod)) {
+            if (spendMap[period] && (!result[asId] || !result[asId][period])) {
+              if (!result[asId]) result[asId] = {};
+              result[asId][period] = { spend: spendMap[period], profit: -spendMap[period], orders: 0 };
+            }
+          }
+        }
+        // Also do ad-level
+        let adSpendByPeriod = {};
+        try {
+          for (const [period, range] of Object.entries(periods)) {
+            const ins = await metaGetAll(`${campaignId}/insights`, {
+              fields: 'spend,ad_id',
+              level: 'ad',
+              time_range: JSON.stringify({ since: range.from, until: range.to }),
+              limit: 500
+            });
+            for (const i of ins) {
+              if (!adSpendByPeriod[i.ad_id]) adSpendByPeriod[i.ad_id] = {};
+              adSpendByPeriod[i.ad_id][period] = parseFloat(i.spend || 0);
+            }
+          }
+        } catch(e) { console.warn('[multiProfitChildren] ad insights error:', e.message); }
+        for (const [period, range] of Object.entries(periods)) {
+          const wcAds = db.prepare("SELECT ad_id, COUNT(*) as orders, SUM(gross_eur) as revenue, SUM(profit) as profit FROM wc_orders WHERE utm_campaign = ? AND order_date >= ? AND order_date <= ? AND ad_id IS NOT NULL AND ad_id != '' GROUP BY ad_id").all(campaignId, range.from, range.to);
+          for (const r of wcAds) {
+            if (!result[r.ad_id]) result[r.ad_id] = {};
+            const spend = adSpendByPeriod[r.ad_id]?.[period] || 0;
+            result[r.ad_id][period] = { spend, profit: r.profit, orders: r.orders };
+          }
+          for (const [adId, spendMap] of Object.entries(adSpendByPeriod)) {
+            if (spendMap[period] && (!result[adId] || !result[adId][period])) {
+              if (!result[adId]) result[adId] = {};
+              result[adId][period] = { spend: spendMap[period], profit: -spendMap[period], orders: 0 };
+            }
+          }
         }
         return sendJSON(res, result);
       }
