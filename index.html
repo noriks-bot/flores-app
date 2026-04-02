@@ -1411,11 +1411,13 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <th style="text-align:left;width:13%">Campaign ID</th>
               <th style="text-align:center;width:10%">Old</th>
               <th style="text-align:center;width:10%">New</th>
-              <th style="text-align:right;width:8%">Spend</th>
-              <th style="text-align:right;width:6%">Ord</th>
-              <th style="text-align:right;width:8%">Profit</th>
+              <th style="text-align:right;width:7%">Spend</th>
+              <th style="text-align:right;width:5%">Ord</th>
+              <th style="text-align:right;width:7%">Profit</th>
+              <th style="text-align:right;width:6%">CPA</th>
+              <th style="text-align:right;width:6%">ROAS</th>
             </tr></thead>
-            <tbody id="logBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
+            <tbody id="logBody"><tr><td colspan="11" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -2750,7 +2752,7 @@ async function loadChangeLog() {
       }
     }
     if (!rows.length) {
-      document.getElementById('logBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#9ca3af">No changes in this period</td></tr>';
+      document.getElementById('logBody').innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#9ca3af">No changes in this period</td></tr>';
       return;
     }
     const profitColor = v => v > 0 ? '#22c55e' : v < 0 ? '#ef4444' : '#666';
@@ -2766,10 +2768,12 @@ async function loadChangeLog() {
       <td style="text-align:right;font-size:11px">${r.spend_at_change ? r.spend_at_change.toFixed(2) + '€' : '—'}</td>
       <td style="text-align:right;font-size:11px">${r.orders_at_change || 0}</td>
       <td style="text-align:right;font-size:11px;font-weight:600;color:${profitColor(r.profit_at_change||0)}">${r.profit_at_change ? r.profit_at_change.toFixed(2) + '€' : '—'}</td>
+      <td style="text-align:right;font-size:11px">${r.cpa_at_change ? r.cpa_at_change.toFixed(2) + '€' : '—'}</td>
+      <td style="text-align:right;font-size:11px">${r.roas_at_change ? r.roas_at_change.toFixed(2) + 'x' : '—'}</td>
     </tr>`;
     }).join('');
   } catch(e) {
-    document.getElementById('logBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#ef4444">Error: '+e.message+'</td></tr>';
+    document.getElementById('logBody').innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#ef4444">Error: '+e.message+'</td></tr>';
   }
 }
 
@@ -3066,7 +3070,7 @@ async function loadTodayBudgetChanges() {
 
 function logChange(type, entityId, oldVal, newVal, extra) {
   const data = { changeType: type, entityId: entityId, oldValue: oldVal, newValue: newVal };
-  if (extra) { data.entityName = extra.name; data.country = extra.country; data.user = extra.user; data.spendAtChange = extra.spend; data.ordersAtChange = extra.orders; data.profitAtChange = extra.profit; }
+  if (extra) { data.entityName = extra.name; data.country = extra.country; data.user = extra.user; data.spendAtChange = extra.spend; data.ordersAtChange = extra.orders; data.profitAtChange = extra.profit; data.cpaAtChange = extra.cpa||0; data.roasAtChange = extra.roas||0; }
   fetch('/api/log', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
@@ -3188,7 +3192,7 @@ function inlineEditBudget(campId, currentBudget, isLifetime) {
       body: JSON.stringify(body)
     }).then(r=>r.json()).then(d=>{
       if(d.ok) {
-        try{ const _c=campaigns.find(x=>x.id===campId); const _cc=((_c?.name||'').match(/cc:([A-Z+]+)/i)||[])[1]||''; logChange('budget', campId, currentBudget + '€', val + '€', {name:_c?.name||'',country:_cc,user:'noriks',spend:parseFloat(_c?.insights?.spend||0),orders:_c?.wc?.orders||0,profit:_c?.wc?.profit||0}); }catch(e){console.error('logChange error',e);}
+        try{ const _c=campaigns.find(x=>x.id===campId); const _cc=((_c?.name||'').match(/cc:([A-Z+]+)/i)||[])[1]||''; const _sp=parseFloat(_c?.insights?.spend||0); const _ord=_c?.wc?.orders||0; const _rev=_c?.wc?.revenueGross||0; logChange('budget', campId, currentBudget + '€', val + '€', {name:_c?.name||'',country:_cc,user:'noriks',spend:_sp,orders:_ord,profit:_c?.wc?.profit||0,cpa:_ord>0?_sp/_ord:0,roas:_sp>0?_rev/_sp:0}); }catch(e){console.error('logChange error',e);}
         const c = campaigns.find(x=>x.id===campId);
         if(c) { if(isLifetime) c.lifetime_budget=String(budgetCents); else c.daily_budget=String(budgetCents); }
         todayBudgetChanges[campId] = { old: currentBudget+'€', new: val+'€', time: new Date().toTimeString().slice(0,5) };
@@ -3212,7 +3216,7 @@ function inlineEditAdsetBudget(adsetId, currentBudget, isLifetime) {
       body: JSON.stringify(body)
     }).then(r=>r.json()).then(d=>{
       if(d.ok) {
-        { let _as=null;for(const cid of Object.keys(adsetCache)){_as=adsetCache[cid]?.find(a=>a.id===adsetId);if(_as)break;} logChange('budget', adsetId, currentBudget + '€', val + '€', {name:_as?.name||'',country:'',user:'noriks',spend:parseFloat(_as?.insights?.spend||0),orders:_as?.wc?.orders||0,profit:_as?.wc?.profit||0}); }
+        { let _as=null;for(const cid of Object.keys(adsetCache)){_as=adsetCache[cid]?.find(a=>a.id===adsetId);if(_as)break;} const _asp=parseFloat(_as?.insights?.spend||0); const _aord=_as?.wc?.orders||0; const _arev=_as?.wc?.revenueGross||0; logChange('budget', adsetId, currentBudget + '€', val + '€', {name:_as?.name||'',country:'',user:'noriks',spend:_asp,orders:_aord,profit:_as?.wc?.profit||0,cpa:_aord>0?_asp/_aord:0,roas:_asp>0?_arev/_asp:0}); }
         for(const cid of Object.keys(adsetCache)){const as=adsetCache[cid]?.find(a=>a.id===adsetId);if(as){if(isLifetime)as.lifetime_budget=String(budgetCents);else as.daily_budget=String(budgetCents);break;}}
         todayBudgetChanges[adsetId] = { old: currentBudget+'€', new: val+'€', time: new Date().toTimeString().slice(0,5) };
         done(true, 'Adset budget updated!');
@@ -4124,7 +4128,7 @@ function renderBaseReport(data) {
     .sort((a, b) => b.spend - a.spend);
   document.getElementById('brCountryBody').innerHTML = countries.length
     ? countries.map(c => brRow(c.label, c)).join('')
-    : '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text-muted)">No data</td></tr>';
+    : '<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--text-muted)">No data</td></tr>';
   document.getElementById('brCountryTotals').innerHTML = countries.length ? brTotalsRow(countries, 9) : '';
 
   // By Type - sort by spend desc
@@ -4133,7 +4137,7 @@ function renderBaseReport(data) {
     .sort((a, b) => b.spend - a.spend);
   document.getElementById('brTypeBody').innerHTML = types.length
     ? types.map(t => brRow(t.label, t)).join('')
-    : '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text-muted)">No data</td></tr>';
+    : '<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--text-muted)">No data</td></tr>';
   document.getElementById('brTypeTotals').innerHTML = types.length ? brTotalsRow(types, 9) : '';
 
   // By Country + Type - sort by spend desc
@@ -6511,7 +6515,7 @@ function renderDashboard(data) {
     var totRevenue = data.orders_list.reduce(function(s,o){return s+(o.revenue||0);},0);
     var totColor = totProfit >= 0 ? '#10b981' : '#ef4444';
     obody.innerHTML += '<tr style="border-top:2px solid #e5e7eb;font-weight:700"><td></td><td></td><td></td><td></td><td></td><td>Total ('+data.orders_list.length+')</td><td></td><td style="text-align:right;color:'+totColor+'">'+totProfit.toFixed(2)+' EUR</td><td style="text-align:right">'+totRevenue.toFixed(2)+' EUR</td></tr>';
-  } else if (obody) { obody.innerHTML = '<tr><td colspan="9">No orders</td></tr>'; }
+  } else if (obody) { obody.innerHTML = '<tr><td colspan="11">No orders</td></tr>'; }
 
   // Chart
   if (data.chartData && data.chartData.length > 0) {
