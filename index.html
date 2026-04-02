@@ -3654,7 +3654,7 @@ async function showCampaignOrders(campaignId) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.onclick = e => { if(e.target===overlay) closeModal(); };
-  overlay.innerHTML = `<div class="modal-box">
+  overlay.innerHTML = `<div class="modal-box" style="max-width:95vw;width:1100px">
     <div class="modal-header">
       <div><div class="modal-title">📦 Orders — ${name.replace(/</g,'&lt;').slice(0,60)}</div><div class="modal-sub">${from} → ${to}</div></div>
       <button class="modal-close" onclick="closeModal()">×</button>
@@ -3686,7 +3686,7 @@ async function showCampaignOrders(campaignId) {
       const prodCost = o.productCost||0;
       const shipCost = o.shippingCost||0;
       const profit = o.profit||0;
-      const calcHtml = `<span style="font-size:9px;color:#999;display:block;margin-top:2px">${gross.toFixed(2)} gross → ${net.toFixed(2)} net (rej+vat) - ${prodCost.toFixed(2)} cost - ${shipCost.toFixed(2)} ship</span>`;
+      const calcHtml = `<div style="font-size:8px;color:#999;margin-top:1px;white-space:nowrap">${gross.toFixed(0)}→${net.toFixed(0)} net -${prodCost.toFixed(0)} cost -${shipCost.toFixed(0)} ship</div>`;
       return `<tr>
         <td><strong>#${o.number}</strong><br><span style="font-size:10px;color:var(--text-muted)">${o.date}</span></td>
         <td>${o.customer||'—'}<br><span style="font-size:10px;color:var(--text-muted)">${o.city||''} ${o.country||''}</span></td>
