@@ -7115,7 +7115,7 @@ async function openTrendChart(id, name, level) {
         labels: days,
         datasets: [
           { type: 'bar', label: 'Spend \u20ac', data: spends, backgroundColor: 'rgba(59,130,246,0.6)', borderColor: '#3b82f6', borderWidth: 1, yAxisID: 'y', order: 2 },
-          { type: 'bar', label: 'Purchases', data: purchases, backgroundColor: 'rgba(34,197,94,0.6)', borderColor: '#22c55e', borderWidth: 1, yAxisID: 'y1', order: 3, barPercentage: 0.4 },
+          { type: 'bar', label: 'Purchases', data: purchases, backgroundColor: 'rgba(34,197,94,0.6)', borderColor: '#22c55e', borderWidth: 1, yAxisID: 'y1', order: 3 },
           { type: 'line', label: 'CPA \u20ac', data: cpas, borderColor: '#f59e0b', backgroundColor: 'transparent', borderWidth: 2, fill: false, tension: 0.3, yAxisID: 'y', spanGaps: false, pointRadius: 3, pointBackgroundColor: '#f59e0b', order: 1 }
         ]
       },
