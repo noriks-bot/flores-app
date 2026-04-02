@@ -7214,6 +7214,18 @@ async function openTrendChart(id, name, level) {
         }
       }
     });
+    // Daily breakdown table under chart
+    var tableHtml = '<div style="max-height:200px;overflow-y:auto;margin-top:12px;border-top:1px solid #e5e7eb;padding-top:8px"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="position:sticky;top:0;background:#f5f5f5"><th style="text-align:left;padding:3px 6px;font-weight:600;color:#666">Date</th><th style="text-align:right;padding:3px 6px;font-weight:600;color:#666">Spend</th><th style="text-align:right;padding:3px 6px;font-weight:600;color:#666">Purchases</th><th style="text-align:right;padding:3px 6px;font-weight:600;color:#666">CPA</th></tr></thead><tbody>';
+    for (var di = days.length - 1; di >= 0; di--) {
+      var daySpend = spends[di] || 0;
+      var dayPurch = purchases[di] || 0;
+      var dayCpa = dayPurch > 0 ? (daySpend / dayPurch).toFixed(2) : '—';
+      var rowBg = dayPurch > 0 ? '' : 'opacity:0.4;';
+      tableHtml += '<tr style="border-bottom:1px solid #f0f0f0;' + rowBg + '"><td style="padding:3px 6px">' + days[di] + '</td><td style="text-align:right;padding:3px 6px">' + daySpend.toFixed(2) + ' €</td><td style="text-align:right;padding:3px 6px;font-weight:600">' + dayPurch + '</td><td style="text-align:right;padding:3px 6px">' + dayCpa + (dayCpa !== '—' ? ' €' : '') + '</td></tr>';
+    }
+    tableHtml += '</tbody></table></div>';
+    document.getElementById('trendChart').insertAdjacentHTML('afterend', tableHtml);
+
   } catch(e) {
     document.getElementById('trendLoading').innerHTML = '<span style="color:#ef4444">Error: ' + e.message + '</span>';
   }
