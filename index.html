@@ -2977,12 +2977,13 @@ function updateSummary() {
   const totCpcLink=totLinkClicks>0?(spend/totLinkClicks).toFixed(2)+' €':'0 €';
   const totFlorexCpa=wcOrders>0?(spend/wcOrders).toFixed(2)+' €':'0 €';
   const fpaCount=campaigns.filter(c=>(c.wc?.orders||0)>0).length;
+  const fpaTotal=Object.values(fpaData).reduce((s,v)=>s+v,0);
   document.getElementById('tableTotals').innerHTML=`<tr class="totals-row">
     <td></td><td></td><td></td><td style="text-align:left"><strong>Totals</strong></td>
     <td></td><td></td><td></td><td></td>
     <td>${spend.toFixed(2)} €</td>
-    <td>${wcOrders}</td>
-    <td style="font-size:11px;color:#c4b5fd">${Object.values(fpaData).reduce((s,v)=>s+v,0)}</td>
+    <td><strong>${wcOrders}</strong></td>
+    <td style="color:#c4b5fd">${fpaTotal}</td>
     <td>${wcProfit.toFixed(2)} €</td>
     <td>${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
     <td>${wcRevenue.toFixed(2)} €</td>
@@ -2993,7 +2994,6 @@ function updateSummary() {
     <td>${purchases}</td>
     <td>${totCheckouts}</td>
     <td>${totAtc}</td>
-    
     <td>${totCpcLink}</td>
   </tr>`;
   document.getElementById('tableTotalsBottom').innerHTML = document.getElementById('tableTotals').innerHTML;
