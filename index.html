@@ -1640,18 +1640,17 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     .opt-refresh-btn { height:30px; padding:0 12px; border-radius:6px; border:1px solid #dadde1; background:#fff; color:#65676b; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:12px; gap:5px; transition:all .15s; }
     .opt-refresh-btn:hover { background:#e4e6eb; color:#1c1e21; }
     #optTable { width:100%; border-collapse:collapse; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
-    #optTable thead th { position:sticky; top:0; z-index:10; background:#f5f6f7; color:#65676b; font-size:12px; font-weight:600; text-transform:none; letter-spacing:0; padding:8px 6px; white-space:nowrap; border:none; border-bottom:1px solid #dadde1; }
+    #optTable thead th { position:sticky; top:0; z-index:10; background:#f5f5f5; color:#4b4b4b; font-size:11px; font-weight:600; text-transform:none; letter-spacing:0; padding:6px 6px; white-space:nowrap; border:none; border-bottom:1px solid #dadde1; line-height:1.3; }
     #optTable thead th:first-child { border-radius:0; }
     #optTable thead th:last-child { border-radius:0; }
     .opt-campaign-row { background:#fff; cursor:pointer; border-bottom:1px solid #e4e6eb; transition:background .1s; }
-    
     .opt-campaign-row:hover { background:#f2f3f5 !important; }
-    .opt-campaign-row td { padding:8px 12px; font-size:13px; font-weight:600; }
-    .opt-adset-row { background:#fafbfc; cursor:pointer; border-bottom:1px solid #e4e6eb; transition:background .1s; }
+    .opt-campaign-row td { padding:4px 6px; font-size:12px; font-weight:500; color:#1c1e21; }
+    .opt-adset-row { background:#fff; cursor:pointer; border-bottom:1px solid #e4e6eb; transition:background .1s; }
     .opt-adset-row:hover { background:#f2f3f5 !important; }
-    .opt-adset-row td { padding:6px 6px; font-size:12px; font-weight:400; }
+    .opt-adset-row td { padding:4px 6px; font-size:12px; font-weight:400; color:#1c1e21; }
     .opt-ad-row { background:#fff; border-bottom:1px solid #e4e6eb; }
-    .opt-ad-row td { padding:5px 6px 5px 24px; font-size:12px; font-weight:400; }
+    .opt-ad-row td { padding:4px 6px 4px 24px; font-size:12px; font-weight:400; color:#1c1e21; }
     .opt-ad-row:hover { background:#f2f3f5 !important; }
     .opt-expand { font-size:16px; cursor:pointer; user-select:none; display:inline-block; width:24px; text-align:center; line-height:1; }
     .opt-expand-campaign { color:#65676b; }
@@ -1660,7 +1659,9 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     .opt-budget-edit:hover { opacity:1; }
     .opt-action-btn { border:none; background:transparent; cursor:pointer; font-size:14px; padding:2px 4px; border-radius:4px; transition:all .15s; }
     .opt-action-btn:hover { background:rgba(0,0,0,0.05); }
-    .opt-range-cell { font-size:11px; color:#9ca3af; text-align:center; line-height:1.4; white-space:nowrap; min-width:80px; }
+    .opt-range-cell { font-size:11px; color:#9ca3af; text-align:center; line-height:1.3; white-space:nowrap; min-width:70px; }
+    #optTable td { vertical-align:middle; }
+    #optTable .muted { color:#bec3c9; }
   </style>
   <!-- Merged header bar -->
   <div class="opt-header-bar">
