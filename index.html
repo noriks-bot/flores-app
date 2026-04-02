@@ -6971,7 +6971,9 @@ async function loadOrgTab(category, btn) {
       html += '<thead><tr><th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--border-color);font-weight:700;color:var(--text-muted);font-size:11px;text-transform:uppercase;width:120px">Key</th><th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--border-color);font-weight:700;color:var(--text-muted);font-size:11px;text-transform:uppercase">Value</th><th style="width:60px"></th></tr></thead><tbody>';
       Object.keys(data).forEach(function(k) {
         var v = data[k];
+        if (v === null || v === undefined) v = '';
         if (typeof v === 'object') v = JSON.stringify(v);
+        v = String(v);
         var isSensitive = (k.toLowerCase().includes('token') || k.toLowerCase().includes('secret')) && v.length > 20;
         var displayVal = isSensitive ? v.slice(0,8) + '\u2022\u2022\u2022\u2022' + v.slice(-4) : v;
         html += '<tr style="border-bottom:1px solid var(--border-color)" data-key="'+k+'" data-category="'+category+'">';
