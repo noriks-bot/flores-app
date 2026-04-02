@@ -3363,14 +3363,14 @@ function renderTable() {
       if(!adsetCache[c.id]){
         childRows.push(`<tr class="level-adset ${bgClass}"><td></td><td colspan="27" style="padding:12px 40px;color:var(--text-muted)"><div class="spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading adsets...</td></tr>`);
       } else {
-        const adsets=adsetCache[c.id].filter(a=>a.insights||a.status==='ACTIVE').sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0));
+        const adsets=(adsetCache[c.id]||[]).sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0));
         adsets.forEach(as=>{
           childRows.push(makeRow(as,'adset',bgClass));
           if(expandedAdsets[as.id]){
             if(!adCache[as.id]){
               childRows.push(`<tr class="level-ad ${bgClass}"><td></td><td colspan="27" style="padding:12px 58px;color:var(--text-muted)"><div class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:8px"></div>Loading ads...</td></tr>`);
             } else {
-              adCache[as.id].filter(a=>a.insights||a.status==='ACTIVE').sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0)).forEach(ad=>{childRows.push(makeRow(ad,'ad',bgClass));});
+              (adCache[as.id]||[]).sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0)).forEach(ad=>{childRows.push(makeRow(ad,'ad',bgClass));});
             }
           }
         });

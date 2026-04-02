@@ -1211,9 +1211,9 @@ async function getAdsets(campaignId, dateFrom, dateTo) {
     };
   }
 
-  // Add active adsets without spend
+  // Add all adsets without spend (including PAUSED)
   for (const [id, meta] of Object.entries(adsetMeta)) {
-    if (!insightAdsets[id] && meta.status === 'ACTIVE') {
+    if (!insightAdsets[id]) {
       insightAdsets[id] = { ...meta, lifetime_budget: meta.lifetime_budget || '0', insights: null };
     }
   }
@@ -1262,13 +1262,22 @@ async function getAds(adsetId, dateFrom, dateTo) {
   } catch(e) {}
 
   // Build from insights
-  const result = insights.filter(i => i.adset_id === adsetId).map(i => ({
-    id: i.ad_id,
-    name: adMeta[i.ad_id]?.name || i.ad_name || i.ad_id,
-    status: adMeta[i.ad_id]?.status || 'PAUSED',
-    insights: i
-  }));
-
+  const insightAds = {};
+  for (const i of insights.filter(i => i.adset_id === adsetId)) {
+    insightAds[i.ad_id] = {
+      id: i.ad_id,
+      name: adMeta[i.ad_id]?.name || i.ad_name || i.ad_id,
+      status: adMeta[i.ad_id]?.status || 'PAUSED',
+      insights: i
+    };
+  }
+  // Add all ads without spend
+  for (const [id, meta] of Object.entries(adMeta)) {
+    if (!insightAds[id]) {
+      insightAds[id] = { ...meta, insights: null };
+    }
+  }
+  const result = Object.values(insightAds);
   result.sort((a, b) => parseFloat(b.insights?.spend || 0) - parseFloat(a.insights?.spend || 0));
 
   setCache(cacheKey, result);
