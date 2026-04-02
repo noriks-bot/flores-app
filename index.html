@@ -1658,7 +1658,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
   <!-- Merged header bar -->
   <div class="opt-header-bar">
     <div class="opt-header-left">
-      <span class="opt-header-title">⚡ Optimizer</span>
+      <span class="opt-header-title">⚡ Report</span>
       <span style="width:1px;height:20px;background:#dadde1;margin:0 2px"></span>
       <button class="opt-fpill active" onclick="switchOptTab(this,'HR')">🇭🇷 HR</button>
       <button class="opt-fpill" onclick="switchOptTab(this,'CZ')">🇨🇿 CZ</button>
@@ -1690,7 +1690,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     <table id="optTable">
       <thead><tr>
         <th style="width:32px"></th>
-        <th style="width:36px;text-align:center">🏳</th>
+        <th style="text-align:left;width:50px">Type</th>
+        <th style="text-align:left">Country</th>
         <th style="text-align:left;min-width:260px">Name</th>
         <th style="text-align:center">Status</th>
         <th style="text-align:right">Budget</th>
@@ -1707,7 +1708,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <th style="text-align:center;font-size:9px">30D</th>
         <th style="text-align:center;font-size:9px">MAX</th>
       </tr></thead>
-      <tbody id="optBody"><tr><td colspan="17" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
+      <tbody id="optBody"><tr><td colspan="18" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
     </table>
   </div>
   <!-- Optimizer Summary -->
@@ -5230,7 +5231,7 @@ function optGetPurchases(ins) {
 
 async function loadOptimizer() {
   const {from,to} = getOptDateRange();
-  document.getElementById('optBody').innerHTML = '<tr><td colspan="17" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr>';
+  document.getElementById('optBody').innerHTML = '<tr><td colspan="18" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr>';
   try {
     const res = await fetch('/api/campaigns?date_from='+from+'&date_to='+to);
     optCampaigns = await res.json();
@@ -5241,7 +5242,7 @@ async function loadOptimizer() {
     renderOptimizer();
     optRangeData = {};
     loadOptRanges();
-  } catch(e) { document.getElementById('optBody').innerHTML = '<tr><td colspan="17" style="text-align:center;padding:30px;color:#dc2626">Error: '+e.message+'</td></tr>'; }
+  } catch(e) { document.getElementById('optBody').innerHTML = '<tr><td colspan="18" style="text-align:center;padding:30px;color:#dc2626">Error: '+e.message+'</td></tr>'; }
 }
 
 function optGetFlags(name) {
@@ -5266,6 +5267,32 @@ function optGetFlags(name) {
     } else {
       html += '<span style="font-size:14px;vertical-align:middle;filter:grayscale(1) opacity(0.4)">' + flag + '</span>';
     }
+  });
+  return html;
+}
+function optGetType(name) {
+  var upper = (name||'').toUpperCase();
+  var ccM = upper.match(/CC:([A-Z+]+)/);
+  var isSofi = upper.includes('SOFI') || (ccM && ccM[1].split('+').length > 1);
+  if (isSofi) return '<span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:800;background:#7c3aed;color:#fff">SOFI</span>';
+  if (upper.includes('CBO')) return '<span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:800;background:#2563eb;color:#fff">CBO</span>';
+  if (upper.includes('ABO')) return '<span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:800;background:#d97706;color:#fff">ABO</span>';
+  return '<span style="font-size:9px;color:#999">—</span>';
+}
+function optGetCountryFlags(name) {
+  var flagMap = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
+  var upper = (name||'').toUpperCase();
+  var ccMatch = upper.match(/CC:([A-Z+]+)/);
+  var countries = [];
+  if (ccMatch) { countries = ccMatch[1].split('+'); }
+  else { for (var code in flagMap) { if (upper.includes(code)) { countries = [code]; break; } } }
+  if (!countries.length) return '<span style="font-size:9px;color:#999">—</span>';
+  var html = '';
+  countries.forEach(function(cc) {
+    var flag = flagMap[cc] || '';
+    if (!flag) return;
+    var isActive = (optCountry === 'ALL' || optCountry === cc);
+    html += '<span style="font-size:13px;vertical-align:middle;' + (!isActive ? 'filter:grayscale(1) opacity(0.4)' : '') + '">' + flag + '</span>';
   });
   return html;
 }
@@ -5341,7 +5368,7 @@ function renderOptimizer() {
     return false;
   });
   if (!filtered.length) {
-    document.getElementById('optBody').innerHTML = '<tr><td colspan="17" style="text-align:center;padding:30px;color:#9ca3af">No campaigns found</td></tr>';
+    document.getElementById('optBody').innerHTML = '<tr><td colspan="18" style="text-align:center;padding:30px;color:#9ca3af">No campaigns found</td></tr>';
     return;
   }
   // Auto-expand multi-country campaigns when country filter is active
@@ -5376,9 +5403,12 @@ function renderOptimizer() {
     const cpaStyle = cpaVal > 0 ? (cpaVal <= 15 ? 'background:#4caf50;color:#fff;border-radius:4px;padding:2px 6px' : cpaVal <= 25 ? 'background:#f59e0b;color:#fff;border-radius:4px;padding:2px 6px' : 'background:#ef5350;color:#fff;border-radius:4px;padding:2px 6px') : '';
     const isExp = optExpanded[c.id];
     const flags = optGetFlags(c.name);
+    const typeTag = optGetType(c.name);
+    const countryFlags = optGetCountryFlags(c.name);
     html += '<tr class="opt-campaign-row" onclick="toggleOpt(this.dataset.cid)" data-cid="'+c.id+'">';
     html += '<td style="text-align:center"><span class="opt-expand opt-expand-campaign">'+(isExp?'▾':'▸')+'</span></td>';
-    html += '<td style="text-align:right">'+flags+'</td>';
+    html += '<td style="text-align:left">'+typeTag+'</td>';
+    html += '<td style="text-align:left">'+countryFlags+'</td>';
     html += '<td style="text-align:left;font-weight:400;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+c.name.replace(/"/g,'&quot;')+'">'+c.name+'</td>';
     html += '<td style="text-align:center" onclick="event.stopPropagation()"><label class="opt-toggle"><input type="checkbox" '+(c.status==='ACTIVE'?'checked':'')+' onchange="toggleCampaignStatus(\''+c.id+'\',this.checked)"><span class="opt-toggle-slider"></span></label></td>';
     html += '<td style="text-align:right">'+(budget?budget+' €':'—')+' <button class="opt-budget-edit" title="Coming soon" onclick="event.stopPropagation()">✏️</button></td>';
@@ -5406,9 +5436,12 @@ function renderOptimizer() {
         if (!asMatchesCountry && optCountry === 'SOFI') { asMatchesCountry = asName.includes('SOFI'); if (!asMatchesCountry) { var _asCC = asName.match(/CC:([A-Z+]+)/); if (_asCC && _asCC[1].split('+').length > 1) asMatchesCountry = true; } }
         const grayStyle = (!asMatchesCountry && optCountry !== 'ALL') ? 'opacity:0.35;' : '';
         const asFlags = optGetFlags(as.name);
+        const asTypeTag = optGetType(as.name);
+        const asCountryFlags2 = optGetCountryFlags(as.name);
         html += '<tr class="opt-adset-row" style="'+grayStyle+'" onclick="event.stopPropagation();toggleOptAds(\''+as.id+'\',\''+c.id+'\');">';
         html += '<td style="text-align:center;padding-left:16px"><span class="opt-expand opt-expand-adset">'+(optExpandedAds[as.id]?'▾':'▸')+'</span></td>';
-        html += '<td style="text-align:center;font-size:12px">'+asFlags+'</td>';
+        html += '<td style="text-align:left;font-size:11px">'+asTypeTag+'</td>';
+        html += '<td style="text-align:left;font-size:12px">'+asCountryFlags2+'</td>';
         html += '<td style="text-align:left;padding-left:32px;color:#4b5563;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">↳ '+as.name+'</td>';
         html += '<td style="text-align:center" onclick="event.stopPropagation()"><label class="opt-toggle"><input type="checkbox" '+(as.status==='ACTIVE'?'checked':'')+' onchange="toggleAdsetStatus(\''+as.id+'\',this.checked)"><span class="opt-toggle-slider"></span></label></td>';
         html += '<td style="text-align:right;color:#9ca3af">—</td>';
@@ -5431,10 +5464,10 @@ function renderOptimizer() {
             const adPurch = optGetPurchases(ad.insights);
             const adCpa = adPurch > 0 ? adSpend/adPurch : 0;
             const adCpaStyle = adCpa > 0 ? (adCpa <= 15 ? 'background:#4caf50;color:#fff;border-radius:4px;padding:2px 6px' : adCpa <= 25 ? 'background:#f59e0b;color:#fff;border-radius:4px;padding:2px 6px' : 'background:#ef5350;color:#fff;border-radius:4px;padding:2px 6px') : '';
-            const adFlags = optGetFlags(ad.name);
             html += '<tr class="opt-ad-row" style="'+grayStyle+'">';
             html += '<td></td>';
-            html += '<td style="text-align:center;font-size:11px">'+adFlags+'</td>';
+            html += '<td></td>';
+            html += '<td></td>';
             html += '<td style="text-align:left;padding-left:56px;color:#6b7280;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">└ '+ad.name+'</td>';
             html += '<td style="text-align:center" onclick="event.stopPropagation()"><label class="opt-toggle"><input type="checkbox" '+(ad.status==='ACTIVE'?'checked':'')+' onchange="toggleAdStatus(\''+ad.id+'\',this.checked)"><span class="opt-toggle-slider"></span></label></td>';
             html += '<td style="text-align:right;color:#9ca3af">—</td>';
