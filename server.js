@@ -712,30 +712,52 @@ async function syncCountry(country) {
       const wcReferrer = (meta.find(m => m.key === '_wc_order_attribution_referrer')?.value || '').toLowerCase();
       const wcSessionEntry = (meta.find(m => m.key === '_wc_order_attribution_session_entry')?.value || '').toLowerCase();
 
-      // Best values (flores plugin takes priority)
-      // WC attribution takes priority over flores plugin (more accurate)
+      // === ATTRIBUTION PRIORITY: PYS Last Click > PYS First Click > WC Session > Flores Plugin ===
+      // Extract PYS data
+      const pysData = meta.find(m => m.key === 'pys_enrich_data')?.value;
+      let pysLastCampaign = '', pysLastAdset = '', pysLastAd = '';
+      let pysFirstCampaign = '', pysFirstAdset = '', pysFirstAd = '';
+      if (pysData && typeof pysData === 'object') {
+        const parsePysUtm = (utmStr) => {
+          if (!utmStr) return {};
+          const result = {};
+          utmStr.split('|').forEach(part => { const [k, v] = part.split(':'); if (k && v) result[k.trim()] = v.trim(); });
+          return result;
+        };
+        const pysLast = parsePysUtm(pysData.last_pys_utm);
+        const pysFirst = parsePysUtm(pysData.pys_utm);
+        pysLastCampaign = pysLast.utm_campaign || '';
+        pysLastAdset = pysLast.utm_term || '';
+        pysLastAd = pysLast.utm_content || '';
+        pysFirstCampaign = pysFirst.utm_campaign || '';
+        pysFirstAdset = pysFirst.utm_term || '';
+        pysFirstAd = pysFirst.utm_content || '';
+      }
+
       let utmSource = wcUtmSource || floresUtmSource || '';
       if (!utmSource && wcReferrer.includes('google')) utmSource = 'google';
       if (!utmSource && wcReferrer.includes('facebook')) utmSource = 'fb';
+      // If PYS has FB data, ensure source is fb
+      if ((pysLastCampaign || pysFirstCampaign) && !utmSource) utmSource = 'fb';
       const utmMedium = floresUtmMedium || '';
 
-      // Campaign ID: flores plugin > WC utm_campaign > session entry > referrer extraction
-      let campaignId = floresCampaignId || wcUtmCampaign;
+      // PRIMARY = PYS Last Click (best for performance marketing)
+      // Fallback chain: PYS last > PYS first > WC session > Flores plugin > URL extraction
+      let campaignId = pysLastCampaign || pysFirstCampaign || floresCampaignId || wcUtmCampaign;
       if (!campaignId) {
         const match = wcSessionEntry.match(/campaignid=(\d+)/i);
         if (match) campaignId = match[1];
       }
-      // Fallback: extract campaign/adset/ad IDs from referrer URL (internal pages with FB params)
       if (!campaignId) {
         const refMatch = wcReferrer.match(/campaignid=(\d+)/i);
         if (refMatch) campaignId = refMatch[1];
       }
-      let adsetId = floresAdsetId;
+      let adsetId = pysLastAdset || pysFirstAdset || floresAdsetId;
       if (!adsetId) {
         const m1 = wcSessionEntry.match(/adsetid=(\d+)/i) || wcReferrer.match(/adsetid=(\d+)/i);
         if (m1) adsetId = m1[1];
       }
-      let adId = floresAdId;
+      let adId = pysLastAd || pysFirstAd || floresAdId;
       if (!adId) {
         const m2 = wcSessionEntry.match(/adid=(\d+)/i) || wcReferrer.match(/adid=(\d+)/i);
         if (m2) adId = m2[1];
@@ -795,30 +817,16 @@ async function syncCountry(country) {
         order_datetime: (order.date_created || '').replace('T', ' ').slice(0, 16)
       });
 
-      // Extract passive attributions from PixelYourSite
-      const pysData = meta.find(m => m.key === 'pys_enrich_data')?.value;
-      if (pysData && typeof pysData === 'object') {
-        const primaryCampaign = campaignId;
-        const parsePysUtm = (utmStr) => {
-          if (!utmStr) return {};
-          const result = {};
-          utmStr.split('|').forEach(part => {
-            const [k, v] = part.split(':');
-            if (k && v) result[k.trim()] = v.trim();
-          });
-          return result;
-        };
-        const pysFirst = parsePysUtm(pysData.pys_utm);
-        const pysLast = parsePysUtm(pysData.last_pys_utm);
-        const upsertPA = db.prepare('INSERT OR IGNORE INTO passive_attributions (wc_order_id, country, campaign_id, adset_id, ad_id, source, order_date) VALUES (?, ?, ?, ?, ?, ?, ?)');
-        // First click passive
-        if (pysFirst.utm_campaign && pysFirst.utm_campaign !== primaryCampaign) {
-          upsertPA.run(order.id, country, pysFirst.utm_campaign, pysFirst.utm_term || '', pysFirst.utm_content || '', 'pys_first', orderDate);
-        }
-        // Last click passive
-        if (pysLast.utm_campaign && pysLast.utm_campaign !== primaryCampaign && pysLast.utm_campaign !== pysFirst.utm_campaign) {
-          upsertPA.run(order.id, country, pysLast.utm_campaign, pysLast.utm_term || '', pysLast.utm_content || '', 'pys_last', orderDate);
-        }
+      // Store passive attributions (PYS first click + WC session as passive)
+      const primaryCampaign = campaignId;
+      const upsertPA = db.prepare('INSERT OR IGNORE INTO passive_attributions (wc_order_id, country, campaign_id, adset_id, ad_id, source, order_date) VALUES (?, ?, ?, ?, ?, ?, ?)');
+      // PYS First Click as passive (if different from primary)
+      if (pysFirstCampaign && pysFirstCampaign !== primaryCampaign && pysFirstCampaign !== 'undefined') {
+        upsertPA.run(order.id, country, pysFirstCampaign, pysFirstAdset || '', pysFirstAd || '', 'pys_first', orderDate);
+      }
+      // WC Session as passive (if different from primary and from PYS first)
+      if (wcUtmCampaign && wcUtmCampaign !== primaryCampaign && wcUtmCampaign !== pysFirstCampaign && wcUtmCampaign !== 'undefined') {
+        upsertPA.run(order.id, country, wcUtmCampaign, '', '', 'wc_session', orderDate);
       }
 
       count++;
