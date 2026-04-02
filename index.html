@@ -1711,7 +1711,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <th style="text-align:center;font-size:9px">30D</th>
         <th style="text-align:center;font-size:9px">MAX</th>
       </tr></thead>
-      <tbody id="optBody"><tr><td colspan="18" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
+      <tbody id="optBody"><tr><td colspan="18"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr></tbody>
     </table>
   </div>
   <!-- Optimizer Summary -->
@@ -5249,7 +5249,7 @@ function optGetPurchases(ins) {
 
 async function loadOptimizer() {
   const {from,to} = getOptDateRange();
-  document.getElementById('optBody').innerHTML = '<tr><td colspan="18" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr>';
+  document.getElementById('optBody').innerHTML = '<tr><td colspan="18"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>';
   try {
     const res = await fetch('/api/campaigns?date_from='+from+'&date_to='+to);
     optCampaigns = await res.json();
@@ -5260,7 +5260,7 @@ async function loadOptimizer() {
     renderOptimizer();
     optRangeData = {};
     loadOptRanges();
-  } catch(e) { document.getElementById('optBody').innerHTML = '<tr><td colspan="18" style="text-align:center;padding:30px;color:#dc2626">Error: '+e.message+'</td></tr>'; }
+  } catch(e) { document.getElementById('optBody').innerHTML = '<tr><td colspan="18"><div class="loading-state" style="color:#dc2626">Error: '+e.message+'</div></td></tr>'; }
 }
 
 function optGetFlags(name) {
@@ -5386,7 +5386,7 @@ function renderOptimizer() {
     return false;
   });
   if (!filtered.length) {
-    document.getElementById('optBody').innerHTML = '<tr><td colspan="18" style="text-align:center;padding:30px;color:#9ca3af">No campaigns found</td></tr>';
+    document.getElementById('optBody').innerHTML = '<tr><td colspan="18"><div class="loading-state">No campaigns found</div></td></tr>';
     return;
   }
   // Auto-expand multi-country campaigns when country filter is active
