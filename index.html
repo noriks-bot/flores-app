@@ -2933,7 +2933,7 @@ async function loadData() {
     if(sortKey) sortCampaigns();
     // Fetch today's budget changes + FPA in parallel
     loadTodayBudgetChanges().then(() => { if(activeTab==='campaigns') renderTable(); });
-    fetch(`/api/fpa?date_from=${from}&date_to=${to}`).then(r=>r.json()).then(d=>{if(!d.error){fpaData=d;if(activeTab==='campaigns')renderTable();}}).catch(()=>{});
+    fetch(`/api/fpa?date_from=${from}&date_to=${to}`).then(r=>r.json()).then(d=>{if(!d.error){fpaData=d;if(activeTab==='campaigns'){renderTable();updateSummary();}}}).catch(()=>{});
     if(activeTab==='campaigns') {
       renderCampaignHeaders();
       updateSummary(); updateSortHeaders(); renderTable();
