@@ -695,9 +695,10 @@ async function syncCountry(country) {
       const meta = order.meta_data || [];
 
       // Priority: flores plugin fields > WC attribution fields
-      const floresCampaignId = meta.find(m => m.key === '_flores_campaign_id')?.value || '';
-      const floresAdsetId = meta.find(m => m.key === '_flores_adset_id')?.value || '';
-      const floresAdId = meta.find(m => m.key === '_flores_ad_id')?.value || '';
+      const cleanVal = v => (!v || v === 'undefined' || v === 'null') ? '' : v;
+      const floresCampaignId = cleanVal(meta.find(m => m.key === '_flores_campaign_id')?.value);
+      const floresAdsetId = cleanVal(meta.find(m => m.key === '_flores_adset_id')?.value);
+      const floresAdId = cleanVal(meta.find(m => m.key === '_flores_ad_id')?.value);
       const floresCampaignName = meta.find(m => m.key === '_flores_campaign_name')?.value || '';
       const floresAdsetName = meta.find(m => m.key === '_flores_adset_name')?.value || '';
       const floresAdName = meta.find(m => m.key === '_flores_ad_name')?.value || '';
@@ -726,12 +727,13 @@ async function syncCountry(country) {
         };
         const pysLast = parsePysUtm(pysData.last_pys_utm);
         const pysFirst = parsePysUtm(pysData.pys_utm);
-        pysLastCampaign = pysLast.utm_campaign || '';
-        pysLastAdset = pysLast.utm_term || '';
-        pysLastAd = pysLast.utm_content || '';
-        pysFirstCampaign = pysFirst.utm_campaign || '';
-        pysFirstAdset = pysFirst.utm_term || '';
-        pysFirstAd = pysFirst.utm_content || '';
+        const cleanPys = v => (!v || v === 'undefined' || v === 'null') ? '' : v;
+        pysLastCampaign = cleanPys(pysLast.utm_campaign);
+        pysLastAdset = cleanPys(pysLast.utm_term);
+        pysLastAd = cleanPys(pysLast.utm_content);
+        pysFirstCampaign = cleanPys(pysFirst.utm_campaign);
+        pysFirstAdset = cleanPys(pysFirst.utm_term);
+        pysFirstAd = cleanPys(pysFirst.utm_content);
       }
 
       let utmSource = wcUtmSource || floresUtmSource || '';
