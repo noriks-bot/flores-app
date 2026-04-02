@@ -7219,6 +7219,7 @@ async function openTrendChart(id, name, level) {
     for (var di = days.length - 1; di >= 0; di--) {
       var daySpend = spends[di] || 0;
       var dayPurch = purchases[di] || 0;
+      if (daySpend <= 0 && dayPurch <= 0) continue;
       var dayCpa = dayPurch > 0 ? (daySpend / dayPurch).toFixed(2) : '—';
       var rowBg = dayPurch > 0 ? '' : 'opacity:0.4;';
       tableHtml += '<tr style="border-bottom:1px solid #f0f0f0;' + rowBg + '"><td style="padding:3px 6px">' + days[di] + '</td><td style="text-align:right;padding:3px 6px">' + daySpend.toFixed(2) + ' €</td><td style="text-align:right;padding:3px 6px;font-weight:600">' + dayPurch + '</td><td style="text-align:right;padding:3px 6px">' + dayCpa + (dayCpa !== '—' ? ' €' : '') + '</td></tr>';
