@@ -1188,14 +1188,13 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 
 <!-- MAIN -->
 <div class="main">
-  <div class="topbar">
+  <div class="topbar" style="display:none">
     <div class="topbar-left">
       <button class="mobile-menu-btn" onclick="openMobileSidebar()"><i class="fas fa-bars"></i></button>
       <h1 class="page-title" id="pageTitle">Campaigns</h1>
     </div>
     <div class="topbar-right">
       <button class="topbar-icon-btn" onclick="openCommandPalette()" title="Command Palette (Ctrl+K)"><i class="fas fa-search"></i></button>
-      <!-- dark mode removed -->
       <button class="topbar-icon-btn notification-bell" onclick="toggleNotifications()" title="Notifications">
         <i class="fas fa-bell"></i>
         <span class="notif-badge" id="notifBadge" style="display:none">0</span>
@@ -3316,7 +3315,7 @@ function makeRow(item,level,bgClass) {
     <td>${selectCb}</td>
     <td>${expandHtml}</td>
     <td>${statusHtml}</td>
-    <td style="text-align:left;${level==='adset'?'padding-left:50px;':level==='ad'?'padding-left:100px;':''}"><div class="name-cell">${level==='adset'?'↳ ':level==='ad'?'↳ ':''}${isNewCampaign(item)?'<span style="background:#3b82f6;color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;margin-right:4px;vertical-align:middle">NEW</span>':''}${nameHtml(item.name,level)}<button onclick="event.stopPropagation();navigator.clipboard.writeText('${item.id}');this.textContent='✓';this.style.background='#22c55e';setTimeout(()=>{this.textContent='ID';this.style.background='#333'},1000)" title="Copy ID: ${item.id}" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">ID</button>${level==='campaign'?`<button class="edit-inline-btn" onclick="event.stopPropagation();inlineEditName('${item.id}','${(item.name||'').replace(/'/g,"\\'").replace(/\`/g,'\\`')}')" title="Rename campaign" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}<button onclick="event.stopPropagation();openTrendChart('${item.id}','${(item.name||'').replace(/'/g,"\\'").substring(0,60)}','${level}')" title="Trend chart" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">📊</button></div></td>
+    <td style="text-align:left;${level==='adset'?'padding-left:50px;':level==='ad'?'padding-left:100px;':''}"><div class="name-cell">${level==='adset'?'↳ ':level==='ad'?'↳ ':''}${isNewCampaign(item)?'<span style="display:block;background:#3b82f6;color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;width:fit-content;margin-bottom:2px">NEW</span>':''}${nameHtml(item.name,level)}<button onclick="event.stopPropagation();navigator.clipboard.writeText('${item.id}');this.textContent='✓';this.style.background='#22c55e';setTimeout(()=>{this.textContent='ID';this.style.background='#333'},1000)" title="Copy ID: ${item.id}" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">ID</button>${level==='campaign'?`<button class="edit-inline-btn" onclick="event.stopPropagation();inlineEditName('${item.id}','${(item.name||'').replace(/'/g,"\\'").replace(/\`/g,'\\`')}')" title="Rename campaign" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}<button onclick="event.stopPropagation();openTrendChart('${item.id}','${(item.name||'').replace(/'/g,"\\'").substring(0,60)}','${level}')" title="Trend chart" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">📊</button></div></td>
     <td style="padding:2px 4px">${getCountryTags(item.name)}</td>
     <td>${getProductTag(item.name)}</td>
     <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}</td>
