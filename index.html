@@ -3681,7 +3681,7 @@ async function showCampaignOrders(campaignId) {
       const prodCost = o.productCost||0;
       const shipCost = o.shippingCost||0;
       const profit = o.profit||0;
-      const calcHtml = `<span style="font-size:9px;color:#999;display:block;margin-top:2px">${gross.toFixed(2)} - ${tax.toFixed(2)} tax - ${prodCost.toFixed(2)} cost - ${shipCost.toFixed(2)} ship</span>`;
+      const calcHtml = `<span style="font-size:9px;color:#999;display:block;margin-top:2px">${gross.toFixed(2)} gross → ${net.toFixed(2)} net (rej+vat) - ${prodCost.toFixed(2)} cost - ${shipCost.toFixed(2)} ship</span>`;
       return `<tr>
         <td><strong>#${o.number}</strong><br><span style="font-size:10px;color:var(--text-muted)">${o.date}</span></td>
         <td>${o.customer||'—'}<br><span style="font-size:10px;color:var(--text-muted)">${o.city||''} ${o.country||''}</span></td>
