@@ -1395,26 +1395,31 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <span class="filter-label">Period</span>
       <div class="preset-tabs" id="logPresetTabs">
         <button class="preset-tab active" data-range="today" onclick="setLogDate(this,'today')">Today</button>
+        <button class="preset-tab" data-range="yesterday" onclick="setLogDate(this,'yesterday')">Yesterday</button>
         <button class="preset-tab" data-range="7d" onclick="setLogDate(this,'7d')">7D</button>
         <button class="preset-tab" data-range="30d" onclick="setLogDate(this,'30d')">30D</button>
         <button class="preset-tab" data-range="all" onclick="setLogDate(this,'all')">All</button>
       </div>
+      <input type="date" id="logCustomFrom" style="padding:5px 8px;border:1px solid var(--border-color);border-radius:6px;font-size:11px;background:var(--card-bg);color:var(--text-primary)" onchange="setLogDateCustom()">
+      <span style="font-size:11px;color:#9ca3af">→</span>
+      <input type="date" id="logCustomTo" style="padding:5px 8px;border:1px solid var(--border-color);border-radius:6px;font-size:11px;background:var(--card-bg);color:var(--text-primary)" onchange="setLogDateCustom()">
     </div>
     <div class="content" style="padding:12px 16px">
       <div class="table-card" style="overflow:hidden">
         <div style="overflow-y:auto;max-height:calc(100vh - 240px)">
           <table style="width:100%;min-width:0;table-layout:fixed;font-size:11px">
             <thead><tr>
-              <th style="text-align:left;width:14%">Time</th>
-              <th style="text-align:left;width:8%">User</th>
-              <th style="text-align:left;width:8%">Type</th>
+              <th style="text-align:left;width:13%">Time</th>
+              <th style="text-align:left;width:7%">User</th>
+              <th style="text-align:left;width:7%">Type</th>
+              <th style="text-align:left;width:13%">Campaign ID</th>
               <th style="text-align:center;width:10%">Old</th>
               <th style="text-align:center;width:10%">New</th>
-              <th style="text-align:right;width:10%">Spend</th>
-              <th style="text-align:right;width:8%">Ord</th>
-              <th style="text-align:right;width:10%">Profit</th>
+              <th style="text-align:right;width:8%">Spend</th>
+              <th style="text-align:right;width:6%">Ord</th>
+              <th style="text-align:right;width:8%">Profit</th>
             </tr></thead>
-            <tbody id="logBody"><tr><td colspan="8" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
+            <tbody id="logBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -2667,11 +2672,34 @@ function navigateTo(section) {
 }
 
 let logDateFilter = 'today';
+let logCustomFrom = '', logCustomTo = '';
 function setLogDate(btn, range) {
   document.querySelectorAll('#logPresetTabs .preset-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   logDateFilter = range;
+  logCustomFrom = ''; logCustomTo = '';
+  document.getElementById('logCustomFrom').value = '';
+  document.getElementById('logCustomTo').value = '';
   loadChangeLog();
+}
+function setLogDateCustom() {
+  const from = document.getElementById('logCustomFrom').value;
+  const to = document.getElementById('logCustomTo').value;
+  if (from && to) {
+    logDateFilter = 'custom';
+    logCustomFrom = from; logCustomTo = to;
+    document.querySelectorAll('#logPresetTabs .preset-tab').forEach(b=>b.classList.remove('active'));
+    loadChangeLog();
+  }
+}
+function logTypeTag(type) {
+  const colors = {
+    budget: 'background:#dbeafe;color:#1d4ed8',
+    status: 'background:#fef3c7;color:#92400e',
+    rename: 'background:#ede9fe;color:#6d28d9'
+  };
+  const style = colors[type] || 'background:#f1f5f9;color:#475569';
+  return `<span style="${style};padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">${type}</span>`;
 }
 async function loadChangeLog() {
   try {
@@ -2680,14 +2708,32 @@ async function loadChangeLog() {
     // Date filter
     if (logDateFilter !== 'all') {
       const now = new Date();
-      let cutoff;
-      if (logDateFilter === 'today') cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString().slice(0,10);
-      else if (logDateFilter === '7d') { const d=new Date(now); d.setDate(d.getDate()-7); cutoff=d.toISOString().slice(0,10); }
-      else if (logDateFilter === '30d') { const d=new Date(now); d.setDate(d.getDate()-30); cutoff=d.toISOString().slice(0,10); }
-      rows = rows.filter(r => (r.timestamp||'').slice(0,10) >= cutoff);
+      let cutoffFrom, cutoffTo;
+      if (logDateFilter === 'today') {
+        cutoffFrom = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString().slice(0,10);
+        cutoffTo = cutoffFrom;
+      } else if (logDateFilter === 'yesterday') {
+        const y = new Date(now); y.setDate(y.getDate()-1);
+        cutoffFrom = y.toISOString().slice(0,10);
+        cutoffTo = cutoffFrom;
+      } else if (logDateFilter === '7d') {
+        const d=new Date(now); d.setDate(d.getDate()-6);
+        cutoffFrom = d.toISOString().slice(0,10);
+        cutoffTo = now.toISOString().slice(0,10);
+      } else if (logDateFilter === '30d') {
+        const d=new Date(now); d.setDate(d.getDate()-29);
+        cutoffFrom = d.toISOString().slice(0,10);
+        cutoffTo = now.toISOString().slice(0,10);
+      } else if (logDateFilter === 'custom') {
+        cutoffFrom = logCustomFrom;
+        cutoffTo = logCustomTo;
+      }
+      if (cutoffFrom && cutoffTo) {
+        rows = rows.filter(r => { const d=(r.timestamp||'').slice(0,10); return d >= cutoffFrom && d <= cutoffTo; });
+      }
     }
     if (!rows.length) {
-      document.getElementById('logBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#9ca3af">No changes in this period</td></tr>';
+      document.getElementById('logBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#9ca3af">No changes in this period</td></tr>';
       return;
     }
     const profitColor = v => v > 0 ? '#22c55e' : v < 0 ? '#ef4444' : '#666';
@@ -2696,7 +2742,8 @@ async function loadChangeLog() {
       return `<tr style="border-bottom:1px solid #f0f0f0">
       <td style="text-align:left;font-size:11px;color:#666;white-space:nowrap">${r.timestamp}</td>
       <td style="text-align:left;font-size:11px;font-weight:600">${r.user || 'noriks'}</td>
-      <td style="text-align:left"><span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">${r.change_type}</span></td>
+      <td style="text-align:left">${logTypeTag(r.change_type)}</td>
+      <td style="text-align:left;font-size:10px;font-family:monospace;color:#64748b">${r.entity_id || '—'}</td>
       <td style="text-align:center;font-size:12px;font-weight:700;background:${oldBg};color:#ef4444">${r.old_value || '—'}</td>
       <td style="text-align:center;font-size:12px;font-weight:700;background:${newBg};color:#22c55e">${r.new_value || '—'}</td>
       <td style="text-align:right;font-size:11px">${r.spend_at_change ? r.spend_at_change.toFixed(2) + '€' : '—'}</td>
@@ -2705,7 +2752,7 @@ async function loadChangeLog() {
     </tr>`;
     }).join('');
   } catch(e) {
-    document.getElementById('logBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#ef4444">Error: '+e.message+'</td></tr>';
+    document.getElementById('logBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#ef4444">Error: '+e.message+'</td></tr>';
   }
 }
 
