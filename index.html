@@ -3413,20 +3413,14 @@ function updateSelectionBar() {
   }
 }
 
+let showOnlySelected = false;
+
 function filterBySelected() {
   if(selectedCampaigns.size === 0) return;
+  showOnlySelected = true;
+  saveAdsFilters();
   if(activeTab === 'campaigns') {
-    const rows = document.querySelectorAll('#tableBody tr.level-campaign');
-    rows.forEach(row => {
-      const id = row.getAttribute('data-id');
-      const show = selectedCampaigns.has(id);
-      row.style.display = show ? '' : 'none';
-      let next = row.nextElementSibling;
-      while(next && !next.classList.contains('level-campaign')) {
-        next.style.display = show ? '' : 'none';
-        next = next.nextElementSibling;
-      }
-    });
+    applySearchFilter();
   } else if(activeTab === 'adsets') {
     renderAdsetTable(); updateAdsetSummary();
   } else {
@@ -3436,10 +3430,12 @@ function filterBySelected() {
 
 function clearSelection() {
   selectedCampaigns.clear();
+  showOnlySelected = false;
   document.querySelectorAll('.camp-select').forEach(cb => cb.checked = false);
   const master = document.querySelector('.master-select');
   if(master) master.checked = false;
   updateSelectionBar();
+  saveAdsFilters();
   if(activeTab === 'campaigns') applySearchFilter();
   else if(activeTab === 'adsets') { renderAdsetTable(); updateAdsetSummary(); }
   else { renderAdTable(); updateAdSummary(); }
@@ -4422,9 +4418,11 @@ function applySearchFilter() {
       if (activeAgeFilter === 'NEW') ageMatch = isNew;
       else if (activeAgeFilter === 'NOT_NEW') ageMatch = !isNew;
     } else if (!ageMatch) { ageMatch = true; }
+    // Show only selected
+    const selectionMatch = !showOnlySelected || selectedCampaigns.has(row.getAttribute('data-id'));
     // Search also matches campaign ID
     const rowId = row.getAttribute('data-id') || '';
-    const match = (!searchFilter || name.includes(searchFilter) || rowId.includes(searchFilter) || row.textContent.toLowerCase().includes(searchFilter)) && countryMatch && typeMatch && deliveryMatch && ageMatch;
+    const match = (!searchFilter || name.includes(searchFilter) || rowId.includes(searchFilter) || row.textContent.toLowerCase().includes(searchFilter)) && countryMatch && typeMatch && deliveryMatch && ageMatch && selectionMatch;
     row.style.display = match ? '' : 'none';
     if (match) shown++;
     // Also hide/show child rows
@@ -4517,7 +4515,7 @@ function saveAdsFilters() {
   try {
     localStorage.setItem('flores-ads-filters', JSON.stringify({
       country: activeCountryFilter, type: activeTypeFilter, delivery: activeDeliveryFilter, age: activeAgeFilter,
-      search: searchFilter, selection: [...selectedCampaigns]
+      search: searchFilter, selection: [...selectedCampaigns], showOnlySelected: showOnlySelected
     }));
   } catch(e) {}
 }
@@ -4532,6 +4530,7 @@ function restoreAdsFilters() {
     if (s.age) { activeAgeFilter = s.age; activatePill('age', s.age); }
     if (s.search) { searchFilter = s.search; document.getElementById('campaignSearch').value = s.search; document.getElementById('searchClear').style.display = 'block'; }
     if (s.selection && s.selection.length) { selectedCampaigns.clear(); s.selection.forEach(id => selectedCampaigns.add(id)); }
+    if (s.showOnlySelected && selectedCampaigns.size > 0) showOnlySelected = true;
   } catch(e) {}
 }
 function activatePill(ft, fv) {
