@@ -2130,7 +2130,7 @@ const server = http.createServer(async (req, res) => {
         const id = query.id;
         if (!id) return sendJSON(res, { error: 'id required' }, 400);
         try {
-          const camp = await metaGet(id, { fields: 'id,name,status,effective_status,bid_strategy,buying_type' });
+          const camp = await metaGet(id, { fields: 'id,name,status,effective_status' });
           if (!camp || !camp.id) return sendJSON(res, { error: 'Not found' }, 404);
           // Fetch insights for the date range
           let insights = null;
@@ -2139,7 +2139,7 @@ const server = http.createServer(async (req, res) => {
             if (insRes && insRes.data && insRes.data[0]) insights = insRes.data[0];
           } catch(e) {}
           // Build campaign object matching getCampaigns format
-          const result = { id: camp.id, name: camp.name, status: camp.effective_status || camp.status, bid_strategy: camp.bid_strategy, buying_type: camp.buying_type, insights: insights || {} };
+          const result = { id: camp.id, name: camp.name, status: camp.effective_status || camp.status, insights: insights || {} };
           return sendJSON(res, result);
         } catch(e) { return sendJSON(res, { error: e.message }, 500); }
       }
