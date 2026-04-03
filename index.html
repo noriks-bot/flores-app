@@ -3702,17 +3702,18 @@ async function showCampaignOrders(campaignId) {
       const profit = o.profit||0;
       const calcHtml = `<div style="font-size:8px;color:#999;margin-top:1px;white-space:nowrap">${gross.toFixed(0)}→${net.toFixed(0)} net -${prodCost.toFixed(0)} cost -${shipCost.toFixed(0)} ship</div>`;
       return `<tr>
-        <td style="white-space:nowrap"><strong>#${o.number}</strong><br><span style="font-size:9px;color:var(--text-muted)">${o.date}</span></td>
-        <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px">${o.customer||'—'}<br><span style="font-size:9px;color:var(--text-muted)">${o.city||''}</span></td>
+        <td style="white-space:nowrap;font-size:10px"><strong>#${o.number}</strong> <span style="color:var(--text-muted)">${o.date}</span></td>
+        <td style="font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.customer||'—'} <span style="color:var(--text-muted)">${o.city||''}</span></td>
         <td style="font-size:10px">${o.country}</td>
-        <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px" title="${prods}">${prods}</td>
-        <td style="text-align:right;white-space:nowrap;font-size:11px">€${gross.toFixed(2)}</td>
-        <td style="text-align:right;color:${profitColor};font-weight:700;white-space:nowrap;font-size:11px">${profit>=0?'+':''}€${profit.toFixed(2)}${calcHtml}</td>
+        <td style="font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${prods}">${prods}</td>
+        <td style="text-align:right;white-space:nowrap;font-size:10px">€${gross.toFixed(2)}</td>
+        <td style="text-align:right;color:${profitColor};font-weight:700;white-space:nowrap;font-size:10px">${profit>=0?'+':''}€${profit.toFixed(2)}<div style="font-size:8px;color:#999">${gross.toFixed(0)}-${prodCost.toFixed(0)}-${shipCost.toFixed(0)}</div></td>
       </tr>`;
     }).join('');
     
-    body.innerHTML = `<table style="width:100%;font-size:10px">
-      <thead><tr><th style="white-space:nowrap">Order</th><th style="white-space:nowrap">Customer</th><th>CC</th><th style="white-space:nowrap">Products</th><th style="text-align:right;white-space:nowrap">Gross</th><th style="text-align:right;white-space:nowrap">Profit</th></tr></thead>
+    body.innerHTML = `<table style="width:100%;font-size:10px;table-layout:fixed">
+      <colgroup><col style="width:12%"><col style="width:20%"><col style="width:5%"><col style="width:30%"><col style="width:13%"><col style="width:20%"></colgroup>
+      <thead><tr><th>Order</th><th>Customer</th><th>CC</th><th>Products</th><th style="text-align:right">Gross</th><th style="text-align:right">Profit</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
     
