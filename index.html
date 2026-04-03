@@ -4531,6 +4531,8 @@ function restoreAdsFilters() {
     if (s.search) { searchFilter = s.search; document.getElementById('campaignSearch').value = s.search; document.getElementById('searchClear').style.display = 'block'; }
     if (s.selection && s.selection.length) { selectedCampaigns.clear(); s.selection.forEach(id => selectedCampaigns.add(id)); }
     if (s.showOnlySelected && selectedCampaigns.size > 0) showOnlySelected = true;
+    // Show selection bar if we have selections
+    if (selectedCampaigns.size > 0) setTimeout(() => updateSelectionBar(), 100);
   } catch(e) {}
 }
 function activatePill(ft, fv) {
