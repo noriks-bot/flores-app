@@ -4376,6 +4376,10 @@ function applySearchFilter() {
   rows.forEach(row => {
     // Work on campaign rows AND flat rows (adsets/ads tabs)
     const isCampaign = row.classList.contains('level-campaign');
+    const isAdset = row.classList.contains('level-adset');
+    const isAd = row.classList.contains('level-ad');
+    // Skip child rows in hierarchical view — they inherit visibility from parent campaign via while loop
+    if (activeTab === 'campaigns' && (isAdset || isAd)) return;
     const isFlat = row.classList.contains('flat-row') || row.querySelector('.name-text');
     if (!isCampaign && !isFlat) return;
     total++;
