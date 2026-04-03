@@ -3474,7 +3474,7 @@ function renderTable() {
   });
   if(!html) html='<tr><td colspan="28"><div class="loading-state">No campaigns found</div></td></tr>';
   document.getElementById('tableBody').innerHTML=html;
-  if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL') applySearchFilter();
+  if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL' || activeDeliveryFilter !== 'HAD_DELIVERY') applySearchFilter();
 }
 
 function distributeWC(parentWC,children) {
@@ -3962,7 +3962,7 @@ function renderAdsetTable() {
   });
   if (!html) html = '<tr><td colspan="19"><div class="loading-state">No ad sets found</div></td></tr>';
   document.getElementById('tableBody').innerHTML = html;
-  if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL') setTimeout(applySearchFilter, 50);
+  if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL' || activeDeliveryFilter !== 'HAD_DELIVERY') setTimeout(applySearchFilter, 50);
 }
 
 function renderAdTable() {
@@ -3974,7 +3974,7 @@ function renderAdTable() {
   });
   if (!html) html = '<tr><td colspan="20"><div class="loading-state">No ads found</div></td></tr>';
   document.getElementById('tableBody').innerHTML = html;
-  if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL') setTimeout(applySearchFilter, 50);
+  if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL' || activeDeliveryFilter !== 'HAD_DELIVERY') setTimeout(applySearchFilter, 50);
 }
 
 function updateAdsetSummary() {
