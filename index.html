@@ -395,7 +395,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 }
 @keyframes fadeIn { from { opacity: 0; } }
 .modal-box {
-  background: #fff; border-radius: 4px; width: 90vw; max-width: 95vw; max-height: 80vh;
+  background: #fff; border-radius: 4px; width: 90vw; max-width: 800px; max-height: 80vh;
   display: flex; flex-direction: column;
   box-shadow: 0 8px 30px rgba(0,0,0,0.2);
   animation: popIn .25s cubic-bezier(0.16,1,0.3,1);
@@ -3668,7 +3668,7 @@ async function showCampaignOrders(campaignId) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.onclick = e => { if(e.target===overlay) closeModal(); };
-  overlay.innerHTML = `<div class="modal-box" style="max-width:95vw;width:95vw;overflow-x:auto">
+  overlay.innerHTML = `<div class="modal-box" style="max-width:800px;width:90vw">
     <div class="modal-header">
       <div><div class="modal-title">📦 Orders — ${name.replace(/</g,'&lt;').slice(0,60)}</div><div class="modal-sub">${from} → ${to}</div></div>
       <button class="modal-close" onclick="closeModal()">×</button>
@@ -3712,7 +3712,7 @@ async function showCampaignOrders(campaignId) {
     }).join('');
     
     body.innerHTML = `<table style="width:100%;font-size:10px;table-layout:fixed">
-      <colgroup><col style="width:12%"><col style="width:20%"><col style="width:5%"><col style="width:30%"><col style="width:13%"><col style="width:20%"></colgroup>
+      <colgroup><col style="width:14%"><col style="width:18%"><col style="width:5%"><col style="width:28%"><col style="width:10%"><col style="width:25%"></colgroup>
       <thead><tr><th>Order</th><th>Customer</th><th>CC</th><th>Products</th><th style="text-align:right">Gross</th><th style="text-align:right">Profit</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
