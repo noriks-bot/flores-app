@@ -690,6 +690,35 @@ async function syncCountry(country) {
   const orders = await fetchWcOrdersForCountry(country, modifiedAfter);
   let count = 0;
 
+  // Pre-resolve ad_id → campaign_id/adset_id via Meta API for orders missing campaign data
+  const adIdLookupCache = {};
+  for (const order of orders) {
+    const meta = order.meta_data || [];
+    const cleanVal = v => (!v || v === 'undefined' || v === 'null' || v === '0') ? '' : String(v).trim();
+    const floresAdId = cleanVal(meta.find(m => m.key === '_flores_ad_id')?.value);
+    const pysData = meta.find(m => m.key === 'pys_enrich_data')?.value;
+    let pysLastAd = '';
+    if (pysData && typeof pysData === 'object') {
+      const parsePysUtm = (utmStr) => { if (!utmStr) return {}; const result = {}; utmStr.split('|').forEach(part => { const [k, v] = part.split(':'); if (k && v) result[k.trim()] = v.trim(); }); return result; };
+      const pysLast = parsePysUtm(pysData.last_pys_utm);
+      pysLastAd = (!pysLast.utm_content || pysLast.utm_content === 'undefined') ? '' : pysLast.utm_content;
+    }
+    const adId = pysLastAd || floresAdId;
+    const wcUtmCampaign = meta.find(m => m.key === '_wc_order_attribution_utm_campaign')?.value || '';
+    const floresCampaignId = cleanVal(meta.find(m => m.key === '_flores_campaign_id')?.value);
+    const campaignId = floresCampaignId || wcUtmCampaign;
+    if (adId && /^\d+$/.test(adId) && (!campaignId || !/^\d+$/.test(campaignId)) && !adIdLookupCache[adId]) {
+      try {
+        const adMeta = await _metaGetOnce(adId, { fields: 'campaign_id,adset_id' });
+        adIdLookupCache[adId] = { campaign_id: adMeta.campaign_id || '', adset_id: adMeta.adset_id || '' };
+        console.log(`[WC-SYNC] Resolved ad ${adId} → campaign ${adMeta.campaign_id}, adset ${adMeta.adset_id}`);
+      } catch (e) {
+        adIdLookupCache[adId] = null;
+        console.warn(`[WC-SYNC] Meta lookup failed for ad ${adId}:`, e.message || e);
+      }
+    }
+  }
+
   const insertMany = db.transaction((orders) => {
     for (const order of orders) {
       const meta = order.meta_data || [];
@@ -765,6 +794,12 @@ async function syncCountry(country) {
         if (m2) adId = m2[1];
       }
 
+      // Apply Meta API lookup cache for missing campaign/adset
+      if (adId && adIdLookupCache[adId]) {
+        if (!campaignId || !/^\d+$/.test(campaignId)) campaignId = adIdLookupCache[adId].campaign_id;
+        if (!adsetId || !/^\d+$/.test(adsetId)) adsetId = adIdLookupCache[adId].adset_id;
+      }
+
       // Origin classification using dash logic
       const orderMeta = {};
       for (const m of meta) orderMeta[m.key] = m.value;
@@ -787,16 +822,6 @@ async function syncCountry(country) {
       relevantMeta.date_created = order.date_created || '';
       relevantMeta.billing_email = order.billing?.email || '';
       {
-      }
-
-      // If we have ad_id but no campaign/adset, lookup from Meta API
-      if (adId && /^\d+$/.test(adId) && (!campaignId || !/^\d+$/.test(campaignId))) {
-        try {
-          const adMeta = await _metaGetOnce(adId, { fields: 'campaign_id,adset_id' });
-          if (adMeta.campaign_id && !campaignId) campaignId = adMeta.campaign_id;
-          if (adMeta.adset_id && (!adsetId || !/^\d+$/.test(adsetId))) adsetId = adMeta.adset_id;
-          console.log(`[WC-SYNC] Resolved ad ${adId} → campaign ${campaignId}, adset ${adsetId}`);
-        } catch (e) { console.warn(`[WC-SYNC] Meta lookup failed for ad ${adId}:`, e.message || e); }
       }
 
       upsertOrder.run({
