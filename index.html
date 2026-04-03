@@ -3668,7 +3668,7 @@ async function showCampaignOrders(campaignId) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.onclick = e => { if(e.target===overlay) closeModal(); };
-  overlay.innerHTML = `<div class="modal-box" style="max-width:95vw;width:750px">
+  overlay.innerHTML = `<div class="modal-box" style="max-width:95vw;width:95vw;overflow-x:auto">
     <div class="modal-header">
       <div><div class="modal-title">📦 Orders — ${name.replace(/</g,'&lt;').slice(0,60)}</div><div class="modal-sub">${from} → ${to}</div></div>
       <button class="modal-close" onclick="closeModal()">×</button>
@@ -3711,9 +3711,8 @@ async function showCampaignOrders(campaignId) {
       </tr>`;
     }).join('');
     
-    body.innerHTML = `<table style="width:100%;font-size:10px;table-layout:fixed">
-      <colgroup><col style="width:60px"><col style="width:80px"><col style="width:25px"><col><col style="width:55px"><col style="width:90px"></colgroup>
-      <thead><tr><th>Order</th><th>Customer</th><th>CC</th><th>Products</th><th style="text-align:right">Gross</th><th style="text-align:right">Profit</th></tr></thead>
+    body.innerHTML = `<table style="width:100%;font-size:10px">
+      <thead><tr><th style="white-space:nowrap">Order</th><th style="white-space:nowrap">Customer</th><th>CC</th><th style="white-space:nowrap">Products</th><th style="text-align:right;white-space:nowrap">Gross</th><th style="text-align:right;white-space:nowrap">Profit</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
     
