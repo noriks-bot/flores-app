@@ -4521,11 +4521,13 @@ function applySearchFilter() {
     const match = searchMatch && countryMatch && typeMatch && deliveryMatch && selectionMatch;
     row.style.display = match ? '' : 'none';
     if (match) shown++;
-    // Also hide/show child rows
-    let next = row.nextElementSibling;
-    while (next && !next.classList.contains('level-campaign')) {
-      next.style.display = match ? '' : 'none';
-      next = next.nextElementSibling;
+    // Also hide/show child rows (only on campaigns tab with hierarchical rows)
+    if (activeTab === 'campaigns' && isCampaign) {
+      let next = row.nextElementSibling;
+      while (next && !next.classList.contains('level-campaign')) {
+        next.style.display = match ? '' : 'none';
+        next = next.nextElementSibling;
+      }
     }
   });
   // Re-apply zebra striping on visible rows
