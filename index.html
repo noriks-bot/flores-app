@@ -4460,7 +4460,56 @@ function applySearchFilter() {
   } else {
     countEl.textContent = '';
   }
+  // Recalculate totals based on visible campaigns only
+  if (activeTab === 'campaigns') recalcFilteredTotals();
 }
+
+function recalcFilteredTotals() {
+  const visibleIds = new Set();
+  document.querySelectorAll('#tableBody tr.level-campaign').forEach(row => {
+    if (row.style.display !== 'none') visibleIds.add(row.getAttribute('data-id'));
+  });
+  const allVisible = visibleIds.size === campaigns.length;
+  if (allVisible) { updateSummary(); return; }
+  const filtered = campaigns.filter(c => visibleIds.has(c.id));
+  let spend=0,purchases=0,wcOrders=0,wcRevenue=0,wcProfit=0,totCheckouts=0,totAtc=0,totLinkClicks=0;
+  let fpaTotal=0;
+  filtered.forEach(c => {
+    if(c.insights){spend+=parseFloat(c.insights.spend||0);purchases+=getPurchases(c.insights);}
+    if(c.wc){wcOrders+=c.wc.orders||0;wcRevenue+=c.wc.revenueGross||0;wcProfit+=c.wc.profit||0;}
+    const acts=c.insights?.actions||[];
+    const ga=(arr,types)=>{for(const t of types){const a=arr.find(x=>x.action_type===t);if(a)return parseFloat(a.value)||0;}return 0;};
+    totCheckouts+=ga(acts,['omni_initiated_checkout','initiate_checkout']);
+    totAtc+=ga(acts,['omni_add_to_cart','add_to_cart']);
+    totLinkClicks+=ga(acts,['link_click']);
+    fpaTotal+=(fpaData.campaigns||{})[c.id]||0;
+  });
+  const cpa=purchases>0?(spend/purchases).toFixed(2)+' €':'—';
+  const roas=spend>0?(wcRevenue/spend).toFixed(2)+'x':'—';
+  const totCpcLink=totLinkClicks>0?(spend/totLinkClicks).toFixed(2)+' €':'0 €';
+  const totFlorexCpa=wcOrders>0?(spend/wcOrders).toFixed(2)+' €':'0 €';
+  const mpTotals={yesterday:0,d3:0,d7:0,d14:0,d30:0,lifetime:0};
+  filtered.forEach(c=>{const mp=multiProfitData[c.id];if(mp){for(const k of Object.keys(mpTotals)) mpTotals[k]+=(mp[k]?.profit||0);}});
+  const totalsHtml=`<tr class="totals-row">
+    <td></td><td></td><td></td><td style="text-align:left"><strong>Totals (${filtered.length})</strong></td>
+    <td></td><td></td><td></td><td></td>
+    <td>${spend.toFixed(2)} €</td>
+    <td><strong>${wcOrders}</strong></td>
+    <td style="color:#c4b5fd">${fpaTotal}</td>
+    <td>${wcProfit.toFixed(2)} €</td>
+    <td>${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
+    <td>${wcRevenue.toFixed(2)} €</td>
+    <td>${totFlorexCpa}</td>
+    <td>${roas}</td>
+    <td></td><td></td><td></td><td></td><td></td><td></td>
+    <td>${cpa}</td>
+    <td>${purchases}</td>
+    <td>${totCheckouts}</td>
+    <td>${totAtc}</td>
+    <td>${totCpcLink}</td>
+  </tr>`;
+  document.getElementById('tableTotals').innerHTML=totalsHtml;
+  document.getElementById('tableTotalsBottom').innerHTML=totalsHtml;
 
 // --- Persist/restore ads manager filters ---
 function saveAdsFilters() {
