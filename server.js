@@ -1068,6 +1068,7 @@ function fetchWcOrdersByCampaign(dateFrom, dateTo) {
 // Calculate WC profit per campaign from its ACTUAL orders (matched by utm_campaign ID)
 function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
   const byCampaign = fetchWcOrdersByCampaign(dateFrom, dateTo);
+  const matchedCampaignIds = new Set();
   
   for (const c of campaigns) {
     const metaSpend = parseFloat(c.insights?.spend || 0);
@@ -1076,6 +1077,7 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
     // Match WC orders by campaign ID
     const campaignId = c.id || '';
     const orders = byCampaign[campaignId] || [];
+    matchedCampaignIds.add(campaignId);
     
     const totalProfit = orders.reduce((s, o) => s + o.profit, 0);
     const totalRevenue = orders.reduce((s, o) => s + o.grossEur, 0);
@@ -1086,6 +1088,28 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
       profit: Math.round((totalProfit - metaSpend) * 100) / 100
     };
     c.wc.roas = metaSpend > 0 ? Math.round(c.wc.revenueGross / metaSpend * 100) / 100 : 0;
+  }
+
+  // Add campaigns that have WC orders but weren't in Meta API results (paused/old campaigns)
+  for (const [campaignId, orders] of Object.entries(byCampaign)) {
+    if (matchedCampaignIds.has(campaignId)) continue;
+    if (!/^\d+$/.test(campaignId)) continue; // skip non-numeric IDs
+    const totalProfit = orders.reduce((s, o) => s + o.profit, 0);
+    const totalRevenue = orders.reduce((s, o) => s + o.grossEur, 0);
+    // Try to get campaign name from DB
+    const dbName = db.prepare("SELECT campaign_name FROM wc_orders WHERE utm_campaign = ? AND campaign_name IS NOT NULL AND campaign_name != '' LIMIT 1").get(campaignId);
+    campaigns.push({
+      id: campaignId,
+      name: dbName?.campaign_name || campaignId,
+      status: 'PAUSED',
+      insights: { spend: '0', impressions: '0', clicks: '0', actions: [] },
+      _parsed: parseCampaignName(dbName?.campaign_name || ''),
+      wc: {
+        orders: orders.length,
+        revenueGross: Math.round(totalRevenue * 100) / 100,
+        profit: Math.round(totalProfit * 100) / 100
+      }
+    });
   }
 
   return campaigns;
