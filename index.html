@@ -3711,10 +3711,10 @@ async function showCampaignOrders(campaignId) {
       </tr>`;
     }).join('');
     
-    body.innerHTML = `<table style="table-layout:fixed;width:100%">
-      <thead><tr><th style="width:80px">Order</th><th style="width:120px">Customer</th><th style="width:40px">CC</th><th style="width:150px">Products</th><th style="text-align:right;width:70px">Gross</th><th style="text-align:right;width:130px">Profit</th></tr></thead>
+    body.innerHTML = `<div style="overflow-x:auto"><table style="table-layout:fixed;width:100%">
+      <thead><tr><th style="width:70px">Order</th><th style="width:110px">Customer</th><th style="width:30px">CC</th><th>Products</th><th style="text-align:right;width:65px">Gross</th><th style="text-align:right;width:120px">Profit</th></tr></thead>
       <tbody>${rows}</tbody>
-    </table>`;
+    </table></div>`;
     
     // Add footer
     const footer = document.createElement('div');
