@@ -3475,7 +3475,7 @@ function renderTable() {
   });
   if(!html) html='<tr><td colspan="28"><div class="loading-state">No campaigns found</div></td></tr>';
   document.getElementById('tableBody').innerHTML=html;
-  if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL' || activeDeliveryFilter !== 'HAD_DELIVERY') applySearchFilter();
+  if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL' || activeDeliveryFilter !== 'HAD_DELIVERY' || showOnlySelected) applySearchFilter();
 }
 
 function distributeWC(parentWC,children) {
