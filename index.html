@@ -4424,8 +4424,13 @@ function applySearchFilter() {
       if (activeAgeFilter === 'NEW') ageMatch = isNew;
       else if (activeAgeFilter === 'NOT_NEW') ageMatch = !isNew;
     } else if (!ageMatch) { ageMatch = true; }
-    // Show only selected
-    const selectionMatch = !showOnlySelected || selectedCampaigns.has(row.getAttribute('data-id'));
+    // Show only selected — child rows (adsets/ads) inherit from parent campaign
+    let selectionMatch = !showOnlySelected || selectedCampaigns.has(row.getAttribute('data-id'));
+    if (!selectionMatch && !isCampaign) {
+      let prev = row.previousElementSibling;
+      while (prev && !prev.classList.contains('level-campaign')) prev = prev.previousElementSibling;
+      if (prev) selectionMatch = selectedCampaigns.has(prev.getAttribute('data-id'));
+    }
     // Search also matches campaign ID
     const rowId = row.getAttribute('data-id') || '';
     const match = (!searchFilter || name.includes(searchFilter) || rowId.includes(searchFilter) || row.textContent.toLowerCase().includes(searchFilter)) && countryMatch && typeMatch && deliveryMatch && ageMatch && selectionMatch;
