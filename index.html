@@ -1286,6 +1286,14 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     </button>
   </div>
 
+  <!-- DELIVERY FILTER -->
+  <div style="display:flex;gap:8px;align-items:center;margin:8px 16px 0 16px;padding:6px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px">
+    <span style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px">Delivery:</span>
+    <button class="fpill fpill-active" data-ft="delivery" data-fv="HAD_DELIVERY" onclick="toggleFilterPill(this)">Had Delivery</button>
+    <button class="fpill" data-ft="delivery" data-fv="ACTIVE" onclick="toggleFilterPill(this)">Active</button>
+    <button class="fpill" data-ft="delivery" data-fv="NOT_ACTIVE" onclick="toggleFilterPill(this)">Not Active</button>
+  </div>
+
   <!-- TABS + SEARCH + FILTER PILLS (one blue container) -->
   <div id="campaignSearchBar" style="background:linear-gradient(135deg,#f0f4ff,#e8efff);border:1px solid #c7d2fe;border-radius:4px;margin:12px 16px;box-shadow:0 2px 8px rgba(30,58,95,0.06);padding:0 16px 10px 16px">
     <div class="level-tabs" style="padding:0;background:transparent;border-radius:0;margin-bottom:10px;display:flex;gap:0;border-bottom:1px solid #c7d2fe">
@@ -1316,7 +1324,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     <button class="fpill" data-ft="type" data-fv="ABO" onclick="toggleFilterPill(this)">ABO</button>
     <button class="fpill" data-ft="type" data-fv="SOFI" onclick="toggleFilterPill(this)">SOFI</button>
     <span style="width:1px;height:20px;background:var(--border-color);margin:0 8px"></span>
-    <button class="fpill" style="background:#fee2e2;color:#dc2626;border-color:#fca5a5" onclick="window.location.reload()">✕ Reset</button>
+    <button class="fpill" style="background:#fee2e2;color:#dc2626;border-color:#fca5a5" onclick="resetAllFilters()">✕ Reset</button>
     </div>
   </div>
 
@@ -3375,6 +3383,7 @@ function toggleCampaignSelect(id, cb) {
   if(cb.checked) selectedCampaigns.add(id);
   else selectedCampaigns.delete(id);
   updateSelectionBar();
+  saveAdsFilters();
 }
 
 function toggleSelectAll(masterCb) {
@@ -4303,17 +4312,21 @@ let searchFilter = '';
 
 let activeCountryFilter = 'ALL';
 let activeTypeFilter = 'ALL';
+let activeDeliveryFilter = 'HAD_DELIVERY';
 
 function resetAllFilters() {
   document.querySelectorAll('.fpill').forEach(b => {
     if (b.getAttribute('data-fv') === 'ALL') b.classList.add('fpill-active');
+    else if (b.getAttribute('data-fv') === 'HAD_DELIVERY' && b.getAttribute('data-ft') === 'delivery') b.classList.add('fpill-active');
     else b.classList.remove('fpill-active');
   });
   activeCountryFilter = 'ALL';
   activeTypeFilter = 'ALL';
+  activeDeliveryFilter = 'HAD_DELIVERY';
   document.getElementById('campaignSearch').value = '';
   document.getElementById('searchClear').style.display = 'none';
   searchFilter = '';
+  saveAdsFilters();
   applySearchFilter();
 }
 
@@ -4325,6 +4338,8 @@ function toggleFilterPill(btn) {
   btn.classList.add('fpill-active');
   if (ft === 'country') activeCountryFilter = fv;
   if (ft === 'type') activeTypeFilter = fv;
+  if (ft === 'delivery') activeDeliveryFilter = fv;
+  saveAdsFilters();
   applySearchFilter();
 }
 
@@ -4333,6 +4348,7 @@ function filterCampaigns() {
   const clearBtn = document.getElementById('searchClear');
   searchFilter = (input.value || '').toLowerCase().trim();
   clearBtn.style.display = searchFilter ? 'block' : 'none';
+  saveAdsFilters();
   applySearchFilter();
 }
 
@@ -4340,6 +4356,7 @@ function clearSearch() {
   document.getElementById('campaignSearch').value = '';
   document.getElementById('searchClear').style.display = 'none';
   searchFilter = '';
+  saveAdsFilters();
   applySearchFilter();
 }
 
@@ -4379,7 +4396,19 @@ function applySearchFilter() {
         typeMatch = fullText.includes(activeTypeFilter);
       }
     }
-    const match = (!searchFilter || name.includes(searchFilter) || row.textContent.toLowerCase().includes(searchFilter)) && countryMatch && typeMatch;
+    // Delivery filter — only on campaign-level rows
+    let deliveryMatch = true;
+    if (activeDeliveryFilter !== 'HAD_DELIVERY' || isCampaign) {
+      const campData = isCampaign ? campaigns.find(c => c.id === row.getAttribute('data-id')) : null;
+      if (isCampaign && campData) {
+        if (activeDeliveryFilter === 'HAD_DELIVERY') deliveryMatch = parseFloat(campData.insights?.spend || 0) > 0;
+        else if (activeDeliveryFilter === 'ACTIVE') deliveryMatch = campData.status === 'ACTIVE';
+        else if (activeDeliveryFilter === 'NOT_ACTIVE') deliveryMatch = campData.status !== 'ACTIVE';
+      }
+    }
+    // Search also matches campaign ID
+    const rowId = row.getAttribute('data-id') || '';
+    const match = (!searchFilter || name.includes(searchFilter) || rowId.includes(searchFilter) || row.textContent.toLowerCase().includes(searchFilter)) && countryMatch && typeMatch && deliveryMatch;
     row.style.display = match ? '' : 'none';
     if (match) shown++;
     // Also hide/show child rows
@@ -4416,6 +4445,35 @@ function applySearchFilter() {
     countEl.textContent = '';
   }
 }
+
+// --- Persist/restore ads manager filters ---
+function saveAdsFilters() {
+  try {
+    localStorage.setItem('flores-ads-filters', JSON.stringify({
+      country: activeCountryFilter, type: activeTypeFilter, delivery: activeDeliveryFilter,
+      search: searchFilter, selection: [...selectedCampaigns]
+    }));
+  } catch(e) {}
+}
+function restoreAdsFilters() {
+  try {
+    const raw = localStorage.getItem('flores-ads-filters');
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (s.country && s.country !== 'ALL') { activeCountryFilter = s.country; activatePill('country', s.country); }
+    if (s.type && s.type !== 'ALL') { activeTypeFilter = s.type; activatePill('type', s.type); }
+    if (s.delivery) { activeDeliveryFilter = s.delivery; activatePill('delivery', s.delivery); }
+    if (s.search) { searchFilter = s.search; document.getElementById('campaignSearch').value = s.search; document.getElementById('searchClear').style.display = 'block'; }
+    if (s.selection && s.selection.length) { selectedCampaigns.clear(); s.selection.forEach(id => selectedCampaigns.add(id)); }
+  } catch(e) {}
+}
+function activatePill(ft, fv) {
+  document.querySelectorAll(`.fpill[data-ft="${ft}"]`).forEach(b => b.classList.remove('fpill-active'));
+  const target = document.querySelector(`.fpill[data-ft="${ft}"][data-fv="${fv}"]`);
+  if (target) target.classList.add('fpill-active');
+}
+// Restore on load
+restoreAdsFilters();
 
 // loadData(); // Moved to navigateTo ads-manager
 
