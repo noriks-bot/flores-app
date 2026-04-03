@@ -416,7 +416,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
   text-align: left; position: sticky; top: 0; z-index: 1;
 }
 .modal-body th:nth-child(n+4) { text-align: right; }
-.modal-body td { padding: 4px 8px; font-size: 11px; border-bottom: 1px solid var(--border-color); line-height: 1.3; }
+.modal-body td { padding: 4px 6px; font-size: 10px; border-bottom: 1px solid var(--border-color); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; }
 .modal-body td:nth-child(n+4) { text-align: right; font-variant-numeric: tabular-nums; }
 .modal-body tr:hover td { background: rgba(59,130,246,0.03); }
 .modal-footer {
@@ -3702,17 +3702,17 @@ async function showCampaignOrders(campaignId) {
       const profit = o.profit||0;
       const calcHtml = `<div style="font-size:8px;color:#999;margin-top:1px;white-space:nowrap">${gross.toFixed(0)}→${net.toFixed(0)} net -${prodCost.toFixed(0)} cost -${shipCost.toFixed(0)} ship</div>`;
       return `<tr>
-        <td style="white-space:nowrap;font-size:10px"><strong>#${o.number}</strong> <span style="color:var(--text-muted)">${o.date}</span></td>
-        <td style="font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.customer||'—'} <span style="color:var(--text-muted)">${o.city||''}</span></td>
-        <td style="font-size:10px">${o.country}</td>
-        <td style="font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${prods}">${prods}</td>
-        <td style="text-align:right;white-space:nowrap;font-size:10px">€${gross.toFixed(2)}</td>
-        <td style="text-align:right;color:${profitColor};font-weight:700;white-space:nowrap;font-size:10px">${profit>=0?'+':''}€${profit.toFixed(2)}<div style="font-size:8px;color:#999">${gross.toFixed(0)}-${prodCost.toFixed(0)}-${shipCost.toFixed(0)}</div></td>
+        <td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><strong>#${o.number}</strong> ${o.date}</td>
+        <td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.customer||'—'}</td>
+        <td>${o.country}</td>
+        <td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${prods}">${prods}</td>
+        <td style="text-align:right;white-space:nowrap">€${gross.toFixed(2)}</td>
+        <td style="text-align:right;white-space:nowrap;color:${profitColor};font-weight:700">${profit>=0?'+':''}€${profit.toFixed(2)}</td>
       </tr>`;
     }).join('');
     
-    body.innerHTML = `<table style="width:100%;font-size:10px;table-layout:fixed;word-break:break-all">
-      <colgroup><col style="width:90px"><col style="width:110px"><col style="width:30px"><col><col style="width:60px"><col style="width:80px"></colgroup>
+    body.innerHTML = `<table style="width:100%;font-size:10px;table-layout:fixed">
+      <colgroup><col style="width:80px"><col style="width:100px"><col style="width:28px"><col><col style="width:55px"><col style="width:75px"></colgroup>
       <thead><tr><th>Order</th><th>Customer</th><th>CC</th><th>Products</th><th style="text-align:right">Gross</th><th style="text-align:right">Profit</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
