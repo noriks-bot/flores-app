@@ -789,6 +789,16 @@ async function syncCountry(country) {
       {
       }
 
+      // If we have ad_id but no campaign/adset, lookup from Meta API
+      if (adId && /^\d+$/.test(adId) && (!campaignId || !/^\d+$/.test(campaignId))) {
+        try {
+          const adMeta = await _metaGetOnce(adId, { fields: 'campaign_id,adset_id' });
+          if (adMeta.campaign_id && !campaignId) campaignId = adMeta.campaign_id;
+          if (adMeta.adset_id && (!adsetId || !/^\d+$/.test(adsetId))) adsetId = adMeta.adset_id;
+          console.log(`[WC-SYNC] Resolved ad ${adId} → campaign ${campaignId}, adset ${adsetId}`);
+        } catch (e) { console.warn(`[WC-SYNC] Meta lookup failed for ad ${adId}:`, e.message || e); }
+      }
+
       upsertOrder.run({
         country,
         wc_order_id: order.id,
