@@ -3904,7 +3904,12 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           byCountry: byCountry.map(c => ({ country: c.country, orders: c.orders, revenue: Math.round(c.revenue * 100) / 100, profit: Math.round(c.profit * 100) / 100 })),
           chartData: chartData.map(d => {
             let daySpend = 0;
-            try { const dd = (dashCacheData||{})[d.date]||{}; for (const [,v] of Object.entries(dd)) { if (v && typeof v.spend === 'number') daySpend += v.spend; } } catch(e){}
+            if (d.date === today && fbSpendToday > 0) {
+              // Use live Meta API spend for today instead of stale cache
+              daySpend = fbSpendToday;
+            } else {
+              try { const dd = (dashCacheData||{})[d.date]||{}; for (const [,v] of Object.entries(dd)) { if (v && typeof v.spend === 'number') daySpend += v.spend; } } catch(e){}
+            }
             return { date: d.date, orders: d.orders, revenue: Math.round(d.revenue * 100) / 100, profit: Math.round((d.profit - daySpend) * 100) / 100, spend: Math.round(daySpend * 100) / 100 };
           }),
           alerts: alerts,
