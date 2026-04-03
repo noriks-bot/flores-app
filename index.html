@@ -3003,7 +3003,12 @@ function updateSummary() {
     <td>${wcRevenue.toFixed(2)} €</td>
     <td>${totFlorexCpa}</td>
     <td>${roas}</td>
-    <td></td><td></td><td></td><td></td><td></td><td></td>
+    <td>${mpTotals.yesterday?mpTotals.yesterday.toFixed(2)+' €':''}</td>
+    <td>${mpTotals.d3?mpTotals.d3.toFixed(2)+' €':''}</td>
+    <td>${mpTotals.d7?mpTotals.d7.toFixed(2)+' €':''}</td>
+    <td>${mpTotals.d14?mpTotals.d14.toFixed(2)+' €':''}</td>
+    <td>${mpTotals.d30?mpTotals.d30.toFixed(2)+' €':''}</td>
+    <td>${mpTotals.lifetime?mpTotals.lifetime.toFixed(2)+' €':''}</td>
     <td>${cpa}</td>
     <td>${purchases}</td>
     <td>${totCheckouts}</td>
@@ -3776,6 +3781,12 @@ function renderCampaignHeaders() {
     <th data-sort="wc_revenue">Flores revenue</th>
     <th data-sort="wc_cpa">Flores CPA</th>
     <th data-sort="wc_roas">ROAS</th>
+    <th class="sep" data-sort="p_yesterday">P/L Yesterday</th>
+    <th data-sort="p_d3">P/L 3D</th>
+    <th data-sort="p_d7">P/L 7D</th>
+    <th data-sort="p_d14">P/L 14D</th>
+    <th data-sort="p_d30">P/L 30D</th>
+    <th data-sort="p_lifetime">P/L Max</th>
     <th data-sort="cpa" style="background:#dbeafe;color:#111">Cost per purchase</th>
     <th data-sort="purchases" style="background:#dbeafe;color:#111">Purchase</th>
     <th data-sort="checkouts" style="background:#dbeafe;color:#111">Checkouts Initiated</th>
