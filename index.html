@@ -4361,10 +4361,9 @@ function filterCampaigns() {
   clearBtn.style.display = searchFilter ? 'block' : 'none';
   saveAdsFilters();
   applySearchFilter();
-  // If search looks like a campaign ID and no results found, try Meta API lookup
-  clearTimeout(_searchDebounce);
+  // If search looks like a campaign ID and not found in current campaigns, try Meta API lookup
   if (searchFilter && /^\d{10,}$/.test(searchFilter) && !campaigns.find(c => c.id === searchFilter)) {
-    _searchDebounce = setTimeout(() => lookupCampaignById(searchFilter), 500);
+    lookupCampaignById(searchFilter);
   }
 }
 
@@ -4373,9 +4372,10 @@ async function lookupCampaignById(id) {
     const {from,to} = getDateRange();
     const res = await fetch(`/api/campaign-lookup?id=${id}&date_from=${from}&date_to=${to}`);
     const data = await res.json();
-    if (data && data.id && !campaigns.find(c => c.id === data.id)) {
+    if (data && data.id && !data.error && !campaigns.find(c => c.id === data.id)) {
       campaigns.push(data);
       renderTable();
+      applySearchFilter();
     }
   } catch(e) { console.warn('[Flores] Campaign lookup failed:', e.message); }
 }
