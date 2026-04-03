@@ -4437,7 +4437,10 @@ function applySearchFilter() {
     }
     // Search also matches campaign ID
     const rowId = row.getAttribute('data-id') || '';
-    const match = (!searchFilter || name.includes(searchFilter) || rowId.includes(searchFilter) || row.textContent.toLowerCase().includes(searchFilter)) && countryMatch && typeMatch && deliveryMatch && ageMatch && selectionMatch;
+    // If searching by exact ID match, override other filters
+    const exactIdMatch = searchFilter && rowId === searchFilter;
+    const searchMatch = !searchFilter || name.includes(searchFilter) || rowId.includes(searchFilter) || row.textContent.toLowerCase().includes(searchFilter);
+    const match = exactIdMatch || (searchMatch && countryMatch && typeMatch && deliveryMatch && ageMatch && selectionMatch);
     row.style.display = match ? '' : 'none';
     if (match) shown++;
     // Also hide/show child rows
