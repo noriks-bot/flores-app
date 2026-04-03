@@ -6506,7 +6506,7 @@ function renderDashboard(data) {
       var dt = o.datetime || o.date || '';
       var dateStr = dt.length >= 16 ? dt.slice(0,16).replace('T',' ') : dt;
       var pfColor = o.profit >= 0 ? '#10b981' : '#ef4444';
-      var campName = o.campaign_id || '';
+      var campName = o.campaign_name || o.campaign_id || '';
       if (campName.length > 30) campName = campName.slice(0,30) + '...';
       return '<tr><td>'+(i+1)+'</td><td style="white-space:nowrap">'+dateStr+'</td><td>'+(fl[o.country]||'')+' '+(o.country||'')+'</td><td><span style="background:'+bg+';color:#fff;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600">'+(o.origin||'')+'</span>'+(o.fbMeasured ? ' <span style="font-size:9px;padding:1px 4px;border-radius:3px;background:'+(o.fbMeasured==='Measured'?'#dcfce7':'#fef3c7')+';color:'+(o.fbMeasured==='Measured'?'#166534':'#92400e')+'">'+o.fbMeasured+'</span>' : '')+'</td><td style="font-size:10px;color:#6b7280;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(o.campaign_id||'')+'">'+campName+'</td><td>'+(o.customer||'#'+o.id)+'</td><td style="font-size:11px;color:#6b7280">'+(o.items||'')+'</td><td style="text-align:right;color:'+pfColor+';font-weight:600">'+(o.profit||0).toFixed(2)+' EUR</td><td style="text-align:right;font-weight:600">'+(o.revenue||0).toFixed(2)+' EUR</td></tr>';
     }).join('');

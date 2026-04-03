@@ -709,9 +709,15 @@ async function syncCountry(country) {
     const campaignId = floresCampaignId || wcUtmCampaign;
     if (adId && /^\d+$/.test(adId) && (!campaignId || !/^\d+$/.test(campaignId)) && !adIdLookupCache[adId]) {
       try {
-        const adMeta = await _metaGetOnce(adId, { fields: 'campaign_id,adset_id' });
-        adIdLookupCache[adId] = { campaign_id: adMeta.campaign_id || '', adset_id: adMeta.adset_id || '' };
-        console.log(`[WC-SYNC] Resolved ad ${adId} → campaign ${adMeta.campaign_id}, adset ${adMeta.adset_id}`);
+        const adMeta = await _metaGetOnce(adId, { fields: 'campaign_id,campaign{name},adset_id,adset{name},name' });
+        adIdLookupCache[adId] = {
+          campaign_id: adMeta.campaign_id || '',
+          adset_id: adMeta.adset_id || '',
+          campaign_name: adMeta.campaign?.name || '',
+          adset_name: adMeta.adset?.name || '',
+          ad_name: adMeta.name || ''
+        };
+        console.log(`[WC-SYNC] Resolved ad ${adId} → campaign ${adMeta.campaign_id} (${adMeta.campaign?.name}), adset ${adMeta.adset_id}`);
       } catch (e) {
         adIdLookupCache[adId] = null;
         console.warn(`[WC-SYNC] Meta lookup failed for ad ${adId}:`, e.message || e);
@@ -795,9 +801,13 @@ async function syncCountry(country) {
       }
 
       // Apply Meta API lookup cache for missing campaign/adset
+      let resolvedCampaignName = '', resolvedAdsetName = '', resolvedAdName = '';
       if (adId && adIdLookupCache[adId]) {
         if (!campaignId || !/^\d+$/.test(campaignId)) campaignId = adIdLookupCache[adId].campaign_id;
         if (!adsetId || !/^\d+$/.test(adsetId)) adsetId = adIdLookupCache[adId].adset_id;
+        resolvedCampaignName = adIdLookupCache[adId].campaign_name || '';
+        resolvedAdsetName = adIdLookupCache[adId].adset_name || '';
+        resolvedAdName = adIdLookupCache[adId].ad_name || '';
       }
 
       // Origin classification using dash logic
@@ -842,9 +852,9 @@ async function syncCountry(country) {
         raw_meta: JSON.stringify(relevantMeta),
         adset_id: adsetId || floresAdsetId,
         ad_id: adId || floresAdId,
-        campaign_name: floresCampaignName,
-        adset_name: floresAdsetName,
-        ad_name: floresAdName,
+        campaign_name: resolvedCampaignName || floresCampaignName,
+        adset_name: resolvedAdsetName || floresAdsetName,
+        ad_name: resolvedAdName || floresAdName,
         utm_medium: utmMedium,
         landing_page: floresLanding,
         placement: floresPlacement,
@@ -3882,7 +3892,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         }
 
         // Orders list for table
-        const ordersList = db.prepare("SELECT wc_order_id, order_date, order_datetime, country, gross_eur, profit, utm_source, utm_medium, utm_campaign, is_fb_attributed, product_type, billing_name, billing_city, billing_email, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ? ORDER BY order_datetime DESC, wc_order_id DESC").all(dashFrom, dashTo);
+        const ordersList = db.prepare("SELECT wc_order_id, order_date, order_datetime, country, gross_eur, profit, utm_source, utm_medium, utm_campaign, campaign_name, is_fb_attributed, product_type, billing_name, billing_city, billing_email, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ? ORDER BY order_datetime DESC, wc_order_id DESC").all(dashFrom, dashTo);
         const ordersListFormatted = ordersList.map(o => {
           // Use dash classification from raw_meta
           let origin = 'Direct';
@@ -3906,7 +3916,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           if (!orderDatetime2 || orderDatetime2.length < 11) {
             try { const mm2 = JSON.parse(o.raw_meta || '{}'); if (mm2.date_created) orderDatetime2 = mm2.date_created.replace('T',' ').slice(0,16); } catch(e6) {}
           }
-          return { id: o.wc_order_id, date: o.order_date, datetime: orderDatetime2, country: o.country, customer, email: o.billing_email || '', origin, fbMeasured, items, campaign_id: o.utm_campaign || '', revenue: Math.round(o.gross_eur * 100) / 100, profit: Math.round(o.profit * 100) / 100 };
+          return { id: o.wc_order_id, date: o.order_date, datetime: orderDatetime2, country: o.country, customer, email: o.billing_email || '', origin, fbMeasured, items, campaign_id: o.utm_campaign || '', campaign_name: o.campaign_name || '', revenue: Math.round(o.gross_eur * 100) / 100, profit: Math.round(o.profit * 100) / 100 };
         });
 
         return sendJSON(res, {
