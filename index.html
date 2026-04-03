@@ -3475,7 +3475,7 @@ function renderTable() {
   });
   if(!html) html='<tr><td colspan="28"><div class="loading-state">No campaigns found</div></td></tr>';
   document.getElementById('tableBody').innerHTML=html;
-  if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL' || activeDeliveryFilter !== 'ALL') applySearchFilter();
+  applySearchFilter();
   updateSelectionBar();
 }
 
@@ -3882,7 +3882,7 @@ function makeFlatRow(item, level) {
     <td>${statusHtml}</td>
     <td><div class="name-cell"><span class="name-text" title="${(item.name||'').replace(/"/g,'&quot;')}">${item.name || '\u2014'}</span></div></td>
     <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(item.campaign_name||'').replace(/"/g,'&quot;')}">${campTagsHtml}${campLabel}</td>
-    <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal>0})" title="Edit adset budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}</td>
+    <td>${budgetHtml}${level==='campaign'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditBudget('${item.id}',${budgetVal},${budgetLifetimeVal2>0})" title="Edit budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}${level==='adset'&&budgetVal>0?`<button onclick="event.stopPropagation();inlineEditAdsetBudget('${item.id}',${budgetVal},${budgetLifetimeVal2>0})" title="Edit adset budget" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-left:4px;border-radius:4px;vertical-align:middle;line-height:1">✎</button>`:''}</td>
     <td style="font-size:10px">${bidLabel}</td>
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td style="white-space:nowrap;vertical-align:middle">${wcCount>0?`<button onclick="event.stopPropagation();showCampaignOrders('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-right:5px;border-radius:4px;vertical-align:middle;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:22px;height:18px"><i class="fas fa-list-ul" style="font-size:9px"></i></button>`:''}<strong style="font-size:13px;vertical-align:middle">${wcCount||0}</strong></td>
@@ -3965,7 +3965,7 @@ function renderAdsetTable() {
   });
   if (!html) html = '<tr><td colspan="19"><div class="loading-state">No ad sets found</div></td></tr>';
   document.getElementById('tableBody').innerHTML = html;
-  if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL') setTimeout(applySearchFilter, 50);
+  setTimeout(applySearchFilter, 50);
 }
 
 function renderAdTable() {
@@ -3977,7 +3977,7 @@ function renderAdTable() {
   });
   if (!html) html = '<tr><td colspan="20"><div class="loading-state">No ads found</div></td></tr>';
   document.getElementById('tableBody').innerHTML = html;
-  if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL') setTimeout(applySearchFilter, 50);
+  setTimeout(applySearchFilter, 50);
 }
 
 function updateAdsetSummary() {
@@ -4485,17 +4485,34 @@ function applySearchFilter() {
         typeMatch = fullText.includes(activeTypeFilter);
       }
     }
-    // Delivery filter — uses campaign data from the campaigns array
-    let deliveryMatch = activeDeliveryFilter === 'ALL';
-    if (!deliveryMatch) {
-      const campData = campaigns.find(c => c.id === rowId);
-      if (activeDeliveryFilter === 'HAD_DELIVERY') {
-        deliveryMatch = campData && parseFloat(campData.insights?.spend || 0) > 0;
-      } else if (activeDeliveryFilter === 'ACTIVE') {
-        deliveryMatch = campData && campData.status === 'ACTIVE';
-      } else if (activeDeliveryFilter === 'NOT_ACTIVE') {
-        deliveryMatch = campData && campData.status !== 'ACTIVE';
+    // Delivery filter
+    let deliveryMatch = true;
+    if (activeDeliveryFilter !== 'HAD_DELIVERY' || isCampaign || activeTab === 'campaigns') {
+      // For campaign rows: check campaigns array
+      if (isCampaign || activeTab === 'campaigns') {
+        const campData = campaigns.find(c => c.id === rowId);
+        if (activeDeliveryFilter === 'HAD_DELIVERY') {
+          deliveryMatch = campData && parseFloat(campData.insights?.spend || 0) > 0;
+        } else if (activeDeliveryFilter === 'ACTIVE') {
+          deliveryMatch = campData && campData.status === 'ACTIVE';
+        } else if (activeDeliveryFilter === 'NOT_ACTIVE') {
+          deliveryMatch = campData && campData.status !== 'ACTIVE';
+        }
+      } else {
+        // For adset/ad flat rows: check their own data
+        const item = activeTab === 'adsets' ? allAdsets.find(a => a.id === rowId) : allAds.find(a => a.id === rowId);
+        if (activeDeliveryFilter === 'ACTIVE') {
+          deliveryMatch = item && item.status === 'ACTIVE';
+        } else if (activeDeliveryFilter === 'NOT_ACTIVE') {
+          deliveryMatch = item && item.status !== 'ACTIVE';
+        } else if (activeDeliveryFilter === 'HAD_DELIVERY') {
+          deliveryMatch = item && parseFloat(item.insights?.spend || 0) > 0;
+        }
       }
+    } else {
+      // HAD_DELIVERY on adset/ad tabs: check row's own spend
+      const item = activeTab === 'adsets' ? allAdsets.find(a => a.id === rowId) : allAds.find(a => a.id === rowId);
+      deliveryMatch = item && parseFloat(item.insights?.spend || 0) > 0;
     }
     // Search matches name OR campaign ID
     const searchMatch = !searchFilter || name.includes(searchFilter) || rowId.includes(searchFilter) || row.textContent.toLowerCase().includes(searchFilter);
@@ -4532,8 +4549,10 @@ function applySearchFilter() {
     }
   });
   const countEl = document.getElementById('searchCount');
-  if (searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL' || activeDeliveryFilter !== 'ALL') {
-    countEl.textContent = `Showing ${shown} of ${total} campaigns`;
+  const hasFilter = searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL' || activeDeliveryFilter !== 'HAD_DELIVERY' || showOnlySelected;
+  if (hasFilter) {
+    const label = activeTab === 'adsets' ? 'ad sets' : activeTab === 'ads' ? 'ads' : 'campaigns';
+    countEl.textContent = `Showing ${shown} of ${total} ${label}`;
   } else {
     countEl.textContent = '';
   }
