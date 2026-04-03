@@ -4326,6 +4326,12 @@ function resetAllFilters() {
   activeTypeFilter = 'ALL';
   activeDeliveryFilter = 'HAD_DELIVERY';
   activeAgeFilter = 'ALL';
+  showOnlySelected = false;
+  selectedCampaigns.clear();
+  document.querySelectorAll('.camp-select').forEach(cb => cb.checked = false);
+  const master = document.querySelector('.master-select');
+  if(master) master.checked = false;
+  updateSelectionBar();
   document.getElementById('campaignSearch').value = '';
   document.getElementById('searchClear').style.display = 'none';
   searchFilter = '';
