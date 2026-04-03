@@ -2816,10 +2816,7 @@ function logout() {
     document.getElementById('sidebar').classList.add('collapsed');
     document.querySelector('.app').classList.add('sidebar-collapsed');
   }
-  // Restore filters and selection before navigating
-  restoreFilterState();
-  restoreSelection();
-  // Handle hash navigation
+  // Handle hash navigation (filters restored after variable declarations)
   const hash = window.location.hash.replace('#', '') || 'dashboard';
   navigateTo(hash);
 })();
@@ -4319,6 +4316,10 @@ let searchFilter = '';
 let activeCountryFilter = 'ALL';
 let activeTypeFilter = 'ALL';
 let activeDeliveryFilter = 'HAD_DELIVERY';
+
+// Restore filters + selection on load (must be after variable declarations)
+restoreFilterState();
+restoreSelection();
 
 // --- Persist filters in localStorage ---
 function saveFilterState() {
