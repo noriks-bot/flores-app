@@ -1306,7 +1306,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <input type="text" id="campaignSearch" placeholder="Search..." oninput="filterCampaigns()" style="width:100%;font-size:12px;padding:7px 8px 7px 30px;border:1px solid #c7d2fe;border-radius:6px;background:#fff;box-sizing:border-box">
       <button class="search-clear" id="searchClear" onclick="clearSearch()">×</button>
     </div>
-    <span class="search-count" id="searchCount" style="font-size:10px"></span>
+    <span class="search-count" id="searchCount" style="font-size:10px;display:none"></span>
     <div class="filter-pills-bar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
     <span style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-right:4px">Country:</span>
     <button class="fpill fpill-active" data-ft="country" data-fv="ALL" onclick="toggleFilterPill(this)">All</button>
@@ -1323,6 +1323,11 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     <button class="fpill" data-ft="type" data-fv="CBO" onclick="toggleFilterPill(this)">CBO</button>
     <button class="fpill" data-ft="type" data-fv="ABO" onclick="toggleFilterPill(this)">ABO</button>
     <button class="fpill" data-ft="type" data-fv="SOFI" onclick="toggleFilterPill(this)">SOFI</button>
+    <span style="width:1px;height:20px;background:var(--border-color);margin:0 8px"></span>
+    <span style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-right:4px">Age:</span>
+    <button class="fpill fpill-active" data-ft="age" data-fv="ALL" onclick="toggleFilterPill(this)">All</button>
+    <button class="fpill" data-ft="age" data-fv="NEW" onclick="toggleFilterPill(this)">New</button>
+    <button class="fpill" data-ft="age" data-fv="NOT_NEW" onclick="toggleFilterPill(this)">Not New</button>
     <span style="width:1px;height:20px;background:var(--border-color);margin:0 8px"></span>
     <button class="fpill" style="background:#fee2e2;color:#dc2626;border-color:#fca5a5" onclick="resetAllFilters()">✕ Reset</button>
     </div>
@@ -4313,6 +4318,7 @@ let searchFilter = '';
 let activeCountryFilter = 'ALL';
 let activeTypeFilter = 'ALL';
 let activeDeliveryFilter = 'HAD_DELIVERY';
+let activeAgeFilter = 'ALL';
 
 function resetAllFilters() {
   document.querySelectorAll('.fpill').forEach(b => {
@@ -4323,6 +4329,7 @@ function resetAllFilters() {
   activeCountryFilter = 'ALL';
   activeTypeFilter = 'ALL';
   activeDeliveryFilter = 'HAD_DELIVERY';
+  activeAgeFilter = 'ALL';
   document.getElementById('campaignSearch').value = '';
   document.getElementById('searchClear').style.display = 'none';
   searchFilter = '';
@@ -4339,6 +4346,7 @@ function toggleFilterPill(btn) {
   if (ft === 'country') activeCountryFilter = fv;
   if (ft === 'type') activeTypeFilter = fv;
   if (ft === 'delivery') activeDeliveryFilter = fv;
+  if (ft === 'age') activeAgeFilter = fv;
   saveAdsFilters();
   applySearchFilter();
 }
@@ -4406,9 +4414,17 @@ function applySearchFilter() {
         else if (activeDeliveryFilter === 'NOT_ACTIVE') deliveryMatch = campData.status !== 'ACTIVE';
       }
     }
+    // Age filter (NEW = campaign name contains today's date DD.MM.YYYY)
+    let ageMatch = activeAgeFilter === 'ALL';
+    if (!ageMatch && isCampaign) {
+      const campData = campaigns.find(c => c.id === row.getAttribute('data-id'));
+      const isNew = campData ? isNewCampaign(campData) : false;
+      if (activeAgeFilter === 'NEW') ageMatch = isNew;
+      else if (activeAgeFilter === 'NOT_NEW') ageMatch = !isNew;
+    } else if (!ageMatch) { ageMatch = true; }
     // Search also matches campaign ID
     const rowId = row.getAttribute('data-id') || '';
-    const match = (!searchFilter || name.includes(searchFilter) || rowId.includes(searchFilter) || row.textContent.toLowerCase().includes(searchFilter)) && countryMatch && typeMatch && deliveryMatch;
+    const match = (!searchFilter || name.includes(searchFilter) || rowId.includes(searchFilter) || row.textContent.toLowerCase().includes(searchFilter)) && countryMatch && typeMatch && deliveryMatch && ageMatch;
     row.style.display = match ? '' : 'none';
     if (match) shown++;
     // Also hide/show child rows
@@ -4450,7 +4466,7 @@ function applySearchFilter() {
 function saveAdsFilters() {
   try {
     localStorage.setItem('flores-ads-filters', JSON.stringify({
-      country: activeCountryFilter, type: activeTypeFilter, delivery: activeDeliveryFilter,
+      country: activeCountryFilter, type: activeTypeFilter, delivery: activeDeliveryFilter, age: activeAgeFilter,
       search: searchFilter, selection: [...selectedCampaigns]
     }));
   } catch(e) {}
@@ -4463,6 +4479,7 @@ function restoreAdsFilters() {
     if (s.country && s.country !== 'ALL') { activeCountryFilter = s.country; activatePill('country', s.country); }
     if (s.type && s.type !== 'ALL') { activeTypeFilter = s.type; activatePill('type', s.type); }
     if (s.delivery) { activeDeliveryFilter = s.delivery; activatePill('delivery', s.delivery); }
+    if (s.age) { activeAgeFilter = s.age; activatePill('age', s.age); }
     if (s.search) { searchFilter = s.search; document.getElementById('campaignSearch').value = s.search; document.getElementById('searchClear').style.display = 'block'; }
     if (s.selection && s.selection.length) { selectedCampaigns.clear(); s.selection.forEach(id => selectedCampaigns.add(id)); }
   } catch(e) {}
