@@ -1316,7 +1316,13 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     <button class="fpill" data-ft="type" data-fv="ABO" onclick="toggleFilterPill(this)">ABO</button>
     <button class="fpill" data-ft="type" data-fv="SOFI" onclick="toggleFilterPill(this)">SOFI</button>
     <span style="width:1px;height:20px;background:var(--border-color);margin:0 8px"></span>
-    <button class="fpill" style="background:#fee2e2;color:#dc2626;border-color:#fca5a5" onclick="window.location.reload()">✕ Reset</button>
+    <span style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-right:4px">Delivery:</span>
+    <button class="fpill fpill-active" data-ft="delivery" data-fv="ALL" onclick="toggleFilterPill(this)">All</button>
+    <button class="fpill" data-ft="delivery" data-fv="HAD_DELIVERY" onclick="toggleFilterPill(this)">Had Delivery</button>
+    <button class="fpill" data-ft="delivery" data-fv="ACTIVE" onclick="toggleFilterPill(this)">Active</button>
+    <button class="fpill" data-ft="delivery" data-fv="NOT_ACTIVE" onclick="toggleFilterPill(this)">Not Active</button>
+    <span style="width:1px;height:20px;background:var(--border-color);margin:0 8px"></span>
+    <button class="fpill" style="background:#fee2e2;color:#dc2626;border-color:#fca5a5" onclick="resetAllFilters()">✕ Reset</button>
     </div>
   </div>
 
@@ -2808,6 +2814,9 @@ function logout() {
     document.getElementById('sidebar').classList.add('collapsed');
     document.querySelector('.app').classList.add('sidebar-collapsed');
   }
+  // Restore filters and selection before navigating
+  restoreFilterState();
+  restoreSelection();
   // Handle hash navigation
   const hash = window.location.hash.replace('#', '') || 'dashboard';
   navigateTo(hash);
@@ -2840,9 +2849,9 @@ setDateRange(fmtDate(today), fmtDate(today));
 
 function showCustomInputs(show) { document.querySelectorAll('.date-input,.date-sep').forEach(el => el.style.display = show ? '' : 'none'); }
 
-document.querySelectorAll('.preset-tab').forEach(btn => {
+document.querySelectorAll('#section-ads-manager .filters-bar .preset-tab').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.preset-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#section-ads-manager .filters-bar .preset-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const t = new Date(), range = btn.dataset.range;
     if (range === 'custom') { showCustomInputs(true); return; }
@@ -2853,11 +2862,12 @@ document.querySelectorAll('.preset-tab').forEach(btn => {
     else if (range === '7d') setDateRange(fmtDate(addDays(t,-6)), fmtDate(t));
     else if (range === '14d') setDateRange(fmtDate(addDays(t,-13)), fmtDate(t));
     else if (range === '30d') setDateRange(fmtDate(addDays(t,-29)), fmtDate(t));
+    saveFilterState();
     loadData();
   });
 });
-document.getElementById('dateFrom').addEventListener('change', () => { if(document.getElementById('dateTo').value) loadData(); });
-document.getElementById('dateTo').addEventListener('change', () => { if(document.getElementById('dateFrom').value) loadData(); });
+document.getElementById('dateFrom').addEventListener('change', () => { if(document.getElementById('dateTo').value) { saveFilterState(); loadData(); } });
+document.getElementById('dateTo').addEventListener('change', () => { if(document.getElementById('dateFrom').value) { saveFilterState(); loadData(); } });
 
 function fmtNum(n) { if(n==null||isNaN(n)) return '—'; return Math.round(n).toLocaleString('en'); }
 function fmtEur(n) { if(n==null||isNaN(n)) return '—'; return '€'+n.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}); }
@@ -3375,6 +3385,7 @@ function toggleCampaignSelect(id, cb) {
   if(cb.checked) selectedCampaigns.add(id);
   else selectedCampaigns.delete(id);
   updateSelectionBar();
+  saveSelection();
 }
 
 function toggleSelectAll(masterCb) {
@@ -3387,32 +3398,29 @@ function toggleSelectAll(masterCb) {
     else { selectedCampaigns.delete(id); if(cb) cb.checked = false; }
   });
   updateSelectionBar();
+  saveSelection();
 }
 
 function updateSelectionBar() {
   const bar = document.getElementById('selectionBar');
   if(selectedCampaigns.size > 0) {
     bar.style.display = 'flex';
-    document.getElementById('selectedCount').textContent = selectedCampaigns.size + ' selected';
+    document.getElementById('selectedCount').textContent = selectedCampaigns.size + ' selected' + (showOnlySelected ? ' (filtered)' : '');
   } else {
     bar.style.display = 'none';
+    showOnlySelected = false;
+    localStorage.removeItem('flores-ads-showSelected');
   }
 }
 
+let showOnlySelected = false;
+
 function filterBySelected() {
   if(selectedCampaigns.size === 0) return;
+  showOnlySelected = true;
+  localStorage.setItem('flores-ads-showSelected', 'true');
   if(activeTab === 'campaigns') {
-    const rows = document.querySelectorAll('#tableBody tr.level-campaign');
-    rows.forEach(row => {
-      const id = row.getAttribute('data-id');
-      const show = selectedCampaigns.has(id);
-      row.style.display = show ? '' : 'none';
-      let next = row.nextElementSibling;
-      while(next && !next.classList.contains('level-campaign')) {
-        next.style.display = show ? '' : 'none';
-        next = next.nextElementSibling;
-      }
-    });
+    applySearchFilter();
   } else if(activeTab === 'adsets') {
     renderAdsetTable(); updateAdsetSummary();
   } else {
@@ -3422,10 +3430,13 @@ function filterBySelected() {
 
 function clearSelection() {
   selectedCampaigns.clear();
+  showOnlySelected = false;
+  localStorage.removeItem('flores-ads-showSelected');
   document.querySelectorAll('.camp-select').forEach(cb => cb.checked = false);
   const master = document.querySelector('.master-select');
   if(master) master.checked = false;
   updateSelectionBar();
+  saveSelection();
   if(activeTab === 'campaigns') applySearchFilter();
   else if(activeTab === 'adsets') { renderAdsetTable(); updateAdsetSummary(); }
   else { renderAdTable(); updateAdSummary(); }
@@ -3465,7 +3476,8 @@ function renderTable() {
   });
   if(!html) html='<tr><td colspan="28"><div class="loading-state">No campaigns found</div></td></tr>';
   document.getElementById('tableBody').innerHTML=html;
-  if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL') applySearchFilter();
+  if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL' || activeDeliveryFilter !== 'ALL') applySearchFilter();
+  updateSelectionBar();
 }
 
 function distributeWC(parentWC,children) {
@@ -3729,6 +3741,7 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') { closeModal();
 function switchTab(tab) {
   activeTab = tab;
   document.querySelectorAll('.level-tab').forEach(t => t.classList.toggle('active', t.dataset.level === tab));
+  saveFilterState();
   const titles = { campaigns: 'Campaigns', adsets: 'Ad Sets', ads: 'Ads' };
   document.getElementById('pageTitle').textContent = titles[tab];
   
@@ -4303,6 +4316,85 @@ let searchFilter = '';
 
 let activeCountryFilter = 'ALL';
 let activeTypeFilter = 'ALL';
+let activeDeliveryFilter = 'ALL';
+
+// --- Persist filters in localStorage ---
+function saveFilterState() {
+  const state = {
+    country: activeCountryFilter,
+    type: activeTypeFilter,
+    delivery: activeDeliveryFilter,
+    search: searchFilter,
+    dateRange: document.querySelector('#section-ads-manager .preset-tab.active')?.dataset?.range || 'today',
+    dateFrom: document.getElementById('dateFrom').value,
+    dateTo: document.getElementById('dateTo').value,
+    tab: activeTab
+  };
+  localStorage.setItem('flores-ads-filters', JSON.stringify(state));
+}
+
+function restoreFilterState() {
+  try {
+    const raw = localStorage.getItem('flores-ads-filters');
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (s.country) { activeCountryFilter = s.country; activatePill('country', s.country); }
+    if (s.type) { activeTypeFilter = s.type; activatePill('type', s.type); }
+    if (s.delivery) { activeDeliveryFilter = s.delivery; activatePill('delivery', s.delivery); }
+    if (s.search) {
+      searchFilter = s.search;
+      document.getElementById('campaignSearch').value = s.search;
+      document.getElementById('searchClear').style.display = s.search ? 'block' : 'none';
+    }
+    if (s.dateRange) {
+      document.querySelectorAll('#section-ads-manager .filters-bar .preset-tab').forEach(b => b.classList.remove('active'));
+      const rangeBtn = document.querySelector(`#section-ads-manager .filters-bar .preset-tab[data-range="${s.dateRange}"]`);
+      if (rangeBtn) rangeBtn.classList.add('active');
+      if (s.dateRange === 'custom') {
+        showCustomInputs(true);
+        if (s.dateFrom) document.getElementById('dateFrom').value = s.dateFrom;
+        if (s.dateTo) document.getElementById('dateTo').value = s.dateTo;
+      } else {
+        // Re-compute dates for the range
+        const t = new Date();
+        if (s.dateRange === 'today') setDateRange(fmtDate(t), fmtDate(t));
+        else if (s.dateRange === 'yesterday') { const y = addDays(t, -1); setDateRange(fmtDate(y), fmtDate(y)); }
+        else if (s.dateRange === '3d') setDateRange(fmtDate(addDays(t, -2)), fmtDate(t));
+        else if (s.dateRange === '7d') setDateRange(fmtDate(addDays(t, -6)), fmtDate(t));
+        else if (s.dateRange === '14d') setDateRange(fmtDate(addDays(t, -13)), fmtDate(t));
+        else if (s.dateRange === '30d') setDateRange(fmtDate(addDays(t, -29)), fmtDate(t));
+      }
+    }
+    if (s.tab && s.tab !== 'campaigns') {
+      activeTab = s.tab;
+      document.querySelectorAll('.level-tab').forEach(t => t.classList.toggle('active', t.dataset.level === s.tab));
+    }
+  } catch(e) { console.warn('Failed to restore filters:', e); }
+}
+
+function activatePill(ft, fv) {
+  document.querySelectorAll(`.fpill[data-ft="${ft}"]`).forEach(b => b.classList.remove('fpill-active'));
+  const target = document.querySelector(`.fpill[data-ft="${ft}"][data-fv="${fv}"]`);
+  if (target) target.classList.add('fpill-active');
+}
+
+// Persist selection across timeframe changes
+function saveSelection() {
+  localStorage.setItem('flores-ads-selection', JSON.stringify([...selectedCampaigns]));
+}
+function restoreSelection() {
+  try {
+    const raw = localStorage.getItem('flores-ads-selection');
+    if (raw) {
+      const ids = JSON.parse(raw);
+      selectedCampaigns.clear();
+      ids.forEach(id => selectedCampaigns.add(id));
+    }
+    if (localStorage.getItem('flores-ads-showSelected') === 'true' && selectedCampaigns.size > 0) {
+      showOnlySelected = true;
+    }
+  } catch(e) {}
+}
 
 function resetAllFilters() {
   document.querySelectorAll('.fpill').forEach(b => {
@@ -4311,9 +4403,11 @@ function resetAllFilters() {
   });
   activeCountryFilter = 'ALL';
   activeTypeFilter = 'ALL';
+  activeDeliveryFilter = 'ALL';
   document.getElementById('campaignSearch').value = '';
   document.getElementById('searchClear').style.display = 'none';
   searchFilter = '';
+  saveFilterState();
   applySearchFilter();
 }
 
@@ -4325,6 +4419,8 @@ function toggleFilterPill(btn) {
   btn.classList.add('fpill-active');
   if (ft === 'country') activeCountryFilter = fv;
   if (ft === 'type') activeTypeFilter = fv;
+  if (ft === 'delivery') activeDeliveryFilter = fv;
+  saveFilterState();
   applySearchFilter();
 }
 
@@ -4333,6 +4429,7 @@ function filterCampaigns() {
   const clearBtn = document.getElementById('searchClear');
   searchFilter = (input.value || '').toLowerCase().trim();
   clearBtn.style.display = searchFilter ? 'block' : 'none';
+  saveFilterState();
   applySearchFilter();
 }
 
@@ -4340,6 +4437,7 @@ function clearSearch() {
   document.getElementById('campaignSearch').value = '';
   document.getElementById('searchClear').style.display = 'none';
   searchFilter = '';
+  saveFilterState();
   applySearchFilter();
 }
 
@@ -4352,6 +4450,7 @@ function applySearchFilter() {
     const isFlat = row.classList.contains('flat-row') || row.querySelector('.name-text');
     if (!isCampaign && !isFlat) return;
     total++;
+    const rowId = row.getAttribute('data-id') || '';
     const name = (row.querySelector('.name-text')?.textContent || '').toLowerCase();
     const nameUpper = (row.querySelector('.name-text')?.textContent || '').toUpperCase();
     // For adsets/ads, also check campaign_name in data attribute or visible text
@@ -4379,7 +4478,23 @@ function applySearchFilter() {
         typeMatch = fullText.includes(activeTypeFilter);
       }
     }
-    const match = (!searchFilter || name.includes(searchFilter) || row.textContent.toLowerCase().includes(searchFilter)) && countryMatch && typeMatch;
+    // Delivery filter — uses campaign data from the campaigns array
+    let deliveryMatch = activeDeliveryFilter === 'ALL';
+    if (!deliveryMatch) {
+      const campData = campaigns.find(c => c.id === rowId);
+      if (activeDeliveryFilter === 'HAD_DELIVERY') {
+        deliveryMatch = campData && parseFloat(campData.insights?.spend || 0) > 0;
+      } else if (activeDeliveryFilter === 'ACTIVE') {
+        deliveryMatch = campData && campData.status === 'ACTIVE';
+      } else if (activeDeliveryFilter === 'NOT_ACTIVE') {
+        deliveryMatch = campData && campData.status !== 'ACTIVE';
+      }
+    }
+    // Search matches name OR campaign ID
+    const searchMatch = !searchFilter || name.includes(searchFilter) || rowId.includes(searchFilter) || row.textContent.toLowerCase().includes(searchFilter);
+    // Show only selected filter
+    const selectionMatch = !showOnlySelected || selectedCampaigns.has(rowId);
+    const match = searchMatch && countryMatch && typeMatch && deliveryMatch && selectionMatch;
     row.style.display = match ? '' : 'none';
     if (match) shown++;
     // Also hide/show child rows
@@ -4410,7 +4525,7 @@ function applySearchFilter() {
     }
   });
   const countEl = document.getElementById('searchCount');
-  if (searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL') {
+  if (searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL' || activeDeliveryFilter !== 'ALL') {
     countEl.textContent = `Showing ${shown} of ${total} campaigns`;
   } else {
     countEl.textContent = '';
