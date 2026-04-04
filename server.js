@@ -1216,7 +1216,7 @@ async function getCampaigns(dateFrom, dateTo) {
 
   // Get all campaigns for status info
   const campaigns = await metaGetAll(`${AD_ACCOUNT}/campaigns`, {
-    fields: 'id,name,status,objective,daily_budget,lifetime_budget',
+    fields: 'id,name,status,objective,daily_budget,lifetime_budget,bid_strategy',
     limit: 500
   });
 
@@ -1285,6 +1285,16 @@ async function getCampaigns(dateFrom, dateTo) {
   }
 
   enrichCampaignsWithProfit(result, dateFrom, dateTo);
+  // Fill in missing budget/metadata from campaignMap for paused campaigns added by enrichment
+  for (const c of result) {
+    const meta = campaignMap[c.id];
+    if (meta) {
+      if (!c.daily_budget || c.daily_budget === '0') c.daily_budget = meta.daily_budget || '0';
+      if (!c.lifetime_budget || c.lifetime_budget === '0') c.lifetime_budget = meta.lifetime_budget || '0';
+      if (!c.bid_strategy) c.bid_strategy = meta.bid_strategy || '';
+      if (!c.name || c.name === c.id) c.name = meta.name || c.name;
+    }
+  }
   // Resolve names for campaigns that only have ID as name
   for (const c of result) {
     if (c._needsNameResolve) {
