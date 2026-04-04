@@ -4435,7 +4435,7 @@ function applySearchFilter() {
     if (activeDeliveryFilter !== 'HAD_DELIVERY' || isCampaign) {
       const campData = isCampaign ? campaigns.find(c => c.id === row.getAttribute('data-id')) : null;
       if (isCampaign && campData) {
-        if (activeDeliveryFilter === 'HAD_DELIVERY') deliveryMatch = parseFloat(campData.insights?.spend || 0) > 0;
+        if (activeDeliveryFilter === 'HAD_DELIVERY') deliveryMatch = parseFloat(campData.insights?.spend || 0) > 0 || (campData.wc?.orders || 0) > 0;
         else if (activeDeliveryFilter === 'ACTIVE') deliveryMatch = campData.status === 'ACTIVE';
         else if (activeDeliveryFilter === 'NOT_ACTIVE') deliveryMatch = campData.status !== 'ACTIVE';
       }
