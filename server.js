@@ -934,9 +934,9 @@ async function syncAllCountries() {
       console.error(`[FLORES] Sync failed for ${country}:`, e.message);
       results[country] = 0;
     }
-    // 2s delay between countries (except after last)
+    // 500ms delay between countries (except after last)
     if (i < countries.length - 1) {
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise(r => setTimeout(r, 500));
     }
   }
 
