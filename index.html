@@ -2939,7 +2939,7 @@ async function loadData() {
   const {from,to}=getDateRange();
   document.getElementById('tableBody').innerHTML='<tr><td colspan="28"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>';
   try {
-    const res=await fetch(`/api/campaigns?date_from=${from}&date_to=${to}`);
+    const res=await fetch(`/api/campaigns?date_from=${from}&date_to=${to}&_t=${Date.now()}`);
     campaigns=await res.json();
     if(campaigns.error){document.getElementById('tableBody').innerHTML=`<tr><td colspan="28"><div class="loading-state">Error: ${campaigns.error}</div></td></tr>`;return;}
     campaigns.sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0));
@@ -4004,10 +4004,8 @@ async function clearCacheAndReload() {
     const syncData = await syncRes.json();
     if (syncData.totalNew > 0) showToast(`Synced ${syncData.totalNew} new orders`, 'success');
   } catch(e) { console.error('Sync error:', e); }
-  // Clear cache and wait for it to complete before reloading
-  await fetch('/api/clear-cache');
-  // Small delay to ensure cache files are deleted
-  await new Promise(r => setTimeout(r, 200));
+  // Clear server cache
+  await fetch('/api/clear-cache&_t=' + Date.now());
   allAdsets=[]; allAds=[];
   await loadData();
   if(btn) btn.classList.remove('spinning');
