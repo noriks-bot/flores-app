@@ -1099,6 +1099,7 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
     campaigns.push({
       id: campaignId,
       name: dbName?.campaign_name || campaignId,
+      _needsNameResolve: !dbName?.campaign_name,
       status: 'PAUSED',
       insights: { spend: '0', impressions: '0', clicks: '0', actions: [] },
       _parsed: parseCampaignName(dbName?.campaign_name || ''),
@@ -1284,6 +1285,13 @@ async function getCampaigns(dateFrom, dateTo) {
   }
 
   enrichCampaignsWithProfit(result, dateFrom, dateTo);
+  // Resolve names for campaigns that only have ID as name
+  for (const c of result) {
+    if (c._needsNameResolve) {
+      try { const m = await metaGet(c.id, { fields: 'id,name' }); if (m?.name) { c.name = m.name; c._parsed = parseCampaignName(m.name); } } catch(e) {}
+      delete c._needsNameResolve;
+    }
+  }
   setCache(cacheKey, result);
   return result;
   } catch (err) {
