@@ -4004,7 +4004,10 @@ async function clearCacheAndReload() {
     const syncData = await syncRes.json();
     if (syncData.totalNew > 0) showToast(`Synced ${syncData.totalNew} new orders`, 'success');
   } catch(e) { console.error('Sync error:', e); }
+  // Clear cache and wait for it to complete before reloading
   await fetch('/api/clear-cache');
+  // Small delay to ensure cache files are deleted
+  await new Promise(r => setTimeout(r, 200));
   allAdsets=[]; allAds=[];
   await loadData();
   if(btn) btn.classList.remove('spinning');

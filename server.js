@@ -941,14 +941,12 @@ async function syncAllCountries() {
   }
 
   console.log(`[FLORES] Sync complete: ${totalNew} total orders`);
-  // Auto-clear campaign cache so new orders show immediately
-  if (totalNew > 0) {
-    try {
-      const files = fs.readdirSync(CACHE_DIR).filter(f => f.startsWith("campaigns_"));
-      files.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
-      console.log(`[FLORES] Cleared ${files.length} campaign cache files`);
-    } catch(e) {}
-  }
+  // Always clear campaign cache after sync so fresh WC data shows
+  try {
+    const files = fs.readdirSync(CACHE_DIR).filter(f => f.startsWith("campaigns_"));
+    files.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
+    if (files.length) console.log(`[FLORES] Cleared ${files.length} campaign cache files`);
+  } catch(e) {}
   return { synced: results, totalNew };
 }
 
