@@ -3741,6 +3741,8 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
 
       // ═══ DASHBOARD API ═══
       if (urlPath === '/api/dashboard') {
+        // Quick sync before returning dashboard data
+        try { await syncAllCountries(); } catch(e) {}
         const dashFrom = query.date_from || getToday(); const dashTo = query.date_to || getToday();
         // Dashboard reads from SQLite - no Meta API calls, instant response
         const today = getToday();
