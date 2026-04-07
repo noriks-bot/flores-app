@@ -3898,12 +3898,11 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             for (const t of tiers) { const max = (t.max === null || t.max === undefined) ? Infinity : Number(t.max); if (ppo <= max) return Number(t.cut)||0; }
             return Number(tiers[tiers.length-1].cut)||0;
           };
-          // Use the EXACT same campaign data Ads Manager uses (topCampaignsRaw with c.wc.profit/c.wc.orders)
-          // Filter: only campaigns with spend > 0 (matches Ads Manager visible rows)
+          // Measured: use campaign-level aggregation (matches Ads Manager)
           if (Array.isArray(topCampaignsRaw)) {
             const seen = new Set();
             for (const camp of topCampaignsRaw) {
-              if (seen.has(camp.id)) continue; // dedupe
+              if (seen.has(camp.id)) continue;
               seen.add(camp.id);
               const wc = camp.wc;
               if (!wc || !(wc.orders > 0)) continue;
@@ -3911,7 +3910,13 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
               advCutTotal += cutFor(ppo) * wc.orders;
             }
           }
-          console.log('[ADV] cut total:', advCutTotal, 'tier:', advTierName, 'campaigns:', topCampaignsRaw?.length || 0);
+          // Unmeasured orders: apply lowest tier cut (first tier in active preset)
+          const lowestCut = (tiers && tiers[0] && Number(tiers[0].cut)) || 0;
+          const _fbCnt = (db.prepare("SELECT COUNT(*) as c FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1").get(dashFrom, dashTo)?.c) || 0;
+          const _fbMeasured = (db.prepare("SELECT COUNT(*) as c FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.c) || 0;
+          const unmeasuredCount = Math.max(0, _fbCnt - _fbMeasured);
+          advCutTotal += lowestCut * unmeasuredCount;
+          console.log('[ADV] cut total:', advCutTotal, 'tier:', advTierName, 'unmeasured:', unmeasuredCount, 'lowestCut:', lowestCut);
         } catch(e) { console.warn('[ADV] cut calc failed', e.message); }
         // FB pixel purchases from Meta API (what FB reports)
         let fbPixelPurchases = 0;
