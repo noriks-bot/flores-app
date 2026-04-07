@@ -2998,6 +2998,10 @@ function updateSummary() {
   const totFlorexCpa=wcOrders>0?(spend/wcOrders).toFixed(2)+' €':'0 €';
   const fpaCount=campaigns.filter(c=>(c.wc?.orders||0)>0).length;
   const fpaTotal=Object.values(fpaData.campaigns||{}).reduce((s,v)=>s+v,0);
+  // ADV totals: sum per-row adv profit
+  let advProfitTotal=0;
+  campaigns.forEach(c=>{ if(c.wc&&c.wc.orders>0){ const a=advProfitForRow(c.wc); advProfitTotal+=a.profit; } else if(c.wc&&c.wc.profit){ advProfitTotal+=c.wc.profit; } });
+  const advPpoTotal=wcOrders>0?(advProfitTotal/wcOrders):0;
   document.getElementById('tableTotals').innerHTML=`<tr class="totals-row">
     <td></td><td></td><td></td><td style="text-align:left"><strong>Totals</strong></td>
     <td></td><td></td><td></td><td></td>
@@ -3006,8 +3010,8 @@ function updateSummary() {
     <td style="color:#c4b5fd">${fpaTotal}</td>
     <td>${wcProfit.toFixed(2)} €</td>
     <td>${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
-    <td>${wcProfit.toFixed(2)} €</td>
-    <td>${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
+    <td>${advProfitTotal.toFixed(2)} €</td>
+    <td>${wcOrders>0?advPpoTotal.toFixed(2)+' €':'0 €'}</td>
     <td>${wcRevenue.toFixed(2)} €</td>
     <td>${totFlorexCpa}</td>
     <td>${roas}</td>
@@ -3021,6 +3025,24 @@ function updateSummary() {
   document.getElementById('tableTotalsBottom').innerHTML = document.getElementById('tableTotals').innerHTML;
   document.getElementById('lastUpdated').textContent='Updated '+new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('campaignCount').textContent=campaigns.length+' campaign'+(campaigns.length!==1?'s':'');
+}
+
+
+// ADV cut tier function (firma profit per order)
+function advCutPerOrder(ppo) {
+  if (ppo <= 5) return 2;
+  if (ppo <= 10) return 4;
+  if (ppo <= 15) return 7;
+  if (ppo <= 20) return 11;
+  if (ppo <= 25) return 16;
+  if (ppo <= 35) return 22;
+  return 28;
+}
+function advProfitForRow(wc) {
+  if (!wc || !wc.orders || wc.orders <= 0) return null;
+  const ppo = wc.profit / wc.orders;
+  const cut = advCutPerOrder(ppo);
+  return { profit: wc.profit - cut * wc.orders, ppo: ppo - cut };
 }
 
 function profitClass(wc) { if(!wc||wc.profit===undefined) return ''; if(wc.profit===0) return ''; return wc.profit>0?'campaign-profit':'campaign-loss'; }
@@ -3346,6 +3368,19 @@ function makeRow(item,level,bgClass) {
   let ppoCls='', ppoHtml='<span class="muted">\u2014</span>';
   if(wc?.orders>0){ const ppo=wc.profit/wc.orders; ppoCls=ppo>=0?'cell-pl-green':'cell-pl-red'; ppoHtml=ppo.toFixed(2)+' \u20ac'; }
   else if(wc?.profit!==undefined&&wc.profit<0){ ppoCls='cell-pl-red'; ppoHtml=wc.profit.toFixed(2)+' \u20ac'; }
+  // ADV variants (firma profit after tiered cut per order)
+  let plAdvCls='', plAdvHtml='<span class="muted">\u2014</span>';
+  let ppoAdvCls='', ppoAdvHtml='<span class="muted">\u2014</span>';
+  if(wc?.orders>0){
+    const adv=advProfitForRow(wc);
+    plAdvCls=adv.profit>=0?'cell-pl-green':'cell-pl-red';
+    plAdvHtml=adv.profit.toFixed(2)+' \u20ac';
+    ppoAdvCls=adv.ppo>=0?'cell-pl-green':'cell-pl-red';
+    ppoAdvHtml=adv.ppo.toFixed(2)+' \u20ac';
+  } else if(wc?.profit!==undefined&&wc.profit<0){
+    plAdvCls='cell-pl-red'; plAdvHtml=wc.profit.toFixed(2)+' \u20ac';
+    ppoAdvCls='cell-pl-red'; ppoAdvHtml=wc.profit.toFixed(2)+' \u20ac';
+  }
   // Florex metrics
   const florexCpa=wc?.orders>0?(spend/wc.orders).toFixed(2)+' \u20ac':'0 \u20ac';
   const roas=spend>0&&wc?.revenueGross?(wc.revenueGross/spend).toFixed(2):'0';
@@ -3374,8 +3409,8 @@ function makeRow(item,level,bgClass) {
     <td style="font-size:11px;color:#8b5cf6">${(fpaData[level==="campaign"?"campaigns":level==="adset"?"adsets":"ads"][item.id])||0}</td>
     <td class="${plCls}">${plHtml}</td>
     <td class="${ppoCls}">${ppoHtml}</td>
-    <td class="${plCls}">${plHtml}</td>
-    <td class="${ppoCls}">${ppoHtml}</td>
+    <td class="${plAdvCls}">${plAdvHtml}</td>
+    <td class="${ppoAdvCls}">${ppoAdvHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${florexCpa}</td>
     <td>${roas}</td>
@@ -3871,6 +3906,19 @@ function makeFlatRow(item, level) {
   let ppoCls='',ppoHtml='<span class="muted">\u2014</span>';
   if(wcCount>0){ const ppo=wc.profit/wc.orders; ppoCls=ppo>=0?'cell-pl-green':'cell-pl-red'; ppoHtml=ppo.toFixed(2)+' \u20ac'; }
   else if(wc?.profit!==undefined&&wc.profit<0){ ppoCls='cell-pl-red'; ppoHtml=wc.profit.toFixed(2)+' \u20ac'; }
+  // ADV variants
+  let plAdvCls='',plAdvHtml='<span class="muted">\u2014</span>';
+  let ppoAdvCls='',ppoAdvHtml='<span class="muted">\u2014</span>';
+  if(wcCount>0){
+    const adv=advProfitForRow(wc);
+    plAdvCls=adv.profit>=0?'cell-pl-green':'cell-pl-red';
+    plAdvHtml=adv.profit.toFixed(2)+' \u20ac';
+    ppoAdvCls=adv.ppo>=0?'cell-pl-green':'cell-pl-red';
+    ppoAdvHtml=adv.ppo.toFixed(2)+' \u20ac';
+  } else if(wc?.profit!==undefined&&wc.profit<0){
+    plAdvCls='cell-pl-red'; plAdvHtml=wc.profit.toFixed(2)+' \u20ac';
+    ppoAdvCls='cell-pl-red'; ppoAdvHtml=wc.profit.toFixed(2)+' \u20ac';
+  }
   const florexCpa=wcCount>0?(spend/wc.orders).toFixed(2)+' \u20ac':'0 \u20ac';
   const roas=spend>0&&wc?.revenueGross?(wc.revenueGross/spend).toFixed(2):'0';
   const acts=ins?.actions||[];const avals=ins?.action_values||[];
@@ -3898,8 +3946,8 @@ function makeFlatRow(item, level) {
     <td style="font-size:11px;color:#8b5cf6">${(fpaData[level==="campaign"?"campaigns":level==="adset"?"adsets":"ads"][item.id])||0}</td>
     <td class="${plCls}">${plHtml}</td>
     <td class="${ppoCls}">${ppoHtml}</td>
-    <td class="${plCls}">${plHtml}</td>
-    <td class="${ppoCls}">${ppoHtml}</td>
+    <td class="${plAdvCls}">${plAdvHtml}</td>
+    <td class="${ppoAdvCls}">${ppoAdvHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${florexCpa}</td>
     <td>${roas}</td>
@@ -3913,12 +3961,13 @@ function makeFlatRow(item, level) {
 }
 
 function makeFlatTotals(items, colSpan) {
-  let spend = 0, clicks = 0, purchases = 0, wcOrders = 0, wcRevenue = 0, wcProfit = 0, active = 0, impr = 0;
+  let spend = 0, clicks = 0, purchases = 0, wcOrders = 0, wcRevenue = 0, wcProfit = 0, active = 0, impr = 0, advProfitTotal = 0;
   items.forEach(c => {
     if (c.insights) { spend += parseFloat(c.insights.spend || 0); clicks += parseInt(c.insights.clicks || 0); impr += parseInt(c.insights.impressions || 0); purchases += getPurchases(c.insights); }
-    if (c.wc) { wcOrders += c.wc.orders || 0; wcRevenue += c.wc.revenueGross || 0; wcProfit += c.wc.profit || 0; }
+    if (c.wc) { wcOrders += c.wc.orders || 0; wcRevenue += c.wc.revenueGross || 0; wcProfit += c.wc.profit || 0; if(c.wc.orders>0){ const a=advProfitForRow(c.wc); advProfitTotal+=a.profit; } else if(c.wc.profit){ advProfitTotal+=c.wc.profit; } }
     if (c.status === 'ACTIVE') active++;
   });
+  const advProfitBadge = advProfitTotal === 0 ? '<span class="badge-neutral">— €0.00</span>' : advProfitTotal > 0 ? `<span class="badge-profit">▲ ${fmtEur(advProfitTotal)}</span>` : `<span class="badge-loss">▼ ${fmtEur(Math.abs(advProfitTotal))}</span>`;
   const cpa = purchases > 0 ? fmtEur(spend / purchases) : '—';
   const cr = clicks > 0 ? fmtPct(purchases / clicks * 100) : '—';
   const ctr = impr > 0 ? fmtPct(clicks / impr * 100) : '—';
@@ -3930,7 +3979,7 @@ function makeFlatTotals(items, colSpan) {
     <td></td><td style="text-align:left" colspan="2"><strong>TOTAL (${items.length})</strong></td>
     <td>${active}/${items.length}</td>
     <td>${fmtEur(spend)}</td><td>${fmtInt(wcOrders)}</td><td>${fmtEur(wcRevenue)}</td>
-    <td>${profitBadge}</td><td>${wcOrders > 0 ? fmtEur(wcProfit / wcOrders) : '—'}</td><td>${profitBadge}</td><td>${wcOrders > 0 ? fmtEur(wcProfit / wcOrders) : '—'}</td><td>${wcOrders > 0 ? fmtEur(spend / wcOrders) : '—'}</td><td>${roas}</td>
+    <td>${profitBadge}</td><td>${wcOrders > 0 ? fmtEur(wcProfit / wcOrders) : '—'}</td><td>${advProfitBadge}</td><td>${wcOrders > 0 ? fmtEur(advProfitTotal / wcOrders) : '—'}</td><td>${wcOrders > 0 ? fmtEur(spend / wcOrders) : '—'}</td><td>${roas}</td>
     <td>${fmtInt(purchases)}</td><td>${cpa}</td><td>${cr}</td>
     <td>${fmtCompact(clicks)}</td><td>${ctr}</td><td>${cpm}</td>
     ${colSpan ? '<td></td>' : ''}
@@ -4538,6 +4587,10 @@ function recalcFilteredTotals() {
   const totFlorexCpa=wcOrders>0?(spend/wcOrders).toFixed(2)+' €':'0 €';
   const mpTotals={yesterday:0,d3:0,d7:0,d14:0,d30:0,lifetime:0};
   filtered.forEach(c=>{const mp=multiProfitData[c.id];if(mp){for(const k of Object.keys(mpTotals)) mpTotals[k]+=(mp[k]?.profit||0);}});
+  // ADV totals
+  let advProfitTotal=0;
+  filtered.forEach(c=>{ if(c.wc&&c.wc.orders>0){ const a=advProfitForRow(c.wc); advProfitTotal+=a.profit; } else if(c.wc&&c.wc.profit){ advProfitTotal+=c.wc.profit; } });
+  const advPpoTotal=wcOrders>0?(advProfitTotal/wcOrders):0;
   const totalsHtml=`<tr class="totals-row">
     <td></td><td></td><td></td><td style="text-align:left"><strong>Totals (${filtered.length})</strong></td>
     <td></td><td></td><td></td><td></td>
@@ -4546,8 +4599,8 @@ function recalcFilteredTotals() {
     <td style="color:#c4b5fd">${fpaTotal}</td>
     <td>${wcProfit.toFixed(2)} €</td>
     <td>${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
-    <td>${wcProfit.toFixed(2)} €</td>
-    <td>${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
+    <td>${advProfitTotal.toFixed(2)} €</td>
+    <td>${wcOrders>0?advPpoTotal.toFixed(2)+' €':'0 €'}</td>
     <td>${wcRevenue.toFixed(2)} €</td>
     <td>${totFlorexCpa}</td>
     <td>${roas}</td>
