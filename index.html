@@ -6904,20 +6904,19 @@ function renderDashboard(data) {
     { label: "FB Profit", value: '\u20ac' + (k.fbProfit||0).toFixed(2) + '<div style="font-size:12px;font-weight:700;color:#fff;margin-top:3px">\u20ac' + (k.fbProfitPerOrder||0).toFixed(2) + '/order</div>', icon: 'fas fa-chart-line' }
   ].map(c => '<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="' + c.icon + '" style="margin-right:6px"></i>' + c.label + '</div><div class="dash-kpi-value">' + c.value + '</div></div>').join('');
 
-  // ADV KPI Cards (FB metrics with tier-based cut applied)
+  // ADV KPI Cards (FB metrics with per-order tier-based cut applied — backend computed)
   const fbOrdersAdv = k.fbOrders || 0;
   const fbProfitOrig = k.fbProfit || 0;
-  const fbPpoOrig = k.fbProfitPerOrder || 0;
-  const advCutEach = fbOrdersAdv > 0 ? advCutPerOrder(fbPpoOrig) : 0;
-  const fbProfitAdv = fbProfitOrig - advCutEach * fbOrdersAdv;
+  const fbProfitAdv = (typeof k.advProfit === 'number') ? k.advProfit : fbProfitOrig;
   const fbPpoAdv = fbOrdersAdv > 0 ? (fbProfitAdv / fbOrdersAdv) : fbProfitAdv;
   const fbCpaAdv = (k.fbCpa || 0);
-  // Manipulation summary
-  const manipTotal = fbProfitOrig - fbProfitAdv;
+  // Manipulation summary (backend authoritative)
+  const manipTotal = (typeof k.advCutTotal === 'number') ? k.advCutTotal : (fbProfitOrig - fbProfitAdv);
   const manipPer = fbOrdersAdv > 0 ? (manipTotal / fbOrdersAdv) : 0;
   const _mt = document.getElementById('manipTotal'); if (_mt) _mt.textContent = '\u20ac' + manipTotal.toFixed(2);
   const _mp = document.getElementById('manipPerOrder'); if (_mp) _mp.textContent = '\u20ac' + manipPer.toFixed(2);
-  const _mtier = document.getElementById('manipTier'); if (_mtier) _mtier.textContent = (typeof ADV_TIER_LABELS !== 'undefined' && ADV_TIER_STATE) ? (ADV_TIER_LABELS[ADV_TIER_STATE.active] || ADV_TIER_STATE.active) : '—';
+  const _tierLabels = { light: '🟢 LIGHT', medium: '🟡 MEDIUM', max: '🔴 MAX' };
+  const _mtier = document.getElementById('manipTier'); if (_mtier) _mtier.textContent = _tierLabels[k.advTierName] || k.advTierName || '—';
   document.getElementById('dashKpisAdv').innerHTML = [
     { label: "ADV Spend", value: '\u20ac' + (k.spend||0).toFixed(2), icon: 'fas fa-ad' },
     { label: "ADV Orders", value: (k.fbOrders || 0) + '<div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);margin-top:3px">FB Report: ' + (k.fbPixelPurchases || 0) + '</div>', icon: 'fas fa-shopping-cart' },

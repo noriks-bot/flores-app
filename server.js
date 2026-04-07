@@ -3881,6 +3881,26 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
 
         // FB KPI data
         const fbAttributedProfit = db.prepare('SELECT COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1').get(dashFrom, dashTo);
+        // ADV manipulation: per-order tier cut from active preset
+        let advCutTotal = 0; let advTierName = 'medium';
+        try {
+          const tierRow = db.prepare("SELECT value FROM flores_settings WHERE key = ?").get('adv_tier_state');
+          let tierState = null;
+          if (tierRow && tierRow.value) { try { tierState = JSON.parse(tierRow.value); } catch(e){} }
+          const _defaults = {
+            light: [{max:5,cut:1},{max:10,cut:3},{max:15,cut:5},{max:20,cut:8},{max:25,cut:12},{max:35,cut:16},{max:null,cut:20}],
+            medium: [{max:5,cut:2},{max:10,cut:4},{max:15,cut:7},{max:20,cut:11},{max:25,cut:16},{max:35,cut:22},{max:null,cut:28}],
+            max: [{max:5,cut:3},{max:10,cut:6},{max:15,cut:10},{max:20,cut:15},{max:25,cut:20},{max:35,cut:28},{max:null,cut:35}]
+          };
+          advTierName = (tierState && tierState.active) || 'medium';
+          const tiers = (tierState && tierState.presets && tierState.presets[advTierName]) || _defaults[advTierName] || _defaults.medium;
+          const cutFor = (ppo) => {
+            for (const t of tiers) { const max = (t.max === null || t.max === undefined) ? Infinity : Number(t.max); if (ppo <= max) return Number(t.cut)||0; }
+            return Number(tiers[tiers.length-1].cut)||0;
+          };
+          const fbOrderRows = db.prepare("SELECT profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1").all(dashFrom, dashTo);
+          for (const r of fbOrderRows) { const ppo = Number(r.profit) || 0; advCutTotal += cutFor(ppo); }
+        } catch(e) { console.warn('[ADV] cut calc failed', e.message); }
         // FB pixel purchases from Meta API (what FB reports)
         let fbPixelPurchases = 0;
         if (Array.isArray(topCampaignsRaw)) {
@@ -3991,6 +4011,9 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             fbUnmeasuredOrders,
             fbCpa,
             fbProfit,
+            advProfit: Math.round((fbProfit - advCutTotal) * 100) / 100,
+            advCutTotal: Math.round(advCutTotal * 100) / 100,
+            advTierName,
             weekOrders: weekStats?.orders || 0,
             weekRevenue: Math.round((weekStats?.revenue || 0) * 100) / 100,
             weekProfit: Math.round(((weekStats?.profit || 0) - fbSpend7d) * 100) / 100,
