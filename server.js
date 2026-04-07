@@ -3747,11 +3747,11 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         const d7ago = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
         
         // Today's KPIs from wc_orders
-        const todayStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND LOWER(billing_name) NOT LIKE '%test%'').get(dashFrom, dashTo);
-        const fbOrders = db.prepare('SELECT COUNT(*) as orders FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'').get(dashFrom, dashTo);
+        const todayStats = db.prepare("SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
+        const fbOrders = db.prepare("SELECT COUNT(*) as orders FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
         
         // 7-day daily chart data
-        const chartData = db.prepare('SELECT order_date as date, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ?  AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date ORDER BY order_date').all(d7ago);
+        const chartData = db.prepare("SELECT order_date as date, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ?  AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date ORDER BY order_date").all(d7ago);
         
         // Top campaigns - from Meta API (has campaign names)
         let topCampaignsRaw = [];
@@ -3880,7 +3880,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         } catch(e) { console.warn('[DASH] Top creatives fetch error:', e.message); }
 
         // FB KPI data
-        const fbAttributedProfit = db.prepare('SELECT COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'').get(dashFrom, dashTo);
+        const fbAttributedProfit = db.prepare("SELECT COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
         // ADV manipulation: per-order tier cut from active preset
         let advCutTotal = 0; let advTierName = 'medium';
         try {
@@ -4010,7 +4010,8 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           if (!orderDatetime2 || orderDatetime2.length < 11) {
             try { const mm2 = JSON.parse(o.raw_meta || '{}'); if (mm2.date_created) orderDatetime2 = mm2.date_created.replace('T',' ').slice(0,16); } catch(e6) {}
           }
-          return { id: o.wc_order_id, date: o.order_date, datetime: orderDatetime2, country: o.country, customer, email: o.billing_email || '', origin, fbMeasured, items, campaign_id: o.utm_campaign || '', campaign_name: o.campaign_name || '', revenue: Math.round(o.gross_eur * 100) / 100, profit: Math.round(o.profit * 100) / 100 };
+          const isTestOrder = /test/i.test(o.billing_name || '');
+          return { id: o.wc_order_id, date: o.order_date, datetime: orderDatetime2, country: o.country, customer, email: o.billing_email || '', origin, fbMeasured, items, campaign_id: o.utm_campaign || '', campaign_name: o.campaign_name || '', revenue: isTestOrder ? 0 : Math.round(o.gross_eur * 100) / 100, profit: isTestOrder ? 0 : Math.round(o.profit * 100) / 100, isTest: isTestOrder };
         });
 
         return sendJSON(res, {
