@@ -2543,25 +2543,35 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         </div>
 
       <!-- ADV Profit Tiers -->
-      <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px;margin-top:20px">
-        <div style="font-weight:700;font-size:16px;margin-bottom:8px"><i class="fas fa-percentage" style="margin-right:8px;color:#f59e0b"></i>ADV Profit Tiers</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Cut applied per order to compute <strong>Profit/loss ADV</strong> and <strong>Profit per order ADV</strong> in Ads Manager. Tiers are evaluated bottom-up by profit-per-order.</div>
-        <table id="advCutTiersTable" style="width:100%;border-collapse:collapse;font-size:13px">
-          <thead>
-            <tr style="border-bottom:2px solid var(--border-color);text-align:left">
-              <th style="padding:8px 6px">PPO &le; (€)</th>
-              <th style="padding:8px 6px">Cut (€)</th>
-              <th style="padding:8px 6px;width:80px"></th>
-            </tr>
-          </thead>
-          <tbody id="advCutTiersBody"></tbody>
-        </table>
-        <div style="margin-top:12px;display:flex;gap:8px">
-          <button onclick="addAdvCutTier()" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><i class="fas fa-plus" style="margin-right:4px"></i>Add tier</button>
-          <button onclick="saveAdvCutTiersUI()" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:8px 20px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer"><i class="fas fa-save" style="margin-right:4px"></i>Save tiers</button>
-          <button onclick="resetAdvCutTiers()" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer">Reset to defaults</button>
+      <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:24px 28px;margin-top:24px">
+        <div style="font-weight:800;font-size:20px;margin-bottom:8px"><i class="fas fa-percentage" style="margin-right:10px;color:#f59e0b"></i>ADV Profit Tiers</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Cut applied per order to compute <strong>Profit/loss ADV</strong> and <strong>Profit per order ADV</strong> in Ads Manager. Choose a preset (Light / Medium / Max) and edit any value.</div>
+
+        <div style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap">
+          <button id="advTierBtn-light" onclick="switchAdvTier('light')" style="padding:12px 28px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;border:2px solid var(--border-color);background:var(--bg);color:var(--text)">🟢 LIGHT (cuts less)</button>
+          <button id="advTierBtn-medium" onclick="switchAdvTier('medium')" style="padding:12px 28px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;border:2px solid var(--border-color);background:var(--bg);color:var(--text)">🟡 MEDIUM (default)</button>
+          <button id="advTierBtn-max" onclick="switchAdvTier('max')" style="padding:12px 28px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;border:2px solid var(--border-color);background:var(--bg);color:var(--text)">🔴 MAX (cuts more)</button>
         </div>
-        <div id="advCutTiersStatus" style="margin-top:10px;font-size:12px;color:var(--text-muted)"></div>
+
+        <div style="overflow-x:auto">
+          <table id="advCutTiersTable" style="width:100%;border-collapse:collapse;font-size:15px;min-width:520px">
+            <thead>
+              <tr style="border-bottom:2px solid var(--border-color);text-align:left;background:var(--bg)">
+                <th style="padding:14px 16px;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted)">Profit per order &le; (€)</th>
+                <th style="padding:14px 16px;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted)">Cut per order (€)</th>
+                <th style="padding:14px 16px;width:120px"></th>
+              </tr>
+            </thead>
+            <tbody id="advCutTiersBody"></tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
+          <button onclick="addAdvCutTier()" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:12px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer"><i class="fas fa-plus" style="margin-right:6px"></i>Add tier</button>
+          <button onclick="saveAdvCutTiersUI()" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer"><i class="fas fa-save" style="margin-right:6px"></i>Save current preset</button>
+          <button onclick="resetAdvCutTiers()" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:12px 22px;border-radius:8px;font-size:13px;cursor:pointer">Reset preset to defaults</button>
+        </div>
+        <div id="advCutTiersStatus" style="margin-top:14px;font-size:13px;color:var(--text-muted)"></div>
       </div>
 
     </div>
@@ -3050,57 +3060,122 @@ function updateSummary() {
 }
 
 
-// ADV cut tier function (firma profit per order) - tiers loaded from localStorage
-const ADV_CUT_DEFAULTS = [
-  { max: 5,   cut: 2 },
-  { max: 10,  cut: 4 },
-  { max: 15,  cut: 7 },
-  { max: 20,  cut: 11 },
-  { max: 25,  cut: 16 },
-  { max: 35,  cut: 22 },
-  { max: Infinity, cut: 28 }
-];
-function loadAdvCutTiers() {
+// ADV cut tier presets (firma profit per order)
+const ADV_CUT_PRESETS = {
+  light: [
+    { max: 5,   cut: 1 },
+    { max: 10,  cut: 3 },
+    { max: 15,  cut: 5 },
+    { max: 20,  cut: 8 },
+    { max: 25,  cut: 12 },
+    { max: 35,  cut: 16 },
+    { max: Infinity, cut: 20 }
+  ],
+  medium: [
+    { max: 5,   cut: 2 },
+    { max: 10,  cut: 4 },
+    { max: 15,  cut: 7 },
+    { max: 20,  cut: 11 },
+    { max: 25,  cut: 16 },
+    { max: 35,  cut: 22 },
+    { max: Infinity, cut: 28 }
+  ],
+  max: [
+    { max: 5,   cut: 3 },
+    { max: 10,  cut: 6 },
+    { max: 15,  cut: 10 },
+    { max: 20,  cut: 15 },
+    { max: 25,  cut: 20 },
+    { max: 35,  cut: 28 },
+    { max: Infinity, cut: 35 }
+  ]
+};
+const ADV_TIER_LABELS = { light: '🟢 LIGHT', medium: '🟡 MEDIUM', max: '🔴 MAX' };
+function loadAdvTierState() {
   try {
-    const saved = localStorage.getItem('flores-adv-cut-tiers');
+    const saved = localStorage.getItem('flores-adv-tier-state');
     if (saved) {
-      const arr = JSON.parse(saved);
-      if (Array.isArray(arr) && arr.length > 0) {
-        return arr.map(t => ({ max: t.max === null || t.max === '' || t.max === 'inf' ? Infinity : Number(t.max), cut: Number(t.cut) }));
+      const obj = JSON.parse(saved);
+      const presets = obj.presets || JSON.parse(JSON.stringify(ADV_CUT_PRESETS));
+      for (const k of Object.keys(presets)) {
+        presets[k] = presets[k].map(t => ({ max: (t.max === null || t.max === undefined) ? Infinity : Number(t.max), cut: Number(t.cut) }));
       }
+      return { active: obj.active || 'medium', presets };
     }
   } catch(e) {}
-  return ADV_CUT_DEFAULTS;
+  return { active: 'medium', presets: JSON.parse(JSON.stringify(ADV_CUT_PRESETS)) };
 }
-function saveAdvCutTiers(tiers) {
-  const serializable = tiers.map(t => ({ max: t.max === Infinity ? null : t.max, cut: t.cut }));
-  localStorage.setItem('flores-adv-cut-tiers', JSON.stringify(serializable));
+function saveAdvTierState() {
+  const out = { active: ADV_TIER_STATE.active, presets: {} };
+  for (const k of Object.keys(ADV_TIER_STATE.presets)) {
+    out.presets[k] = ADV_TIER_STATE.presets[k].map(t => ({ max: t.max === Infinity ? null : t.max, cut: t.cut }));
+  }
+  localStorage.setItem('flores-adv-tier-state', JSON.stringify(out));
 }
-let ADV_CUT_TIERS = loadAdvCutTiers();
+let ADV_TIER_STATE = loadAdvTierState();
+function getActiveAdvTiers() { return ADV_TIER_STATE.presets[ADV_TIER_STATE.active] || ADV_CUT_PRESETS.medium; }
+function advCutPerOrder(ppo) {
+  const tiers = getActiveAdvTiers();
+  for (const t of tiers) { if (ppo <= t.max) return t.cut; }
+  return tiers[tiers.length - 1].cut;
+}
 
 // === ADV Cut Tiers UI ===
+function highlightActiveTierBtn() {
+  ['light','medium','max'].forEach(k => {
+    const btn = document.getElementById('advTierBtn-' + k);
+    if (!btn) return;
+    if (k === ADV_TIER_STATE.active) {
+      btn.style.background = 'linear-gradient(135deg,#3b82f6,#1d4ed8)';
+      btn.style.color = '#fff';
+      btn.style.borderColor = '#1d4ed8';
+      btn.style.boxShadow = '0 4px 12px rgba(59,130,246,0.35)';
+    } else {
+      btn.style.background = 'var(--bg)';
+      btn.style.color = 'var(--text)';
+      btn.style.borderColor = 'var(--border-color)';
+      btn.style.boxShadow = 'none';
+    }
+  });
+}
 function renderAdvCutTiersUI() {
   const tbody = document.getElementById('advCutTiersBody');
   if (!tbody) return;
+  highlightActiveTierBtn();
+  const tiers = getActiveAdvTiers();
   let html = '';
-  ADV_CUT_TIERS.forEach((t, i) => {
+  tiers.forEach((t, i) => {
     const maxVal = t.max === Infinity ? '' : t.max;
-    const isLast = (i === ADV_CUT_TIERS.length - 1);
+    const isLast = (i === tiers.length - 1);
     html += `<tr data-i="${i}" style="border-bottom:1px solid var(--border-color)">
-      <td style="padding:6px"><input type="number" step="0.01" value="${maxVal}" placeholder="${isLast ? '∞ (no limit)' : ''}" data-field="max" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:6px 10px;border-radius:6px;font-size:12px;width:120px"></td>
-      <td style="padding:6px"><input type="number" step="0.01" value="${t.cut}" data-field="cut" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:6px 10px;border-radius:6px;font-size:12px;width:120px"></td>
-      <td style="padding:6px"><button onclick="removeAdvCutTier(${i})" style="background:#ef4444;color:#fff;border:none;padding:5px 10px;border-radius:5px;font-size:11px;cursor:pointer">Remove</button></td>
+      <td style="padding:12px 16px"><input type="number" step="0.01" value="${maxVal}" placeholder="${isLast ? '∞ (no limit)' : ''}" data-field="max" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td>
+      <td style="padding:12px 16px"><input type="number" step="0.01" value="${t.cut}" data-field="cut" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td>
+      <td style="padding:12px 16px"><button onclick="removeAdvCutTier(${i})" style="background:#ef4444;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">Remove</button></td>
     </tr>`;
   });
   tbody.innerHTML = html;
 }
+function switchAdvTier(name) {
+  ADV_TIER_STATE.active = name;
+  saveAdvTierState();
+  renderAdvCutTiersUI();
+  const el = document.getElementById('advCutTiersStatus');
+  if (el) {
+    el.textContent = '✓ Switched to ' + (ADV_TIER_LABELS[name] || name) + '. Refresh Ads Manager to see new values.';
+    setTimeout(() => { el.textContent = ''; }, 4000);
+  }
+}
 function addAdvCutTier() {
-  const last = ADV_CUT_TIERS[ADV_CUT_TIERS.length - 1] || { max: 5, cut: 2 };
-  ADV_CUT_TIERS.push({ max: last.max === Infinity ? 50 : last.max + 5, cut: last.cut });
+  const tiers = getActiveAdvTiers();
+  const last = tiers[tiers.length - 1] || { max: 5, cut: 2 };
+  tiers.push({ max: last.max === Infinity ? 50 : last.max + 5, cut: last.cut });
+  ADV_TIER_STATE.presets[ADV_TIER_STATE.active] = tiers;
   renderAdvCutTiersUI();
 }
 function removeAdvCutTier(i) {
-  ADV_CUT_TIERS.splice(i, 1);
+  const tiers = getActiveAdvTiers();
+  tiers.splice(i, 1);
+  ADV_TIER_STATE.presets[ADV_TIER_STATE.active] = tiers;
   renderAdvCutTiersUI();
 }
 function saveAdvCutTiersUI() {
@@ -3113,25 +3188,26 @@ function saveAdvCutTiersUI() {
     const cut = Number(cutInput) || 0;
     tiers.push({ max, cut });
   });
-  // Sort by max ascending so lookup works
   tiers.sort((a, b) => a.max - b.max);
-  ADV_CUT_TIERS = tiers;
-  saveAdvCutTiers(tiers);
-  document.getElementById('advCutTiersStatus').textContent = '✓ Saved. Refresh Ads Manager to see updates.';
-  setTimeout(() => { document.getElementById('advCutTiersStatus').textContent = ''; }, 4000);
+  ADV_TIER_STATE.presets[ADV_TIER_STATE.active] = tiers;
+  saveAdvTierState();
+  const el = document.getElementById('advCutTiersStatus');
+  if (el) {
+    el.textContent = '✓ Saved ' + (ADV_TIER_LABELS[ADV_TIER_STATE.active] || '') + ' preset. Refresh Ads Manager.';
+    setTimeout(() => { el.textContent = ''; }, 4000);
+  }
   renderAdvCutTiersUI();
 }
 function resetAdvCutTiers() {
-  ADV_CUT_TIERS = JSON.parse(JSON.stringify(ADV_CUT_DEFAULTS)).map(t => ({ max: t.max === null ? Infinity : t.max, cut: t.cut }));
-  saveAdvCutTiers(ADV_CUT_TIERS);
+  ADV_TIER_STATE.presets[ADV_TIER_STATE.active] = JSON.parse(JSON.stringify(ADV_CUT_PRESETS[ADV_TIER_STATE.active]))
+    .map(t => ({ max: t.max === null ? Infinity : t.max, cut: t.cut }));
+  saveAdvTierState();
   renderAdvCutTiersUI();
-  document.getElementById('advCutTiersStatus').textContent = '✓ Reset to defaults.';
-  setTimeout(() => { document.getElementById('advCutTiersStatus').textContent = ''; }, 4000);
-}
-
-function advCutPerOrder(ppo) {
-  for (const t of ADV_CUT_TIERS) { if (ppo <= t.max) return t.cut; }
-  return ADV_CUT_TIERS[ADV_CUT_TIERS.length - 1].cut;
+  const el = document.getElementById('advCutTiersStatus');
+  if (el) {
+    el.textContent = '✓ Reset ' + (ADV_TIER_LABELS[ADV_TIER_STATE.active] || '') + ' preset to defaults.';
+    setTimeout(() => { el.textContent = ''; }, 4000);
+  }
 }
 function advProfitForRow(wc) {
   if (!wc || !wc.orders || wc.orders <= 0) return null;
