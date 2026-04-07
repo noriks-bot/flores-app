@@ -3098,6 +3098,16 @@ function clonePresets() {
   return out;
 }
 let ADV_TIER_STATE = { active: 'medium', presets: clonePresets() };
+// Render immediately when DOM is ready, regardless of section
+function _initAdvTierUI() {
+  try { renderAdvCutTiersUI(); } catch(e) { console.error('[ADV] render fail', e); }
+  loadAdvTierStateFromServer();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _initAdvTierUI);
+} else {
+  setTimeout(_initAdvTierUI, 0);
+}
 
 function hydrateAdvState(raw) {
   if (!raw) return { active: 'medium', presets: clonePresets() };
