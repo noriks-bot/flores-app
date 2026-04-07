@@ -2560,15 +2560,22 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <tr style="border-bottom:2px solid var(--border-color);text-align:left;background:var(--bg)">
                 <th style="padding:14px 16px;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted)">Profit per order &le; (€)</th>
                 <th style="padding:14px 16px;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted)">Cut per order (€)</th>
-                <th style="padding:14px 16px;width:120px"></th>
+                
               </tr>
             </thead>
-            <tbody id="advCutTiersBody"></tbody>
+            <tbody id="advCutTiersBody">
+              <tr><td style="padding:12px 16px"><input type="number" step="0.01" value="5"  data-field="max" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td><td style="padding:12px 16px"><input type="number" step="0.01" value="2"  data-field="cut" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td><td></td></tr>
+              <tr><td style="padding:12px 16px"><input type="number" step="0.01" value="10" data-field="max" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td><td style="padding:12px 16px"><input type="number" step="0.01" value="4"  data-field="cut" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td><td></td></tr>
+              <tr><td style="padding:12px 16px"><input type="number" step="0.01" value="15" data-field="max" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td><td style="padding:12px 16px"><input type="number" step="0.01" value="7"  data-field="cut" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td><td></td></tr>
+              <tr><td style="padding:12px 16px"><input type="number" step="0.01" value="20" data-field="max" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td><td style="padding:12px 16px"><input type="number" step="0.01" value="11" data-field="cut" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td><td></td></tr>
+              <tr><td style="padding:12px 16px"><input type="number" step="0.01" value="25" data-field="max" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td><td style="padding:12px 16px"><input type="number" step="0.01" value="16" data-field="cut" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td><td></td></tr>
+              <tr><td style="padding:12px 16px"><input type="number" step="0.01" value="35" data-field="max" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td><td style="padding:12px 16px"><input type="number" step="0.01" value="22" data-field="cut" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td><td></td></tr>
+              <tr><td style="padding:12px 16px"><input type="number" step="0.01" value=""   placeholder="∞" data-field="max" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td><td style="padding:12px 16px"><input type="number" step="0.01" value="28" data-field="cut" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td><td></td></tr>
+            </tbody>
           </table>
         </div>
 
         <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
-          <button onclick="addAdvCutTier()" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:12px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer"><i class="fas fa-plus" style="margin-right:6px"></i>Add tier</button>
           <button onclick="saveAdvCutTiersUI()" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer"><i class="fas fa-save" style="margin-right:6px"></i>Save current preset</button>
           <button onclick="resetAdvCutTiers()" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:12px 22px;border-radius:8px;font-size:13px;cursor:pointer">Reset preset to defaults</button>
         </div>
@@ -3098,15 +3105,10 @@ function clonePresets() {
   return out;
 }
 let ADV_TIER_STATE = { active: 'medium', presets: clonePresets() };
-// Render immediately when DOM is ready, regardless of section
-function _initAdvTierUI() {
-  try { renderAdvCutTiersUI(); } catch(e) { console.error('[ADV] render fail', e); }
-  loadAdvTierStateFromServer();
-}
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', _initAdvTierUI);
+  document.addEventListener('DOMContentLoaded', function() { loadAdvTierStateFromServer(); });
 } else {
-  setTimeout(_initAdvTierUI, 0);
+  loadAdvTierStateFromServer();
 }
 
 function hydrateAdvState(raw) {
@@ -3189,21 +3191,20 @@ function highlightActiveTierBtn() {
   });
 }
 function renderAdvCutTiersUI() {
+  highlightActiveTierBtn();
   const tbody = document.getElementById('advCutTiersBody');
   if (!tbody) return;
-  highlightActiveTierBtn();
   const tiers = getActiveAdvTiers();
-  let html = '';
-  tiers.forEach((t, i) => {
-    const maxVal = t.max === Infinity ? '' : t.max;
-    const isLast = (i === tiers.length - 1);
-    html += `<tr data-i="${i}" style="border-bottom:1px solid var(--border-color)">
-      <td style="padding:12px 16px"><input type="number" step="0.01" value="${maxVal}" placeholder="${isLast ? '∞ (no limit)' : ''}" data-field="max" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td>
-      <td style="padding:12px 16px"><input type="number" step="0.01" value="${t.cut}" data-field="cut" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:10px 14px;border-radius:8px;font-size:15px;width:160px;font-weight:600"></td>
-      <td style="padding:12px 16px"><button onclick="removeAdvCutTier(${i})" style="background:#ef4444;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">Remove</button></td>
-    </tr>`;
+  const rows = tbody.querySelectorAll('tr');
+  rows.forEach((row, i) => {
+    if (i >= tiers.length) { row.style.display = 'none'; return; }
+    row.style.display = '';
+    const t = tiers[i];
+    const maxInput = row.querySelector('[data-field="max"]');
+    const cutInput = row.querySelector('[data-field="cut"]');
+    if (maxInput) maxInput.value = (t.max === Infinity || t.max === null) ? '' : t.max;
+    if (cutInput) cutInput.value = t.cut;
   });
-  tbody.innerHTML = html;
 }
 async function switchAdvTier(name) {
   ADV_TIER_STATE.active = name;
