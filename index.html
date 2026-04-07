@@ -728,6 +728,11 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 .role-admin { background:rgba(239,68,68,0.12); color:#ef4444; }
 .role-advertiser { background:rgba(37,99,235,0.12); color:#2563eb; }
 body.advertiser-mode .col-profit-orig { display: none !important; }
+body.advertiser-mode #dashKpis { display: none !important; }
+body.advertiser-mode #dashKpisFb { display: none !important; }
+body.advertiser-mode #dashManipulation { display: none !important; }
+body.advertiser-mode #dashOrdersTable { display: none !important; }
+body.advertiser-mode .dash-orders-wrapper { display: none !important; }
 .role-viewer { background:rgba(107,114,128,0.12); color:#6b7280; }
 
 /* ═══ PREMIUM ENHANCEMENTS ═══ */
@@ -1250,7 +1255,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           </div>
         </div>
         <!-- Orders Table -->
-        <div style="margin-top:20px;background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px">
+        <div class="dash-orders-wrapper" style="margin-top:20px;background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px">
           <div style="padding:14px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border-color)">📋 Orders</div>
           <table id="dashOrdersTable" border="0" cellpadding="4" cellspacing="0" style="width:100%;font-size:12px">
             <tr><th>#</th><th>Date</th><th>Country</th><th>Origin</th><th>Campaign</th><th>Customer</th><th>Items</th><th style="text-align:right">Profit</th><th style="text-align:right">Amount</th></tr>
@@ -6964,10 +6969,14 @@ function renderDashboard(data) {
       type: 'bar',
       data: {
         labels: data.chartData.map(d => d.date.slice(5)),
-        datasets: [
-          { label: 'Spend', data: data.chartData.map(d => d.spend), backgroundColor: 'rgba(37,99,235,0.7)', borderRadius: 4, order: 2 },
-          { label: 'Profit', data: data.chartData.map(d => d.profit), backgroundColor: data.chartData.map(d => d.profit >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)'), borderRadius: 4, order: 1 }
-        ]
+        datasets: (function(){
+          const isAdv = document.body.classList.contains('advertiser-mode');
+          const profitField = isAdv ? 'advProfit' : 'profit';
+          return [
+            { label: 'Spend', data: data.chartData.map(d => d.spend), backgroundColor: 'rgba(37,99,235,0.7)', borderRadius: 4, order: 2 },
+            { label: isAdv ? 'ADV Profit' : 'Profit', data: data.chartData.map(d => d[profitField] || 0), backgroundColor: data.chartData.map(d => (d[profitField]||0) >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)'), borderRadius: 4, order: 1 }
+          ];
+        })()
       },
       options: {
         responsive: true, maintainAspectRatio: false,
