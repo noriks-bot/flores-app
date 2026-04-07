@@ -1274,15 +1274,15 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <div id="dashCountrySection" style="margin-top:24px">
           <div class="country-block" data-mode="all">
             <h3 style="font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#111;margin:16px 0 10px">Vse (All orders)</h3>
-            <div id="dashCountryCardsAll" class="country-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px"></div>
+            <div id="dashCountryCardsAll" class="country-cards-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:16px"></div>
           </div>
           <div class="country-block" data-mode="fb">
             <h3 style="font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#1877f2;margin:24px 0 10px">FB Attributed</h3>
-            <div id="dashCountryCardsFb" class="country-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px"></div>
+            <div id="dashCountryCardsFb" class="country-cards-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:16px"></div>
           </div>
           <div class="country-block" data-mode="adv">
             <h3 style="font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#f59e0b;margin:24px 0 10px">FB ADV (with manipulation)</h3>
-            <div id="dashCountryCardsAdv" class="country-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px"></div>
+            <div id="dashCountryCardsAdv" class="country-cards-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:16px"></div>
           </div>
         </div>
 
@@ -7069,12 +7069,12 @@ async function loadCountryCards() {
     const elFb = document.getElementById('dashCountryCardsFb');
     const elAdv = document.getElementById('dashCountryCardsAdv');
 
-    // ALL block (no spend, only orders+profit+ppo)
+    // ALL block (all orders + FB spend)
     if (elAll) {
       let h = '';
       for (const cc of order) {
         const c = all[cc]; if (!c) continue;
-        h += renderCountryCard(cc, { spend: 0, orders: c.orders, profit: c.profit, ppo: c.ppo, cpa: 0, roas: 0 }, { hasSpend: false });
+        h += renderCountryCard(cc, { spend: c.spend||0, orders: c.orders, profit: c.profit, ppo: c.ppo, cpa: c.cpa||0, roas: c.roas||0 });
       }
       elAll.innerHTML = h || '<div style="color:var(--text-muted);padding:10px">No data</div>';
     }

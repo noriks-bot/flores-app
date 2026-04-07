@@ -2668,16 +2668,21 @@ const server = http.createServer(async (req, res) => {
           v.ppo = v.orders > 0 ? Math.round(v.netProfit / v.orders * 100) / 100 : 0;
         }
 
-        // byCountryAll: ALL orders (not just FB-attributed)
+        // byCountryAll: ALL orders (not just FB-attributed) with spend from FB data
         const byCountryAll = {};
         try {
           const allRows = db.prepare("SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? GROUP BY country").all(start, end);
           for (const r of allRows) {
+            const fbSpend = (byCountry[r.country] && byCountry[r.country].spend) || 0;
+            const netProfit = Math.round(((r.profit||0) - fbSpend) * 100) / 100;
             byCountryAll[r.country] = {
               orders: r.orders,
               revenue: Math.round((r.revenue||0) * 100) / 100,
-              profit: Math.round((r.profit||0) * 100) / 100,
-              ppo: r.orders > 0 ? Math.round(((r.profit||0) / r.orders) * 100) / 100 : 0
+              profit: netProfit,
+              ppo: r.orders > 0 ? Math.round((netProfit / r.orders) * 100) / 100 : 0,
+              spend: Math.round(fbSpend * 100) / 100,
+              cpa: r.orders > 0 ? Math.round((fbSpend / r.orders) * 100) / 100 : 0,
+              roas: fbSpend > 0 ? Math.round(((r.revenue||0) / fbSpend) * 100) / 100 : 0
             };
           }
         } catch(e) { console.warn('[base-report] byCountryAll failed', e.message); }
