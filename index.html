@@ -7056,10 +7056,10 @@ function renderCountryCard(cc, data, opts) {
 }
 
 async function loadCountryCards() {
-  const today = new Date().toISOString().slice(0,10);
+  const dr = getDashDateRange();
   const order = ['HR','CZ','PL','GR','SK','IT','HU'];
   try {
-    const res = await fetch('/api/base-report?date_from='+today+'&date_to='+today, {credentials:'same-origin'});
+    const res = await fetch('/api/base-report?date_from='+dr.from+'&date_to='+dr.to, {credentials:'same-origin'});
     const data = await res.json();
     const fb = data.byCountry || {};
     const all = data.byCountryAll || {};
