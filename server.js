@@ -3898,13 +3898,14 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             for (const t of tiers) { const max = (t.max === null || t.max === undefined) ? Infinity : Number(t.max); if (ppo <= max) return Number(t.cut)||0; }
             return Number(tiers[tiers.length-1].cut)||0;
           };
-          // Aggregate per campaign (matches Ads Manager logic): each campaign gets ONE cut based on its average PPO
-          const fbCampaignRows = db.prepare("SELECT utm_campaign, COUNT(*) as cnt, SUM(profit) as totalProfit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 GROUP BY utm_campaign").all(dashFrom, dashTo);
-          for (const r of fbCampaignRows) {
-            const cnt = Number(r.cnt) || 0;
-            if (cnt <= 0) continue;
-            const ppo = (Number(r.totalProfit) || 0) / cnt;
-            advCutTotal += cutFor(ppo) * cnt;
+          // Use the EXACT same campaign data Ads Manager uses (topCampaignsRaw with c.wc.profit/c.wc.orders)
+          if (Array.isArray(topCampaignsRaw)) {
+            for (const camp of topCampaignsRaw) {
+              const wc = camp.wc;
+              if (!wc || !(wc.orders > 0)) continue;
+              const ppo = (Number(wc.profit) || 0) / wc.orders;
+              advCutTotal += cutFor(ppo) * wc.orders;
+            }
           }
         } catch(e) { console.warn('[ADV] cut calc failed', e.message); }
         // FB pixel purchases from Meta API (what FB reports)
