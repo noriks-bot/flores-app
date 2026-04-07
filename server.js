@@ -2521,6 +2521,7 @@ const server = http.createServer(async (req, res) => {
         const dbOrderRows = db.prepare(`
           SELECT country, COUNT(*) as orders, SUM(gross_eur) as revenue, SUM(profit) as profit
           FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1
+           AND LOWER(billing_name) NOT LIKE '%test%'
           GROUP BY country
         `).all(start, end);
         for (const r of dbOrderRows) {
@@ -2652,7 +2653,7 @@ const server = http.createServer(async (req, res) => {
         // byCountryAll: ALL orders (not just FB-attributed) with spend from FB data
         const byCountryAll = {};
         try {
-          const allRows = db.prepare("SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? GROUP BY country").all(start, end);
+          const allRows = db.prepare("SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ?  AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY country").all(start, end);
           for (const r of allRows) {
             const fbSpend = (byCountry[r.country] && byCountry[r.country].spend) || 0;
             const netProfit = Math.round(((r.profit||0) - fbSpend) * 100) / 100;
@@ -3746,11 +3747,11 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         const d7ago = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
         
         // Today's KPIs from wc_orders
-        const todayStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ?').get(dashFrom, dashTo);
-        const fbOrders = db.prepare('SELECT COUNT(*) as orders FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1').get(dashFrom, dashTo);
+        const todayStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND LOWER(billing_name) NOT LIKE '%test%'').get(dashFrom, dashTo);
+        const fbOrders = db.prepare('SELECT COUNT(*) as orders FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'').get(dashFrom, dashTo);
         
         // 7-day daily chart data
-        const chartData = db.prepare('SELECT order_date as date, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? GROUP BY order_date ORDER BY order_date').all(d7ago);
+        const chartData = db.prepare('SELECT order_date as date, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ?  AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date ORDER BY order_date').all(d7ago);
         
         // Top campaigns - from Meta API (has campaign names)
         let topCampaignsRaw = [];
@@ -3879,7 +3880,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         } catch(e) { console.warn('[DASH] Top creatives fetch error:', e.message); }
 
         // FB KPI data
-        const fbAttributedProfit = db.prepare('SELECT COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1').get(dashFrom, dashTo);
+        const fbAttributedProfit = db.prepare('SELECT COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'').get(dashFrom, dashTo);
         // ADV manipulation: per-order tier cut from active preset
         let advCutTotal = 0; let advTierName = 'medium';
         try {
@@ -3926,7 +3927,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           }
         }
         const fbOrderCount = fbOrders?.orders || 0;
-        const fbMeasuredResult = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo);
+        const fbMeasuredResult = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != '' AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
         const fbMeasuredOrders = fbMeasuredResult?.cnt || 0;
         const fbUnmeasuredOrders = fbOrderCount - fbMeasuredOrders;
         const fbCpa = fbOrderCount > 0 ? Math.round((fbSpendRange / fbOrderCount) * 100) / 100 : 0;
@@ -4045,7 +4046,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           byCountry: byCountry.map(c => ({ country: c.country, orders: c.orders, revenue: Math.round(c.revenue * 100) / 100, profit: Math.round(c.profit * 100) / 100 })),
           chartData: (function(){
             // Build helper for per-day ADV profit (FB-attributed orders, tier cut per campaign)
-            const advByDayRows = db.prepare("SELECT order_date as date, utm_campaign, COUNT(*) as cnt, SUM(profit) as totalProfit FROM wc_orders WHERE order_date >= ? AND is_fb_attributed = 1 GROUP BY order_date, utm_campaign").all(d7ago);
+            const advByDayRows = db.prepare("SELECT order_date as date, utm_campaign, COUNT(*) as cnt, SUM(profit) as totalProfit FROM wc_orders WHERE order_date >= ? AND is_fb_attributed = 1  AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date, utm_campaign").all(d7ago);
             const advByDay = {};
             for (const r of advByDayRows) {
               const cnt = Number(r.cnt) || 0; if (cnt <= 0) continue;
@@ -4065,7 +4066,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
               advByDay[r.date] += advProfit;
             }
             // Per-day FB-attributed orders count + revenue
-            const advCountRows = db.prepare("SELECT order_date as date, COUNT(*) as cnt, COALESCE(SUM(gross_eur),0) as rev FROM wc_orders WHERE order_date >= ? AND is_fb_attributed = 1 GROUP BY order_date").all(d7ago);
+            const advCountRows = db.prepare("SELECT order_date as date, COUNT(*) as cnt, COALESCE(SUM(gross_eur),0) as rev FROM wc_orders WHERE order_date >= ? AND is_fb_attributed = 1  AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date").all(d7ago);
             const advCounts = {};
             for (const r of advCountRows) advCounts[r.date] = { orders: r.cnt, revenue: r.rev };
             return chartData.map(d => {
