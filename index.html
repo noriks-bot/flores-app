@@ -1220,6 +1220,14 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         </div>
         <div class="dash-kpis" id="dashKpis"></div>
         <div class="dash-kpis dash-kpis-fb" id="dashKpisFb" style="margin-top:16px"></div>
+        <div id="dashManipulation" style="margin-top:16px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px 20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+          <div style="font-weight:800;font-size:14px;color:#111;display:flex;align-items:center;gap:8px"><i class="fas fa-magic" style="color:#f59e0b"></i>Manipulation</div>
+          <div style="display:flex;gap:32px;flex-wrap:wrap">
+            <div><div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Total today</div><div id="manipTotal" style="font-size:20px;font-weight:800;color:#dc2626">€0.00</div></div>
+            <div><div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Per order</div><div id="manipPerOrder" style="font-size:20px;font-weight:800;color:#dc2626">€0.00</div></div>
+            <div><div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Active tier</div><div id="manipTier" style="font-size:20px;font-weight:800;color:#111">—</div></div>
+          </div>
+        </div>
         <div class="dash-kpis dash-kpis-fb" id="dashKpisAdv" style="margin-top:16px"></div>
         <!-- Quick Actions -->
         <div class="dash-quick-actions" style="display:none">
@@ -6904,6 +6912,12 @@ function renderDashboard(data) {
   const fbProfitAdv = fbProfitOrig - advCutEach * fbOrdersAdv;
   const fbPpoAdv = fbOrdersAdv > 0 ? (fbProfitAdv / fbOrdersAdv) : fbProfitAdv;
   const fbCpaAdv = (k.fbCpa || 0);
+  // Manipulation summary
+  const manipTotal = fbProfitOrig - fbProfitAdv;
+  const manipPer = fbOrdersAdv > 0 ? (manipTotal / fbOrdersAdv) : 0;
+  const _mt = document.getElementById('manipTotal'); if (_mt) _mt.textContent = '\u20ac' + manipTotal.toFixed(2);
+  const _mp = document.getElementById('manipPerOrder'); if (_mp) _mp.textContent = '\u20ac' + manipPer.toFixed(2);
+  const _mtier = document.getElementById('manipTier'); if (_mtier) _mtier.textContent = (typeof ADV_TIER_LABELS !== 'undefined' && ADV_TIER_STATE) ? (ADV_TIER_LABELS[ADV_TIER_STATE.active] || ADV_TIER_STATE.active) : '—';
   document.getElementById('dashKpisAdv').innerHTML = [
     { label: "ADV Spend", value: '\u20ac' + (k.spend||0).toFixed(2), icon: 'fas fa-ad' },
     { label: "ADV Orders", value: (k.fbOrders || 0) + '<div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);margin-top:3px">FB Report: ' + (k.fbPixelPurchases || 0) + '</div>', icon: 'fas fa-shopping-cart' },
