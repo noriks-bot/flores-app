@@ -2546,59 +2546,40 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
-        // 3. Aggregate spend by country and type
+        // 3. Aggregate spend by country using Meta API country breakdown (matches FB Ads Reporting)
         const byCountry = {};
         const byType = {};
         const byCountryAndType = {};
+        const COUNTRY_MAP = {'Croatia':'HR','Czech Republic':'CZ','Czechia':'CZ','Poland':'PL','Greece':'GR','Slovakia':'SK','Italy':'IT','Hungary':'HU','Slovenia':'SI'};
+        try {
+          for (const acct of Object.values(AD_ACCOUNTS_MAP)) {
+            const rows = await metaGetAll(acct + '/insights', {
+              fields: 'spend,actions',
+              breakdowns: 'country',
+              time_range: JSON.stringify({ since: start, until: end }),
+              limit: 500
+            });
+            for (const row of rows) {
+              const cc = COUNTRY_MAP[row.country] || row.country;
+              if (!cc || cc.length > 3) continue;
+              const spend = parseFloat(row.spend || 0);
+              const pAct = (row.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
+              const purchases = pAct ? parseInt(pAct.value) : 0;
+              if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
+              byCountry[cc].spend += spend;
+              byCountry[cc].purchases += purchases;
+            }
+          }
+        } catch(e) { console.warn('[base-report] Meta country breakdown failed:', e.message); }
 
+        // Also aggregate by type (from campaign names)
         for (const c of campaignData) {
           const spend = parseFloat(c.insights?.spend || 0);
           if (spend <= 0) continue;
-          const parsed = parseCampaignName(c.name);
           const campType = parseCampaignType(c.name);
-          const countries = parsed.countries.length > 0 ? parsed.countries : Object.keys(WC_STORES);
-
-          // Split spend proportionally by order count in those countries
-          let relevantOrders = 0;
-          for (const cc of countries) {
-            relevantOrders += (totalOrdersByCountry[cc] || 0);
-          }
-
-          for (const cc of countries) {
-            const ccOrders = totalOrdersByCountry[cc] || 0;
-            // Proportional split: if there are orders, use order ratio; otherwise equal split
-            let spendShare;
-            if (relevantOrders > 0) {
-              spendShare = spend * (ccOrders / relevantOrders);
-            } else {
-              spendShare = spend / countries.length;
-            }
-
-            // Distribute FB purchases proportionally
-            const fbPurchases = campaignPurchases[c.id] || 0;
-            let purchShare;
-            if (relevantOrders > 0) {
-              purchShare = fbPurchases * (ccOrders / relevantOrders);
-            } else {
-              purchShare = fbPurchases / countries.length;
-            }
-
-            // By Country
-            if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
-            byCountry[cc].spend += spendShare;
-            byCountry[cc].purchases += purchShare;
-
-            // By Type
-            if (!byType[campType]) byType[campType] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
-            byType[campType].spend += spendShare;
-            byType[campType].purchases += purchShare;
-
-            // By Country + Type
-            const key = `${cc}_${campType}`;
-            if (!byCountryAndType[key]) byCountryAndType[key] = { country: cc, type: campType, spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
-            byCountryAndType[key].spend += spendShare;
-            byCountryAndType[key].purchases += purchShare;
-          }
+          if (!byType[campType]) byType[campType] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
+          byType[campType].spend += spend;
+          byType[campType].purchases += (campaignPurchases[c.id] || 0);
         }
 
         // Fill in orders/revenue/profit from DB
