@@ -7040,18 +7040,18 @@ function renderCountryCard(cc, data, opts) {
   const profitColor = profit >= 0 ? '#10b981' : '#ef4444';
   const roasColor = roas >= 2 ? '#10b981' : roas >= 1 ? '#f59e0b' : '#ef4444';
   const hasSpend = opts.hasSpend !== false;
-  return '<div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:16px 20px">'
-    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
+  return '<div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:10px 12px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
     + '<div style="font-weight:700;font-size:15px">' + (flags[cc]||'') + ' ' + cc + '</div>'
     + (hasSpend ? '<div style="font-weight:800;font-size:16px;color:' + roasColor + '">' + roas.toFixed(2) + 'x</div>' : '')
     + '</div>'
-    + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px 16px;font-size:13px">'
-    + (hasSpend ? '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">Spend</div><div style="font-weight:700">\u20ac' + spend.toFixed(2) + '</div></div>' : '<div></div>')
-    + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">Orders</div><div style="font-weight:700">' + orders + '</div></div>'
-    + (hasSpend ? '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">CPA</div><div style="font-weight:700">\u20ac' + cpa.toFixed(2) + '</div></div>' : '<div></div>')
-    + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">Profit</div><div style="font-weight:700;color:' + profitColor + '">\u20ac' + profit.toFixed(2) + '</div></div>'
-    + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">Profit/Order</div><div style="font-weight:700;color:' + profitColor + '">\u20ac' + ppo.toFixed(2) + '</div></div>'
-    + (hasSpend ? '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">ROAS</div><div style="font-weight:700;color:' + roasColor + '">' + roas.toFixed(2) + 'x</div></div>' : '<div></div>')
+    + '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px 12px;font-size:12px">'
+    + (hasSpend ? '<div><div style="font-size:9px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.3px">Spend</div><div style="font-weight:700">\u20ac' + spend.toFixed(2) + '</div></div>' : '<div></div>')
+    + '<div><div style="font-size:9px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.3px">Orders</div><div style="font-weight:700">' + orders + '</div></div>'
+    + (hasSpend ? '<div><div style="font-size:9px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.3px">CPA</div><div style="font-weight:700">\u20ac' + cpa.toFixed(2) + '</div></div>' : '<div></div>')
+    + '<div><div style="font-size:9px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.3px">Profit</div><div style="font-weight:700;color:' + profitColor + '">\u20ac' + profit.toFixed(2) + '</div></div>'
+    + '<div><div style="font-size:9px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.3px">Profit/Order</div><div style="font-weight:700;color:' + profitColor + '">\u20ac' + ppo.toFixed(2) + '</div></div>'
+    + (hasSpend ? '<div><div style="font-size:9px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.3px">ROAS</div><div style="font-weight:700;color:' + roasColor + '">' + roas.toFixed(2) + 'x</div></div>' : '<div></div>')
     + '</div></div>';
 }
 
@@ -7073,8 +7073,8 @@ async function loadCountryCards() {
     if (elAll) {
       let h = '';
       for (const cc of order) {
-        const c = all[cc]; if (!c) continue;
-        h += renderCountryCard(cc, { spend: c.spend||0, orders: c.orders, profit: c.profit, ppo: c.ppo, cpa: c.cpa||0, roas: c.roas||0 });
+        const c = all[cc] || {spend:0,orders:0,profit:0,ppo:0,cpa:0,roas:0};
+        h += renderCountryCard(cc, { spend: c.spend||0, orders: c.orders||0, profit: c.profit||0, ppo: c.ppo||0, cpa: c.cpa||0, roas: c.roas||0 });
       }
       elAll.innerHTML = h || '<div style="color:var(--text-muted);padding:10px">No data</div>';
     }
@@ -7083,8 +7083,8 @@ async function loadCountryCards() {
     if (elFb) {
       let h = '';
       for (const cc of order) {
-        const c = fb[cc]; if (!c) continue;
-        h += renderCountryCard(cc, { spend: c.spend, orders: c.orders, profit: c.netProfit, ppo: c.ppo, cpa: c.cpa, roas: c.roas });
+        const c = fb[cc] || {spend:0,orders:0,netProfit:0,ppo:0,cpa:0,roas:0};
+        h += renderCountryCard(cc, { spend: c.spend||0, orders: c.orders||0, profit: c.netProfit||0, ppo: c.ppo||0, cpa: c.cpa||0, roas: c.roas||0 });
       }
       elFb.innerHTML = h || '<div style="color:var(--text-muted);padding:10px">No data</div>';
     }
@@ -7093,7 +7093,7 @@ async function loadCountryCards() {
     if (elAdv) {
       let h = '';
       for (const cc of order) {
-        const c = fb[cc]; if (!c) continue;
+        const c = fb[cc] || {spend:0,orders:0,netProfit:0,ppo:0,cpa:0,roas:0};
         let profit = c.netProfit || 0;
         let ppo = c.ppo || 0;
         if (c.orders > 0) {
