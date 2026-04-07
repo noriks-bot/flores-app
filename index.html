@@ -3510,9 +3510,15 @@ function profitPill(val) {
 
 function profitCell(p) {
   if(!p) return '<td><span class="muted">—</span></td>';
-  const profit=p.profit||0;
+  let profit=p.profit||0;
   const orders=p.orders||0;
   const spend=p.spend||0;
+  // Advertiser sees ADV-cut profit (per-period campaign-level cut)
+  if (document.body.classList.contains('advertiser-mode') && orders > 0) {
+    const ppo = profit / orders;
+    const cut = (typeof advCutPerOrder === 'function') ? advCutPerOrder(ppo) : 0;
+    profit = profit - cut * orders;
+  }
   const cpa=orders>0?(spend/orders).toFixed(1)+'€':'—';
   const pill=profitPill(profit);
   const ordTag=`<span style="display:block;font-size:9px;color:#666;margin-top:1px">${orders} orders</span>`;
