@@ -2719,7 +2719,7 @@ function navigateTo(section) {
   if (section === 'organizations') { loadOrganizations(); }
   if (section === 'saas-dashboard') { loadSaasDashboard(); }
   if (section === 'org-setup') { loadOrgTab('countries', document.querySelector('#section-org-setup .fpill')); }
-  if (section === 'settings') { loadOrgTab('countries', document.querySelector('#section-settings .fpill')); renderAdvCutTiersUI(); }
+  if (section === 'settings') { loadOrgTab('countries', document.querySelector('#section-settings .fpill')); }
   // Auto-load AI hints section init
   if (section === 'ai-hints') {
     initAIHintsIfNeeded();
@@ -3093,47 +3093,50 @@ const ADV_CUT_PRESETS = {
 };
 const ADV_TIER_LABELS = { light: '🟢 LIGHT', medium: '🟡 MEDIUM', max: '🔴 MAX' };
 function clonePresets() {
-  // Deep clone presets preserving Infinity (which JSON.stringify would lose)
   const out = {};
-  for (const k of Object.keys(ADV_CUT_PRESETS)) {
-    out[k] = ADV_CUT_PRESETS[k].map(t => ({ max: t.max, cut: t.cut }));
-  }
-  return out;
-}
-function hydrateAdvState(obj) {
-  if (!obj || typeof obj !== 'object') return { active: 'medium', presets: clonePresets() };
-  const presets = obj.presets || clonePresets();
-  for (const k of Object.keys(presets)) {
-    presets[k] = presets[k].map(t => ({ max: (t.max === null || t.max === undefined) ? Infinity : Number(t.max), cut: Number(t.cut) }));
-  }
-  for (const k of Object.keys(ADV_CUT_PRESETS)) {
-    if (!presets[k]) presets[k] = ADV_CUT_PRESETS[k].map(t => ({ max: t.max, cut: t.cut }));
-  }
-  return { active: obj.active || 'medium', presets };
-}
-function serializeAdvState() {
-  const out = { active: ADV_TIER_STATE.active, presets: {} };
-  for (const k of Object.keys(ADV_TIER_STATE.presets)) {
-    out.presets[k] = ADV_TIER_STATE.presets[k].map(t => ({ max: t.max === Infinity ? null : t.max, cut: t.cut }));
-  }
+  for (const k of Object.keys(ADV_CUT_PRESETS)) out[k] = ADV_CUT_PRESETS[k].map(t => ({ max: t.max, cut: t.cut }));
   return out;
 }
 let ADV_TIER_STATE = { active: 'medium', presets: clonePresets() };
-let ADV_TIER_LOADED = false;
+
+function hydrateAdvState(raw) {
+  if (!raw) return { active: 'medium', presets: clonePresets() };
+  let obj = raw;
+  if (typeof raw === 'string') { try { obj = JSON.parse(raw); } catch(e) { return { active: 'medium', presets: clonePresets() }; } }
+  const presets = clonePresets();
+  if (obj.presets) {
+    for (const k of Object.keys(obj.presets)) {
+      if (Array.isArray(obj.presets[k])) {
+        presets[k] = obj.presets[k].map(t => ({
+          max: (t.max === null || t.max === undefined) ? Infinity : Number(t.max),
+          cut: Number(t.cut)
+        }));
+      }
+    }
+  }
+  return { active: obj.active || 'medium', presets };
+}
+
 async function loadAdvTierStateFromServer() {
   try {
-    const res = await fetch('/api/settings', { credentials: 'same-origin' });
+    const res = await fetch('/api/settings', { credentials: 'same-origin', cache: 'no-store' });
     const all = await res.json();
-    if (all && all.adv_tier_state) {
-      const parsed = typeof all.adv_tier_state === 'string' ? JSON.parse(all.adv_tier_state) : all.adv_tier_state;
-      ADV_TIER_STATE = hydrateAdvState(parsed);
-    }
-  } catch(e) { console.warn('[ADV] load from server failed', e); }
-  ADV_TIER_LOADED = true;
+    ADV_TIER_STATE = hydrateAdvState(all.adv_tier_state);
+    console.log('[ADV] loaded state:', ADV_TIER_STATE.active);
+  } catch(e) {
+    console.error('[ADV] load failed', e);
+  }
   renderAdvCutTiersUI();
 }
+
 async function saveAdvTierState() {
-  const payload = serializeAdvState();
+  const payload = {
+    active: ADV_TIER_STATE.active,
+    presets: {}
+  };
+  for (const k of Object.keys(ADV_TIER_STATE.presets)) {
+    payload.presets[k] = ADV_TIER_STATE.presets[k].map(t => ({ max: t.max === Infinity ? null : t.max, cut: t.cut }));
+  }
   try {
     const res = await fetch('/api/settings', {
       method: 'POST',
@@ -3142,9 +3145,14 @@ async function saveAdvTierState() {
       body: JSON.stringify({ adv_tier_state: JSON.stringify(payload) })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
+    console.log('[ADV] saved', ADV_TIER_STATE.active);
     return true;
-  } catch(e) { console.error('[ADV] save to server failed', e); return false; }
+  } catch(e) {
+    console.error('[ADV] save failed', e);
+    return false;
+  }
 }
+
 function getActiveAdvTiers() { return ADV_TIER_STATE.presets[ADV_TIER_STATE.active] || ADV_CUT_PRESETS.medium; }
 function advCutPerOrder(ppo) {
   const tiers = getActiveAdvTiers();
@@ -6143,7 +6151,7 @@ async function toggleOpt(campaignId) {
     origNav(section);
     if (section === 'fb-integration') loadFbIntegration();
     if (section === 'users') loadUsers();
-    if (section === 'settings') { loadSettings(); setTimeout(function(){ try { renderAdvCutTiersUI(); loadAdvTierStateFromServer(); } catch(e){ console.error('[ADV] navigate error', e); } }, 50); }
+    if (section === 'settings') { loadSettings(); loadAdvTierStateFromServer(); }
     if (section === 'videos' && !videosData) loadVideos();
   };
   // Handle initial hash if it's a new section
@@ -7588,7 +7596,6 @@ function initSaasAdminMode() {
 // Run on page load
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(initSaasAdminMode, 100);
-  setTimeout(function(){ try { renderAdvCutTiersUI(); loadAdvTierStateFromServer(); } catch(e){ console.error('[ADV] init error', e); } }, 500);
 });
 
 // Trend Chart
