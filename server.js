@@ -3899,14 +3899,19 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             return Number(tiers[tiers.length-1].cut)||0;
           };
           // Use the EXACT same campaign data Ads Manager uses (topCampaignsRaw with c.wc.profit/c.wc.orders)
+          // Filter: only campaigns with spend > 0 (matches Ads Manager visible rows)
           if (Array.isArray(topCampaignsRaw)) {
+            const seen = new Set();
             for (const camp of topCampaignsRaw) {
+              if (seen.has(camp.id)) continue; // dedupe
+              seen.add(camp.id);
               const wc = camp.wc;
               if (!wc || !(wc.orders > 0)) continue;
               const ppo = (Number(wc.profit) || 0) / wc.orders;
               advCutTotal += cutFor(ppo) * wc.orders;
             }
           }
+          console.log('[ADV] cut total:', advCutTotal, 'tier:', advTierName, 'campaigns:', topCampaignsRaw?.length || 0);
         } catch(e) { console.warn('[ADV] cut calc failed', e.message); }
         // FB pixel purchases from Meta API (what FB reports)
         let fbPixelPurchases = 0;
