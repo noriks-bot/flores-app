@@ -1363,6 +1363,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <th data-sort="wc_orders" style="max-width:75px;width:75px">Flores purchases</th><th data-sort="fpa" style="max-width:30px;width:30px">FPA</th>
               <th data-sort="wc_profit">Profit/loss</th>
               <th data-sort="wc_ppo">Profit per order</th>
+              <th data-sort="wc_profit">Profit/loss ADV</th>
+              <th data-sort="wc_ppo">Profit per order ADV</th>
               <th data-sort="wc_revenue">Flores revenue</th>
               <th data-sort="wc_cpa">Flores CPA</th>
               <th data-sort="wc_roas">ROAS</th>
@@ -1381,7 +1383,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           </thead>
           <tbody id="tableTotals"></tbody>
           <tbody id="tableBody">
-            <tr><td colspan="28"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>
+            <tr><td colspan="30"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>
           </tbody>
           <tbody id="tableTotalsBottom"></tbody>
         </table>
@@ -2937,11 +2939,11 @@ document.addEventListener('click', e => {
 
 async function loadData() {
   const {from,to}=getDateRange();
-  document.getElementById('tableBody').innerHTML='<tr><td colspan="28"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>';
+  document.getElementById('tableBody').innerHTML='<tr><td colspan="30"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>';
   try {
     const res=await fetch(`/api/campaigns?date_from=${from}&date_to=${to}&_t=${Date.now()}`);
     campaigns=await res.json();
-    if(campaigns.error){document.getElementById('tableBody').innerHTML=`<tr><td colspan="28"><div class="loading-state">Error: ${campaigns.error}</div></td></tr>`;return;}
+    if(campaigns.error){document.getElementById('tableBody').innerHTML=`<tr><td colspan="30"><div class="loading-state">Error: ${campaigns.error}</div></td></tr>`;return;}
     campaigns.sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0));
     expandedCampaigns={}; expandedAdsets={}; adsetCache={}; adCache={};
     allAdsets=[]; allAds=[];
@@ -2962,7 +2964,7 @@ async function loadData() {
     } else {
       renderAdHeaders(); loadAds();
     }
-  } catch(e){ document.getElementById('tableBody').innerHTML=`<tr><td colspan="28"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
+  } catch(e){ document.getElementById('tableBody').innerHTML=`<tr><td colspan="30"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
 }
 
 function updateSummary() {
@@ -3002,6 +3004,8 @@ function updateSummary() {
     <td>${spend.toFixed(2)} €</td>
     <td><strong>${wcOrders}</strong></td>
     <td style="color:#c4b5fd">${fpaTotal}</td>
+    <td>${wcProfit.toFixed(2)} €</td>
+    <td>${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
     <td>${wcProfit.toFixed(2)} €</td>
     <td>${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
     <td>${wcRevenue.toFixed(2)} €</td>
@@ -3370,6 +3374,8 @@ function makeRow(item,level,bgClass) {
     <td style="font-size:11px;color:#8b5cf6">${(fpaData[level==="campaign"?"campaigns":level==="adset"?"adsets":"ads"][item.id])||0}</td>
     <td class="${plCls}">${plHtml}</td>
     <td class="${ppoCls}">${ppoHtml}</td>
+    <td class="${plCls}">${plHtml}</td>
+    <td class="${ppoCls}">${ppoHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${florexCpa}</td>
     <td>${roas}</td>
@@ -3473,7 +3479,7 @@ function renderTable() {
       html+=childRows.join('');
     }
   });
-  if(!html) html='<tr><td colspan="28"><div class="loading-state">No campaigns found</div></td></tr>';
+  if(!html) html='<tr><td colspan="30"><div class="loading-state">No campaigns found</div></td></tr>';
   document.getElementById('tableBody').innerHTML=html;
   if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL' || activeDeliveryFilter !== 'HAD_DELIVERY' || showOnlySelected) applySearchFilter();
 }
@@ -3772,6 +3778,8 @@ function renderCampaignHeaders() {
     <th data-sort="wc_orders" style="max-width:75px;width:75px">Flores purchases</th><th data-sort="fpa" style="max-width:30px;width:30px">FPA</th>
     <th data-sort="wc_profit">Profit/loss</th>
     <th data-sort="wc_ppo">Profit per order</th>
+    <th data-sort="wc_profit">Profit/loss ADV</th>
+    <th data-sort="wc_ppo">Profit per order ADV</th>
     <th data-sort="wc_revenue">Flores revenue</th>
     <th data-sort="wc_cpa">Flores CPA</th>
     <th data-sort="wc_roas">ROAS</th>
@@ -3796,6 +3804,8 @@ const FLAT_HEADERS = `
     <th data-sort="wc_orders" style="max-width:75px;width:75px">Flores purchases</th><th data-sort="fpa" style="max-width:30px;width:30px">FPA</th>
     <th data-sort="wc_profit">Profit/loss</th>
     <th data-sort="wc_ppo">Profit per order</th>
+    <th data-sort="wc_profit">Profit/loss ADV</th>
+    <th data-sort="wc_ppo">Profit per order ADV</th>
     <th data-sort="wc_revenue">Flores revenue</th>
     <th data-sort="wc_cpa">Flores CPA</th>
     <th data-sort="wc_roas">ROAS</th>
@@ -3888,6 +3898,8 @@ function makeFlatRow(item, level) {
     <td style="font-size:11px;color:#8b5cf6">${(fpaData[level==="campaign"?"campaigns":level==="adset"?"adsets":"ads"][item.id])||0}</td>
     <td class="${plCls}">${plHtml}</td>
     <td class="${ppoCls}">${ppoHtml}</td>
+    <td class="${plCls}">${plHtml}</td>
+    <td class="${ppoCls}">${ppoHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${florexCpa}</td>
     <td>${roas}</td>
@@ -3918,7 +3930,7 @@ function makeFlatTotals(items, colSpan) {
     <td></td><td style="text-align:left" colspan="2"><strong>TOTAL (${items.length})</strong></td>
     <td>${active}/${items.length}</td>
     <td>${fmtEur(spend)}</td><td>${fmtInt(wcOrders)}</td><td>${fmtEur(wcRevenue)}</td>
-    <td>${profitBadge}</td><td>${wcOrders > 0 ? fmtEur(wcProfit / wcOrders) : '—'}</td><td>${wcOrders > 0 ? fmtEur(spend / wcOrders) : '—'}</td><td>${roas}</td>
+    <td>${profitBadge}</td><td>${wcOrders > 0 ? fmtEur(wcProfit / wcOrders) : '—'}</td><td>${profitBadge}</td><td>${wcOrders > 0 ? fmtEur(wcProfit / wcOrders) : '—'}</td><td>${wcOrders > 0 ? fmtEur(spend / wcOrders) : '—'}</td><td>${roas}</td>
     <td>${fmtInt(purchases)}</td><td>${cpa}</td><td>${cr}</td>
     <td>${fmtCompact(clicks)}</td><td>${ctr}</td><td>${cpm}</td>
     ${colSpan ? '<td></td>' : ''}
@@ -3927,32 +3939,32 @@ function makeFlatTotals(items, colSpan) {
 
 async function loadAdsets() {
   const { from, to } = getDateRange();
-  document.getElementById('tableBody').innerHTML = '<tr><td colspan="19"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading ad sets...</div></div></td></tr>';
+  document.getElementById('tableBody').innerHTML = '<tr><td colspan="21"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading ad sets...</div></div></td></tr>';
   document.getElementById('tableTotals').innerHTML = '';
   document.getElementById('tableTotalsBottom').innerHTML = '';
   try {
     const res = await fetch(`/api/all-adsets?date_from=${from}&date_to=${to}`);
     allAdsets = await res.json();
-    if (allAdsets.error) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="19"><div class="loading-state">Error: ${allAdsets.error}</div></td></tr>`; allAdsets = []; return; }
+    if (allAdsets.error) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="21"><div class="loading-state">Error: ${allAdsets.error}</div></td></tr>`; allAdsets = []; return; }
     document.getElementById('tab-count-adsets').textContent = allAdsets.length;
     renderAdsetTable();
     updateAdsetSummary();
-  } catch (e) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="19"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
+  } catch (e) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="21"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
 }
 
 async function loadAds() {
   const { from, to } = getDateRange();
-  document.getElementById('tableBody').innerHTML = '<tr><td colspan="20"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading ads...</div></div></td></tr>';
+  document.getElementById('tableBody').innerHTML = '<tr><td colspan="22"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading ads...</div></div></td></tr>';
   document.getElementById('tableTotals').innerHTML = '';
   document.getElementById('tableTotalsBottom').innerHTML = '';
   try {
     const res = await fetch(`/api/all-ads?date_from=${from}&date_to=${to}`);
     allAds = await res.json();
-    if (allAds.error) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="20"><div class="loading-state">Error: ${allAds.error}</div></td></tr>`; allAds = []; return; }
+    if (allAds.error) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="22"><div class="loading-state">Error: ${allAds.error}</div></td></tr>`; allAds = []; return; }
     document.getElementById('tab-count-ads').textContent = allAds.length;
     renderAdTable();
     updateAdSummary();
-  } catch (e) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="20"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
+  } catch (e) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="22"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
 }
 
 function renderAdsetTable() {
@@ -3962,7 +3974,7 @@ function renderAdsetTable() {
     if (filterBySelection && !selectedCampaigns.has(as.campaign_id)) return;
     html += makeFlatRow(as, 'adset');
   });
-  if (!html) html = '<tr><td colspan="19"><div class="loading-state">No ad sets found</div></td></tr>';
+  if (!html) html = '<tr><td colspan="21"><div class="loading-state">No ad sets found</div></td></tr>';
   document.getElementById('tableBody').innerHTML = html;
   if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL' || activeDeliveryFilter !== 'HAD_DELIVERY') setTimeout(applySearchFilter, 50);
 }
@@ -3974,7 +3986,7 @@ function renderAdTable() {
     if (filterBySelection && !selectedCampaigns.has(ad.campaign_id)) return;
     html += makeFlatRow(ad, 'ad');
   });
-  if (!html) html = '<tr><td colspan="20"><div class="loading-state">No ads found</div></td></tr>';
+  if (!html) html = '<tr><td colspan="22"><div class="loading-state">No ads found</div></td></tr>';
   document.getElementById('tableBody').innerHTML = html;
   if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL' || activeDeliveryFilter !== 'HAD_DELIVERY') setTimeout(applySearchFilter, 50);
 }
@@ -4532,6 +4544,8 @@ function recalcFilteredTotals() {
     <td>${spend.toFixed(2)} €</td>
     <td><strong>${wcOrders}</strong></td>
     <td style="color:#c4b5fd">${fpaTotal}</td>
+    <td>${wcProfit.toFixed(2)} €</td>
+    <td>${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
     <td>${wcProfit.toFixed(2)} €</td>
     <td>${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
     <td>${wcRevenue.toFixed(2)} €</td>
