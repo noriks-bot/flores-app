@@ -7004,6 +7004,52 @@ function renderDashboard(data) {
       }
     });
   }
+  // Load country breakdown cards
+  loadCountryCards();
+}
+
+// Country Cards
+async function loadCountryCards() {
+  const el = document.getElementById('dashCountryCards');
+  if (!el) return;
+  const today = new Date().toISOString().slice(0,10);
+  try {
+    const res = await fetch('/api/base-report?date_from='+today+'&date_to='+today, {credentials:'same-origin'});
+    const data = await res.json();
+    const bc = data.byCountry || {};
+    const isAdv = document.body.classList.contains('advertiser-mode');
+    const flags = {HR:'\ud83c\udded\ud83c\uddf7',CZ:'\ud83c\udde8\ud83c\uddff',PL:'\ud83c\uddf5\ud83c\uddf1',GR:'\ud83c\uddec\ud83c\uddf7',SK:'\ud83c\uddf8\ud83c\uddf0',IT:'\ud83c\uddee\ud83c\uddf9',HU:'\ud83c\udded\ud83c\uddfa'};
+    const order = ['HR','CZ','PL','GR','SK','IT','HU'];
+    let html = '';
+    for (const cc of order) {
+      const c = bc[cc];
+      if (!c) continue;
+      let profit = c.netProfit || 0;
+      let ppo = c.ppo || 0;
+      if (isAdv && c.orders > 0) {
+        const cut = (typeof advCutPerOrder === 'function') ? advCutPerOrder(ppo) : 0;
+        profit = profit - cut * c.orders;
+        ppo = c.orders > 0 ? profit / c.orders : 0;
+      }
+      const profitColor = profit >= 0 ? '#10b981' : '#ef4444';
+      const roas = c.roas || 0;
+      const roasColor = roas >= 2 ? '#10b981' : roas >= 1 ? '#f59e0b' : '#ef4444';
+      html += '<div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:16px 20px">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
+        + '<div style="font-weight:700;font-size:15px">' + (flags[cc]||'') + ' ' + cc + '</div>'
+        + '<div style="font-weight:800;font-size:16px;color:' + roasColor + '">' + roas.toFixed(2) + 'x</div>'
+        + '</div>'
+        + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px 16px;font-size:13px">'
+        + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">Spend</div><div style="font-weight:700">\u20ac' + (c.spend||0).toFixed(2) + '</div></div>'
+        + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">Orders</div><div style="font-weight:700">' + (c.orders||0) + '</div></div>'
+        + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">CPA</div><div style="font-weight:700">\u20ac' + (c.cpa||0).toFixed(2) + '</div></div>'
+        + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">Profit</div><div style="font-weight:700;color:' + profitColor + '">\u20ac' + profit.toFixed(2) + '</div></div>'
+        + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">Profit/Order</div><div style="font-weight:700;color:' + profitColor + '">\u20ac' + ppo.toFixed(2) + '</div></div>'
+        + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">ROAS</div><div style="font-weight:700;color:' + roasColor + '">' + roas.toFixed(2) + 'x</div></div>'
+        + '</div></div>';
+    }
+    el.innerHTML = html || '<div style="color:var(--text-muted);text-align:center;padding:20px">No country data</div>';
+  } catch(e) { console.error('[Country Cards]', e); }
 }
 
 // Load dashboard on startup
