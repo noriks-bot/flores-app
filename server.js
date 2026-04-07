@@ -2668,7 +2668,20 @@ const server = http.createServer(async (req, res) => {
           v.ppo = v.orders > 0 ? Math.round(v.netProfit / v.orders * 100) / 100 : 0;
         }
 
-        return sendJSON(res, { byCountry, byType, byCountryAndType });
+        // byCountryAll: ALL orders (not just FB-attributed)
+        const byCountryAll = {};
+        try {
+          const allRows = db.prepare("SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? GROUP BY country").all(start, end);
+          for (const r of allRows) {
+            byCountryAll[r.country] = {
+              orders: r.orders,
+              revenue: Math.round((r.revenue||0) * 100) / 100,
+              profit: Math.round((r.profit||0) * 100) / 100,
+              ppo: r.orders > 0 ? Math.round(((r.profit||0) / r.orders) * 100) / 100 : 0
+            };
+          }
+        } catch(e) { console.warn('[base-report] byCountryAll failed', e.message); }
+        return sendJSON(res, { byCountry, byType, byCountryAndType, byCountryAll });
       }
       if (urlPath === '/api/origin-report') {
         const start = query.start || dateFrom;

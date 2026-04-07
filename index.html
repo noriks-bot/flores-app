@@ -734,6 +734,9 @@ body.advertiser-mode #dashKpis { display: none !important; }
 body.advertiser-mode #dashKpisFb { display: none !important; }
 body.advertiser-mode #dashManipulation { display: none !important; }
 body.advertiser-mode #dashOrdersTable { display: none !important; }
+body.advertiser-mode .country-block[data-mode="all"] { display: none !important; }
+body.advertiser-mode .country-block[data-mode="fb"] { display: none !important; }
+body.advertiser-mode .country-block[data-mode="adv"] h3 { display: none !important; }
 body.advertiser-mode .fa-list-ul { display: none !important; }
 body.advertiser-mode button[title="View orders"] { display: none !important; }
 body.advertiser-mode .dash-orders-wrapper { display: none !important; }
@@ -1267,8 +1270,21 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           </table>
         </div>
 
-        <!-- Country Cards -->
-        <div id="dashCountryCards" style="margin-top:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px"></div>
+        <!-- Country Cards Sections -->
+        <div id="dashCountrySection" style="margin-top:24px">
+          <div class="country-block" data-mode="all">
+            <h3 style="font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#111;margin:16px 0 10px">Vse (All orders)</h3>
+            <div id="dashCountryCardsAll" class="country-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px"></div>
+          </div>
+          <div class="country-block" data-mode="fb">
+            <h3 style="font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#1877f2;margin:24px 0 10px">FB Attributed</h3>
+            <div id="dashCountryCardsFb" class="country-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px"></div>
+          </div>
+          <div class="country-block" data-mode="adv">
+            <h3 style="font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#f59e0b;margin:24px 0 10px">FB ADV (with manipulation)</h3>
+            <div id="dashCountryCardsAdv" class="country-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px"></div>
+          </div>
+        </div>
 
       </div>
     </div>
@@ -7012,46 +7028,83 @@ function renderDashboard(data) {
 }
 
 // Country Cards
+function renderCountryCard(cc, data, opts) {
+  opts = opts || {};
+  const flags = {HR:'\ud83c\udded\ud83c\uddf7',CZ:'\ud83c\udde8\ud83c\uddff',PL:'\ud83c\uddf5\ud83c\uddf1',GR:'\ud83c\uddec\ud83c\uddf7',SK:'\ud83c\uddf8\ud83c\uddf0',IT:'\ud83c\uddee\ud83c\uddf9',HU:'\ud83c\udded\ud83c\uddfa'};
+  const spend = data.spend || 0;
+  const orders = data.orders || 0;
+  const cpa = data.cpa != null ? data.cpa : (orders > 0 ? spend/orders : 0);
+  const profit = data.profit || 0;
+  const ppo = data.ppo != null ? data.ppo : (orders > 0 ? profit/orders : 0);
+  const roas = data.roas != null ? data.roas : 0;
+  const profitColor = profit >= 0 ? '#10b981' : '#ef4444';
+  const roasColor = roas >= 2 ? '#10b981' : roas >= 1 ? '#f59e0b' : '#ef4444';
+  const hasSpend = opts.hasSpend !== false;
+  return '<div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:16px 20px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
+    + '<div style="font-weight:700;font-size:15px">' + (flags[cc]||'') + ' ' + cc + '</div>'
+    + (hasSpend ? '<div style="font-weight:800;font-size:16px;color:' + roasColor + '">' + roas.toFixed(2) + 'x</div>' : '')
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px 16px;font-size:13px">'
+    + (hasSpend ? '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">Spend</div><div style="font-weight:700">\u20ac' + spend.toFixed(2) + '</div></div>' : '<div></div>')
+    + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">Orders</div><div style="font-weight:700">' + orders + '</div></div>'
+    + (hasSpend ? '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">CPA</div><div style="font-weight:700">\u20ac' + cpa.toFixed(2) + '</div></div>' : '<div></div>')
+    + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">Profit</div><div style="font-weight:700;color:' + profitColor + '">\u20ac' + profit.toFixed(2) + '</div></div>'
+    + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">Profit/Order</div><div style="font-weight:700;color:' + profitColor + '">\u20ac' + ppo.toFixed(2) + '</div></div>'
+    + (hasSpend ? '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">ROAS</div><div style="font-weight:700;color:' + roasColor + '">' + roas.toFixed(2) + 'x</div></div>' : '<div></div>')
+    + '</div></div>';
+}
+
 async function loadCountryCards() {
-  const el = document.getElementById('dashCountryCards');
-  if (!el) return;
   const today = new Date().toISOString().slice(0,10);
+  const order = ['HR','CZ','PL','GR','SK','IT','HU'];
   try {
     const res = await fetch('/api/base-report?date_from='+today+'&date_to='+today, {credentials:'same-origin'});
     const data = await res.json();
-    const bc = data.byCountry || {};
+    const fb = data.byCountry || {};
+    const all = data.byCountryAll || {};
     const isAdv = document.body.classList.contains('advertiser-mode');
-    const flags = {HR:'\ud83c\udded\ud83c\uddf7',CZ:'\ud83c\udde8\ud83c\uddff',PL:'\ud83c\uddf5\ud83c\uddf1',GR:'\ud83c\uddec\ud83c\uddf7',SK:'\ud83c\uddf8\ud83c\uddf0',IT:'\ud83c\uddee\ud83c\uddf9',HU:'\ud83c\udded\ud83c\uddfa'};
-    const order = ['HR','CZ','PL','GR','SK','IT','HU'];
-    let html = '';
-    for (const cc of order) {
-      const c = bc[cc];
-      if (!c) continue;
-      let profit = c.netProfit || 0;
-      let ppo = c.ppo || 0;
-      if (isAdv && c.orders > 0) {
-        const cut = (typeof advCutPerOrder === 'function') ? advCutPerOrder(ppo) : 0;
-        profit = profit - cut * c.orders;
-        ppo = c.orders > 0 ? profit / c.orders : 0;
+
+    const elAll = document.getElementById('dashCountryCardsAll');
+    const elFb = document.getElementById('dashCountryCardsFb');
+    const elAdv = document.getElementById('dashCountryCardsAdv');
+
+    // ALL block (no spend, only orders+profit+ppo)
+    if (elAll) {
+      let h = '';
+      for (const cc of order) {
+        const c = all[cc]; if (!c) continue;
+        h += renderCountryCard(cc, { spend: 0, orders: c.orders, profit: c.profit, ppo: c.ppo, cpa: 0, roas: 0 }, { hasSpend: false });
       }
-      const profitColor = profit >= 0 ? '#10b981' : '#ef4444';
-      const roas = c.roas || 0;
-      const roasColor = roas >= 2 ? '#10b981' : roas >= 1 ? '#f59e0b' : '#ef4444';
-      html += '<div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:16px 20px">'
-        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
-        + '<div style="font-weight:700;font-size:15px">' + (flags[cc]||'') + ' ' + cc + '</div>'
-        + '<div style="font-weight:800;font-size:16px;color:' + roasColor + '">' + roas.toFixed(2) + 'x</div>'
-        + '</div>'
-        + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px 16px;font-size:13px">'
-        + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">Spend</div><div style="font-weight:700">\u20ac' + (c.spend||0).toFixed(2) + '</div></div>'
-        + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">Orders</div><div style="font-weight:700">' + (c.orders||0) + '</div></div>'
-        + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">CPA</div><div style="font-weight:700">\u20ac' + (c.cpa||0).toFixed(2) + '</div></div>'
-        + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">Profit</div><div style="font-weight:700;color:' + profitColor + '">\u20ac' + profit.toFixed(2) + '</div></div>'
-        + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">Profit/Order</div><div style="font-weight:700;color:' + profitColor + '">\u20ac' + ppo.toFixed(2) + '</div></div>'
-        + '<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.5px">ROAS</div><div style="font-weight:700;color:' + roasColor + '">' + roas.toFixed(2) + 'x</div></div>'
-        + '</div></div>';
+      elAll.innerHTML = h || '<div style="color:var(--text-muted);padding:10px">No data</div>';
     }
-    el.innerHTML = html || '<div style="color:var(--text-muted);text-align:center;padding:20px">No country data</div>';
+
+    // FB block (with spend)
+    if (elFb) {
+      let h = '';
+      for (const cc of order) {
+        const c = fb[cc]; if (!c) continue;
+        h += renderCountryCard(cc, { spend: c.spend, orders: c.orders, profit: c.netProfit, ppo: c.ppo, cpa: c.cpa, roas: c.roas });
+      }
+      elFb.innerHTML = h || '<div style="color:var(--text-muted);padding:10px">No data</div>';
+    }
+
+    // FB ADV block (with spend + tier cut)
+    if (elAdv) {
+      let h = '';
+      for (const cc of order) {
+        const c = fb[cc]; if (!c) continue;
+        let profit = c.netProfit || 0;
+        let ppo = c.ppo || 0;
+        if (c.orders > 0) {
+          const cut = (typeof advCutPerOrder === 'function') ? advCutPerOrder(ppo) : 0;
+          profit = profit - cut * c.orders;
+          ppo = profit / c.orders;
+        }
+        h += renderCountryCard(cc, { spend: c.spend, orders: c.orders, profit, ppo, cpa: c.cpa, roas: c.roas });
+      }
+      elAdv.innerHTML = h || '<div style="color:var(--text-muted);padding:10px">No data</div>';
+    }
   } catch(e) { console.error('[Country Cards]', e); }
 }
 
