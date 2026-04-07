@@ -727,6 +727,8 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 .role-badge { font-size:11px; font-weight:700; padding:3px 10px; border-radius:6px; text-transform:uppercase; letter-spacing:0.5px; }
 .role-admin { background:rgba(239,68,68,0.12); color:#ef4444; }
 .role-advertiser { background:rgba(37,99,235,0.12); color:#2563eb; }
+.sidebar-nav { visibility: hidden; }
+body.role-loaded .sidebar-nav { visibility: visible; }
 body.advertiser-mode .col-profit-orig { display: none !important; }
 body.advertiser-mode #dashKpis { display: none !important; }
 body.advertiser-mode #dashKpisFb { display: none !important; }
@@ -7572,6 +7574,7 @@ function initSaasAdminMode() {
     if(sn) sn.textContent = u.displayName || u.username;
     if(sr) sr.textContent = u.role;
     if(sa) sa.textContent = (u.displayName||u.username).charAt(0).toUpperCase();
+    document.body.classList.add('role-loaded');
     
     // Advertiser role: only Dashboard, Ads Manager, Creative Reporting
     if (u.role === 'advertiser') {
