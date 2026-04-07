@@ -3111,13 +3111,6 @@ function hydrateAdvState(obj) {
   }
   return { active: obj.active || 'medium', presets };
 }
-function loadAdvTierStateFromCache() {
-  try {
-    const saved = localStorage.getItem('flores-adv-tier-state');
-    if (saved) return hydrateAdvState(JSON.parse(saved));
-  } catch(e) {}
-  return { active: 'medium', presets: clonePresets() };
-}
 function serializeAdvState() {
   const out = { active: ADV_TIER_STATE.active, presets: {} };
   for (const k of Object.keys(ADV_TIER_STATE.presets)) {
@@ -3125,30 +3118,33 @@ function serializeAdvState() {
   }
   return out;
 }
+let ADV_TIER_STATE = { active: 'medium', presets: clonePresets() };
+let ADV_TIER_LOADED = false;
 async function loadAdvTierStateFromServer() {
   try {
-    const res = await fetch('/api/settings');
+    const res = await fetch('/api/settings', { credentials: 'same-origin' });
     const all = await res.json();
     if (all && all.adv_tier_state) {
       const parsed = typeof all.adv_tier_state === 'string' ? JSON.parse(all.adv_tier_state) : all.adv_tier_state;
       ADV_TIER_STATE = hydrateAdvState(parsed);
-      localStorage.setItem('flores-adv-tier-state', JSON.stringify(serializeAdvState()));
-      renderAdvCutTiersUI();
     }
   } catch(e) { console.warn('[ADV] load from server failed', e); }
+  ADV_TIER_LOADED = true;
+  renderAdvCutTiersUI();
 }
 async function saveAdvTierState() {
   const payload = serializeAdvState();
-  localStorage.setItem('flores-adv-tier-state', JSON.stringify(payload));
   try {
-    await fetch('/api/settings', {
+    const res = await fetch('/api/settings', {
       method: 'POST',
+      credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ adv_tier_state: JSON.stringify(payload) })
     });
-  } catch(e) { console.warn('[ADV] save to server failed', e); }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return true;
+  } catch(e) { console.error('[ADV] save to server failed', e); return false; }
 }
-let ADV_TIER_STATE = loadAdvTierStateFromCache();
 function getActiveAdvTiers() { return ADV_TIER_STATE.presets[ADV_TIER_STATE.active] || ADV_CUT_PRESETS.medium; }
 function advCutPerOrder(ppo) {
   const tiers = getActiveAdvTiers();
@@ -3191,13 +3187,14 @@ function renderAdvCutTiersUI() {
   });
   tbody.innerHTML = html;
 }
-function switchAdvTier(name) {
+async function switchAdvTier(name) {
   ADV_TIER_STATE.active = name;
-  saveAdvTierState();
   renderAdvCutTiersUI();
   const el = document.getElementById('advCutTiersStatus');
+  if (el) el.textContent = 'Saving...';
+  const ok = await saveAdvTierState();
   if (el) {
-    el.textContent = '✓ Switched to ' + (ADV_TIER_LABELS[name] || name) + '. Refresh Ads Manager to see new values.';
+    el.textContent = ok ? ('✓ Switched to ' + (ADV_TIER_LABELS[name] || name) + '. Refresh Ads Manager to see new values.') : '✗ Save failed!';
     setTimeout(() => { el.textContent = ''; }, 4000);
   }
 }
@@ -3214,7 +3211,7 @@ function removeAdvCutTier(i) {
   ADV_TIER_STATE.presets[ADV_TIER_STATE.active] = tiers;
   renderAdvCutTiersUI();
 }
-function saveAdvCutTiersUI() {
+async function saveAdvCutTiersUI() {
   const rows = document.querySelectorAll('#advCutTiersBody tr');
   const tiers = [];
   rows.forEach(row => {
@@ -3226,22 +3223,23 @@ function saveAdvCutTiersUI() {
   });
   tiers.sort((a, b) => a.max - b.max);
   ADV_TIER_STATE.presets[ADV_TIER_STATE.active] = tiers;
-  saveAdvTierState();
   const el = document.getElementById('advCutTiersStatus');
+  if (el) el.textContent = 'Saving...';
+  const ok = await saveAdvTierState();
   if (el) {
-    el.textContent = '✓ Saved ' + (ADV_TIER_LABELS[ADV_TIER_STATE.active] || '') + ' preset. Refresh Ads Manager.';
+    el.textContent = ok ? ('✓ Saved ' + (ADV_TIER_LABELS[ADV_TIER_STATE.active] || '') + ' preset. Refresh Ads Manager.') : '✗ Save failed!';
     setTimeout(() => { el.textContent = ''; }, 4000);
   }
   renderAdvCutTiersUI();
 }
-function resetAdvCutTiers() {
-  ADV_TIER_STATE.presets[ADV_TIER_STATE.active] = JSON.parse(JSON.stringify(ADV_CUT_PRESETS[ADV_TIER_STATE.active]))
-    .map(t => ({ max: t.max === null ? Infinity : t.max, cut: t.cut }));
-  saveAdvTierState();
+async function resetAdvCutTiers() {
+  ADV_TIER_STATE.presets[ADV_TIER_STATE.active] = ADV_CUT_PRESETS[ADV_TIER_STATE.active].map(t => ({ max: t.max, cut: t.cut }));
   renderAdvCutTiersUI();
   const el = document.getElementById('advCutTiersStatus');
+  if (el) el.textContent = 'Saving...';
+  const ok = await saveAdvTierState();
   if (el) {
-    el.textContent = '✓ Reset ' + (ADV_TIER_LABELS[ADV_TIER_STATE.active] || '') + ' preset to defaults.';
+    el.textContent = ok ? ('✓ Reset ' + (ADV_TIER_LABELS[ADV_TIER_STATE.active] || '') + ' preset to defaults.') : '✗ Save failed!';
     setTimeout(() => { el.textContent = ''; }, 4000);
   }
 }
