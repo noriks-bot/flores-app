@@ -6143,7 +6143,7 @@ async function toggleOpt(campaignId) {
     origNav(section);
     if (section === 'fb-integration') loadFbIntegration();
     if (section === 'users') loadUsers();
-    if (section === 'settings') loadSettings();
+    if (section === 'settings') { loadSettings(); setTimeout(function(){ try { renderAdvCutTiersUI(); loadAdvTierStateFromServer(); } catch(e){ console.error('[ADV] navigate error', e); } }, 50); }
     if (section === 'videos' && !videosData) loadVideos();
   };
   // Handle initial hash if it's a new section
@@ -7588,7 +7588,7 @@ function initSaasAdminMode() {
 // Run on page load
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(initSaasAdminMode, 100);
-  setTimeout(function(){ try { renderAdvCutTiersUI(); loadAdvTierStateFromServer(); } catch(e){} }, 200);
+  setTimeout(function(){ try { renderAdvCutTiersUI(); loadAdvTierStateFromServer(); } catch(e){ console.error('[ADV] init error', e); } }, 500);
 });
 
 // Trend Chart
