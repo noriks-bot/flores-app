@@ -3100,32 +3100,55 @@ function clonePresets() {
   }
   return out;
 }
-function loadAdvTierState() {
+function hydrateAdvState(obj) {
+  if (!obj || typeof obj !== 'object') return { active: 'medium', presets: clonePresets() };
+  const presets = obj.presets || clonePresets();
+  for (const k of Object.keys(presets)) {
+    presets[k] = presets[k].map(t => ({ max: (t.max === null || t.max === undefined) ? Infinity : Number(t.max), cut: Number(t.cut) }));
+  }
+  for (const k of Object.keys(ADV_CUT_PRESETS)) {
+    if (!presets[k]) presets[k] = ADV_CUT_PRESETS[k].map(t => ({ max: t.max, cut: t.cut }));
+  }
+  return { active: obj.active || 'medium', presets };
+}
+function loadAdvTierStateFromCache() {
   try {
     const saved = localStorage.getItem('flores-adv-tier-state');
-    if (saved) {
-      const obj = JSON.parse(saved);
-      const presets = obj.presets || clonePresets();
-      for (const k of Object.keys(presets)) {
-        presets[k] = presets[k].map(t => ({ max: (t.max === null || t.max === undefined) ? Infinity : Number(t.max), cut: Number(t.cut) }));
-      }
-      // Ensure all 3 presets exist (in case saved state is partial)
-      for (const k of Object.keys(ADV_CUT_PRESETS)) {
-        if (!presets[k]) presets[k] = ADV_CUT_PRESETS[k].map(t => ({ max: t.max, cut: t.cut }));
-      }
-      return { active: obj.active || 'medium', presets };
-    }
+    if (saved) return hydrateAdvState(JSON.parse(saved));
   } catch(e) {}
   return { active: 'medium', presets: clonePresets() };
 }
-function saveAdvTierState() {
+function serializeAdvState() {
   const out = { active: ADV_TIER_STATE.active, presets: {} };
   for (const k of Object.keys(ADV_TIER_STATE.presets)) {
     out.presets[k] = ADV_TIER_STATE.presets[k].map(t => ({ max: t.max === Infinity ? null : t.max, cut: t.cut }));
   }
-  localStorage.setItem('flores-adv-tier-state', JSON.stringify(out));
+  return out;
 }
-let ADV_TIER_STATE = loadAdvTierState();
+async function loadAdvTierStateFromServer() {
+  try {
+    const res = await fetch('/api/settings');
+    const all = await res.json();
+    if (all && all.adv_tier_state) {
+      const parsed = typeof all.adv_tier_state === 'string' ? JSON.parse(all.adv_tier_state) : all.adv_tier_state;
+      ADV_TIER_STATE = hydrateAdvState(parsed);
+      localStorage.setItem('flores-adv-tier-state', JSON.stringify(serializeAdvState()));
+      renderAdvCutTiersUI();
+    }
+  } catch(e) { console.warn('[ADV] load from server failed', e); }
+}
+async function saveAdvTierState() {
+  const payload = serializeAdvState();
+  localStorage.setItem('flores-adv-tier-state', JSON.stringify(payload));
+  try {
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adv_tier_state: JSON.stringify(payload) })
+    });
+  } catch(e) { console.warn('[ADV] save to server failed', e); }
+}
+let ADV_TIER_STATE = loadAdvTierStateFromCache();
 function getActiveAdvTiers() { return ADV_TIER_STATE.presets[ADV_TIER_STATE.active] || ADV_CUT_PRESETS.medium; }
 function advCutPerOrder(ppo) {
   const tiers = getActiveAdvTiers();
@@ -7567,7 +7590,7 @@ function initSaasAdminMode() {
 // Run on page load
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(initSaasAdminMode, 100);
-  setTimeout(function(){ try { renderAdvCutTiersUI(); } catch(e){} }, 200);
+  setTimeout(function(){ try { renderAdvCutTiersUI(); loadAdvTierStateFromServer(); } catch(e){} }, 200);
 });
 
 // Trend Chart
