@@ -7585,6 +7585,12 @@ function initSaasAdminMode() {
         if (section && !advAllowed.includes(section)) el.style.display = 'none';
       });
       document.querySelectorAll('.nav-section-label').forEach(function(el) { el.style.display = 'none'; });
+      // Hide nav-section containers that have no visible nav-items (removes empty borders)
+      document.querySelectorAll('.nav-section').forEach(function(sec) {
+        const visible = Array.from(sec.querySelectorAll('.nav-item')).some(function(it){ return it.style.display !== 'none'; });
+        if (!visible) sec.style.display = 'none';
+        else { sec.style.borderTop = 'none'; sec.style.paddingTop = '0'; }
+      });
       // If currently on hidden section, redirect to dashboard
       const curHash = (window.location.hash || '#dashboard').replace('#','');
       if (!advAllowed.includes(curHash)) { window.location.hash = 'dashboard'; navigateTo('dashboard'); }
