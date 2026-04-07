@@ -6920,42 +6920,6 @@ function renderDashboard(data) {
     ? '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px"><i class="fas fa-check-circle" style="color:#10b981;margin-right:6px"></i>No alerts — everything looks good!</div>'
     : alerts.map(a => `<div class="dash-alert-item ${a.type}"><i class="fas ${a.type==='high_cpa'?'fa-exclamation-triangle':'fa-times-circle'}"></i><span>${a.message}</span></div>`).join('');
   
-  // Top Campaigns table
-  const tcBody = document.getElementById("dashTopCampaigns")?.querySelector("tbody");
-  tcBody.innerHTML = (data.topCampaigns || []).map(c => {
-    const campName = c.displayName || c.name || '—';
-    const spend = c.spend != null ? '€' + c.spend.toFixed(0) : '€0';
-    const orders = c.orders || 0;
-    const revenue = c.revenue != null ? '€' + c.revenue.toFixed(0) : '€0';
-    const profitVal = c.profit != null ? c.profit : 0;
-    const profitColor = profitVal > 0 ? '#10b981' : profitVal < 0 ? '#ef4444' : '#666';
-    const profitStr = '€' + profitVal.toFixed(0);
-    const cpa = orders > 0 ? '€' + (c.spend / orders).toFixed(2) : '—';
-    return `<tr>
-      <td style="text-align:left;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px" title="${campName.replace(/"/g,'&quot;')}">${campName}</td>
-      <td style="text-align:right">${spend}</td>
-      <td style="text-align:right">${orders}</td>
-      <td style="text-align:right">${revenue}</td>
-      <td style="text-align:right;color:${profitColor};font-weight:600">${profitStr}</td>
-      <td style="text-align:right">${cpa}</td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
-  
-  // Top Creatives table
-  const crBody = document.querySelector('#dashTopCreatives tbody');
-  try {
-    crBody.innerHTML = (data.topCreatives || []).map(function(c) {
-      var crName = (c.name || c.id || '—');
-      var sp = (typeof c.spend === 'number') ? '€' + c.spend.toFixed(0) : '—';
-      var ord = c.orders || 0;
-      var rev = (typeof c.revenue === 'number') ? '€' + c.revenue.toFixed(0) : '—';
-      var pft = (typeof c.profit === 'number') ? c.profit : null;
-      var pfColor = pft !== null && pft > 0 ? '#10b981' : pft !== null && pft < 0 ? '#ef4444' : 'inherit';
-      var pfStr = pft !== null ? '€' + pft.toFixed(0) : '—';
-      var cpa = (typeof c.cpa === 'number') && c.cpa > 0 ? '€' + c.cpa.toFixed(2) : '—';
-      return '<tr><td style="text-align:left;font-weight:600;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + crName.replace(/"/g,'&quot;') + '">' + crName + '</td><td>' + sp + '</td><td>' + ord + '</td><td>' + rev + '</td><td style="color:' + pfColor + ';font-weight:600">' + pfStr + '</td><td>' + cpa + '</td></tr>';
-    }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
-  } catch(crErr) { console.error('Top Creatives render error:', crErr); crBody.innerHTML = '<tr><td colspan="6">Render error: ' + crErr.message + '</td></tr>'; }
   
   // Orders table
   var obody = document.getElementById('dashOrdersBody');
