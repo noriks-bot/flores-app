@@ -3092,19 +3092,31 @@ const ADV_CUT_PRESETS = {
   ]
 };
 const ADV_TIER_LABELS = { light: '🟢 LIGHT', medium: '🟡 MEDIUM', max: '🔴 MAX' };
+function clonePresets() {
+  // Deep clone presets preserving Infinity (which JSON.stringify would lose)
+  const out = {};
+  for (const k of Object.keys(ADV_CUT_PRESETS)) {
+    out[k] = ADV_CUT_PRESETS[k].map(t => ({ max: t.max, cut: t.cut }));
+  }
+  return out;
+}
 function loadAdvTierState() {
   try {
     const saved = localStorage.getItem('flores-adv-tier-state');
     if (saved) {
       const obj = JSON.parse(saved);
-      const presets = obj.presets || JSON.parse(JSON.stringify(ADV_CUT_PRESETS));
+      const presets = obj.presets || clonePresets();
       for (const k of Object.keys(presets)) {
         presets[k] = presets[k].map(t => ({ max: (t.max === null || t.max === undefined) ? Infinity : Number(t.max), cut: Number(t.cut) }));
+      }
+      // Ensure all 3 presets exist (in case saved state is partial)
+      for (const k of Object.keys(ADV_CUT_PRESETS)) {
+        if (!presets[k]) presets[k] = ADV_CUT_PRESETS[k].map(t => ({ max: t.max, cut: t.cut }));
       }
       return { active: obj.active || 'medium', presets };
     }
   } catch(e) {}
-  return { active: 'medium', presets: JSON.parse(JSON.stringify(ADV_CUT_PRESETS)) };
+  return { active: 'medium', presets: clonePresets() };
 }
 function saveAdvTierState() {
   const out = { active: ADV_TIER_STATE.active, presets: {} };
