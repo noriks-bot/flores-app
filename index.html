@@ -6903,7 +6903,7 @@ function renderDashboard(data) {
   const advCutEach = fbOrdersAdv > 0 ? advCutPerOrder(fbPpoOrig) : 0;
   const fbProfitAdv = fbProfitOrig - advCutEach * fbOrdersAdv;
   const fbPpoAdv = fbOrdersAdv > 0 ? (fbProfitAdv / fbOrdersAdv) : fbProfitAdv;
-  const fbCpaAdv = fbOrdersAdv > 0 ? ((k.spend || 0) / fbOrdersAdv) + advCutEach : (k.fbCpa || 0);
+  const fbCpaAdv = (k.fbCpa || 0);
   document.getElementById('dashKpisAdv').innerHTML = [
     { label: "ADV Spend", value: '\u20ac' + (k.spend||0).toFixed(2), icon: 'fas fa-ad' },
     { label: "ADV Orders", value: (k.fbOrders || 0) + '<div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);margin-top:3px">FB Report: ' + (k.fbPixelPurchases || 0) + '</div>', icon: 'fas fa-shopping-cart' },
