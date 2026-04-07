@@ -7563,6 +7563,19 @@ function initSaasAdminMode() {
     if(sr) sr.textContent = u.role;
     if(sa) sa.textContent = (u.displayName||u.username).charAt(0).toUpperCase();
     
+    // Advertiser role: only Dashboard, Ads Manager, Creative Reporting
+    if (u.role === 'advertiser') {
+      const advAllowed = ['dashboard','ads-manager','creative-reporting'];
+      document.querySelectorAll('.nav-item').forEach(function(el) {
+        var section = el.getAttribute('data-section');
+        if (section && !advAllowed.includes(section)) el.style.display = 'none';
+      });
+      document.querySelectorAll('.nav-section-label').forEach(function(el) { el.style.display = 'none'; });
+      // If currently on hidden section, redirect to dashboard
+      const curHash = (window.location.hash || '#dashboard').replace('#','');
+      if (!advAllowed.includes(curHash)) { window.location.hash = 'dashboard'; navigateTo('dashboard'); }
+      return;
+    }
     if (u.role === 'super_admin' && u.username === 'saas') {
       // Hide app-specific nav items for SaaS admin
       document.querySelectorAll('.nav-item').forEach(function(el) {
