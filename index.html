@@ -727,6 +727,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 .role-badge { font-size:11px; font-weight:700; padding:3px 10px; border-radius:6px; text-transform:uppercase; letter-spacing:0.5px; }
 .role-admin { background:rgba(239,68,68,0.12); color:#ef4444; }
 .role-advertiser { background:rgba(37,99,235,0.12); color:#2563eb; }
+body.advertiser-mode .col-profit-orig { display: none !important; }
 .role-viewer { background:rgba(107,114,128,0.12); color:#6b7280; }
 
 /* ═══ PREMIUM ENHANCEMENTS ═══ */
@@ -1358,8 +1359,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <th data-sort="bid_strategy">Bid strategy</th>
               <th class="sep" data-sort="spend">Spend</th>
               <th data-sort="wc_orders" style="max-width:75px;width:75px">Flores purchases</th><th data-sort="fpa" style="max-width:30px;width:30px">FPA</th>
-              <th data-sort="wc_profit">Profit/loss</th>
-              <th data-sort="wc_ppo">Profit per order</th>
+              <th class="col-profit-orig" data-sort="wc_profit">Profit/loss</th>
+              <th class="col-profit-orig" data-sort="wc_ppo">Profit per order</th>
               <th data-sort="wc_profit">Profit/loss ADV</th>
               <th data-sort="wc_ppo">Profit per order ADV</th>
               <th data-sort="wc_revenue">Flores revenue</th>
@@ -3045,8 +3046,8 @@ function updateSummary() {
     <td>${spend.toFixed(2)} €</td>
     <td><strong>${wcOrders}</strong></td>
     <td style="color:#c4b5fd">${fpaTotal}</td>
-    <td>${wcProfit.toFixed(2)} €</td>
-    <td>${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
+    <td class="col-profit-orig">${wcProfit.toFixed(2)} €</td>
+    <td class="col-profit-orig">${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
     <td>${advProfitTotal.toFixed(2)} €</td>
     <td>${wcOrders>0?advPpoTotal.toFixed(2)+' €':'0 €'}</td>
     <td>${wcRevenue.toFixed(2)} €</td>
@@ -3628,8 +3629,8 @@ function makeRow(item,level,bgClass) {
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td style="white-space:nowrap;vertical-align:middle">${wcCount>0?`<button onclick="event.stopPropagation();showCampaignOrders('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-right:5px;border-radius:4px;vertical-align:middle;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:22px;height:18px"><i class="fas fa-list-ul" style="font-size:9px"></i></button>`:''}<strong style="font-size:13px;vertical-align:middle">${wcCount||0}</strong></td>
     <td style="font-size:11px;color:#8b5cf6">${(fpaData[level==="campaign"?"campaigns":level==="adset"?"adsets":"ads"][item.id])||0}</td>
-    <td class="${plCls}">${plHtml}</td>
-    <td class="${ppoCls}">${ppoHtml}</td>
+    <td class="col-profit-orig ${plCls}">${plHtml}</td>
+    <td class="col-profit-orig ${ppoCls}">${ppoHtml}</td>
     <td class="${plAdvCls}">${plAdvHtml}</td>
     <td class="${ppoAdvCls}">${ppoAdvHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
@@ -4032,8 +4033,8 @@ function renderCampaignHeaders() {
     <th data-sort="bid_strategy">Bid strategy</th>
     <th class="sep" data-sort="spend">Spend</th>
     <th data-sort="wc_orders" style="max-width:75px;width:75px">Flores purchases</th><th data-sort="fpa" style="max-width:30px;width:30px">FPA</th>
-    <th data-sort="wc_profit">Profit/loss</th>
-    <th data-sort="wc_ppo">Profit per order</th>
+    <th class="col-profit-orig" data-sort="wc_profit">Profit/loss</th>
+    <th class="col-profit-orig" data-sort="wc_ppo">Profit per order</th>
     <th data-sort="wc_profit">Profit/loss ADV</th>
     <th data-sort="wc_ppo">Profit per order ADV</th>
     <th data-sort="wc_revenue">Flores revenue</th>
@@ -4058,8 +4059,8 @@ const FLAT_HEADERS = `
     <th data-sort="bid_strategy">Bid strategy</th>
     <th class="sep" data-sort="spend">Spend</th>
     <th data-sort="wc_orders" style="max-width:75px;width:75px">Flores purchases</th><th data-sort="fpa" style="max-width:30px;width:30px">FPA</th>
-    <th data-sort="wc_profit">Profit/loss</th>
-    <th data-sort="wc_ppo">Profit per order</th>
+    <th class="col-profit-orig" data-sort="wc_profit">Profit/loss</th>
+    <th class="col-profit-orig" data-sort="wc_ppo">Profit per order</th>
     <th data-sort="wc_profit">Profit/loss ADV</th>
     <th data-sort="wc_ppo">Profit per order ADV</th>
     <th data-sort="wc_revenue">Flores revenue</th>
@@ -4165,8 +4166,8 @@ function makeFlatRow(item, level) {
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td style="white-space:nowrap;vertical-align:middle">${wcCount>0?`<button onclick="event.stopPropagation();showCampaignOrders('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-right:5px;border-radius:4px;vertical-align:middle;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:22px;height:18px"><i class="fas fa-list-ul" style="font-size:9px"></i></button>`:''}<strong style="font-size:13px;vertical-align:middle">${wcCount||0}</strong></td>
     <td style="font-size:11px;color:#8b5cf6">${(fpaData[level==="campaign"?"campaigns":level==="adset"?"adsets":"ads"][item.id])||0}</td>
-    <td class="${plCls}">${plHtml}</td>
-    <td class="${ppoCls}">${ppoHtml}</td>
+    <td class="col-profit-orig ${plCls}">${plHtml}</td>
+    <td class="col-profit-orig ${ppoCls}">${ppoHtml}</td>
     <td class="${plAdvCls}">${plAdvHtml}</td>
     <td class="${ppoAdvCls}">${ppoAdvHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
@@ -4200,7 +4201,7 @@ function makeFlatTotals(items, colSpan) {
     <td></td><td style="text-align:left" colspan="2"><strong>TOTAL (${items.length})</strong></td>
     <td>${active}/${items.length}</td>
     <td>${fmtEur(spend)}</td><td>${fmtInt(wcOrders)}</td><td>${fmtEur(wcRevenue)}</td>
-    <td>${profitBadge}</td><td>${wcOrders > 0 ? fmtEur(wcProfit / wcOrders) : '—'}</td><td>${advProfitBadge}</td><td>${wcOrders > 0 ? fmtEur(advProfitTotal / wcOrders) : '—'}</td><td>${wcOrders > 0 ? fmtEur(spend / wcOrders) : '—'}</td><td>${roas}</td>
+    <td class="col-profit-orig">${profitBadge}</td><td class="col-profit-orig">${wcOrders > 0 ? fmtEur(wcProfit / wcOrders) : '—'}</td><td>${advProfitBadge}</td><td>${wcOrders > 0 ? fmtEur(advProfitTotal / wcOrders) : '—'}</td><td>${wcOrders > 0 ? fmtEur(spend / wcOrders) : '—'}</td><td>${roas}</td>
     <td>${fmtInt(purchases)}</td><td>${cpa}</td><td>${cr}</td>
     <td>${fmtCompact(clicks)}</td><td>${ctr}</td><td>${cpm}</td>
     ${colSpan ? '<td></td>' : ''}
@@ -4818,8 +4819,8 @@ function recalcFilteredTotals() {
     <td>${spend.toFixed(2)} €</td>
     <td><strong>${wcOrders}</strong></td>
     <td style="color:#c4b5fd">${fpaTotal}</td>
-    <td>${wcProfit.toFixed(2)} €</td>
-    <td>${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
+    <td class="col-profit-orig">${wcProfit.toFixed(2)} €</td>
+    <td class="col-profit-orig">${wcOrders>0?(wcProfit/wcOrders).toFixed(2)+' €':'0 €'}</td>
     <td>${advProfitTotal.toFixed(2)} €</td>
     <td>${wcOrders>0?advPpoTotal.toFixed(2)+' €':'0 €'}</td>
     <td>${wcRevenue.toFixed(2)} €</td>
@@ -7565,6 +7566,7 @@ function initSaasAdminMode() {
     
     // Advertiser role: only Dashboard, Ads Manager, Creative Reporting
     if (u.role === 'advertiser') {
+      document.body.classList.add('advertiser-mode');
       const advAllowed = ['dashboard','ads-manager','creative-reporting'];
       document.querySelectorAll('.nav-item').forEach(function(el) {
         var section = el.getAttribute('data-section');
