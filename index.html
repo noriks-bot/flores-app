@@ -7555,6 +7555,7 @@ function initSaasAdminMode() {
 // Run on page load
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(initSaasAdminMode, 100);
+  setTimeout(function(){ try { renderAdvCutTiersUI(); } catch(e){} }, 200);
 });
 
 // Trend Chart
