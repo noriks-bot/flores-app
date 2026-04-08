@@ -3583,8 +3583,8 @@ function profitCell(p, singleDay) {
   let profit=p.profit||0;
   const orders=p.orders||0;
   const spend=p.spend||0;
-  // Always apply ADV cut (manipulation) for day-level profit — admin + advertiser
-  if (orders > 0) {
+  // Advertiser sees ADV-cut profit (per-period campaign-level cut)
+  if (document.body.classList.contains('advertiser-mode') && orders > 0) {
     const ppo = profit / orders;
     const cut = (typeof advCutPerOrder === 'function') ? advCutPerOrder(ppo) : 0;
     profit = profit - cut * orders;
@@ -4832,7 +4832,7 @@ function applySearchFilter() {
       if (activeAgeFilter === 'NEW') ageMatch = isNew;
       else if (activeAgeFilter === 'NOT_NEW') ageMatch = !isNew;
     } else if (!ageMatch) { ageMatch = true; }
-    // Result filter: LOSS_3D = d3 ADV profit < 0, LOSS_7D = d7 ADV profit < 0
+    // Result filter: LOSS_3D = d3 profit < 0, LOSS_7D = d7 profit < 0
     let resultMatch = activeResultFilter === 'ALL';
     if (!resultMatch) {
       const rowId2 = row.getAttribute('data-id');
@@ -4840,20 +4840,8 @@ function applySearchFilter() {
       if (isCampaign) mp = multiProfitData[rowId2];
       else mp = multiProfitChildren[rowId2];
       if (mp) {
-        const advProf = (period) => {
-          const pp = mp[period];
-          if (!pp) return 0;
-          let pr = pp.profit || 0;
-          const ord = pp.orders || 0;
-          if (ord > 0) {
-            const ppo = pr / ord;
-            const cut = (typeof advCutPerOrder === 'function') ? advCutPerOrder(ppo) : 0;
-            pr = pr - cut * ord;
-          }
-          return pr;
-        };
-        if (activeResultFilter === 'LOSS_3D') resultMatch = advProf('d3') < 0;
-        else if (activeResultFilter === 'LOSS_7D') resultMatch = advProf('d7') < 0;
+        if (activeResultFilter === 'LOSS_3D') resultMatch = (mp.d3?.profit ?? 0) < 0;
+        else if (activeResultFilter === 'LOSS_7D') resultMatch = (mp.d7?.profit ?? 0) < 0;
       }
     }
     // Show only selected — child rows (adsets/ads) inherit from parent campaign
