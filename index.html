@@ -205,7 +205,8 @@ tbody td {
 }
 tbody td:nth-child(1), tbody td:nth-child(2) { text-align: left; }
 tbody tr:last-child td { border-bottom: none; }
-tbody tr:hover td:not(.pl-day-cell) { background: #f3f4f6 !important; transition: background .1s; }
+tbody tr:hover td { background: inherit; }
+#section-ads-manager table tbody tr:hover td { background: inherit !important; filter: none; }
 tbody tr.level-campaign:nth-child(odd) td { background: #fbfbfb; }
 tbody tr.level-campaign:nth-child(even) td { background: #fff; }
 
@@ -326,7 +327,7 @@ tr.campaign-profit td:nth-child(1), tr.campaign-profit td:nth-child(2) { backgro
 tr.campaign-loss td:nth-child(1), tr.campaign-loss td:nth-child(2) { background: #fff !important; }
 tr.campaign-profit:hover td:nth-child(1), tr.campaign-profit:hover td:nth-child(2) { background: #f3f4f6 !important; }
 tr.campaign-loss:hover td:nth-child(1), tr.campaign-loss:hover td:nth-child(2) { background: #f3f4f6 !important; }
-tbody tr:hover td:nth-child(1), tbody tr:hover td:nth-child(2) { background: #f3f4f6 !important; }
+/* tbody tr:hover td nth-child 1/2 override removed */
 tr.level-adset td:nth-child(1), tr.level-adset td:nth-child(2) { background: inherit; }
 tr.level-ad td:nth-child(1), tr.level-ad td:nth-child(2) { background: inherit; }
 tr.totals-row td:nth-child(1), tr.totals-row td:nth-child(2) { background: #1a2332 !important; }
@@ -1075,18 +1076,14 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 #section-ads-manager table tbody tr.ci-even:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #ececec !important; }
 #section-ads-manager table tbody tr.ci-odd:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #fff !important; }
 #section-ads-manager table tbody td.pl-day-cell { background-image: none !important; width: 78px; min-width: 78px; max-width: 78px; }
-/* Hover: keep the inline red/green bg, add a subtle brightness boost */
-#section-ads-manager table tbody tr:hover td.pl-day-cell,
-#section-ads-manager table tbody tr.ci-even:hover td.pl-day-cell,
-#section-ads-manager table tbody tr.ci-odd:hover td.pl-day-cell { background-color: transparent !important; filter: brightness(1.05); }
+/* Hover disabled entirely for ads-manager */
 #section-ads-manager table thead th.pl-day-col { width: 78px; min-width: 78px; max-width: 78px; text-align: center; }
 #section-ads-manager table tbody td.pl-day-cell .muted { color: #fff !important; }
 /* Override global nth-child zebra — ci- classes are source of truth */
 #section-ads-manager table tbody tr:nth-child(even):not(.totals-row):not(.ci-even):not(.ci-odd) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #ececec !important; }
 #section-ads-manager td.cell-pl-green { background: #4db87a !important; color: #fff !important; font-weight: 400; text-align: right; }
 #section-ads-manager td.cell-pl-red { background: #e85555 !important; color: #fff !important; font-weight: 400; text-align: right; }
-#section-ads-manager tr:hover td.cell-pl-green { background: #43a86e !important; }
-#section-ads-manager tr:hover td.cell-pl-red { background: #d04545 !important; }
+/* ads-manager hover intentionally disabled */
 #section-ads-manager .totals-row td { background: #2C3E5A !important; color: #fff !important; font-weight: 700; position: static; }
 #section-ads-manager .totals-row td.cell-pl-green, #section-ads-manager .totals-row td.cell-pl-red { background: #2C3E5A !important; }
 #section-ads-manager tr.totals-row td:nth-child(1), #section-ads-manager tr.totals-row td:nth-child(2) { background: #2C3E5A !important; }
