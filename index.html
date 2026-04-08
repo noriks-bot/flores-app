@@ -1074,7 +1074,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 /* Campaign rows: zebra by ci-even/ci-odd (set in JS based on campaign index) */
 #section-ads-manager table tbody tr.ci-even:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #ececec !important; }
 #section-ads-manager table tbody tr.ci-odd:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #fff !important; }
-#section-ads-manager table tbody td.pl-day-cell { background-image: none !important; }
+#section-ads-manager table tbody td.pl-day-cell { background-image: none !important; width: 78px; min-width: 78px; max-width: 78px; }
+#section-ads-manager table thead th.pl-day-col { width: 78px; min-width: 78px; max-width: 78px; text-align: center; }
 #section-ads-manager table tbody td.pl-day-cell .muted { color: #fff !important; }
 /* Override global nth-child zebra — ci- classes are source of truth */
 #section-ads-manager table tbody tr:nth-child(even):not(.totals-row):not(.ci-even):not(.ci-odd) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #ececec !important; }
@@ -1396,9 +1397,9 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <th data-sort="wc_revenue">Flores revenue</th>
               <th data-sort="wc_cpa">Flores CPA</th>
               <th data-sort="wc_roas">ROAS</th>
-              <th class="sep" data-sort="p_yesterday">P/L Yesterday</th>
-              <th data-sort="p_y2">P/L -2d</th>
-              <th data-sort="p_y3">P/L -3d</th>
+              <th class="sep pl-day-col" data-sort="p_yesterday">P/L Y</th>
+              <th class="pl-day-col" data-sort="p_y2">P/L -2d</th>
+              <th class="pl-day-col" data-sort="p_y3">P/L -3d</th>
               <th data-sort="p_d3">P/L 3D</th>
               <th data-sort="p_d7">P/L 7D</th>
               <th data-sort="p_d14">P/L 14D</th>
@@ -3588,7 +3589,7 @@ function profitCell(p, singleDay) {
     let bg='#9ca3af', label='€0';
     if (profit > 0) { bg='#4caf50'; label='+'+fmtEur(profit); }
     else if (profit < 0) { bg='#ef5350'; label=fmtEur(profit); }
-    return `<td class="pl-day-cell" style="background:${bg};color:#fff;text-align:center;line-height:1.2;padding:6px 8px"><div style="font-weight:700;font-size:12px">${label}</div><div style="font-size:9px;opacity:0.9">${orders} orders</div><div style="font-size:9px;opacity:0.9">${cpa} CPA</div></td>`;
+    return `<td class="pl-day-cell" style="background:${bg};color:#fff;text-align:center;line-height:1.2;padding:6px 6px"><div style="font-weight:700;font-size:12px;white-space:nowrap">${label}</div><div style="font-size:9px;opacity:0.9;white-space:nowrap">${orders} orders</div><div style="font-size:9px;opacity:0.9;white-space:nowrap">${cpa} CPA</div></td>`;
   }
   const pill=profitPill(profit);
   const ordTag=`<span style="display:block;font-size:9px;color:#666;margin-top:1px">${orders} orders</span>`;
@@ -4123,9 +4124,9 @@ function renderCampaignHeaders() {
     <th data-sort="wc_revenue">Flores revenue</th>
     <th data-sort="wc_cpa">Flores CPA</th>
     <th data-sort="wc_roas">ROAS</th>
-    <th class="sep" data-sort="p_yesterday">P/L Yesterday</th>
-    <th data-sort="p_y2">P/L -2d</th>
-    <th data-sort="p_y3">P/L -3d</th>
+    <th class="sep pl-day-col" data-sort="p_yesterday">P/L Y</th>
+    <th class="pl-day-col" data-sort="p_y2">P/L -2d</th>
+    <th class="pl-day-col" data-sort="p_y3">P/L -3d</th>
     <th data-sort="p_d3">P/L 3D</th>
     <th data-sort="p_d7">P/L 7D</th>
     <th data-sort="p_d14">P/L 14D</th>
