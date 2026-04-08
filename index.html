@@ -3753,10 +3753,10 @@ function makeRow(item,level,bgClass) {
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td style="white-space:nowrap;vertical-align:middle">${wcCount>0?`<button onclick="event.stopPropagation();showCampaignOrders('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-right:5px;border-radius:4px;vertical-align:middle;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:22px;height:18px"><i class="fas fa-list-ul" style="font-size:9px"></i></button>`:''}<strong style="font-size:13px;vertical-align:middle">${wcCount||0}</strong></td>
     <td style="font-size:11px;color:#8b5cf6">${(fpaData[level==="campaign"?"campaigns":level==="adset"?"adsets":"ads"][item.id])||0}</td>
-    <td class="col-profit-orig ${plCls}">${plHtml}</td>
-    <td class="col-profit-orig ${ppoCls}">${ppoHtml}</td>
-    <td class="${plAdvCls}">${plAdvHtml}</td>
-    <td class="${ppoAdvCls}">${ppoAdvHtml}</td>
+    <td class="col-profit-orig ${plCls}" style="${plCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":plCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plHtml}</td>
+    <td class="col-profit-orig ${ppoCls}" style="${ppoCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":ppoCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoHtml}</td>
+    <td class="${plAdvCls}" style="${plAdvCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":plAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plAdvHtml}</td>
+    <td class="${ppoAdvCls}" style="${ppoAdvCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":ppoAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoAdvHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${florexCpa}</td>
     <td>${roas}</td>
@@ -4298,10 +4298,10 @@ function makeFlatRow(item, level) {
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td style="white-space:nowrap;vertical-align:middle">${wcCount>0?`<button onclick="event.stopPropagation();showCampaignOrders('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-right:5px;border-radius:4px;vertical-align:middle;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:22px;height:18px"><i class="fas fa-list-ul" style="font-size:9px"></i></button>`:''}<strong style="font-size:13px;vertical-align:middle">${wcCount||0}</strong></td>
     <td style="font-size:11px;color:#8b5cf6">${(fpaData[level==="campaign"?"campaigns":level==="adset"?"adsets":"ads"][item.id])||0}</td>
-    <td class="col-profit-orig ${plCls}">${plHtml}</td>
-    <td class="col-profit-orig ${ppoCls}">${ppoHtml}</td>
-    <td class="${plAdvCls}">${plAdvHtml}</td>
-    <td class="${ppoAdvCls}">${ppoAdvHtml}</td>
+    <td class="col-profit-orig ${plCls}" style="${plCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":plCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plHtml}</td>
+    <td class="col-profit-orig ${ppoCls}" style="${ppoCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":ppoCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoHtml}</td>
+    <td class="${plAdvCls}" style="${plAdvCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":plAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plAdvHtml}</td>
+    <td class="${ppoAdvCls}" style="${ppoAdvCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":ppoAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoAdvHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${florexCpa}</td>
     <td>${roas}</td>
