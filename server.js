@@ -2671,6 +2671,22 @@ const server = http.createServer(async (req, res) => {
               roas: fbSpend > 0 ? Math.round(((r.revenue||0) / fbSpend) * 100) / 100 : 0
             };
           }
+          // Include countries that have FB spend but zero orders (so spend still shows in ALL row)
+          for (const cc of Object.keys(byCountry)) {
+            if (byCountryAll[cc]) continue;
+            const fbSpend = byCountry[cc].spend || 0;
+            if (fbSpend <= 0) continue;
+            const netProfit = Math.round((0 - fbSpend) * 100) / 100;
+            byCountryAll[cc] = {
+              orders: 0,
+              revenue: 0,
+              profit: netProfit,
+              ppo: 0,
+              spend: Math.round(fbSpend * 100) / 100,
+              cpa: 0,
+              roas: 0
+            };
+          }
         } catch(e) { console.warn('[base-report] byCountryAll failed', e.message); }
         return sendJSON(res, { byCountry, byType, byCountryAndType, byCountryAll });
       }
