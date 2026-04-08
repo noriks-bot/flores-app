@@ -1084,7 +1084,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 #section-ads-manager td.cell-pl-green { background: #4db87a !important; color: #fff !important; font-weight: 400; text-align: right; }
 #section-ads-manager td.cell-pl-red { background: #e85555 !important; color: #fff !important; font-weight: 400; text-align: right; }
 /* ads-manager hover intentionally disabled */
-#section-ads-manager table tbody tr:hover td { background: inherit !important; }
+#section-ads-manager table tbody tr:not(.totals-row):hover td { background: inherit !important; }
 #section-ads-manager table tbody tr:hover td.cell-pl-green { background: #4db87a !important; }
 #section-ads-manager table tbody tr:hover td.cell-pl-red { background: #e85555 !important; }
 #section-ads-manager table tbody tr.ci-even:hover td { background: #ececec !important; }
@@ -1095,13 +1095,20 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 #section-ads-manager table tbody tr.campaign-loss:hover td { background: inherit !important; }
 #section-ads-manager tr:hover .name-cell .info-btn, #section-ads-manager tr:hover .name-cell .orders-btn { display: inline-flex; }
 /* ===== ads-manager: NO HOVER on rows. P/L stays green/red. ===== */
-#section-ads-manager table tbody tr.level-campaign:hover td,
-#section-ads-manager table tbody tr.level-adset:hover td,
-#section-ads-manager table tbody tr.level-ad:hover td,
-#section-ads-manager table tbody tr.campaign-profit:hover td,
-#section-ads-manager table tbody tr.campaign-loss:hover td,
-#section-ads-manager table tbody tr.ci-even:hover td,
-#section-ads-manager table tbody tr.ci-odd:hover td { background: inherit !important; }
+#section-ads-manager table tbody tr.level-campaign:not(.totals-row):hover td,
+#section-ads-manager table tbody tr.level-adset:not(.totals-row):hover td,
+#section-ads-manager table tbody tr.level-ad:not(.totals-row):hover td,
+#section-ads-manager table tbody tr.campaign-profit:not(.totals-row):hover td,
+#section-ads-manager table tbody tr.campaign-loss:not(.totals-row):hover td,
+#section-ads-manager table tbody tr.ci-even:not(.totals-row):hover td,
+#section-ads-manager table tbody tr.ci-odd:not(.totals-row):hover td { background: inherit !important; }
+/* Totals row: lock dark navy bg even on hover */
+#section-ads-manager table tbody tr.totals-row:hover td,
+#section-ads-manager table tbody tr.totals-row td { background: #2C3E5A !important; color: #fff !important; }
+#section-ads-manager table tbody tr.totals-row td.cell-pl-green,
+#section-ads-manager table tbody tr.totals-row td.cell-pl-red,
+#section-ads-manager table tbody tr.totals-row:hover td.cell-pl-green,
+#section-ads-manager table tbody tr.totals-row:hover td.cell-pl-red { background: #2C3E5A !important; color: #fff !important; }
 #section-ads-manager table tbody tr.ci-even:hover > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #ececec !important; }
 #section-ads-manager table tbody tr.ci-odd:hover > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #fff !important; }
 #section-ads-manager table tbody tr:hover td.cell-pl-green,
