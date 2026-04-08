@@ -2721,7 +2721,43 @@ const sectionTitles = {
 };
 
 var dashboardLoaded = false;
-var dashDateRange = "today";function setDashDate(btn, range) {  document.querySelectorAll(".dash-date-btn").forEach(function(b){b.classList.remove("active");});  btn.classList.add("active");  dashDateRange = range;  dashboardLoaded = false;  loadDashboard();}function getDashDateRange() {  var today = new Date().toISOString().slice(0,10);  var d = new Date();  switch(dashDateRange) {    case "yesterday": d.setDate(d.getDate()-1); return {from:d.toISOString().slice(0,10),to:d.toISOString().slice(0,10)};    case "3d": d.setDate(d.getDate()-2); return {from:d.toISOString().slice(0,10),to:today};    case "7d": d.setDate(d.getDate()-6); return {from:d.toISOString().slice(0,10),to:today};    case "14d": d.setDate(d.getDate()-13); return {from:d.toISOString().slice(0,10),to:today};    case "30d": d.setDate(d.getDate()-29); return {from:d.toISOString().slice(0,10),to:today};    default: return {from:today,to:today};  }}
+var dashDateRange = "today";
+function setDashDate(btn, range) {
+  document.querySelectorAll(".dash-date-btn").forEach(function(b){b.classList.remove("active");});
+  btn.classList.add("active");
+  dashDateRange = range;
+  var isCustom = (range === 'custom');
+  document.getElementById('dashCustomFrom').style.display = isCustom ? '' : 'none';
+  document.getElementById('dashCustomTo').style.display = isCustom ? '' : 'none';
+  document.getElementById('dashCustomSep').style.display = isCustom ? '' : 'none';
+  if (isCustom) {
+    var today = new Date().toISOString().slice(0,10);
+    if (!document.getElementById('dashCustomFrom').value) document.getElementById('dashCustomFrom').value = today;
+    if (!document.getElementById('dashCustomTo').value) document.getElementById('dashCustomTo').value = today;
+    return;
+  }
+  dashboardLoaded = false;
+  loadDashboard();
+}
+function applyDashCustomRange() {
+  if (document.getElementById('dashCustomFrom').value && document.getElementById('dashCustomTo').value) {
+    dashboardLoaded = false;
+    loadDashboard();
+  }
+}
+function getDashDateRange() {
+  var today = new Date().toISOString().slice(0,10);
+  var d = new Date();
+  switch(dashDateRange) {
+    case "yesterday": d.setDate(d.getDate()-1); return {from:d.toISOString().slice(0,10),to:d.toISOString().slice(0,10)};
+    case "3d": d.setDate(d.getDate()-2); return {from:d.toISOString().slice(0,10),to:today};
+    case "7d": d.setDate(d.getDate()-6); return {from:d.toISOString().slice(0,10),to:today};
+    case "14d": d.setDate(d.getDate()-13); return {from:d.toISOString().slice(0,10),to:today};
+    case "30d": d.setDate(d.getDate()-29); return {from:d.toISOString().slice(0,10),to:today};
+    case "custom": return {from: document.getElementById('dashCustomFrom').value || today, to: document.getElementById('dashCustomTo').value || today};
+    default: return {from:today,to:today};
+  }
+}
 function navigateTo(section) {
   // Update hash
   window.location.hash = section;
