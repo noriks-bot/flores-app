@@ -1287,6 +1287,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           </div>
         </div>
         <div class="dash-kpis dash-kpis-fb" id="dashKpisAdv" style="margin-top:16px"></div>
+        <div class="dash-kpis admin-only-v2" id="dashKpisV2" style="margin-top:16px;display:none"></div>
+        <div class="dash-kpis dash-kpis-fb admin-only-v2" id="dashKpisFbV2" style="margin-top:16px;display:none"></div>
         <!-- Quick Actions -->
         <div class="dash-quick-actions" style="display:none">
           <button class="dash-action-btn" onclick="navigateTo('bulk-uploader')"><i class="fas fa-layer-group"></i> Bulk Uploader</button>
@@ -2401,6 +2403,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <button class="fpill" onclick="loadOrgTab('product_costs',this)">Product Costs</button>
         <button class="fpill" onclick="loadOrgTab('rejection_rates',this)">Rejection Rates</button>
         <button class="fpill" onclick="loadOrgTab('shipping_costs',this)">Shipping Costs</button>
+        <button class="fpill" onclick="loadOrgTab('rejection_rates2',this)">Rejection Rates 2</button>
+        <button class="fpill" onclick="loadOrgTab('shipping_costs2',this)">Shipping Costs 2</button>
         <button class="fpill" onclick="loadOrgTab('vat_rates',this)">VAT Rates</button>
       </div>
       <div id="orgSetupContent" style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:20px;min-height:200px">
@@ -2572,6 +2576,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           <button class="fpill" onclick="loadOrgTab('product_costs',this)">Product Costs</button>
           <button class="fpill" onclick="loadOrgTab('rejection_rates',this)">Rejection Rates</button>
           <button class="fpill" onclick="loadOrgTab('shipping_costs',this)">Shipping Costs</button>
+          <button class="fpill" onclick="loadOrgTab('rejection_rates2',this)">Rejection Rates 2</button>
+          <button class="fpill" onclick="loadOrgTab('shipping_costs2',this)">Shipping Costs 2</button>
           <button class="fpill" onclick="loadOrgTab('vat_rates',this)">VAT Rates</button>
         </div>
         <div id="orgSetupContent2" style="min-height:100px">
@@ -7060,6 +7066,9 @@ function renderDashboard(data) {
     { label: "FB Profit", value: '\u20ac' + (k.fbProfit||0).toFixed(2) + '<div style="font-size:12px;font-weight:700;color:#fff;margin-top:3px">\u20ac' + (k.fbProfitPerOrder||0).toFixed(2) + '/order</div>', icon: 'fas fa-chart-line' }
   ].map(c => '<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="' + c.icon + '" style="margin-right:6px"></i>' + c.label + '</div><div class="dash-kpi-value">' + c.value + '</div></div>').join('');
 
+  // V2 KPI Cards (admin only)
+  try { loadDashboardV2(); } catch(e) {}
+
   // ADV KPI Cards (FB metrics with per-order tier-based cut applied — backend computed)
   const fbOrdersAdv = k.fbOrders || 0;
   const fbProfitOrig = k.fbProfit || 0;
@@ -7646,6 +7655,42 @@ async function loadOrganizations() {
 }
 
 // Org Setup
+async function loadDashboardV2() {
+  try {
+    var meRes = await fetch('/api/me', {credentials:'same-origin'});
+    var me = await meRes.json();
+    if (!me || (me.role !== 'admin' && me.role !== 'super_admin')) return;
+    var rowV2 = document.getElementById('dashKpisV2');
+    var rowFbV2 = document.getElementById('dashKpisFbV2');
+    if (!rowV2 || !rowFbV2) return;
+    var p = new URLSearchParams(window.location.search);
+    var df = p.get('date_from') || '';
+    var dt = p.get('date_to') || '';
+    var qs = (df && dt) ? ('?date_from='+df+'&date_to='+dt) : '';
+    var r = await fetch('/api/dashboard2' + qs, {credentials:'same-origin'});
+    if (!r.ok) return;
+    var d = await r.json();
+    if (!d || !d.kpis) return;
+    var k = d.kpis;
+    rowV2.style.display = '';
+    rowFbV2.style.display = '';
+    rowV2.innerHTML = [
+      { label: 'Spend (v2)', value: '\u20ac' + (k.spend||0).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}), icon: 'fas fa-coins', color: '#2563eb' },
+      { label: 'Orders (v2)', value: (k.orders || 0), icon: 'fas fa-shopping-bag', color: '#7c3aed' },
+      { label: 'Revenue (v2)', value: '\u20ac' + (k.revenue||0).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}), icon: 'fas fa-euro-sign', color: '#10b981' },
+      { label: 'Profit (v2)', value: '\u20ac' + (k.profit||0).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}) + '<div style="font-size:12px;font-weight:700;color:#374151;margin-top:3px">\u20ac' + (k.profitPerOrder||0).toFixed(2) + '/order</div>', icon: 'fas fa-chart-line', color: k.profit >= 0 ? '#10b981' : '#ef4444' },
+      { label: 'CPA (v2)', value: '\u20ac' + (k.cpa||0).toFixed(2), icon: 'fas fa-bullseye', color: '#f59e0b' },
+      { label: 'V2 Source', value: '<span style="font-size:13px">rejection_rates2 + shipping_costs2</span>', icon: 'fas fa-cog', color: '#6b7280' }
+    ].map(function(c) { return '<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="'+c.icon+'" style="margin-right:6px;color:'+c.color+'"></i>'+c.label+'</div><div class="dash-kpi-value" style="color:'+c.color+'">'+c.value+'</div></div>'; }).join('');
+    rowFbV2.innerHTML = [
+      { label: 'FB Spend (v2)', value: '\u20ac' + (k.spend||0).toFixed(2), icon: 'fas fa-ad' },
+      { label: 'FB Orders (v2)', value: (k.fbOrders || 0), icon: 'fas fa-shopping-cart' },
+      { label: 'FB CPA (v2)', value: '\u20ac' + (k.fbCpa||0).toFixed(2), icon: 'fas fa-bullseye' },
+      { label: 'FB Profit (v2)', value: '\u20ac' + (k.fbProfit||0).toFixed(2) + '<div style="font-size:12px;font-weight:700;color:#fff;margin-top:3px">\u20ac' + (k.fbProfitPerOrder||0).toFixed(2) + '/order</div>', icon: 'fas fa-chart-line' }
+    ].map(function(c) { return '<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="'+c.icon+'" style="margin-right:6px"></i>'+c.label+'</div><div class="dash-kpi-value">'+c.value+'</div></div>'; }).join('');
+  } catch(e) { console.warn('[V2] failed', e); }
+}
+
 async function loadOrgTab(category, btn) {
   // Support both org-setup and settings page
   var parentSection = btn ? btn.closest('.content-section, [id^="section-"]') : null;

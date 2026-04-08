@@ -458,6 +458,18 @@ function seedOrgSettings() {
       upsertSetting.run(1, 'shipping_costs', cc, String(cost));
     }
 
+    // Rejection Rates 2 (admin v2)
+    const rejections2 = { HR: 8, CZ: 8, PL: 5, SK: 4, HU: 7, GR: 15, IT: 15 };
+    for (const [cc, rate] of Object.entries(rejections2)) {
+      upsertSetting.run(1, 'rejection_rates2', cc, String(rate));
+    }
+
+    // Shipping Costs 2 (admin v2)
+    const shipping2 = { HR: 3, CZ: 3.3, PL: 3.5, SK: 3.1, HU: 3, GR: 4.5, IT: 5.5 };
+    for (const [cc, cost] of Object.entries(shipping2)) {
+      upsertSetting.run(1, 'shipping_costs2', cc, String(cost));
+    }
+
     // VAT Rates (%)
     const vat = { HR: 25, CZ: 21, PL: 23, GR: 24, IT: 22, HU: 27, SK: 23 };
     for (const [cc, rate] of Object.entries(vat)) {
@@ -3760,6 +3772,20 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
       }
 
       // ═══ DASHBOARD API ═══
+      // Load V2 rates from org_settings
+function getRates2() {
+  const rej = {}, ship = {};
+  try {
+    const rows = db.prepare("SELECT key, value FROM org_settings WHERE org_id = 1 AND category = 'rejection_rates2'").all();
+    for (const r of rows) rej[r.key] = parseFloat(r.value);
+  } catch(e) {}
+  try {
+    const rows = db.prepare("SELECT key, value FROM org_settings WHERE org_id = 1 AND category = 'shipping_costs2'").all();
+    for (const r of rows) ship[r.key] = parseFloat(r.value);
+  } catch(e) {}
+  return { rej, ship };
+}
+
       if (urlPath === '/api/dashboard') {
         const dashFrom = query.date_from || getToday(); const dashTo = query.date_to || getToday();
         // Dashboard reads from SQLite - no Meta API calls, instant response
@@ -4114,6 +4140,68 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
       }
 
             // ═══ ACTIVITY LOG API ═══
+      if (urlPath === '/api/dashboard2') {
+        const user = getSessionUser(req);
+        if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) return sendJSON(res, { error: 'Admin required' }, 403);
+        const dashFrom = query.date_from || getToday(); const dashTo = query.date_to || getToday();
+        const rates2 = getRates2();
+        const VAT_RATES_LOCAL = { HR: 0.25, CZ: 0.21, PL: 0.23, GR: 0.24, IT: 0.22, HU: 0.27, SK: 0.23 };
+        const rows = db.prepare("SELECT country, gross_eur, product_cost, shipping_cost, profit, is_fb_attributed FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND LOWER(billing_name) NOT LIKE '%test%'").all(dashFrom, dashTo);
+        let orders = 0, revenue = 0, profit2Total = 0, fbOrders = 0, fbProfit2Total = 0;
+        for (const r of rows) {
+          const country = r.country;
+          const rejRate1 = (dashRejectionRates[country] || 15) / 100;
+          const rejRate2 = (rates2.rej[country] != null ? rates2.rej[country] : (rejRate1*100)) / 100;
+          const ship2Cost = rates2.ship[country] != null ? rates2.ship[country] : r.shipping_cost;
+          const vat = VAT_RATES_LOCAL[country] || 0;
+          const grossEur = r.gross_eur || 0;
+          const netRev2 = grossEur * (1 - rejRate2) / (1 + vat);
+          // Reverse product cost bruto from stored effective
+          const productCostBruto = (1 - rejRate1) > 0 ? (r.product_cost || 0) / (1 - rejRate1) : (r.product_cost || 0);
+          const productCost2 = productCostBruto * (1 - rejRate2);
+          const profit2 = netRev2 - productCost2 - ship2Cost;
+          orders++;
+          revenue += grossEur;
+          profit2Total += profit2;
+          if (r.is_fb_attributed === 1) {
+            fbOrders++;
+            fbProfit2Total += profit2;
+          }
+        }
+        // FB spend (live or cache)
+        let fbSpendRange = 0;
+        try {
+          const camps = await getCampaigns(dashFrom, dashTo);
+          if (Array.isArray(camps)) fbSpendRange = camps.reduce((s,c) => s + parseFloat(c.insights?.spend||0), 0);
+        } catch(e) {}
+        if (fbSpendRange === 0) {
+          try {
+            const dc = JSON.parse(fs.readFileSync(DASH_CACHE_FILE, 'utf8'));
+            for (const [date, countries] of Object.entries(dc.data || {})) {
+              if (date >= dashFrom && date <= dashTo) {
+                for (const [,v] of Object.entries(countries)) { if (v && typeof v.spend === 'number') fbSpendRange += v.spend; }
+              }
+            }
+          } catch(e) {}
+        }
+        const profitFinal = profit2Total - fbSpendRange;
+        const fbProfitFinal = fbProfit2Total - fbSpendRange;
+        return sendJSON(res, {
+          kpis: {
+            orders,
+            revenue: Math.round(revenue * 100) / 100,
+            profit: Math.round(profitFinal * 100) / 100,
+            profitPerOrder: orders > 0 ? Math.round(profitFinal/orders*100)/100 : 0,
+            spend: Math.round(fbSpendRange * 100) / 100,
+            cpa: orders > 0 ? Math.round(fbSpendRange/orders*100)/100 : 0,
+            fbOrders,
+            fbProfit: Math.round(fbProfitFinal * 100) / 100,
+            fbProfitPerOrder: fbOrders > 0 ? Math.round(fbProfitFinal/fbOrders*100)/100 : 0,
+            fbCpa: fbOrders > 0 ? Math.round(fbSpendRange/fbOrders*100)/100 : 0
+          }
+        });
+      }
+
       if (urlPath === '/api/activity-log') {
         const page = parseInt(query.page) || 1;
         const limit = Math.min(parseInt(query.limit) || 50, 200);
