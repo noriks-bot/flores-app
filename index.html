@@ -1278,6 +1278,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         </div>
         <div class="dash-kpis" id="dashKpis"></div>
         <div class="dash-kpis dash-kpis-fb" id="dashKpisFb" style="margin-top:16px"></div>
+        <div class="dash-kpis admin-only-v2" id="dashKpisV2" style="margin-top:16px;display:none"></div>
+        <div class="dash-kpis dash-kpis-fb admin-only-v2" id="dashKpisFbV2" style="margin-top:16px;display:none"></div>
         <div id="dashManipulation" style="margin-top:16px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px 20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
           <div style="font-weight:800;font-size:14px;color:#111;display:flex;align-items:center;gap:8px"><i class="fas fa-magic" style="color:#f59e0b"></i>Manipulation</div>
           <div style="display:flex;gap:32px;flex-wrap:wrap">
@@ -1287,8 +1289,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           </div>
         </div>
         <div class="dash-kpis dash-kpis-fb" id="dashKpisAdv" style="margin-top:16px"></div>
-        <div class="dash-kpis admin-only-v2" id="dashKpisV2" style="margin-top:16px;display:none"></div>
-        <div class="dash-kpis dash-kpis-fb admin-only-v2" id="dashKpisFbV2" style="margin-top:16px;display:none"></div>
+
         <!-- Quick Actions -->
         <div class="dash-quick-actions" style="display:none">
           <button class="dash-action-btn" onclick="navigateTo('bulk-uploader')"><i class="fas fa-layer-group"></i> Bulk Uploader</button>
