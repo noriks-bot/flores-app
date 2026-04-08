@@ -1452,6 +1452,8 @@ async function getMultiPeriodProfit() {
   
   const periods = {
     yesterday: { from: fmt(addD(today,-1)), to: fmt(addD(today,-1)) },
+    y2: { from: fmt(addD(today,-2)), to: fmt(addD(today,-2)) },
+    y3: { from: fmt(addD(today,-3)), to: fmt(addD(today,-3)) },
     d3: { from: fmt(addD(today,-3)), to: fmt(addD(today,-1)) },
     d7: { from: fmt(addD(today,-7)), to: fmt(addD(today,-1)) },
     d14: { from: fmt(addD(today,-14)), to: fmt(addD(today,-1)) },
@@ -2361,6 +2363,8 @@ const server = http.createServer(async (req, res) => {
         const addD = (d,n) => { const r=new Date(d); r.setDate(r.getDate()+n); return r; };
         const periods = {
           yesterday: { from: fmt(addD(today,-1)), to: fmt(addD(today,-1)) },
+          y2: { from: fmt(addD(today,-2)), to: fmt(addD(today,-2)) },
+          y3: { from: fmt(addD(today,-3)), to: fmt(addD(today,-3)) },
           d3: { from: fmt(addD(today,-3)), to: fmt(addD(today,-1)) },
           d7: { from: fmt(addD(today,-7)), to: fmt(addD(today,-1)) },
           d14: { from: fmt(addD(today,-14)), to: fmt(addD(today,-1)) },

@@ -1395,6 +1395,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <th data-sort="wc_cpa">Flores CPA</th>
               <th data-sort="wc_roas">ROAS</th>
               <th class="sep" data-sort="p_yesterday">P/L Yesterday</th>
+              <th data-sort="p_y2">P/L -2d</th>
+              <th data-sort="p_y3">P/L -3d</th>
               <th data-sort="p_d3">P/L 3D</th>
               <th data-sort="p_d7">P/L 7D</th>
               <th data-sort="p_d14">P/L 14D</th>
@@ -1409,7 +1411,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           </thead>
           <tbody id="tableTotals"></tbody>
           <tbody id="tableBody">
-            <tr><td colspan="30"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>
+            <tr><td colspan="32"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>
           </tbody>
           <tbody id="tableTotalsBottom"></tbody>
         </table>
@@ -3012,6 +3014,8 @@ function getSortValue(item,key) {
     case 'cpm': return parseFloat(ins?.cpm||0);
     case 'cpc': return parseFloat(ins?.cpc||0);
     case 'p_yesterday': return multiProfitData[item.id]?.yesterday?.profit??-Infinity;
+    case 'p_y2': return multiProfitData[item.id]?.y2?.profit??-Infinity;
+    case 'p_y3': return multiProfitData[item.id]?.y3?.profit??-Infinity;
     case 'p_d3': return multiProfitData[item.id]?.d3?.profit??-Infinity;
     case 'p_d7': return multiProfitData[item.id]?.d7?.profit??-Infinity;
     case 'p_d14': return multiProfitData[item.id]?.d14?.profit??-Infinity;
@@ -3041,11 +3045,11 @@ document.addEventListener('click', e => {
 
 async function loadData() {
   const {from,to}=getDateRange();
-  document.getElementById('tableBody').innerHTML='<tr><td colspan="30"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>';
+  document.getElementById('tableBody').innerHTML='<tr><td colspan="32"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading campaigns...</div></div></td></tr>';
   try {
     const res=await fetch(`/api/campaigns?date_from=${from}&date_to=${to}&_t=${Date.now()}`);
     campaigns=await res.json();
-    if(campaigns.error){document.getElementById('tableBody').innerHTML=`<tr><td colspan="30"><div class="loading-state">Error: ${campaigns.error}</div></td></tr>`;return;}
+    if(campaigns.error){document.getElementById('tableBody').innerHTML=`<tr><td colspan="32"><div class="loading-state">Error: ${campaigns.error}</div></td></tr>`;return;}
     campaigns.sort((a,b)=>parseFloat(b.insights?.spend||0)-parseFloat(a.insights?.spend||0));
     expandedCampaigns={}; expandedAdsets={}; adsetCache={}; adCache={};
     allAdsets=[]; allAds=[];
@@ -3066,7 +3070,7 @@ async function loadData() {
     } else {
       renderAdHeaders(); loadAds();
     }
-  } catch(e){ document.getElementById('tableBody').innerHTML=`<tr><td colspan="30"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
+  } catch(e){ document.getElementById('tableBody').innerHTML=`<tr><td colspan="32"><div class="loading-state">Error: ${e.message}</div></td></tr>`; }
 }
 
 function updateSummary() {
@@ -3117,7 +3121,7 @@ function updateSummary() {
     <td>${wcRevenue.toFixed(2)} €</td>
     <td>${totFlorexCpa}</td>
     <td>${roas}</td>
-    <td></td><td></td><td></td><td></td><td></td><td></td>
+    <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
     <td>${cpa}</td>
     <td>${purchases}</td>
     <td>${totCheckouts}</td>
@@ -3586,13 +3590,13 @@ let multiProfitChildren = {}; // adsetId/adId -> {yesterday, d3, ...}
 function profitPeriodCells(item,level) {
   if(level==='campaign') {
     const mp=multiProfitData[item.id];
-    if(!mp) return '<td><span class="muted">—</span></td>'.repeat(6);
-    return `${profitCell(mp.yesterday)}${profitCell(mp.d3)}${profitCell(mp.d7)}${profitCell(mp.d14)}${profitCell(mp.d30)}${profitCell(mp.lifetime)}`;
+    if(!mp) return '<td><span class="muted">—</span></td>'.repeat(8);
+    return `${profitCell(mp.yesterday)}${profitCell(mp.y2)}${profitCell(mp.y3)}${profitCell(mp.d3)}${profitCell(mp.d7)}${profitCell(mp.d14)}${profitCell(mp.d30)}${profitCell(mp.lifetime)}`;
   }
   // Adset/ad level
   const mp=multiProfitChildren[item.id];
-  if(!mp) return '<td><span class="muted" style="font-size:9px">...</span></td>'.repeat(6);
-  return `${profitCell(mp.yesterday)}${profitCell(mp.d3)}${profitCell(mp.d7)}${profitCell(mp.d14)}${profitCell(mp.d30)}${profitCell(mp.lifetime)}`;
+  if(!mp) return '<td><span class="muted" style="font-size:9px">...</span></td>'.repeat(8);
+  return `${profitCell(mp.yesterday)}${profitCell(mp.y2)}${profitCell(mp.y3)}${profitCell(mp.d3)}${profitCell(mp.d7)}${profitCell(mp.d14)}${profitCell(mp.d30)}${profitCell(mp.lifetime)}`;
 }
 
 function isNewCampaign(item) {
@@ -3806,7 +3810,7 @@ function renderTable() {
       html+=childRows.join('');
     }
   });
-  if(!html) html='<tr><td colspan="30"><div class="loading-state">No campaigns found</div></td></tr>';
+  if(!html) html='<tr><td colspan="32"><div class="loading-state">No campaigns found</div></td></tr>';
   document.getElementById('tableBody').innerHTML=html;
   if(searchFilter || activeCountryFilter !== 'ALL' || activeTypeFilter !== 'ALL' || activeDeliveryFilter !== 'HAD_DELIVERY' || showOnlySelected) applySearchFilter();
 }
@@ -4111,6 +4115,8 @@ function renderCampaignHeaders() {
     <th data-sort="wc_cpa">Flores CPA</th>
     <th data-sort="wc_roas">ROAS</th>
     <th class="sep" data-sort="p_yesterday">P/L Yesterday</th>
+    <th data-sort="p_y2">P/L -2d</th>
+    <th data-sort="p_y3">P/L -3d</th>
     <th data-sort="p_d3">P/L 3D</th>
     <th data-sort="p_d7">P/L 7D</th>
     <th data-sort="p_d14">P/L 14D</th>
@@ -4902,7 +4908,7 @@ function recalcFilteredTotals() {
     <td>${wcRevenue.toFixed(2)} €</td>
     <td>${totFlorexCpa}</td>
     <td>${roas}</td>
-    <td></td><td></td><td></td><td></td><td></td><td></td>
+    <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
     <td>${cpa}</td>
     <td>${purchases}</td>
     <td>${totCheckouts}</td>
