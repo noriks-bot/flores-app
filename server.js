@@ -4197,7 +4197,9 @@ function getRates2() {
             fbOrders,
             fbProfit: Math.round(fbProfitFinal * 100) / 100,
             fbProfitPerOrder: fbOrders > 0 ? Math.round(fbProfitFinal/fbOrders*100)/100 : 0,
-            fbCpa: fbOrders > 0 ? Math.round(fbSpendRange/fbOrders*100)/100 : 0
+            fbCpa: fbOrders > 0 ? Math.round(fbSpendRange/fbOrders*100)/100 : 0,
+            fbMeasuredOrders: (() => { try { return db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.cnt || 0; } catch(e) { return 0; } })(),
+            fbUnmeasuredOrders: (() => { try { var t = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1").get(dashFrom, dashTo)?.cnt || 0; var m = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.cnt || 0; return Math.max(0, t - m); } catch(e) { return 0; } })()
           }
         });
       }
