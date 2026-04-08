@@ -205,7 +205,7 @@ tbody td {
 }
 tbody td:nth-child(1), tbody td:nth-child(2) { text-align: left; }
 tbody tr:last-child td { border-bottom: none; }
-tbody tr:hover td { background: #f3f4f6 !important; transition: background .1s; }
+tbody tr:hover td:not(.pl-day-cell) { background: #f3f4f6 !important; transition: background .1s; }
 tbody tr.level-campaign:nth-child(odd) td { background: #fbfbfb; }
 tbody tr.level-campaign:nth-child(even) td { background: #fff; }
 
@@ -1075,6 +1075,10 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 #section-ads-manager table tbody tr.ci-even:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #ececec !important; }
 #section-ads-manager table tbody tr.ci-odd:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #fff !important; }
 #section-ads-manager table tbody td.pl-day-cell { background-image: none !important; width: 78px; min-width: 78px; max-width: 78px; }
+/* Hover: keep the inline red/green bg, add a subtle brightness boost */
+#section-ads-manager table tbody tr:hover td.pl-day-cell,
+#section-ads-manager table tbody tr.ci-even:hover td.pl-day-cell,
+#section-ads-manager table tbody tr.ci-odd:hover td.pl-day-cell { background-color: transparent !important; filter: brightness(1.05); }
 #section-ads-manager table thead th.pl-day-col { width: 78px; min-width: 78px; max-width: 78px; text-align: center; }
 #section-ads-manager table tbody td.pl-day-cell .muted { color: #fff !important; }
 /* Override global nth-child zebra — ci- classes are source of truth */
