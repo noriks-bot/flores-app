@@ -7681,11 +7681,13 @@ async function loadDashboardV2() {
       { label: 'Revenue (v2)', value: '\u20ac' + (k.revenue||0).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}), icon: 'fas fa-euro-sign', color: '#10b981' },
       { label: 'Profit (v2)', value: '\u20ac' + (k.profit||0).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}) + '<div style="font-size:12px;font-weight:700;color:#374151;margin-top:3px">\u20ac' + (k.profitPerOrder||0).toFixed(2) + '/order</div>', icon: 'fas fa-chart-line', color: k.profit >= 0 ? '#10b981' : '#ef4444' },
       { label: 'CPA (v2)', value: '\u20ac' + (k.cpa||0).toFixed(2), icon: 'fas fa-bullseye', color: '#f59e0b' },
-      { label: 'V2 Source', value: '<span style="font-size:13px">rejection_rates2 + shipping_costs2</span>', icon: 'fas fa-cog', color: '#6b7280' }
+      { label: 'Campaigns (v2)', value: '—', icon: 'fas fa-bullhorn', color: '#2563eb' }
     ].map(function(c) { return '<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="'+c.icon+'" style="margin-right:6px;color:'+c.color+'"></i>'+c.label+'</div><div class="dash-kpi-value" style="color:'+c.color+'">'+c.value+'</div></div>'; }).join('');
     rowFbV2.innerHTML = [
       { label: 'FB Spend (v2)', value: '\u20ac' + (k.spend||0).toFixed(2), icon: 'fas fa-ad' },
       { label: 'FB Orders (v2)', value: (k.fbOrders || 0), icon: 'fas fa-shopping-cart' },
+      { label: 'FB Measured (v2)', value: '—', icon: 'fas fa-check-circle' },
+      { label: 'FB Unmeasured (v2)', value: '—', icon: 'fas fa-question-circle' },
       { label: 'FB CPA (v2)', value: '\u20ac' + (k.fbCpa||0).toFixed(2), icon: 'fas fa-bullseye' },
       { label: 'FB Profit (v2)', value: '\u20ac' + (k.fbProfit||0).toFixed(2) + '<div style="font-size:12px;font-weight:700;color:#fff;margin-top:3px">\u20ac' + (k.fbProfitPerOrder||0).toFixed(2) + '/order</div>', icon: 'fas fa-chart-line' }
     ].map(function(c) { return '<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="'+c.icon+'" style="margin-right:6px"></i>'+c.label+'</div><div class="dash-kpi-value">'+c.value+'</div></div>'; }).join('');
