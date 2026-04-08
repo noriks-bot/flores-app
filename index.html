@@ -1228,7 +1228,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <div class="dash-loading" id="dashLoading" style="text-align:center;padding:60px;color:var(--text-muted)"><i class="fas fa-spinner fa-spin"></i> Loading dashboard...</div>
       <div id="dashContent" style="display:none">
         <!-- KPI Cards -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin:0 0 24px 0"><div style="display:flex;gap:4px;background:#e4e6eb;border-radius:6px;padding:3px" id="dashDateFilter"><button class="dash-date-btn active" onclick="setDashDate(this,'today')">Today</button><button class="dash-date-btn" onclick="setDashDate(this,'yesterday')">Yesterday</button><button class="dash-date-btn" onclick="setDashDate(this,'3d')">3D</button><button class="dash-date-btn" onclick="setDashDate(this,'7d')">7D</button><button class="dash-date-btn" onclick="setDashDate(this,'14d')">14D</button><button class="dash-date-btn" onclick="setDashDate(this,'30d')">30D</button><button class="dash-date-btn" onclick="setDashDate(this,'custom')">Custom</button></div><input type="date" id="dashCustomFrom" style="display:none;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;margin-left:8px" onchange="applyDashCustomRange()"><span id="dashCustomSep" style="display:none;margin:0 4px;color:#9ca3af">→</span><input type="date" id="dashCustomTo" style="display:none;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px" onchange="applyDashCustomRange()">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:0 0 24px 0"><div style="display:flex;gap:4px;background:#e4e6eb;border-radius:6px;padding:3px" id="dashDateFilter"><button class="dash-date-btn active" onclick="setDashDate(this,'today')">Today</button><button class="dash-date-btn" onclick="setDashDate(this,'yesterday')">Yesterday</button><button class="dash-date-btn" onclick="setDashDate(this,'3d')">3D</button><button class="dash-date-btn" onclick="setDashDate(this,'7d')">7D</button><button class="dash-date-btn" onclick="setDashDate(this,'14d')">14D</button><button class="dash-date-btn" onclick="setDashDate(this,'30d')">30D</button></div><input type="date" id="dashCustomFrom" style="padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;margin-left:8px" onchange="applyDashCustomRange()"><span id="dashCustomSep" style="margin:0 4px;color:#9ca3af">→</span><input type="date" id="dashCustomTo" style="padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px" onchange="applyDashCustomRange()">
           <button onclick="refreshDashboard(this)" style="padding:10px 24px;border:none;background:#2563eb;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px;box-shadow:0 2px 4px rgba(37,99,235,0.3)"><i class="fas fa-sync-alt"></i> Refresh</button>
         </div>
         <div class="dash-kpis" id="dashKpis"></div>
@@ -2726,21 +2726,19 @@ function setDashDate(btn, range) {
   document.querySelectorAll(".dash-date-btn").forEach(function(b){b.classList.remove("active");});
   btn.classList.add("active");
   dashDateRange = range;
-  var isCustom = (range === 'custom');
-  document.getElementById('dashCustomFrom').style.display = isCustom ? '' : 'none';
-  document.getElementById('dashCustomTo').style.display = isCustom ? '' : 'none';
-  document.getElementById('dashCustomSep').style.display = isCustom ? '' : 'none';
-  if (isCustom) {
-    var today = new Date().toISOString().slice(0,10);
-    if (!document.getElementById('dashCustomFrom').value) document.getElementById('dashCustomFrom').value = today;
-    if (!document.getElementById('dashCustomTo').value) document.getElementById('dashCustomTo').value = today;
-    return;
-  }
+  // Sync the date inputs to reflect the chosen preset
+  var r = getDashDateRange();
+  document.getElementById('dashCustomFrom').value = r.from;
+  document.getElementById('dashCustomTo').value = r.to;
   dashboardLoaded = false;
   loadDashboard();
 }
 function applyDashCustomRange() {
-  if (document.getElementById('dashCustomFrom').value && document.getElementById('dashCustomTo').value) {
+  var f = document.getElementById('dashCustomFrom').value;
+  var t = document.getElementById('dashCustomTo').value;
+  if (f && t) {
+    dashDateRange = 'custom';
+    document.querySelectorAll(".dash-date-btn").forEach(function(b){b.classList.remove("active");});
     dashboardLoaded = false;
     loadDashboard();
   }
@@ -7145,7 +7143,17 @@ async function loadCountryCards() {
 }
 
 // Load dashboard on startup
-setTimeout(function() { if (!dashboardLoaded) loadDashboard(); }, 50);
+setTimeout(function() {
+  // Init date inputs with current preset values so they show today by default
+  try {
+    var r = getDashDateRange();
+    var f = document.getElementById('dashCustomFrom');
+    var t = document.getElementById('dashCustomTo');
+    if (f && !f.value) f.value = r.from;
+    if (t && !t.value) t.value = r.to;
+  } catch(e) {}
+  if (!dashboardLoaded) loadDashboard();
+}, 50);
 
 /* ═══ ACTIVITY LOG ═══ */
 let alCurrentPage = 1;
