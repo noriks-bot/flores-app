@@ -7676,7 +7676,7 @@ async function loadDashboardV2() {
     var d = await r.json();
     if (!d || !d.kpis) return;
     var k = d.kpis;
-    rowV2.style.display = '';
+    rowV2.style.display = ''; var divV2 = document.getElementById('dashV2Divider'); if (divV2) divV2.style.display = '';
     rowFbV2.style.display = '';
     rowV2.innerHTML = [
       { label: 'Spend (v2)', value: '\u20ac' + (k.spend||0).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}), icon: 'fas fa-coins', color: '#2563eb' },
