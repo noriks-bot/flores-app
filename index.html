@@ -1072,10 +1072,12 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 #section-ads-manager table thead th { font-size: 11px; font-weight: 600; color: #111; padding: 8px 10px; white-space: nowrap; }
 #section-ads-manager table tbody td { padding: 5px 10px; font-size: 12px; font-weight: 400; color: #111; white-space: nowrap; border-bottom: 1px solid #e8e8e8; }
 /* Campaign rows: zebra by ci-even/ci-odd (set in JS based on campaign index) */
-#section-ads-manager table tbody tr.ci-even:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
-#section-ads-manager table tbody tr.ci-odd:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #fff !important; }
+#section-ads-manager table tbody tr.ci-even:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #ececec !important; }
+#section-ads-manager table tbody tr.ci-odd:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #fff !important; }
+#section-ads-manager table tbody td.pl-day-cell { background-image: none !important; }
+#section-ads-manager table tbody td.pl-day-cell .muted { color: #fff !important; }
 /* Override global nth-child zebra — ci- classes are source of truth */
-#section-ads-manager table tbody tr:nth-child(even):not(.totals-row):not(.ci-even):not(.ci-odd) > td:not(.cell-pl-green):not(.cell-pl-red) { background-color: #ececec !important; }
+#section-ads-manager table tbody tr:nth-child(even):not(.totals-row):not(.ci-even):not(.ci-odd) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #ececec !important; }
 #section-ads-manager td.cell-pl-green { background: #4db87a !important; color: #fff !important; font-weight: 400; text-align: right; }
 #section-ads-manager td.cell-pl-red { background: #e85555 !important; color: #fff !important; font-weight: 400; text-align: right; }
 #section-ads-manager tr:hover td.cell-pl-green { background: #43a86e !important; }
@@ -3569,7 +3571,7 @@ function profitPill(val) {
   return `<span class="pill-red">${fmtEur(val)}</span>`;
 }
 
-function profitCell(p) {
+function profitCell(p, singleDay) {
   if(!p) return '<td><span class="muted">—</span></td>';
   let profit=p.profit||0;
   const orders=p.orders||0;
@@ -3581,6 +3583,13 @@ function profitCell(p) {
     profit = profit - cut * orders;
   }
   const cpa=orders>0?(spend/orders).toFixed(1)+'€':'—';
+  if (singleDay) {
+    // Full-fill cell for single-day columns (Yesterday, -2d, -3d)
+    let bg='#9ca3af', label='€0';
+    if (profit > 0) { bg='#4caf50'; label='+'+fmtEur(profit); }
+    else if (profit < 0) { bg='#ef5350'; label=fmtEur(profit); }
+    return `<td class="pl-day-cell" style="background:${bg};color:#fff;text-align:center;line-height:1.2;padding:6px 8px"><div style="font-weight:700;font-size:12px">${label}</div><div style="font-size:9px;opacity:0.9">${orders} orders</div><div style="font-size:9px;opacity:0.9">${cpa} CPA</div></td>`;
+  }
   const pill=profitPill(profit);
   const ordTag=`<span style="display:block;font-size:9px;color:#666;margin-top:1px">${orders} orders</span>`;
   const cpaTag=`<span style="display:block;font-size:9px;color:#666">${cpa} CPA</span>`;
@@ -3591,12 +3600,12 @@ function profitPeriodCells(item,level) {
   if(level==='campaign') {
     const mp=multiProfitData[item.id];
     if(!mp) return '<td><span class="muted">—</span></td>'.repeat(8);
-    return `${profitCell(mp.yesterday)}${profitCell(mp.y2)}${profitCell(mp.y3)}${profitCell(mp.d3)}${profitCell(mp.d7)}${profitCell(mp.d14)}${profitCell(mp.d30)}${profitCell(mp.lifetime)}`;
+    return `${profitCell(mp.yesterday,true)}${profitCell(mp.y2,true)}${profitCell(mp.y3,true)}${profitCell(mp.d3)}${profitCell(mp.d7)}${profitCell(mp.d14)}${profitCell(mp.d30)}${profitCell(mp.lifetime)}`;
   }
   // Adset/ad level
   const mp=multiProfitChildren[item.id];
   if(!mp) return '<td><span class="muted" style="font-size:9px">...</span></td>'.repeat(8);
-  return `${profitCell(mp.yesterday)}${profitCell(mp.y2)}${profitCell(mp.y3)}${profitCell(mp.d3)}${profitCell(mp.d7)}${profitCell(mp.d14)}${profitCell(mp.d30)}${profitCell(mp.lifetime)}`;
+  return `${profitCell(mp.yesterday,true)}${profitCell(mp.y2,true)}${profitCell(mp.y3,true)}${profitCell(mp.d3)}${profitCell(mp.d7)}${profitCell(mp.d14)}${profitCell(mp.d30)}${profitCell(mp.lifetime)}`;
 }
 
 function isNewCampaign(item) {
