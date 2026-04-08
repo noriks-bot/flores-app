@@ -121,7 +121,7 @@ let DROPBOX_ACCESS_TOKEN = null;
 let dropboxTokenExpires = 0;
 let videosCache = null;
 let videosCacheTime = 0;
-const VIDEOS_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+const VIDEOS_CACHE_TTL = 5 * 60 * 1000; // 15 minutes
 const API_VERSION = 'v21.0';
 const CACHE_DIR = path.join(__dirname, 'cache');
 if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
@@ -973,10 +973,10 @@ async function initialSync() {
 // Run initial sync on startup (non-blocking)
 initialSync().catch(e => console.error('[FLORES] Initial sync error:', e.message));
 
-// Periodic sync every 15 minutes
+// Periodic sync every 5 minutes
 setInterval(() => {
   syncAllCountries().catch(e => console.error('[FLORES] Periodic sync error:', e.message));
-}, 15 * 60 * 1000);
+}, 5 * 60 * 1000);
 
 // Fetch Advertiser profit data from local dash server
 let advCache = { data: null, ts: 0, key: '' };
@@ -3069,7 +3069,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             const cached = db.prepare("SELECT data, computed_at FROM fatigue_cache ORDER BY id DESC LIMIT 1").get();
             if (cached) {
               const age = Date.now() - new Date(cached.computed_at + 'Z').getTime();
-              if (age < 15 * 60 * 1000) {
+              if (age < 5 * 60 * 1000) {
                 const parsed = JSON.parse(cached.data);
                 parsed._cached = true;
                 parsed._cachedAt = cached.computed_at;
