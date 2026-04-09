@@ -2702,6 +2702,22 @@ const server = http.createServer(async (req, res) => {
             };
           }
         } catch(e) { console.warn('[base-report] byCountryAll failed', e.message); }
+        // Distribute unassigned spend (total from campaigns - sum of country breakdown) proportionally
+        var _totalSpend = 0;
+        for (const c of campaignData) { _totalSpend += parseFloat(c.insights?.spend || 0); }
+        var _countrySum = 0;
+        for (const cc of Object.keys(byCountry)) { _countrySum += byCountry[cc].spend || 0; }
+        var _unassigned = _totalSpend - _countrySum;
+        if (_unassigned > 0.5 && _countrySum > 0) {
+          for (const cc of Object.keys(byCountry)) {
+            var _r = (byCountry[cc].spend || 0) / _countrySum;
+            byCountry[cc].spend = Math.round((byCountry[cc].spend + _unassigned * _r) * 100) / 100;
+            byCountry[cc].netProfit = Math.round((byCountry[cc].profit - byCountry[cc].spend) * 100) / 100;
+            byCountry[cc].ppo = byCountry[cc].orders > 0 ? Math.round(byCountry[cc].netProfit / byCountry[cc].orders * 100) / 100 : 0;
+            byCountry[cc].cpa = byCountry[cc].purchases > 0 ? Math.round(byCountry[cc].spend / byCountry[cc].purchases * 100) / 100 : 0;
+            byCountry[cc].roas = byCountry[cc].spend > 0 ? Math.round(byCountry[cc].revenue / byCountry[cc].spend * 100) / 100 : 0;
+          }
+        }
         return sendJSON(res, { byCountry, byType, byCountryAndType, byCountryAll });
       }
       if (urlPath === '/api/origin-report') {
