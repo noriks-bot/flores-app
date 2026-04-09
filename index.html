@@ -7079,11 +7079,7 @@ function renderDashboard(data) {
   const fbProfitAdv = (typeof k.advProfit === 'number') ? k.advProfit : fbProfitOrig;
   const fbPpoAdv = fbOrdersAdv > 0 ? (fbProfitAdv / fbOrdersAdv) : fbProfitAdv;
   const fbCpaAdv = (k.fbCpa || 0);
-  // Manipulation summary (backend authoritative)
-  const manipTotal = (typeof k.advCutTotal === 'number') ? k.advCutTotal : (fbProfitOrig - fbProfitAdv);
-  const manipPer = fbOrdersAdv > 0 ? (manipTotal / fbOrdersAdv) : 0;
-  const _mt = document.getElementById('manipTotal'); if (_mt) _mt.textContent = '\u20ac' + manipTotal.toFixed(2);
-  const _mp = document.getElementById('manipPerOrder'); if (_mp) _mp.textContent = '\u20ac' + manipPer.toFixed(2);
+  // Manipulation badge is populated by loadCountryCards() to match FB Profit − ADV Profit exactly
   const _tierLabels = { light: '🟢 LIGHT', medium: '🟡 MEDIUM', max: '🔴 MAX' };
   const _mtier = document.getElementById('manipTier'); if (_mtier) _mtier.textContent = _tierLabels[k.advTierName] || k.advTierName || '—';
   // ADV KPI cards are populated once by loadCountryCards() (single authoritative source)
@@ -7262,12 +7258,14 @@ async function loadCountryCards() {
       }
       elAdv.innerHTML = h || '<div style="color:var(--text-muted);padding:10px">No data</div>';
       // Sync ADV KPI row with country cards sum
-      var advTotalSpend = 0, advTotalOrders = 0, advTotalProfit = 0;
+      var advTotalSpend = 0, advTotalOrders = 0, advTotalProfit = 0, fbTotalProfit = 0;
       for (var _cc of order) {
         var _c = fb[_cc] || {spend:0,orders:0,netProfit:0,ppo:0};
         advTotalSpend += _c.spend || 0;
         advTotalOrders += _c.orders || 0;
-        var _profit = _c.netProfit || 0;
+        var _netP = _c.netProfit || 0;
+        fbTotalProfit += _netP;
+        var _profit = _netP;
         if (_c.orders > 0) {
           var _ppo = _c.ppo || 0;
           var _cut = (typeof advCutPerOrder === 'function') ? advCutPerOrder(_ppo) : 0;
@@ -7275,6 +7273,11 @@ async function loadCountryCards() {
         }
         advTotalProfit += _profit;
       }
+      // Manipulation = FB Profit − ADV Profit (exact, same basis as cards)
+      var _manipTotal = fbTotalProfit - advTotalProfit;
+      var _manipPer = advTotalOrders > 0 ? (_manipTotal / advTotalOrders) : 0;
+      var _mtEl = document.getElementById('manipTotal'); if (_mtEl) _mtEl.textContent = '\u20ac' + _manipTotal.toFixed(2);
+      var _mpEl = document.getElementById('manipPerOrder'); if (_mpEl) _mpEl.textContent = '\u20ac' + _manipPer.toFixed(2);
       // Override ADV KPI cards to match
       var advKpiEl = document.getElementById('dashKpisAdv');
       if (advKpiEl) {
