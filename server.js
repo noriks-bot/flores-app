@@ -3929,8 +3929,9 @@ function getRates2() {
 
         // FB KPI data
         const fbAttributedProfit = db.prepare("SELECT COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
-        // ADV manipulation: per-order tier cut from active preset
-        let advCutTotal = 0; let advTierName = 'medium';
+        // ADV manipulation: per-country tier cut on netPPO (same basis as /api/base-report country cards)
+        // Guarantee: advCutTotal = FB Profit − ADV Profit, always.
+        let advCutTotal = 0; let advTierName = 'light';
         try {
           const tierRow = db.prepare("SELECT value FROM flores_settings WHERE key = ?").get('adv_tier_state');
           let tierState = null;
@@ -3940,31 +3941,36 @@ function getRates2() {
             medium: [{max:5,cut:2},{max:10,cut:4},{max:15,cut:7},{max:20,cut:11},{max:25,cut:16},{max:35,cut:22},{max:null,cut:28}],
             max: [{max:5,cut:3},{max:10,cut:6},{max:15,cut:10},{max:20,cut:15},{max:25,cut:20},{max:35,cut:28},{max:null,cut:35}]
           };
-          advTierName = (tierState && tierState.active) || 'medium';
-          const tiers = (tierState && tierState.presets && tierState.presets[advTierName]) || _defaults[advTierName] || _defaults.medium;
+          advTierName = (tierState && tierState.active) || 'light';
+          const tiers = (tierState && tierState.presets && tierState.presets[advTierName]) || _defaults[advTierName] || _defaults.light;
           const cutFor = (ppo) => {
             for (const t of tiers) { const max = (t.max === null || t.max === undefined) ? Infinity : Number(t.max); if (ppo <= max) return Number(t.cut)||0; }
             return Number(tiers[tiers.length-1].cut)||0;
           };
-          // Measured: use campaign-level aggregation (matches Ads Manager)
-          if (Array.isArray(topCampaignsRaw)) {
-            const seen = new Set();
-            for (const camp of topCampaignsRaw) {
-              if (seen.has(camp.id)) continue;
-              seen.add(camp.id);
-              const wc = camp.wc;
-              if (!wc || !(wc.orders > 0)) continue;
-              const ppo = (Number(wc.profit) || 0) / wc.orders;
-              advCutTotal += cutFor(ppo) * wc.orders;
+          // Per-country orders + profit (FB-attributed) for the range
+          const perCountry = db.prepare("SELECT country, COUNT(*) as orders, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY country").all(dashFrom, dashTo);
+          // Per-country FB spend from dashCacheData (range sum)
+          const spendByCountry = {};
+          if (dashCacheData) {
+            for (const [date, countries] of Object.entries(dashCacheData)) {
+              if (date < dashFrom || date > dashTo) continue;
+              for (const [cc, v] of Object.entries(countries || {})) {
+                if (v && typeof v.spend === 'number') spendByCountry[cc] = (spendByCountry[cc] || 0) + v.spend;
+              }
             }
           }
-          // Unmeasured orders: apply lowest tier cut (first tier in active preset)
-          const lowestCut = (tiers && tiers[0] && Number(tiers[0].cut)) || 0;
-          const _fbCnt = (db.prepare("SELECT COUNT(*) as c FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1").get(dashFrom, dashTo)?.c) || 0;
-          const _fbMeasured = (db.prepare("SELECT COUNT(*) as c FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.c) || 0;
-          const unmeasuredCount = Math.max(0, _fbCnt - _fbMeasured);
-          advCutTotal += lowestCut * unmeasuredCount;
-          console.log('[ADV] cut total:', advCutTotal, 'tier:', advTierName, 'unmeasured:', unmeasuredCount, 'lowestCut:', lowestCut);
+          if (dashFrom === today && fbSpendToday > 0 && dashCacheData && dashCacheData[today]) {
+            // live today spend is already via dashCacheData[today] when present; otherwise distribute proportionally
+          }
+          for (const row of perCountry) {
+            const orders = Number(row.orders) || 0; if (orders <= 0) continue;
+            const gross = Number(row.profit) || 0;
+            const spend = Number(spendByCountry[row.country]) || 0;
+            const netProfit = gross - spend;
+            const netPpo = netProfit / orders;
+            advCutTotal += cutFor(netPpo) * orders;
+          }
+          console.log('[ADV] cut total:', advCutTotal, 'tier:', advTierName);
         } catch(e) { console.warn('[ADV] cut calc failed', e.message); }
         // FB pixel purchases from Meta API (what FB reports)
         let fbPixelPurchases = 0;
