@@ -4110,10 +4110,8 @@ function getRates2() {
           topProducts,
           byCountry: byCountry.map(c => ({ country: c.country, orders: c.orders, revenue: Math.round(c.revenue * 100) / 100, profit: Math.round(c.profit * 100) / 100 })),
           chartData: (function(){
-            // Per-day FB orders aggregated (for ADV profit calc after spend)
-            const advDayRows = db.prepare("SELECT order_date as date, COUNT(*) as cnt, COALESCE(SUM(profit),0) as totalProfit, COALESCE(SUM(gross_eur),0) as rev FROM wc_orders WHERE order_date >= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date").all(d7ago);
-            const advDayData = {};
-            for (const r of advDayRows) advDayData[r.date] = { orders: r.cnt, profit: r.totalProfit, revenue: r.rev };
+            // Per-day ADV profit: per-campaign-per-day tier cut (matches KPI card exactly)
+            const advCampDayRows = db.prepare("SELECT order_date as date, utm_campaign, COUNT(*) as cnt, COALESCE(SUM(profit),0) as totalProfit, COALESCE(SUM(gross_eur),0) as rev FROM wc_orders WHERE order_date >= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date, utm_campaign").all(d7ago);
             // Load tier config once
             let _tierCfg = null;
             try {
@@ -4124,17 +4122,31 @@ function getRates2() {
             const _tierDef = { light:[{max:5,cut:1},{max:10,cut:3},{max:15,cut:5},{max:20,cut:8},{max:25,cut:12},{max:35,cut:16},{max:null,cut:20}], medium:[{max:5,cut:2},{max:10,cut:4},{max:15,cut:7},{max:20,cut:11},{max:25,cut:16},{max:35,cut:22},{max:null,cut:28}], max:[{max:5,cut:3},{max:10,cut:6},{max:15,cut:10},{max:20,cut:15},{max:25,cut:20},{max:35,cut:28},{max:null,cut:35}] };
             const _tiers = (_tierCfg && _tierCfg.presets && _tierCfg.presets[_tierActive]) || _tierDef[_tierActive] || _tierDef.medium;
             function _cutFor(ppo) { for (const t of _tiers) { const mx = (t.max === null || t.max === undefined) ? Infinity : Number(t.max); if (ppo <= mx) return Number(t.cut)||0; } return Number(_tiers[_tiers.length-1].cut)||0; }
+            // Aggregate: per day, first get fbProfit (wcProfit-spend), then per-campaign cut
+            const advDayData = {};
+            for (const r of advCampDayRows) {
+              if (!advDayData[r.date]) advDayData[r.date] = { orders: 0, profit: 0, revenue: 0, cutTotal: 0 };
+              advDayData[r.date].orders += r.cnt;
+              advDayData[r.date].profit += r.totalProfit;
+              advDayData[r.date].revenue += r.rev;
+            }
             return chartData.map(d => {
               let daySpend = 0;
               if (d.date === today && fbSpendToday > 0) daySpend = fbSpendToday;
               else { try { const dd = (dashCacheData||{})[d.date]||{}; for (const [,v] of Object.entries(dd)) { if (v && typeof v.spend === 'number') daySpend += v.spend; } } catch(e){} }
-              // ADV profit: first subtract spend from FB profit, then apply tier cut (matches KPI card)
+              // ADV profit: per-campaign tier cut (same as KPI card)
               const _dd = advDayData[d.date] || { orders: 0, profit: 0, revenue: 0 };
               const fbProfitDay = _dd.profit - daySpend;
               const advCnt = _dd.orders;
-              const _ppoDay = advCnt > 0 ? fbProfitDay / advCnt : 0;
-              const _cutDay = _cutFor(_ppoDay);
-              const advProfitDay = fbProfitDay - _cutDay * advCnt;
+              // Per-campaign cut for this day
+              let advCutDay = 0;
+              for (const cr of advCampDayRows) {
+                if (cr.date !== d.date) continue;
+                const cnt = Number(cr.cnt) || 0; if (cnt <= 0) continue;
+                const campPpo = (Number(cr.totalProfit) / cnt) - (daySpend > 0 && advCnt > 0 ? daySpend / advCnt : 0);
+                advCutDay += _cutFor(campPpo) * cnt;
+              }
+              const advProfitDay = fbProfitDay - advCutDay;
               return {
                 date: d.date,
                 orders: d.orders,
