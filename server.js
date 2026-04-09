@@ -2670,13 +2670,13 @@ const server = http.createServer(async (req, res) => {
             for (const t of tiers) { const max = (t.max === null || t.max === undefined) ? Infinity : Number(t.max); if (ppo <= max) return Number(t.cut)||0; }
             return Number(tiers[tiers.length-1].cut)||0;
           };
-          // Initialize per-country aggregates for campaign-based ADV
+          // Per-country ADV: distribute each campaign's (netProfit, advCut) across countries
+          // using DB order distribution. Sum of country advProfit === overall advProfit.
           for (const cc of Object.keys(byCountry)) {
-            byCountry[cc].campOrders = 0;
-            byCountry[cc].campNetProfit = 0;
+            byCountry[cc].advNetProfit = 0;
             byCountry[cc].advCut = 0;
+            byCountry[cc].advOrders = 0;
           }
-          // Build campaign → per-country orders distribution from DB (authoritative)
           const _distRows = db.prepare(`
             SELECT utm_campaign, country, COUNT(*) as orders
             FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1
@@ -2689,41 +2689,36 @@ const server = http.createServer(async (req, res) => {
             if (!campCountryDist[row.utm_campaign]) campCountryDist[row.utm_campaign] = {};
             campCountryDist[row.utm_campaign][row.country] = (campCountryDist[row.utm_campaign][row.country] || 0) + row.orders;
           }
-          const seen = new Set();
+          const seenCamp = new Set();
           for (const camp of campaignData) {
             if (!camp || !camp.wc || !(camp.wc.orders > 0)) continue;
-            if (seen.has(camp.id)) continue;
-            seen.add(camp.id);
-            const netProfit = Number(camp.wc.profit) || 0; // already net (gross − spend)
+            if (seenCamp.has(camp.id)) continue;
+            seenCamp.add(camp.id);
+            const netProfit = Number(camp.wc.profit) || 0; // net (gross − spend)
             const orders = Number(camp.wc.orders) || 0;
             const netPpo = netProfit / orders;
-            const cut = cutFor(netPpo);
-            const totalCut = cut * orders;
-            // Distribute across countries using DB order distribution (fallback: parsed name countries, else single OTHER)
+            const totalCut = cutFor(netPpo) * orders;
             let dist = campCountryDist[camp.id] || {};
             let distTotal = Object.values(dist).reduce((s, n) => s + n, 0);
             if (distTotal <= 0) {
               const ccs = (camp._parsed && camp._parsed.countries) || [];
-              if (ccs.length) {
-                dist = {}; for (const cc of ccs) dist[cc] = 1; distTotal = ccs.length;
-              } else {
-                dist = { OTHER: 1 }; distTotal = 1;
-              }
+              if (ccs.length) { dist = {}; for (const cc of ccs) dist[cc] = 1; distTotal = ccs.length; }
+              else { dist = { OTHER: 1 }; distTotal = 1; }
             }
             for (const [cc, cnt] of Object.entries(dist)) {
               const share = cnt / distTotal;
-              if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0, campOrders: 0, campNetProfit: 0, advCut: 0 };
-              byCountry[cc].campOrders += orders * share;
-              byCountry[cc].campNetProfit += netProfit * share;
+              if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0, advNetProfit: 0, advCut: 0, advOrders: 0 };
+              byCountry[cc].advNetProfit += netProfit * share;
               byCountry[cc].advCut += totalCut * share;
+              byCountry[cc].advOrders += orders * share;
             }
           }
-          // ADV profit per country = FB Attributed netProfit − per-country advCut (same orders count as FB block)
           for (const cc of Object.keys(byCountry)) {
             const c = byCountry[cc];
-            c.advCut = Math.round(c.advCut * 100) / 100;
-            c.advProfit = Math.round(((c.netProfit || 0) - c.advCut) * 100) / 100;
-            c.advOrders = c.orders || 0;
+            c.advCut = Math.round((c.advCut || 0) * 100) / 100;
+            c.advNetProfit = Math.round((c.advNetProfit || 0) * 100) / 100;
+            c.advProfit = Math.round((c.advNetProfit - c.advCut) * 100) / 100;
+            c.advOrders = Math.round(c.advOrders || 0);
             c.advPpo = c.advOrders > 0 ? Math.round((c.advProfit / c.advOrders) * 100) / 100 : 0;
           }
         } catch(e) { console.warn('[base-report] adv per-country failed', e.message); }
