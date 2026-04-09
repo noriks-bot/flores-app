@@ -7109,31 +7109,9 @@ function renderDashboard(data) {
   // V2 KPI Cards (admin only) — independent endpoint with rejection2 + shipping2
   try { loadDashboardV2(); } catch(e) {}
 
-  // ADV KPI Cards (per-campaign tier cut — same basis as Ads Manager)
-  const fbOrdersAdv = k.fbOrders || 0;
-  const fbProfitOrig = k.fbProfit || 0;
-  const fbProfitAdv = (typeof k.advProfit === 'number') ? k.advProfit : fbProfitOrig;
-  const fbPpoAdv = fbOrdersAdv > 0 ? (fbProfitAdv / fbOrdersAdv) : fbProfitAdv;
-  const fbCpaAdv = (k.fbCpa || 0);
+  // ADV KPI tier label (values come from loadCountryCards after base-report is fetched)
   const _tierLabels = { light: '🟢 LIGHT', medium: '🟡 MEDIUM', max: '🔴 MAX' };
   const _mtier = document.getElementById('manipTier'); if (_mtier) _mtier.textContent = _tierLabels[k.advTierName] || k.advTierName || '—';
-  // Manipulation = backend per-campaign advCutTotal (matches Ads Manager)
-  const manipTotal = Number(k.advCutTotal) || 0;
-  const manipPer = fbOrdersAdv > 0 ? (manipTotal / fbOrdersAdv) : 0;
-  const _mt = document.getElementById('manipTotal'); if (_mt) _mt.textContent = '\u20ac' + manipTotal.toFixed(2);
-  const _mp = document.getElementById('manipPerOrder'); if (_mp) _mp.textContent = '\u20ac' + manipPer.toFixed(2);
-  // ADV KPI cards (single render, authoritative per-campaign values)
-  const _advKpiEl = document.getElementById('dashKpisAdv');
-  if (_advKpiEl) {
-    _advKpiEl.innerHTML = [
-      { label: "ADV Spend", value: '\u20ac' + (k.spend||0).toFixed(2), icon: 'fas fa-ad' },
-      { label: "ADV Orders", value: fbOrdersAdv + '<div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);margin-top:3px">FB Report: ' + (k.fbPixelPurchases || 0) + '</div>', icon: 'fas fa-shopping-cart' },
-      { label: "ADV Measured Orders", value: k.fbMeasuredOrders || 0, icon: 'fas fa-check-circle' },
-      { label: "ADV Unmeasured Orders", value: k.fbUnmeasuredOrders || 0, icon: 'fas fa-question-circle' },
-      { label: "ADV CPA", value: '\u20ac' + fbCpaAdv.toFixed(2), icon: 'fas fa-bullseye' },
-      { label: "ADV Profit", value: '\u20ac' + fbProfitAdv.toFixed(2) + '<div style="font-size:12px;font-weight:700;color:#fff;margin-top:3px">\u20ac' + fbPpoAdv.toFixed(2) + '/order</div>', icon: 'fas fa-chart-line' }
-    ].map(c => '<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="' + c.icon + '" style="margin-right:6px"></i>' + c.label + '</div><div class="dash-kpi-value">' + c.value + '</div></div>').join('');
-  }
 
     // Alerts
   const alerts = data.alerts || [];
@@ -7300,7 +7278,31 @@ function renderCountryCardsFromData(data) {
         });
       }
       elAdv.innerHTML = h || '<div style="color:var(--text-muted);padding:10px">No data</div>';
-      // ADV KPI + Manipulation are populated in renderDashboard() from backend authoritative (per-campaign)
+      // Sum country ADV values → KPI + Manipulation (single source of truth = country cards)
+      let sumAdvProfit = 0, sumAdvCut = 0, sumOrders = 0, sumSpend = 0, sumNetProfit = 0;
+      for (const cc of order) {
+        const c = fb[cc]; if (!c) continue;
+        sumAdvProfit += Number(c.advProfit) || 0;
+        sumAdvCut += Number(c.advCut) || 0;
+        sumOrders += Number(c.orders) || 0;
+        sumSpend += Number(c.spend) || 0;
+        sumNetProfit += Number(c.netProfit) || 0;
+      }
+      const _mt = document.getElementById('manipTotal'); if (_mt) _mt.textContent = '\u20ac' + sumAdvCut.toFixed(2);
+      const _mp = document.getElementById('manipPerOrder'); if (_mp) _mp.textContent = '\u20ac' + (sumOrders > 0 ? (sumAdvCut / sumOrders) : 0).toFixed(2);
+      const _advKpiEl = document.getElementById('dashKpisAdv');
+      if (_advKpiEl) {
+        const ppo = sumOrders > 0 ? (sumAdvProfit / sumOrders) : 0;
+        const cpa = sumOrders > 0 ? (sumSpend / sumOrders) : 0;
+        _advKpiEl.innerHTML = [
+          { label: "ADV Spend", value: '\u20ac' + sumSpend.toFixed(2), icon: 'fas fa-ad' },
+          { label: "ADV Orders", value: sumOrders, icon: 'fas fa-shopping-cart' },
+          { label: "ADV Measured Orders", value: sumOrders, icon: 'fas fa-check-circle' },
+          { label: "ADV Unmeasured Orders", value: 0, icon: 'fas fa-question-circle' },
+          { label: "ADV CPA", value: '\u20ac' + cpa.toFixed(2), icon: 'fas fa-bullseye' },
+          { label: "ADV Profit", value: '\u20ac' + sumAdvProfit.toFixed(2) + '<div style="font-size:12px;font-weight:700;color:#fff;margin-top:3px">\u20ac' + ppo.toFixed(2) + '/order</div>', icon: 'fas fa-chart-line' }
+        ].map(c => '<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="' + c.icon + '" style="margin-right:6px"></i>' + c.label + '</div><div class="dash-kpi-value">' + c.value + '</div></div>').join('');
+      }
     }
   } catch(e) { console.error('[Country Cards]', e); }
 }
