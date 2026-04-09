@@ -2605,7 +2605,7 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
-        // 3. Spend by country — single source: Meta API country breakdown
+        // 3. Spend by country — Meta API country breakdown, normalized to total campaign spend
         const byCountry = {};
         const byType = {};
         const byCountryAndType = {};
@@ -2628,6 +2628,16 @@ const server = http.createServer(async (req, res) => {
             byCountry[cc].purchases += purchases;
           }
         }
+        // Normalize country spend to total campaign spend (single source of truth)
+        try {
+          const totalCampSpend = (campaignData || []).reduce((s,c) => s + parseFloat(c.insights?.spend||0), 0);
+          let sumCountrySpend = 0;
+          for (const cc of Object.keys(byCountry)) sumCountrySpend += byCountry[cc].spend || 0;
+          if (totalCampSpend > 0 && sumCountrySpend > 0 && Math.abs(totalCampSpend - sumCountrySpend) > 0.01) {
+            const factor = totalCampSpend / sumCountrySpend;
+            for (const cc of Object.keys(byCountry)) byCountry[cc].spend *= factor;
+          }
+        } catch(e) {}
 
         // Also aggregate by type (from campaign names)
         for (const c of campaignData) {
