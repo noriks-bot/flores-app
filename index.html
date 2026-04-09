@@ -7133,18 +7133,16 @@ function renderDashboard(data) {
         labels: data.chartData.map(d => d.date.slice(5)),
         datasets: (function(){
           const isAdv = document.body.classList.contains('advertiser-mode');
-          var ds = [
-            { label: 'Spend', data: data.chartData.map(d => d.spend), backgroundColor: 'rgba(37,99,235,0.7)', borderRadius: 4, order: 3 },
-            { label: 'Profit', data: data.chartData.map(d => d.profit || 0), backgroundColor: data.chartData.map(d => (d.profit||0) >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)'), borderRadius: 4, order: 2 }
-          ];
-          if (!isAdv) {
-            ds.push({ label: 'ADV Profit', data: data.chartData.map(d => d.advProfit || 0), backgroundColor: data.chartData.map(d => (d.advProfit||0) >= 0 ? 'rgba(249,115,22,0.7)' : 'rgba(239,68,68,0.4)'), borderRadius: 4, order: 1 });
-          } else {
-            ds[1].label = 'ADV Profit';
-            ds[1].data = data.chartData.map(d => d.advProfit || 0);
-            ds[1].backgroundColor = data.chartData.map(d => (d.advProfit||0) >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)');
+          if (isAdv) {
+            return [
+              { label: 'Spend', data: data.chartData.map(d => d.spend), backgroundColor: 'rgba(37,99,235,0.7)', borderRadius: 4, order: 2 },
+              { label: 'ADV Profit', data: data.chartData.map(d => d.advProfit || 0), backgroundColor: data.chartData.map(d => (d.advProfit||0) >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)'), borderRadius: 4, order: 1 }
+            ];
           }
-          return ds;
+          return [
+            { label: 'Spend', data: data.chartData.map(d => d.spend), backgroundColor: 'rgba(37,99,235,0.7)', borderRadius: 4, order: 2 },
+            { label: 'FB Profit', data: data.chartData.map(d => d.fbProfit || d.profit || 0), backgroundColor: data.chartData.map(d => ((d.fbProfit||d.profit||0)) >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)'), borderRadius: 4, order: 1 }
+          ];
         })()
       },
       options: {

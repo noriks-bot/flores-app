@@ -4153,6 +4153,7 @@ function getRates2() {
                 revenue: Math.round(d.revenue * 100) / 100,
                 profit: Math.round((d.profit - daySpend) * 100) / 100,
                 spend: Math.round(daySpend * 100) / 100,
+                fbProfit: Math.round(fbProfitDay * 100) / 100,
                 advProfit: Math.round(advProfitDay * 100) / 100,
                 advOrders: advCnt
               };
