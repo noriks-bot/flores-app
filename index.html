@@ -7122,18 +7122,18 @@ function renderDashboard(data) {
   if (data.chartData && data.chartData.length > 0) {
     const ctx = document.getElementById('dashChart').getContext('2d');
     if (dashChart) dashChart.destroy();
+    const isAdv = document.body.classList.contains('advertiser-mode');
     dashChart = new Chart(ctx, {
       type: 'bar',
       data: {
         labels: data.chartData.map(d => d.date.slice(5)),
-        datasets: (function(){
-          const isAdv = document.body.classList.contains('advertiser-mode');
-          const profitField = isAdv ? 'advProfit' : 'profit';
-          return [
-            { label: 'Spend', data: data.chartData.map(d => d.spend), backgroundColor: 'rgba(37,99,235,0.7)', borderRadius: 4, order: 2 },
-            { label: isAdv ? 'ADV Profit' : 'Profit', data: data.chartData.map(d => d[profitField] || 0), backgroundColor: data.chartData.map(d => (d[profitField]||0) >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)'), borderRadius: 4, order: 1 }
-          ];
-        })()
+        datasets: [
+          { label: 'Spend', data: data.chartData.map(d => d.spend), backgroundColor: 'rgba(37,99,235,0.7)', borderRadius: 4, order: 2 },
+          { label: isAdv ? 'ADV Profit' : 'Profit',
+            data: data.chartData.map(d => isAdv ? 0 : (d.profit || 0)),
+            backgroundColor: data.chartData.map(d => ((isAdv?0:(d.profit||0)) >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)')),
+            borderRadius: 4, order: 1 }
+        ]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
@@ -7144,6 +7144,41 @@ function renderDashboard(data) {
         }
       }
     });
+    // Advertiser mode: fetch ADV Profit per day from same endpoint as country cards
+    if (isAdv) {
+      (async function(){
+        try {
+          const days = data.chartData.map(d => d.date);
+          const results = await Promise.all(days.map(d =>
+            fetch('/api/base-report?date_from='+d+'&date_to='+d, {credentials:'same-origin'})
+              .then(r => r.ok ? r.json() : null)
+              .catch(() => null)
+          ));
+          const order = ['HR','CZ','PL','GR','SK','IT','HU'];
+          const advPerDay = results.map(function(res){
+            if (!res || !res.byCountry) return 0;
+            let sum = 0;
+            for (const cc of order) {
+              const c = res.byCountry[cc]; if (!c) continue;
+              let profit = c.netProfit || 0;
+              if (c.orders > 0) {
+                const ppo = c.ppo || 0;
+                const cut = (typeof advCutPerOrder === 'function') ? advCutPerOrder(ppo) : 0;
+                profit = profit - cut * c.orders;
+              }
+              sum += profit;
+            }
+            return Math.round(sum * 100) / 100;
+          });
+          const ds = dashChart.data.datasets.find(x => /Profit/i.test(x.label||''));
+          if (ds) {
+            ds.data = advPerDay;
+            ds.backgroundColor = advPerDay.map(v => v >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)');
+            dashChart.update('none');
+          }
+        } catch(e) { console.warn('[ADV chart]', e); }
+      })();
+    }
   }
   // Load country breakdown cards
   loadCountryCards();
