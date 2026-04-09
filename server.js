@@ -4110,8 +4110,8 @@ function getRates2() {
           topProducts,
           byCountry: byCountry.map(c => ({ country: c.country, orders: c.orders, revenue: Math.round(c.revenue * 100) / 100, profit: Math.round(c.profit * 100) / 100 })),
           chartData: (function(){
-            // Build helper for per-day ADV profit (FB-attributed orders, tier cut per COUNTRY to match country cards)
-            const advByDayRows = db.prepare("SELECT order_date as date, country, COUNT(*) as cnt, SUM(profit) as totalProfit FROM wc_orders WHERE order_date >= ? AND is_fb_attributed = 1  AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date, country").all(d7ago);
+            // Build helper for per-day ADV profit (FB-attributed orders, tier cut per campaign to match KPI card)
+            const advByDayRows = db.prepare("SELECT order_date as date, utm_campaign, COUNT(*) as cnt, SUM(profit) as totalProfit FROM wc_orders WHERE order_date >= ? AND is_fb_attributed = 1  AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date, utm_campaign").all(d7ago);
             const advByDay = {};
             for (const r of advByDayRows) {
               const cnt = Number(r.cnt) || 0; if (cnt <= 0) continue;
