@@ -2695,7 +2695,12 @@ const server = http.createServer(async (req, res) => {
             const totalCut = cutFor(netPpo) * orders;
             let dist = campCountryDist[camp.id] || {};
             let distTotal = Object.values(dist).reduce((s, n) => s + n, 0);
-            if (distTotal <= 0) continue; // skip campaigns with no DB orders
+            if (distTotal <= 0) {
+              // No DB orders match this campaign — fall back to parsed countries from name
+              const ccs = (camp._parsed && camp._parsed.countries) || [];
+              if (ccs.length) { dist = {}; for (const cc of ccs) dist[cc] = 1; distTotal = ccs.length; }
+              else { dist = { HR: 1 }; distTotal = 1; } // last resort: HR bucket
+            }
             for (const [cc, cnt] of Object.entries(dist)) {
               const share = cnt / distTotal;
               if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0, netProfit: 0, advCut: 0 };
