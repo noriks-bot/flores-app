@@ -2654,6 +2654,59 @@ const server = http.createServer(async (req, res) => {
           byCountry[cc].ppo = byCountry[cc].orders > 0 ? Math.round(byCountry[cc].netProfit / byCountry[cc].orders * 100) / 100 : 0;
         }
 
+        // Per-country ADV cut computed per-campaign (same basis as Ads Manager + dashboard totals)
+        try {
+          const tierRow = db.prepare("SELECT value FROM flores_settings WHERE key = ?").get('adv_tier_state');
+          let tierState = null;
+          if (tierRow && tierRow.value) { try { tierState = JSON.parse(tierRow.value); } catch(e){} }
+          const _defaults = {
+            light: [{max:5,cut:1},{max:10,cut:3},{max:15,cut:5},{max:20,cut:8},{max:25,cut:12},{max:35,cut:16},{max:null,cut:20}],
+            medium: [{max:5,cut:2},{max:10,cut:4},{max:15,cut:7},{max:20,cut:11},{max:25,cut:16},{max:35,cut:22},{max:null,cut:28}],
+            max: [{max:5,cut:3},{max:10,cut:6},{max:15,cut:10},{max:20,cut:15},{max:25,cut:20},{max:35,cut:28},{max:null,cut:35}]
+          };
+          const active = (tierState && tierState.active) || 'light';
+          const tiers = (tierState && tierState.presets && tierState.presets[active]) || _defaults[active] || _defaults.light;
+          const cutFor = (ppo) => {
+            for (const t of tiers) { const max = (t.max === null || t.max === undefined) ? Infinity : Number(t.max); if (ppo <= max) return Number(t.cut)||0; }
+            return Number(tiers[tiers.length-1].cut)||0;
+          };
+          // Initialize per-country aggregates for campaign-based ADV
+          for (const cc of Object.keys(byCountry)) {
+            byCountry[cc].campOrders = 0;
+            byCountry[cc].campNetProfit = 0;
+            byCountry[cc].advCut = 0;
+          }
+          const seen = new Set();
+          for (const camp of campaignData) {
+            if (!camp || !camp.wc || !(camp.wc.orders > 0)) continue;
+            if (seen.has(camp.id)) continue;
+            seen.add(camp.id);
+            const ccs = (camp._parsed && camp._parsed.countries) || [];
+            if (!ccs.length) continue;
+            const netProfit = Number(camp.wc.profit) || 0; // already net (gross − spend)
+            const orders = Number(camp.wc.orders) || 0;
+            const netPpo = netProfit / orders;
+            const cut = cutFor(netPpo);
+            // Distribute proportionally across targeted countries
+            const perCcOrders = orders / ccs.length;
+            const perCcNet = netProfit / ccs.length;
+            const perCcCut = cut * perCcOrders;
+            for (const cc of ccs) {
+              if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0, campOrders: 0, campNetProfit: 0, advCut: 0 };
+              byCountry[cc].campOrders += perCcOrders;
+              byCountry[cc].campNetProfit += perCcNet;
+              byCountry[cc].advCut += perCcCut;
+            }
+          }
+          for (const cc of Object.keys(byCountry)) {
+            const c = byCountry[cc];
+            c.advCut = Math.round(c.advCut * 100) / 100;
+            c.advProfit = Math.round((c.campNetProfit - c.advCut) * 100) / 100;
+            c.advOrders = Math.round(c.campOrders);
+            c.advPpo = c.advOrders > 0 ? Math.round((c.advProfit / c.advOrders) * 100) / 100 : 0;
+          }
+        } catch(e) { console.warn('[base-report] adv per-country failed', e.message); }
+
         // Orders/revenue/profit by type: get from DB grouped by type
         // We need to distribute DB orders by type based on campaign attribution
         // Simplification: query DB orders by campaign, then map campaign→type

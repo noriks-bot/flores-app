@@ -7285,19 +7285,19 @@ function renderCountryCardsFromData(data) {
       elFb.innerHTML = h || '<div style="color:var(--text-muted);padding:10px">No data</div>';
     }
 
-    // FB ADV block (with spend + tier cut)
+    // FB ADV block (per-campaign tier cut, aggregated by country — authoritative from backend)
     if (elAdv) {
       let h = '';
       for (const cc of order) {
-        const c = fb[cc] || {spend:0,orders:0,netProfit:0,ppo:0,cpa:0,roas:0};
-        let profit = c.netProfit || 0;
-        let ppo = c.ppo || 0;
-        if (c.orders > 0) {
-          const cut = (typeof advCutPerOrder === 'function') ? advCutPerOrder(ppo) : 0;
-          profit = profit - cut * c.orders;
-          ppo = profit / c.orders;
-        }
-        h += renderCountryCard(cc, { spend: c.spend, orders: c.orders, profit, ppo, cpa: c.cpa, roas: c.roas });
+        const c = fb[cc] || {spend:0,orders:0,netProfit:0,ppo:0,cpa:0,roas:0,advProfit:0,advOrders:0,advPpo:0};
+        h += renderCountryCard(cc, {
+          spend: c.spend,
+          orders: (typeof c.advOrders === 'number') ? c.advOrders : (c.orders || 0),
+          profit: (typeof c.advProfit === 'number') ? c.advProfit : 0,
+          ppo: (typeof c.advPpo === 'number') ? c.advPpo : 0,
+          cpa: c.cpa,
+          roas: c.roas
+        });
       }
       elAdv.innerHTML = h || '<div style="color:var(--text-muted);padding:10px">No data</div>';
       // ADV KPI + Manipulation are populated in renderDashboard() from backend authoritative (per-campaign)
