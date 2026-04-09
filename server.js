@@ -2605,39 +2605,46 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
-        // 3. Spend by country — Meta API country breakdown, normalized to total campaign spend
+        // 3. Spend by country: sum campaign spend per country using DB order distribution
+        // (same basis as overall: overall = sum campaignData.insights.spend)
         const byCountry = {};
         const byType = {};
         const byCountryAndType = {};
-        const COUNTRY_MAP = {'Croatia':'HR','Czech Republic':'CZ','Czechia':'CZ','Poland':'PL','Greece':'GR','Slovakia':'SK','Italy':'IT','Hungary':'HU','Slovenia':'SI'};
-        for (const acct of Object.values(AD_ACCOUNTS_MAP)) {
-          const rows = await metaGetAll(acct + '/insights', {
-            fields: 'spend,actions',
-            breakdowns: 'country',
-            time_range: JSON.stringify({ since: start, until: end }),
-            limit: 500
-          });
-          for (const row of rows) {
-            const cc = COUNTRY_MAP[row.country] || row.country;
-            if (!cc || cc.length > 3) continue;
-            const spend = parseFloat(row.spend || 0);
-            const pAct = (row.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
+        {
+          // Preload DB order distribution per campaign
+          const _dRows = db.prepare(`
+            SELECT utm_campaign, country, COUNT(*) as o
+            FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1
+            AND utm_campaign IS NOT NULL AND utm_campaign != ''
+            AND LOWER(billing_name) NOT LIKE '%test%'
+            GROUP BY utm_campaign, country
+          `).all(start, end);
+          const distMap = {};
+          for (const r of _dRows) {
+            if (!distMap[r.utm_campaign]) distMap[r.utm_campaign] = {};
+            distMap[r.utm_campaign][r.country] = r.o;
+          }
+          for (const c of campaignData) {
+            const spend = parseFloat(c.insights?.spend || 0);
+            if (spend <= 0) continue;
+            const pAct = (c.insights?.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
             const purchases = pAct ? parseInt(pAct.value) : 0;
-            if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
-            byCountry[cc].spend += spend;
-            byCountry[cc].purchases += purchases;
+            // Distribution: DB orders → parsed name countries → HR fallback
+            let dist = distMap[c.id] || {};
+            let total = Object.values(dist).reduce((s,n)=>s+n,0);
+            if (total <= 0) {
+              const ccs = (c._parsed && c._parsed.countries) || [];
+              if (ccs.length) { dist = {}; for (const cc of ccs) dist[cc] = 1; total = ccs.length; }
+              else { dist = { HR: 1 }; total = 1; }
+            }
+            for (const [cc, cnt] of Object.entries(dist)) {
+              const share = cnt / total;
+              if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
+              byCountry[cc].spend += spend * share;
+              byCountry[cc].purchases += purchases * share;
+            }
           }
         }
-        // Normalize country spend to total campaign spend (single source of truth)
-        try {
-          const totalCampSpend = (campaignData || []).reduce((s,c) => s + parseFloat(c.insights?.spend||0), 0);
-          let sumCountrySpend = 0;
-          for (const cc of Object.keys(byCountry)) sumCountrySpend += byCountry[cc].spend || 0;
-          if (totalCampSpend > 0 && sumCountrySpend > 0 && Math.abs(totalCampSpend - sumCountrySpend) > 0.01) {
-            const factor = totalCampSpend / sumCountrySpend;
-            for (const cc of Object.keys(byCountry)) byCountry[cc].spend *= factor;
-          }
-        } catch(e) {}
 
         // Also aggregate by type (from campaign names)
         for (const c of campaignData) {
