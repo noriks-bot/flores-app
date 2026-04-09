@@ -2677,8 +2677,15 @@ const server = http.createServer(async (req, res) => {
             byCountry[cc].advCut = 0;
           }
           // Build campaign → per-country orders distribution from DB (authoritative)
+          const _distRows = db.prepare(`
+            SELECT utm_campaign, country, COUNT(*) as orders
+            FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1
+            AND utm_campaign IS NOT NULL AND utm_campaign != ''
+            AND LOWER(billing_name) NOT LIKE '%test%'
+            GROUP BY utm_campaign, country
+          `).all(start, end);
           const campCountryDist = {};
-          for (const row of dbOrdersByCampaign) {
+          for (const row of _distRows) {
             if (!campCountryDist[row.utm_campaign]) campCountryDist[row.utm_campaign] = {};
             campCountryDist[row.utm_campaign][row.country] = (campCountryDist[row.utm_campaign][row.country] || 0) + row.orders;
           }
