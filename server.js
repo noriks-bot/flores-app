@@ -1053,7 +1053,10 @@ function fetchActualWcOrders(dateFrom, dateTo) {
 
 // Fetch WC orders from DB, grouped by campaign ID
 // Returns: { campaignId: [{ orderId, country, grossEur, profit, ... }] }
-function fetchWcOrdersByCampaign(dateFrom, dateTo) {
+// If `catalogCampaignByCountry` provided (e.g. { HR: '123...', CZ: '456...' }),
+// legacy catalog orders (non-numeric utm_campaign like "noriks-facebook-hr") are
+// attributed to that country's catalog campaign.
+function fetchWcOrdersByCampaign(dateFrom, dateTo, catalogCampaignByCountry) {
   const rows = db.prepare(`
     SELECT wc_order_id, country, gross_eur, net_revenue, product_cost, shipping_cost, profit, utm_campaign, adset_id, ad_id, raw_meta
     FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''
@@ -1063,8 +1066,10 @@ function fetchWcOrdersByCampaign(dateFrom, dateTo) {
   for (const r of rows) {
     let campaignKey = r.utm_campaign;
     // If utm_campaign is non-numeric (legacy catalog campaigns like "noriks-facebook-hr"),
-    // try to recover the numeric Meta campaign id from raw_meta attribution fields.
+    // try to recover the numeric Meta campaign id from raw_meta attribution fields,
+    // else fall back to country-level catalog campaign id.
     if (!/^\d+$/.test(campaignKey)) {
+      let resolved = null;
       try {
         const m = JSON.parse(r.raw_meta || '{}');
         const candidates = [
@@ -1078,9 +1083,13 @@ function fetchWcOrdersByCampaign(dateFrom, dateTo) {
           }
         }
         for (const cand of candidates) {
-          if (cand && /^\d+$/.test(String(cand))) { campaignKey = String(cand); break; }
+          if (cand && /^\d+$/.test(String(cand))) { resolved = String(cand); break; }
         }
       } catch(e) {}
+      if (!resolved && catalogCampaignByCountry && r.country && catalogCampaignByCountry[r.country]) {
+        resolved = catalogCampaignByCountry[r.country];
+      }
+      if (resolved) campaignKey = resolved;
     }
     if (!byCampaign[campaignKey]) byCampaign[campaignKey] = [];
     byCampaign[campaignKey].push({
@@ -1100,7 +1109,17 @@ function fetchWcOrdersByCampaign(dateFrom, dateTo) {
 
 // Calculate WC profit per campaign from its ACTUAL orders (matched by utm_campaign ID)
 function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
-  const byCampaign = fetchWcOrdersByCampaign(dateFrom, dateTo);
+  // Build country -> catalog campaign id lookup (for legacy non-numeric utm orders)
+  const catalogByCountry = {};
+  for (const c of campaigns) {
+    if (!/catalog/i.test(c.name || '')) continue;
+    const p = parseCampaignName(c.name || '');
+    const ccs = (p && p.countries) || [];
+    for (const cc of ccs) {
+      if (!catalogByCountry[cc]) catalogByCountry[cc] = c.id;
+    }
+  }
+  const byCampaign = fetchWcOrdersByCampaign(dateFrom, dateTo, catalogByCountry);
   const matchedCampaignIds = new Set();
   
   for (const c of campaigns) {
