@@ -1102,10 +1102,9 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
     c.wc.roas = metaSpend > 0 ? Math.round(c.wc.revenueGross / metaSpend * 100) / 100 : 0;
   }
 
-  // Add campaigns that have WC orders but weren't in Meta API results (paused/old campaigns)
+  // Add campaigns that have WC orders but weren't in Meta API results (paused/old campaigns, or non-numeric legacy utm ids)
   for (const [campaignId, orders] of Object.entries(byCampaign)) {
     if (matchedCampaignIds.has(campaignId)) continue;
-    if (!/^\d+$/.test(campaignId)) continue; // skip non-numeric IDs
     const totalProfit = orders.reduce((s, o) => s + o.profit, 0);
     const totalRevenue = orders.reduce((s, o) => s + o.grossEur, 0);
     // Try to get campaign name from DB
