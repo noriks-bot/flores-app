@@ -2321,15 +2321,26 @@ const server = http.createServer(async (req, res) => {
       try { db.exec("ALTER TABLE change_log ADD COLUMN profit_at_change REAL DEFAULT 0"); } catch(e) {}
       if (urlPath === '/api/log' && req.method === 'POST') {
         const body = await new Promise((res,rej)=>{ let d=''; req.on('data',c=>d+=c); req.on('end',()=>res(JSON.parse(d))); req.on('error',rej); });
-        const { changeType, entityId, oldValue, newValue, entityName, country, user, spendAtChange, ordersAtChange, profitAtChange } = body;
+        const { changeType, entityId, oldValue, newValue, entityName, country, spendAtChange, ordersAtChange, profitAtChange } = body;
         const cpaAtChange = body.cpaAtChange || 0;
         const roasAtChange = body.roasAtChange || 0;
-        db.prepare('INSERT INTO change_log (change_type, entity_id, entity_name, country, old_value, new_value, user, spend_at_change, orders_at_change, profit_at_change, cpa_at_change, roas_at_change) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(changeType, entityId, entityName || '', country || '', oldValue || '', newValue || '', user || 'noriks', spendAtChange || 0, ordersAtChange || 0, profitAtChange || 0, cpaAtChange, roasAtChange);
+        // Always attribute to actual logged-in user (ignore body.user to prevent hardcoded 'noriks')
+        const sessionUser = getSessionUser(req);
+        const actualUser = sessionUser?.username || body.user || 'unknown';
+        db.prepare('INSERT INTO change_log (change_type, entity_id, entity_name, country, old_value, new_value, user, spend_at_change, orders_at_change, profit_at_change, cpa_at_change, roas_at_change) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(changeType, entityId, entityName || '', country || '', oldValue || '', newValue || '', actualUser, spendAtChange || 0, ordersAtChange || 0, profitAtChange || 0, cpaAtChange, roasAtChange);
         return sendJSON(res, { ok: true });
       }
       if (urlPath === '/api/log' && req.method === 'GET') {
         const limit = parseInt(query.limit) || 100;
-        const rows = db.prepare('SELECT * FROM change_log ORDER BY id DESC LIMIT ?').all(limit);
+        // Admin/super_admin sees all users; everyone else sees only their own changes
+        const sessionUser = getSessionUser(req);
+        const isAdmin = sessionUser && (sessionUser.role === 'admin' || sessionUser.role === 'super_admin');
+        let rows;
+        if (isAdmin) {
+          rows = db.prepare('SELECT * FROM change_log ORDER BY id DESC LIMIT ?').all(limit);
+        } else {
+          rows = db.prepare('SELECT * FROM change_log WHERE user = ? ORDER BY id DESC LIMIT ?').all(sessionUser?.username || '', limit);
+        }
         return sendJSON(res, rows);
       }
       if (urlPath === '/api/campaign-orders') {
