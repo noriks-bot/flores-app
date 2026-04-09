@@ -944,6 +944,10 @@ body::before {
 .dash-kpis-fb .dash-kpi-card { background: linear-gradient(135deg, #1e40af, #3b82f6) !important; color: #fff !important; }
 .dash-kpis-fb .dash-kpi-label { color: rgba(255,255,255,0.8) !important; }
 .dash-kpis-fb .dash-kpi-value { color: #fff !important; }
+/* Dashboard 2: compact cards (50% shorter) */
+.dash-kpis-compact .dash-kpi-card { padding: 8px 14px; }
+.dash-kpis-compact .dash-kpi-label { font-size: 10px; margin-bottom: 2px; }
+.dash-kpis-compact .dash-kpi-value { font-size: 16px; letter-spacing: -0.5px; }
 .dash-action-btn {
   padding: 10px 20px; background: var(--card-bg); border: 1px solid var(--border-color);
   border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer;
@@ -1276,12 +1280,14 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <div class="filters-bar" style="background:transparent;backdrop-filter:none;border:none;padding:0;margin:0 0 24px 0;justify-content:space-between"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span class="filter-label">Period</span><div class="preset-tabs" id="dashDateFilter"><button class="preset-tab dash-date-btn active" onclick="setDashDate(this,'today')">Today</button><button class="preset-tab dash-date-btn" onclick="setDashDate(this,'yesterday')">Yesterday</button><button class="preset-tab dash-date-btn" onclick="setDashDate(this,'3d')">3D</button><button class="preset-tab dash-date-btn" onclick="setDashDate(this,'7d')">7D</button><button class="preset-tab dash-date-btn" onclick="setDashDate(this,'14d')">14D</button><button class="preset-tab dash-date-btn" onclick="setDashDate(this,'30d')">30D</button><button class="preset-tab dash-date-btn" onclick="setDashDate(this,'custom')">Custom</button></div><input type="date" id="dashCustomFrom" class="date-input" onchange="applyDashCustomRange()"><span id="dashCustomSep" class="date-sep">→</span><input type="date" id="dashCustomTo" class="date-input" onchange="applyDashCustomRange()"></div>
           <button onclick="refreshDashboard(this)" style="padding:10px 24px;border:none;background:#2563eb;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px;box-shadow:0 2px 4px rgba(37,99,235,0.3)"><i class="fas fa-sync-alt"></i> Refresh</button>
         </div>
+        <!-- DASHBOARD 2 (admin only, compact rows — placeholder, no data) -->
+        <div id="dashV2Divider" class="admin-only-v2" style="display:none;margin-bottom:8px"><div style="font-size:16px;font-weight:800;color:#1e3a5f;display:flex;align-items:center;gap:8px"><i class="fas fa-chart-line" style="color:#10b981"></i>DASHBOARD 2</div></div>
+        <div class="dash-kpis admin-only-v2 dash-kpis-compact" id="dashKpisV2" style="display:none"></div>
+        <div class="dash-kpis dash-kpis-fb admin-only-v2 dash-kpis-compact" id="dashKpisFbV2" style="display:none;margin-top:8px;margin-bottom:20px"></div>
+
         <div style="font-size:16px;font-weight:800;color:#1e3a5f;margin-bottom:8px;display:flex;align-items:center;gap:8px"><i class="fas fa-chart-bar" style="color:#2563eb"></i>DASHBOARD 1</div>
         <div class="dash-kpis" id="dashKpis"></div>
         <div class="dash-kpis dash-kpis-fb" id="dashKpisFb" style="margin-top:16px"></div>
-        <div id="dashV2Divider" style="display:none"></div>
-        <div class="dash-kpis admin-only-v2" id="dashKpisV2" style="display:none"></div>
-        <div class="dash-kpis dash-kpis-fb admin-only-v2" id="dashKpisFbV2" style="display:none"></div>
         <div style="margin-top:20px;border-top:2px solid #e5e7eb;padding-top:12px"><div style="font-size:16px;font-weight:800;color:#1e3a5f;display:flex;align-items:center;gap:8px"><i class="fas fa-user-secret" style="color:#f59e0b"></i>ADV DASH</div></div>
         <div id="dashManipulation" style="margin-top:16px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px 20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
           <div style="font-weight:800;font-size:14px;color:#111;display:flex;align-items:center;gap:8px"><i class="fas fa-magic" style="color:#f59e0b"></i>Manipulation</div>
@@ -7100,8 +7106,36 @@ function renderDashboard(data) {
     { label: "FB Profit", value: '\u20ac' + (k.fbProfit||0).toFixed(2) + '<div style="font-size:12px;font-weight:700;color:#fff;margin-top:3px">\u20ac' + (k.fbProfitPerOrder||0).toFixed(2) + '/order</div>', icon: 'fas fa-chart-line' }
   ].map(c => '<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="' + c.icon + '" style="margin-right:6px"></i>' + c.label + '</div><div class="dash-kpi-value">' + c.value + '</div></div>').join('');
 
-  // V2 KPI Cards (admin only)
-  /* Dashboard 2 disabled */
+  // V2 KPI Cards (admin only) — placeholder: mirror of D1, compact rows, no impact
+  try {
+    const isAdminBody = !document.body.classList.contains('advertiser-mode');
+    if (isAdminBody) {
+      const rowV2 = document.getElementById('dashKpisV2');
+      const rowFbV2 = document.getElementById('dashKpisFbV2');
+      const divV2 = document.getElementById('dashV2Divider');
+      if (rowV2 && rowFbV2) {
+        rowV2.style.display = '';
+        rowFbV2.style.display = '';
+        if (divV2) divV2.style.display = '';
+        rowV2.innerHTML = [
+          { label: "Spend", value: '€' + (k.spend||0).toFixed(2), icon: 'fas fa-coins', color: '#2563eb' },
+          { label: "Orders", value: (k.orders || 0), icon: 'fas fa-shopping-bag', color: '#7c3aed' },
+          { label: "Revenue", value: '€' + (k.revenue||0).toFixed(2), icon: 'fas fa-euro-sign', color: '#10b981' },
+          { label: "Profit", value: '€' + (k.profit||0).toFixed(2), icon: 'fas fa-chart-line', color: k.profit >= 0 ? '#10b981' : '#ef4444' },
+          { label: "CPA", value: '€' + (k.cpa||0).toFixed(2), icon: 'fas fa-bullseye', color: '#f59e0b' },
+          { label: "Campaigns", value: (k.campaigns||0), icon: 'fas fa-bullhorn', color: '#2563eb' }
+        ].map(c => '<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="'+c.icon+'" style="margin-right:6px;color:'+c.color+'"></i>'+c.label+'</div><div class="dash-kpi-value" style="color:'+c.color+'">'+c.value+'</div></div>').join('');
+        rowFbV2.innerHTML = [
+          { label: "FB Spend", value: '\u20ac' + (k.spend||0).toFixed(2), icon: 'fas fa-ad' },
+          { label: "FB Orders", value: (k.fbOrders || 0), icon: 'fas fa-shopping-cart' },
+          { label: "FB Measured", value: k.fbMeasuredOrders || 0, icon: 'fas fa-check-circle' },
+          { label: "FB Unmeasured", value: k.fbUnmeasuredOrders || 0, icon: 'fas fa-question-circle' },
+          { label: "FB CPA", value: '\u20ac' + (k.fbCpa||0).toFixed(2), icon: 'fas fa-bullseye' },
+          { label: "FB Profit", value: '\u20ac' + (k.fbProfit||0).toFixed(2), icon: 'fas fa-chart-line' }
+        ].map(c => '<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="'+c.icon+'" style="margin-right:6px"></i>'+c.label+'</div><div class="dash-kpi-value">'+c.value+'</div></div>').join('');
+      }
+    }
+  } catch(e) {}
 
   // ADV KPI Cards (FB metrics with per-order tier-based cut applied — backend computed)
   const fbOrdersAdv = k.fbOrders || 0;
