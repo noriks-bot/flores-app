@@ -7035,9 +7035,24 @@ async function loadDashboard() {
   document.getElementById('dashLoading').style.display = 'block';
   document.getElementById('dashContent').style.display = 'none';
   try {
-    const dr = getDashDateRange(); const resp = await fetch('/api/dashboard?date_from='+dr.from+'&date_to='+dr.to);
+    const dr = getDashDateRange();
+    const isAdv = document.body.classList.contains('advertiser-mode');
+    // Fetch main dashboard first
+    const resp = await fetch('/api/dashboard?date_from='+dr.from+'&date_to='+dr.to);
     const data = await resp.json();
     if (data.error) throw new Error(data.error);
+    // Prefetch everything ADV view needs BEFORE first render (no post-render flicker)
+    if (isAdv) {
+      const rangeBase = fetch('/api/base-report?date_from='+dr.from+'&date_to='+dr.to, {credentials:'same-origin'}).then(r => r.ok ? r.json() : null).catch(() => null);
+      const days = (data.chartData || []).map(d => d.date);
+      const perDay = Promise.all(days.map(d =>
+        fetch('/api/base-report?date_from='+d+'&date_to='+d, {credentials:'same-origin'}).then(r => r.ok ? r.json() : null).catch(() => null)
+      ));
+      const [rangeData, perDayData] = await Promise.all([rangeBase, perDay]);
+      data.__advBaseReport = rangeData;
+      data.__advPerDayBase = perDayData;
+      data.__advDays = days;
+    }
     renderDashboard(data);
     dashboardLoaded = true;
   } catch(e) {
@@ -7119,6 +7134,27 @@ function renderDashboard(data) {
     const ctx = document.getElementById('dashChart').getContext('2d');
     if (dashChart) dashChart.destroy();
     const isAdv = document.body.classList.contains('advertiser-mode');
+    // Build profit series
+    let profitSeries;
+    if (isAdv && Array.isArray(data.__advPerDayBase)) {
+      const ORDER_CC = ['HR','CZ','PL','GR','SK','IT','HU'];
+      profitSeries = data.__advPerDayBase.map(function(res){
+        if (!res || !res.byCountry) return 0;
+        let sum = 0;
+        for (const cc of ORDER_CC) {
+          const c = res.byCountry[cc]; if (!c) continue;
+          let profit = c.netProfit || 0;
+          if (c.orders > 0) {
+            const cut = (typeof advCutPerOrder === 'function') ? advCutPerOrder(c.ppo || 0) : 0;
+            profit = profit - cut * c.orders;
+          }
+          sum += profit;
+        }
+        return Math.round(sum * 100) / 100;
+      });
+    } else {
+      profitSeries = data.chartData.map(d => d.profit || 0);
+    }
     dashChart = new Chart(ctx, {
       type: 'bar',
       data: {
@@ -7126,8 +7162,8 @@ function renderDashboard(data) {
         datasets: [
           { label: 'Spend', data: data.chartData.map(d => d.spend), backgroundColor: 'rgba(37,99,235,0.7)', borderRadius: 4, order: 2 },
           { label: isAdv ? 'ADV Profit' : 'Profit',
-            data: data.chartData.map(d => isAdv ? 0 : (d.profit || 0)),
-            backgroundColor: data.chartData.map(d => ((isAdv?0:(d.profit||0)) >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)')),
+            data: profitSeries,
+            backgroundColor: profitSeries.map(v => v >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)'),
             borderRadius: 4, order: 1 }
         ]
       },
@@ -7140,44 +7176,10 @@ function renderDashboard(data) {
         }
       }
     });
-    // Advertiser mode: fetch ADV Profit per day from same endpoint as country cards
-    if (isAdv) {
-      (async function(){
-        try {
-          const days = data.chartData.map(d => d.date);
-          const results = await Promise.all(days.map(d =>
-            fetch('/api/base-report?date_from='+d+'&date_to='+d, {credentials:'same-origin'})
-              .then(r => r.ok ? r.json() : null)
-              .catch(() => null)
-          ));
-          const order = ['HR','CZ','PL','GR','SK','IT','HU'];
-          const advPerDay = results.map(function(res){
-            if (!res || !res.byCountry) return 0;
-            let sum = 0;
-            for (const cc of order) {
-              const c = res.byCountry[cc]; if (!c) continue;
-              let profit = c.netProfit || 0;
-              if (c.orders > 0) {
-                const ppo = c.ppo || 0;
-                const cut = (typeof advCutPerOrder === 'function') ? advCutPerOrder(ppo) : 0;
-                profit = profit - cut * c.orders;
-              }
-              sum += profit;
-            }
-            return Math.round(sum * 100) / 100;
-          });
-          const ds = dashChart.data.datasets.find(x => /Profit/i.test(x.label||''));
-          if (ds) {
-            ds.data = advPerDay;
-            ds.backgroundColor = advPerDay.map(v => v >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)');
-            dashChart.update('none');
-          }
-        } catch(e) { console.warn('[ADV chart]', e); }
-      })();
-    }
   }
-  // Load country breakdown cards
-  loadCountryCards();
+  // Load country breakdown cards (use prefetched data in ADV mode to avoid refetch flicker)
+  if (data.__advBaseReport) renderCountryCardsFromData(data.__advBaseReport);
+  else loadCountryCards();
 }
 
 // Country Cards
@@ -7210,12 +7212,18 @@ function renderCountryCard(cc, data, opts) {
 
 async function loadCountryCards() {
   const dr = getDashDateRange();
-  const order = ['HR','CZ','PL','GR','SK','IT','HU'];
   try {
     const res = await fetch('/api/base-report?date_from='+dr.from+'&date_to='+dr.to, {credentials:'same-origin'});
     const data = await res.json();
-    const fb = data.byCountry || {};
-    const all = data.byCountryAll || {};
+    renderCountryCardsFromData(data);
+  } catch(e) { console.error('[Country Cards]', e); }
+}
+
+function renderCountryCardsFromData(data) {
+  const order = ['HR','CZ','PL','GR','SK','IT','HU'];
+  try {
+    const fb = (data && data.byCountry) || {};
+    const all = (data && data.byCountryAll) || {};
     const isAdv = document.body.classList.contains('advertiser-mode');
 
     const elAll = document.getElementById('dashCountryCardsAll');
