@@ -2702,22 +2702,6 @@ const server = http.createServer(async (req, res) => {
             };
           }
         } catch(e) { console.warn('[base-report] byCountryAll failed', e.message); }
-        // Distribute unassigned spend (total from campaigns - sum of country breakdown) proportionally
-        var _totalSpend = 0;
-        for (const c of campaignData) { _totalSpend += parseFloat(c.insights?.spend || 0); }
-        var _countrySum = 0;
-        for (const cc of Object.keys(byCountry)) { _countrySum += byCountry[cc].spend || 0; }
-        var _unassigned = _totalSpend - _countrySum;
-        if (_unassigned > 0.5 && _countrySum > 0) {
-          for (const cc of Object.keys(byCountry)) {
-            var _r = (byCountry[cc].spend || 0) / _countrySum;
-            byCountry[cc].spend = Math.round((byCountry[cc].spend + _unassigned * _r) * 100) / 100;
-            byCountry[cc].netProfit = Math.round((byCountry[cc].profit - byCountry[cc].spend) * 100) / 100;
-            byCountry[cc].ppo = byCountry[cc].orders > 0 ? Math.round(byCountry[cc].netProfit / byCountry[cc].orders * 100) / 100 : 0;
-            byCountry[cc].cpa = byCountry[cc].purchases > 0 ? Math.round(byCountry[cc].spend / byCountry[cc].purchases * 100) / 100 : 0;
-            byCountry[cc].roas = byCountry[cc].spend > 0 ? Math.round(byCountry[cc].revenue / byCountry[cc].spend * 100) / 100 : 0;
-          }
-        }
         return sendJSON(res, { byCountry, byType, byCountryAndType, byCountryAll });
       }
       if (urlPath === '/api/origin-report') {
@@ -4088,7 +4072,7 @@ function getRates2() {
             fbPixelPurchases,
             profitPerOrder: todayStats.orders > 0 ? Math.round(((todayStats.profit || 0) - fbSpendRange) / todayStats.orders * 100) / 100 : 0,
             fbProfitPerOrder: fbOrderCount > 0 ? Math.round(fbProfit / fbOrderCount * 100) / 100 : 0,
-            ordersBySource: (() => { try { const allOrd = db.prepare("SELECT wc_order_id, utm_source, utm_medium, utm_campaign, is_fb_attributed, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ?").all(dashFrom, dashTo); const m = {}; allOrd.forEach(o => { let origin = 'Direct'; try { const rawM2 = JSON.parse(o.raw_meta || '{}'); origin = classifySourceDash(rawM2, []); } catch(e2) { if (o.is_fb_attributed === 1) origin = 'Facebook'; else if (o.utm_source === 'callcenter') origin = 'Call Center'; else if ((o.utm_source||'').includes('google') && (o.utm_medium === 'cpc' || o.utm_medium === 'paid' || (o.utm_campaign||'').includes('google_cpc'))) origin = 'Google Paid'; else if ((o.utm_source||'').includes('google')) origin = 'Google Organic'; } m[origin] = (m[origin] || 0) + 1; }); return m; } catch(e) { return {}; } })().catch(e => { console.warn("chartData error", e); return []; }),
+            ordersBySource: (() => { try { const allOrd = db.prepare("SELECT wc_order_id, utm_source, utm_medium, utm_campaign, is_fb_attributed, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ?").all(dashFrom, dashTo); const m = {}; allOrd.forEach(o => { let origin = 'Direct'; try { const rawM2 = JSON.parse(o.raw_meta || '{}'); origin = classifySourceDash(rawM2, []); } catch(e2) { if (o.is_fb_attributed === 1) origin = 'Facebook'; else if (o.utm_source === 'callcenter') origin = 'Call Center'; else if ((o.utm_source||'').includes('google') && (o.utm_medium === 'cpc' || o.utm_medium === 'paid' || (o.utm_campaign||'').includes('google_cpc'))) origin = 'Google Paid'; else if ((o.utm_source||'').includes('google')) origin = 'Google Organic'; } m[origin] = (m[origin] || 0) + 1; }); return m; } catch(e) { return {}; } })(),
             fbMeasuredOrders,
             fbUnmeasuredOrders,
             fbCpa,
@@ -4102,79 +4086,55 @@ function getRates2() {
             spend: Math.round(fbSpendRange * 100) / 100,
             cpa: todayStats.orders > 0 ? Math.round((fbSpendRange / todayStats.orders) * 100) / 100 : 0,
             campaigns: Array.isArray(topCampaignsRaw) ? topCampaignsRaw.filter(c => parseFloat(c.insights?.spend) > 0).length : 0,
-            adsets: await (async () => { try { let cnt = 0; for (const acct of Object.values(AD_ACCOUNTS_MAP)) { const ins = await metaGetAll(acct + '/insights', { level: 'adset', fields: 'spend', time_range: JSON.stringify({since:dashFrom,until:dashTo}), limit:'200' }); cnt += ins.filter(a => parseFloat(a.spend) > 0).length; } return cnt; } catch(e) { return 0; } })().catch(e => { console.warn("chartData error", e); return []; }),
-            ads: await (async () => { try { let cnt = 0; for (const acct of Object.values(AD_ACCOUNTS_MAP)) { const ins = await metaGetAll(acct + '/insights', { level: 'ad', fields: 'spend', time_range: JSON.stringify({since:dashFrom,until:dashTo}), limit:'500' }); cnt += ins.filter(a => parseFloat(a.spend) > 0).length; } return cnt; } catch(e) { return 0; } })().catch(e => { console.warn("chartData error", e); return []; }),
+            adsets: await (async () => { try { let cnt = 0; for (const acct of Object.values(AD_ACCOUNTS_MAP)) { const ins = await metaGetAll(acct + '/insights', { level: 'adset', fields: 'spend', time_range: JSON.stringify({since:dashFrom,until:dashTo}), limit:'200' }); cnt += ins.filter(a => parseFloat(a.spend) > 0).length; } return cnt; } catch(e) { return 0; } })(),
+            ads: await (async () => { try { let cnt = 0; for (const acct of Object.values(AD_ACCOUNTS_MAP)) { const ins = await metaGetAll(acct + '/insights', { level: 'ad', fields: 'spend', time_range: JSON.stringify({since:dashFrom,until:dashTo}), limit:'500' }); cnt += ins.filter(a => parseFloat(a.spend) > 0).length; } return cnt; } catch(e) { return 0; } })(),
             weekSpend: Math.round(fbSpend7d * 100) / 100
           },
           topCampaigns: enrichedCampaigns,
           topProducts,
           byCountry: byCountry.map(c => ({ country: c.country, orders: c.orders, revenue: Math.round(c.revenue * 100) / 100, profit: Math.round(c.profit * 100) / 100 })),
-          chartData: await (async function(){
-            // Get per-day spend from Meta API (accurate, not from dash-cache)
-            let metaSpendByDay = {};
-            try {
-              for (const acct of Object.values(AD_ACCOUNTS_MAP)) {
-                const dayInsights = await metaGetAll(acct + '/insights', {
-                  fields: 'spend',
-                  time_increment: '1',
-                  time_range: JSON.stringify({ since: d7ago, until: today }),
-                  limit: '30'
-                });
-                for (const row of dayInsights) {
-                  const d = row.date_start;
-                  if (!metaSpendByDay[d]) metaSpendByDay[d] = 0;
-                  metaSpendByDay[d] += parseFloat(row.spend || 0);
-                }
-              }
-            } catch(e) { console.warn('[Chart] Meta per-day spend failed:', e.message); }
-            // Per-day ADV profit: per-campaign-per-day tier cut (matches KPI card exactly)
-            const advCampDayRows = db.prepare("SELECT order_date as date, utm_campaign, COUNT(*) as cnt, COALESCE(SUM(profit),0) as totalProfit, COALESCE(SUM(gross_eur),0) as rev FROM wc_orders WHERE order_date >= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date, utm_campaign").all(d7ago);
-            // Load tier config once
-            let _tierCfg = null;
-            try {
-              const _tr = db.prepare("SELECT value FROM flores_settings WHERE key = ?").get('adv_tier_state');
-              if (_tr && _tr.value) _tierCfg = JSON.parse(_tr.value);
-            } catch(e) {}
-            const _tierActive = (_tierCfg && _tierCfg.active) || 'medium';
-            const _tierDef = { light:[{max:5,cut:1},{max:10,cut:3},{max:15,cut:5},{max:20,cut:8},{max:25,cut:12},{max:35,cut:16},{max:null,cut:20}], medium:[{max:5,cut:2},{max:10,cut:4},{max:15,cut:7},{max:20,cut:11},{max:25,cut:16},{max:35,cut:22},{max:null,cut:28}], max:[{max:5,cut:3},{max:10,cut:6},{max:15,cut:10},{max:20,cut:15},{max:25,cut:20},{max:35,cut:28},{max:null,cut:35}] };
-            const _tiers = (_tierCfg && _tierCfg.presets && _tierCfg.presets[_tierActive]) || _tierDef[_tierActive] || _tierDef.medium;
-            function _cutFor(ppo) { for (const t of _tiers) { const mx = (t.max === null || t.max === undefined) ? Infinity : Number(t.max); if (ppo <= mx) return Number(t.cut)||0; } return Number(_tiers[_tiers.length-1].cut)||0; }
-            // Aggregate: per day, first get fbProfit (wcProfit-spend), then per-campaign cut
-            const advDayData = {};
-            for (const r of advCampDayRows) {
-              if (!advDayData[r.date]) advDayData[r.date] = { orders: 0, profit: 0, revenue: 0, cutTotal: 0 };
-              advDayData[r.date].orders += r.cnt;
-              advDayData[r.date].profit += r.totalProfit;
-              advDayData[r.date].revenue += r.rev;
+          chartData: (function(){
+            // Build helper for per-day ADV profit (FB-attributed orders, tier cut per campaign)
+            const advByDayRows = db.prepare("SELECT order_date as date, utm_campaign, COUNT(*) as cnt, SUM(profit) as totalProfit FROM wc_orders WHERE order_date >= ? AND is_fb_attributed = 1  AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date, utm_campaign").all(d7ago);
+            const advByDay = {};
+            for (const r of advByDayRows) {
+              const cnt = Number(r.cnt) || 0; if (cnt <= 0) continue;
+              const ppo = (Number(r.totalProfit) || 0) / cnt;
+              let cut = 0;
+              try {
+                const tierRow = db.prepare("SELECT value FROM flores_settings WHERE key = ?").get('adv_tier_state');
+                let tierState = null;
+                if (tierRow && tierRow.value) { try { tierState = JSON.parse(tierRow.value); } catch(e){} }
+                const _def = { medium: [{max:5,cut:2},{max:10,cut:4},{max:15,cut:7},{max:20,cut:11},{max:25,cut:16},{max:35,cut:22},{max:null,cut:28}] };
+                const active = (tierState && tierState.active) || 'medium';
+                const ts = (tierState && tierState.presets && tierState.presets[active]) || _def[active] || _def.medium;
+                for (const t of ts) { const mx = (t.max === null || t.max === undefined) ? Infinity : Number(t.max); if (ppo <= mx) { cut = Number(t.cut)||0; break; } }
+              } catch(e){}
+              const advProfit = (Number(r.totalProfit) || 0) - cut * cnt;
+              if (!advByDay[r.date]) advByDay[r.date] = 0;
+              advByDay[r.date] += advProfit;
             }
+            // Per-day FB-attributed orders count + revenue
+            const advCountRows = db.prepare("SELECT order_date as date, COUNT(*) as cnt, COALESCE(SUM(gross_eur),0) as rev FROM wc_orders WHERE order_date >= ? AND is_fb_attributed = 1  AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date").all(d7ago);
+            const advCounts = {};
+            for (const r of advCountRows) advCounts[r.date] = { orders: r.cnt, revenue: r.rev };
             return chartData.map(d => {
-              let daySpend = metaSpendByDay[d.date] || 0;
+              let daySpend = 0;
               if (d.date === today && fbSpendToday > 0) daySpend = fbSpendToday;
-              // ADV profit: per-campaign tier cut (same as KPI card)
-              const _dd = advDayData[d.date] || { orders: 0, profit: 0, revenue: 0 };
-              const fbProfitDay = _dd.profit - daySpend;
-              const advCnt = _dd.orders;
-              // Per-campaign cut for this day
-              let advCutDay = 0;
-              for (const cr of advCampDayRows) {
-                if (cr.date !== d.date) continue;
-                const cnt = Number(cr.cnt) || 0; if (cnt <= 0) continue;
-                const campPpo = (Number(cr.totalProfit) / cnt) - (daySpend > 0 && advCnt > 0 ? daySpend / advCnt : 0);
-                advCutDay += _cutFor(campPpo) * cnt;
-              }
-              const advProfitDay = fbProfitDay - advCutDay;
+              else { try { const dd = (dashCacheData||{})[d.date]||{}; for (const [,v] of Object.entries(dd)) { if (v && typeof v.spend === 'number') daySpend += v.spend; } } catch(e){} }
+              const advProfitDay = advByDay[d.date] || 0;
+              const advCnt = (advCounts[d.date] && advCounts[d.date].orders) || 0;
               return {
                 date: d.date,
                 orders: d.orders,
                 revenue: Math.round(d.revenue * 100) / 100,
                 profit: Math.round((d.profit - daySpend) * 100) / 100,
                 spend: Math.round(daySpend * 100) / 100,
-                fbProfit: Math.round(fbProfitDay * 100) / 100,
-                advProfit: Math.round(advProfitDay * 100) / 100,
+                advProfit: Math.round((advProfitDay - daySpend) * 100) / 100,
                 advOrders: advCnt
               };
             });
-          })().catch(e => { console.warn("chartData error", e); return []; }),
+          })(),
           alerts: alerts,
           topCreatives: topCreativesData,
           date: today
@@ -4240,7 +4200,7 @@ function getRates2() {
             fbProfit: Math.round(fbProfitFinal * 100) / 100,
             fbProfitPerOrder: fbOrders > 0 ? Math.round(fbProfitFinal/fbOrders*100)/100 : 0,
             fbCpa: fbOrders > 0 ? Math.round(fbSpendRange/fbOrders*100)/100 : 0,
-            fbMeasuredOrders: (() => { try { return db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.cnt || 0; } catch(e) { return 0; } })().catch(e => { console.warn("chartData error", e); return []; }),
+            fbMeasuredOrders: (() => { try { return db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.cnt || 0; } catch(e) { return 0; } })(),
             fbUnmeasuredOrders: (() => { try { var t = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1").get(dashFrom, dashTo)?.cnt || 0; var m = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.cnt || 0; return Math.max(0, t - m); } catch(e) { return 0; } })()
           }
         });
