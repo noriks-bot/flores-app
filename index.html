@@ -7037,19 +7037,20 @@ async function loadDashboard() {
   try {
     const dr = getDashDateRange();
     const isAdv = document.body.classList.contains('advertiser-mode');
-    // Fetch main dashboard first
-    const resp = await fetch('/api/dashboard?date_from='+dr.from+'&date_to='+dr.to);
-    const data = await resp.json();
+    // Fetch main dashboard + range base-report in parallel (before first render)
+    const [resp, rangeBase] = await Promise.all([
+      fetch('/api/dashboard?date_from='+dr.from+'&date_to='+dr.to).then(r => r.json()),
+      fetch('/api/base-report?date_from='+dr.from+'&date_to='+dr.to, {credentials:'same-origin'}).then(r => r.ok ? r.json() : null).catch(() => null)
+    ]);
+    const data = resp;
     if (data.error) throw new Error(data.error);
-    // Prefetch everything ADV view needs BEFORE first render (no post-render flicker)
+    data.__advBaseReport = rangeBase;
+    // ADV view also needs per-day base-report for chart (prefetched before render)
     if (isAdv) {
-      const rangeBase = fetch('/api/base-report?date_from='+dr.from+'&date_to='+dr.to, {credentials:'same-origin'}).then(r => r.ok ? r.json() : null).catch(() => null);
       const days = (data.chartData || []).map(d => d.date);
-      const perDay = Promise.all(days.map(d =>
+      const perDayData = await Promise.all(days.map(d =>
         fetch('/api/base-report?date_from='+d+'&date_to='+d, {credentials:'same-origin'}).then(r => r.ok ? r.json() : null).catch(() => null)
       ));
-      const [rangeData, perDayData] = await Promise.all([rangeBase, perDay]);
-      data.__advBaseReport = rangeData;
       data.__advPerDayBase = perDayData;
       data.__advDays = days;
     }
