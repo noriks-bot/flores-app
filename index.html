@@ -7667,10 +7667,8 @@ async function loadDashboardV2() {
     var rowV2 = document.getElementById('dashKpisV2');
     var rowFbV2 = document.getElementById('dashKpisFbV2');
     if (!rowV2 || !rowFbV2) return;
-    var p = new URLSearchParams(window.location.search);
-    var df = p.get('date_from') || '';
-    var dt = p.get('date_to') || '';
-    var qs = (df && dt) ? ('?date_from='+df+'&date_to='+dt) : '';
+    var dr = getDashDateRange();
+    var qs = '?date_from='+dr.from+'&date_to='+dr.to;
     var r = await fetch('/api/dashboard2' + qs, {credentials:'same-origin'});
     if (!r.ok) return;
     var d = await r.json();
