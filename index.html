@@ -7051,15 +7051,7 @@ async function loadDashboard() {
     const data = resp;
     if (data.error) throw new Error(data.error);
     data.__advBaseReport = rangeBase;
-    // ADV view also needs per-day base-report for chart (prefetched before render)
-    if (isAdv) {
-      const days = (data.chartData || []).map(d => d.date);
-      const perDayData = await Promise.all(days.map(d =>
-        fetch('/api/base-report?date_from='+d+'&date_to='+d, {credentials:'same-origin'}).then(r => r.ok ? r.json() : null).catch(() => null)
-      ));
-      data.__advPerDayBase = perDayData;
-      data.__advDays = days;
-    }
+    // ADV view no longer needs per-day base-report (chart uses purchases from /api/dashboard)
     renderDashboard(data);
     dashboardLoaded = true;
   } catch(e) {
@@ -7167,37 +7159,20 @@ function renderDashboard(data) {
     const ctx = document.getElementById('dashChart').getContext('2d');
     if (dashChart) dashChart.destroy();
     const isAdv = document.body.classList.contains('advertiser-mode');
-    // Build profit series
-    let profitSeries;
-    if (isAdv && Array.isArray(data.__advPerDayBase)) {
-      const ORDER_CC = ['HR','CZ','PL','GR','SK','IT','HU'];
-      profitSeries = data.__advPerDayBase.map(function(res){
-        if (!res || !res.byCountry) return 0;
-        let sum = 0;
-        for (const cc of ORDER_CC) {
-          const c = res.byCountry[cc]; if (!c) continue;
-          let profit = c.netProfit || 0;
-          if (c.orders > 0) {
-            const cut = (typeof advCutPerOrder === 'function') ? advCutPerOrder(c.ppo || 0) : 0;
-            profit = profit - cut * c.orders;
-          }
-          sum += profit;
-        }
-        return Math.round(sum * 100) / 100;
-      });
-    } else {
-      profitSeries = data.chartData.map(d => d.profit || 0);
-    }
+    // Build purchases series: admin = all orders, advertiser = FB-attributed orders
+    const purchasesSeries = isAdv
+      ? data.chartData.map(d => Number(d.advOrders) || 0)
+      : data.chartData.map(d => Number(d.orders) || 0);
     dashChart = new Chart(ctx, {
       type: 'bar',
       data: {
         labels: data.chartData.map(d => d.date.slice(5)),
         datasets: [
-          { label: 'Spend', data: data.chartData.map(d => d.spend), backgroundColor: 'rgba(37,99,235,0.7)', borderRadius: 4, order: 2 },
-          { label: isAdv ? 'ADV Profit' : 'Profit',
-            data: profitSeries,
-            backgroundColor: profitSeries.map(v => v >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)'),
-            borderRadius: 4, order: 1 }
+          { label: 'Spend', data: data.chartData.map(d => d.spend), backgroundColor: 'rgba(37,99,235,0.7)', borderRadius: 4, order: 2, yAxisID: 'y' },
+          { label: isAdv ? 'FB Purchases' : 'Purchases',
+            data: purchasesSeries,
+            backgroundColor: 'rgba(124,58,237,0.75)',
+            borderRadius: 4, order: 1, yAxisID: 'y1' }
         ]
       },
       options: {
@@ -7205,7 +7180,8 @@ function renderDashboard(data) {
         plugins: { legend: { position: 'top', labels: { font: { size: 11, family: 'Inter' }, usePointStyle: true, pointStyle: 'rectRounded' } } },
         scales: {
           x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-          y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 11 }, callback: v => '€' + v } }
+          y: { position: 'left', grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 11 }, callback: v => '€' + v } },
+          y1: { position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { font: { size: 11 }, precision: 0 } }
         }
       }
     });
