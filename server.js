@@ -3967,7 +3967,7 @@ function getRates2() {
 
         // FB KPI data
         const fbAttributedProfit = db.prepare("SELECT COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
-        // ADV manipulation: per-country tier cut on netPPO (same basis as /api/base-report country cards)
+        // ADV manipulation: per-campaign tier cut on net PPO (same basis as Ads Manager).
         // Guarantee: advCutTotal = FB Profit − ADV Profit, always.
         let advCutTotal = 0; let advTierName = 'light';
         try {
@@ -3985,28 +3985,15 @@ function getRates2() {
             for (const t of tiers) { const max = (t.max === null || t.max === undefined) ? Infinity : Number(t.max); if (ppo <= max) return Number(t.cut)||0; }
             return Number(tiers[tiers.length-1].cut)||0;
           };
-          // Per-country orders + profit (FB-attributed) for the range
-          const perCountry = db.prepare("SELECT country, COUNT(*) as orders, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY country").all(dashFrom, dashTo);
-          // Per-country FB spend from dashCacheData (range sum)
-          const spendByCountry = {};
-          if (dashCacheData) {
-            for (const [date, countries] of Object.entries(dashCacheData)) {
-              if (date < dashFrom || date > dashTo) continue;
-              for (const [cc, v] of Object.entries(countries || {})) {
-                if (v && typeof v.spend === 'number') spendByCountry[cc] = (spendByCountry[cc] || 0) + v.spend;
-              }
+          if (Array.isArray(topCampaignsRaw)) {
+            const seen = new Set();
+            for (const camp of topCampaignsRaw) {
+              if (!camp || !camp.wc || !(camp.wc.orders > 0)) continue;
+              if (seen.has(camp.id)) continue;
+              seen.add(camp.id);
+              const netPpo = (Number(camp.wc.profit) || 0) / camp.wc.orders; // wc.profit is already net (gross − spend)
+              advCutTotal += cutFor(netPpo) * camp.wc.orders;
             }
-          }
-          if (dashFrom === today && fbSpendToday > 0 && dashCacheData && dashCacheData[today]) {
-            // live today spend is already via dashCacheData[today] when present; otherwise distribute proportionally
-          }
-          for (const row of perCountry) {
-            const orders = Number(row.orders) || 0; if (orders <= 0) continue;
-            const gross = Number(row.profit) || 0;
-            const spend = Number(spendByCountry[row.country]) || 0;
-            const netProfit = gross - spend;
-            const netPpo = netProfit / orders;
-            advCutTotal += cutFor(netPpo) * orders;
           }
           console.log('[ADV] cut total:', advCutTotal, 'tier:', advTierName);
         } catch(e) { console.warn('[ADV] cut calc failed', e.message); }
