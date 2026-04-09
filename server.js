@@ -4110,43 +4110,38 @@ function getRates2() {
           topProducts,
           byCountry: byCountry.map(c => ({ country: c.country, orders: c.orders, revenue: Math.round(c.revenue * 100) / 100, profit: Math.round(c.profit * 100) / 100 })),
           chartData: (function(){
-            // Build helper for per-day ADV profit (FB-attributed orders, tier cut per campaign to match KPI card)
-            const advByDayRows = db.prepare("SELECT order_date as date, utm_campaign, COUNT(*) as cnt, SUM(profit) as totalProfit FROM wc_orders WHERE order_date >= ? AND is_fb_attributed = 1  AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date, utm_campaign").all(d7ago);
-            const advByDay = {};
-            for (const r of advByDayRows) {
-              const cnt = Number(r.cnt) || 0; if (cnt <= 0) continue;
-              const ppo = (Number(r.totalProfit) || 0) / cnt;
-              let cut = 0;
-              try {
-                const tierRow = db.prepare("SELECT value FROM flores_settings WHERE key = ?").get('adv_tier_state');
-                let tierState = null;
-                if (tierRow && tierRow.value) { try { tierState = JSON.parse(tierRow.value); } catch(e){} }
-                const _def = { medium: [{max:5,cut:2},{max:10,cut:4},{max:15,cut:7},{max:20,cut:11},{max:25,cut:16},{max:35,cut:22},{max:null,cut:28}] };
-                const active = (tierState && tierState.active) || 'medium';
-                const ts = (tierState && tierState.presets && tierState.presets[active]) || _def[active] || _def.medium;
-                for (const t of ts) { const mx = (t.max === null || t.max === undefined) ? Infinity : Number(t.max); if (ppo <= mx) { cut = Number(t.cut)||0; break; } }
-              } catch(e){}
-              const advProfit = (Number(r.totalProfit) || 0) - cut * cnt;
-              if (!advByDay[r.date]) advByDay[r.date] = 0;
-              advByDay[r.date] += advProfit;
-            }
-            // Per-day FB-attributed orders count + revenue
-            const advCountRows = db.prepare("SELECT order_date as date, COUNT(*) as cnt, COALESCE(SUM(gross_eur),0) as rev FROM wc_orders WHERE order_date >= ? AND is_fb_attributed = 1  AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date").all(d7ago);
-            const advCounts = {};
-            for (const r of advCountRows) advCounts[r.date] = { orders: r.cnt, revenue: r.rev };
+            // Per-day FB orders aggregated (for ADV profit calc after spend)
+            const advDayRows = db.prepare("SELECT order_date as date, COUNT(*) as cnt, COALESCE(SUM(profit),0) as totalProfit, COALESCE(SUM(gross_eur),0) as rev FROM wc_orders WHERE order_date >= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date").all(d7ago);
+            const advDayData = {};
+            for (const r of advDayRows) advDayData[r.date] = { orders: r.cnt, profit: r.totalProfit, revenue: r.rev };
+            // Load tier config once
+            let _tierCfg = null;
+            try {
+              const _tr = db.prepare("SELECT value FROM flores_settings WHERE key = ?").get('adv_tier_state');
+              if (_tr && _tr.value) _tierCfg = JSON.parse(_tr.value);
+            } catch(e) {}
+            const _tierActive = (_tierCfg && _tierCfg.active) || 'medium';
+            const _tierDef = { light:[{max:5,cut:1},{max:10,cut:3},{max:15,cut:5},{max:20,cut:8},{max:25,cut:12},{max:35,cut:16},{max:null,cut:20}], medium:[{max:5,cut:2},{max:10,cut:4},{max:15,cut:7},{max:20,cut:11},{max:25,cut:16},{max:35,cut:22},{max:null,cut:28}], max:[{max:5,cut:3},{max:10,cut:6},{max:15,cut:10},{max:20,cut:15},{max:25,cut:20},{max:35,cut:28},{max:null,cut:35}] };
+            const _tiers = (_tierCfg && _tierCfg.presets && _tierCfg.presets[_tierActive]) || _tierDef[_tierActive] || _tierDef.medium;
+            function _cutFor(ppo) { for (const t of _tiers) { const mx = (t.max === null || t.max === undefined) ? Infinity : Number(t.max); if (ppo <= mx) return Number(t.cut)||0; } return Number(_tiers[_tiers.length-1].cut)||0; }
             return chartData.map(d => {
               let daySpend = 0;
               if (d.date === today && fbSpendToday > 0) daySpend = fbSpendToday;
               else { try { const dd = (dashCacheData||{})[d.date]||{}; for (const [,v] of Object.entries(dd)) { if (v && typeof v.spend === 'number') daySpend += v.spend; } } catch(e){} }
-              const advProfitDay = advByDay[d.date] || 0;
-              const advCnt = (advCounts[d.date] && advCounts[d.date].orders) || 0;
+              // ADV profit: first subtract spend from FB profit, then apply tier cut (matches KPI card)
+              const _dd = advDayData[d.date] || { orders: 0, profit: 0, revenue: 0 };
+              const fbProfitDay = _dd.profit - daySpend;
+              const advCnt = _dd.orders;
+              const _ppoDay = advCnt > 0 ? fbProfitDay / advCnt : 0;
+              const _cutDay = _cutFor(_ppoDay);
+              const advProfitDay = fbProfitDay - _cutDay * advCnt;
               return {
                 date: d.date,
                 orders: d.orders,
                 revenue: Math.round(d.revenue * 100) / 100,
                 profit: Math.round((d.profit - daySpend) * 100) / 100,
                 spend: Math.round(daySpend * 100) / 100,
-                advProfit: Math.round((advProfitDay - daySpend) * 100) / 100,
+                advProfit: Math.round(advProfitDay * 100) / 100,
                 advOrders: advCnt
               };
             });
