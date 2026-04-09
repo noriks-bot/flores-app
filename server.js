@@ -1923,6 +1923,20 @@ function actLog(req, action, details, entityType, entityId) {
   } catch(e) { console.error('Activity log error:', e.message); }
 }
 
+// Server-side change_log writer (safety net for mutation endpoints)
+function serverLogChange(req, changeType, entityId, oldValue, newValue, extra) {
+  try {
+    const user = getSessionUser(req);
+    const username = user?.username || 'unknown';
+    extra = extra || {};
+    db.prepare('INSERT INTO change_log (change_type, entity_id, entity_name, country, old_value, new_value, user, spend_at_change, orders_at_change, profit_at_change, cpa_at_change, roas_at_change) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
+      changeType, String(entityId || ''), extra.name || '', extra.country || '',
+      String(oldValue || ''), String(newValue || ''), username,
+      extra.spend || 0, extra.orders || 0, extra.profit || 0, extra.cpa || 0, extra.roas || 0
+    );
+  } catch(e) { console.error('serverLogChange error:', e.message); }
+}
+
 // ═══ APP VERSION ═══
 const APP_VERSION = '2.0.0';
 const APP_START_TIME = Date.now();
@@ -2237,7 +2251,6 @@ const server = http.createServer(async (req, res) => {
         const body = await new Promise((res,rej)=>{ let d=''; req.on('data',c=>d+=c); req.on('end',()=>res(JSON.parse(d))); req.on('error',rej); });
         const { campaignId, name } = body;
         if (!campaignId || !name) return sendJSON(res, {error:'Missing campaignId or name'}, 400);
-        // Find which account owns this campaign
         let acct = AD_ACCOUNT;
         for (const [,a] of Object.entries(AD_ACCOUNTS_MAP)) {
           try { const r = await metaGet(campaignId, {fields:'id'}); if(r.id) { acct = a; break; } } catch(e) {}
@@ -2256,7 +2269,6 @@ const server = http.createServer(async (req, res) => {
           if (dailyBudget !== undefined) params.daily_budget = String(dailyBudget);
           if (lifetimeBudget !== undefined) params.lifetime_budget = String(lifetimeBudget);
           const result = await fbPost(`/${campaignId}`, params);
-          // Clear cache so new value shows immediately
           const files = fs.readdirSync(CACHE_DIR).filter(f => f.startsWith("campaigns_"));
           files.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
           return sendJSON(res, { ok: result.success === true || !!result });
@@ -2271,7 +2283,6 @@ const server = http.createServer(async (req, res) => {
           if (dailyBudget !== undefined) params.daily_budget = String(dailyBudget);
           if (lifetimeBudget !== undefined) params.lifetime_budget = String(lifetimeBudget);
           const result = await fbPost(`/${adsetId}`, params);
-          // Clear adset cache
           const files2 = fs.readdirSync(CACHE_DIR).filter(f => f.startsWith("adsets_") || f.startsWith("campaigns_"));
           files2.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
           return sendJSON(res, { ok: result.success === true || !!result });
@@ -2324,9 +2335,9 @@ const server = http.createServer(async (req, res) => {
         const { changeType, entityId, oldValue, newValue, entityName, country, spendAtChange, ordersAtChange, profitAtChange } = body;
         const cpaAtChange = body.cpaAtChange || 0;
         const roasAtChange = body.roasAtChange || 0;
-        // Always attribute to actual logged-in user (ignore body.user to prevent hardcoded 'noriks')
+        // Always attribute to actual logged-in user (never trust body.user to prevent hardcoded 'noriks')
         const sessionUser = getSessionUser(req);
-        const actualUser = sessionUser?.username || body.user || 'unknown';
+        const actualUser = sessionUser?.username || 'unknown';
         db.prepare('INSERT INTO change_log (change_type, entity_id, entity_name, country, old_value, new_value, user, spend_at_change, orders_at_change, profit_at_change, cpa_at_change, roas_at_change) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(changeType, entityId, entityName || '', country || '', oldValue || '', newValue || '', actualUser, spendAtChange || 0, ordersAtChange || 0, profitAtChange || 0, cpaAtChange, roasAtChange);
         return sendJSON(res, { ok: true });
       }
