@@ -1055,14 +1055,35 @@ function fetchActualWcOrders(dateFrom, dateTo) {
 // Returns: { campaignId: [{ orderId, country, grossEur, profit, ... }] }
 function fetchWcOrdersByCampaign(dateFrom, dateTo) {
   const rows = db.prepare(`
-    SELECT wc_order_id, country, gross_eur, net_revenue, product_cost, shipping_cost, profit, utm_campaign, adset_id, ad_id
+    SELECT wc_order_id, country, gross_eur, net_revenue, product_cost, shipping_cost, profit, utm_campaign, adset_id, ad_id, raw_meta
     FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''
   `).all(dateFrom, dateTo);
 
   const byCampaign = {};
   for (const r of rows) {
-    if (!byCampaign[r.utm_campaign]) byCampaign[r.utm_campaign] = [];
-    byCampaign[r.utm_campaign].push({
+    let campaignKey = r.utm_campaign;
+    // If utm_campaign is non-numeric (legacy catalog campaigns like "noriks-facebook-hr"),
+    // try to recover the numeric Meta campaign id from raw_meta attribution fields.
+    if (!/^\d+$/.test(campaignKey)) {
+      try {
+        const m = JSON.parse(r.raw_meta || '{}');
+        const candidates = [
+          m._flores_campaign_id,
+          m._wc_order_attribution_utm_id,
+          m._wc_order_attribution_utm_content
+        ];
+        if (Array.isArray(m.meta_data)) {
+          for (const md of m.meta_data) {
+            if (md && md.key && /_flores_campaign_id|attribution_utm_id|attribution_utm_content/i.test(md.key)) candidates.push(md.value);
+          }
+        }
+        for (const cand of candidates) {
+          if (cand && /^\d+$/.test(String(cand))) { campaignKey = String(cand); break; }
+        }
+      } catch(e) {}
+    }
+    if (!byCampaign[campaignKey]) byCampaign[campaignKey] = [];
+    byCampaign[campaignKey].push({
       orderId: r.wc_order_id,
       country: r.country,
       grossEur: r.gross_eur,
@@ -1102,9 +1123,10 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
     c.wc.roas = metaSpend > 0 ? Math.round(c.wc.revenueGross / metaSpend * 100) / 100 : 0;
   }
 
-  // Add campaigns that have WC orders but weren't in Meta API results (paused/old campaigns, or non-numeric legacy utm ids)
+  // Add campaigns that have WC orders but weren't in Meta API results (paused/old campaigns)
   for (const [campaignId, orders] of Object.entries(byCampaign)) {
     if (matchedCampaignIds.has(campaignId)) continue;
+    if (!/^\d+$/.test(campaignId)) continue; // skip non-numeric IDs
     const totalProfit = orders.reduce((s, o) => s + o.profit, 0);
     const totalRevenue = orders.reduce((s, o) => s + o.grossEur, 0);
     // Try to get campaign name from DB
