@@ -7087,6 +7087,11 @@ function renderDashboard(data) {
   const _tierLabels = { light: '🟢 LIGHT', medium: '🟡 MEDIUM', max: '🔴 MAX' };
   const _mtier = document.getElementById('manipTier'); if (_mtier) _mtier.textContent = _tierLabels[k.advTierName] || k.advTierName || '—';
   // ADV KPIs: show loading, will be filled by loadCountryCards
+  window._dashSpend = k.spend || 0;
+  window._dashFbOrders = k.fbOrders || 0;
+  window._dashFbPixel = k.fbPixelPurchases || 0;
+  window._dashFbMeasured = k.fbMeasuredOrders || 0;
+  window._dashFbUnmeasured = k.fbUnmeasuredOrders || 0;
   document.getElementById('dashKpisAdv').innerHTML = '<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.6)"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
 
     // Alerts
@@ -7244,9 +7249,10 @@ async function loadCountryCards() {
       var advKpiEl = document.getElementById('dashKpisAdv');
       if (advKpiEl) {
         var advPpo = advTotalOrders > 0 ? advTotalProfit / advTotalOrders : 0;
-        var advCpa = advTotalOrders > 0 ? advTotalSpend / advTotalOrders : 0;
+        var _advSpend = window._dashSpend || advTotalSpend;
+        var advCpa = advTotalOrders > 0 ? _advSpend / advTotalOrders : 0;
         advKpiEl.innerHTML = [
-          { label: "ADV Spend", value: '\u20ac' + advTotalSpend.toFixed(2), icon: 'fas fa-ad' },
+          { label: "ADV Spend", value: '\u20ac' + (window._dashSpend || advTotalSpend).toFixed(2), icon: 'fas fa-ad' },
           { label: "ADV Orders", value: advTotalOrders, icon: 'fas fa-shopping-cart' },
           { label: "ADV Measured Orders", value: advTotalOrders, icon: 'fas fa-check-circle' },
           { label: "ADV Unmeasured Orders", value: 0, icon: 'fas fa-question-circle' },
