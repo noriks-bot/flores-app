@@ -2565,42 +2565,24 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
-        // 3. Aggregate spend by country using Meta API country breakdown (matches FB Ads Reporting)
+        // 3. Aggregate spend by country from campaign names (single source = campaign insights)
         const byCountry = {};
         const byType = {};
         const byCountryAndType = {};
-        const COUNTRY_MAP = {'Croatia':'HR','Czech Republic':'CZ','Czechia':'CZ','Poland':'PL','Greece':'GR','Slovakia':'SK','Italy':'IT','Hungary':'HU','Slovenia':'SI'};
-        try {
-          for (const acct of Object.values(AD_ACCOUNTS_MAP)) {
-            const rows = await metaGetAll(acct + '/insights', {
-              fields: 'spend,actions',
-              breakdowns: 'country',
-              time_range: JSON.stringify({ since: start, until: end }),
-              limit: 500
-            });
-            for (const row of rows) {
-              const cc = COUNTRY_MAP[row.country] || row.country;
-              if (!cc || cc.length > 3) continue;
-              const spend = parseFloat(row.spend || 0);
-              const pAct = (row.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
-              const purchases = pAct ? parseInt(pAct.value) : 0;
-              if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
-              byCountry[cc].spend += spend;
-              byCountry[cc].purchases += purchases;
-            }
+        for (const c of campaignData) {
+          const spend = parseFloat(c.insights?.spend || 0);
+          if (spend <= 0) continue;
+          const { countries } = parseCampaignName(c.name);
+          const purchases = campaignPurchases[c.id] || 0;
+          const targets = countries.length ? countries : ['OTHER'];
+          const perCc = spend / targets.length;
+          const perPurch = purchases / targets.length;
+          for (const cc of targets) {
+            if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
+            byCountry[cc].spend += perCc;
+            byCountry[cc].purchases += perPurch;
           }
-        } catch(e) { console.warn('[base-report] Meta country breakdown failed:', e.message); }
-
-        // Rescale country spend so sum(byCountry.spend) === total campaign spend (single source of truth)
-        try {
-          const totalCampaignSpend = (campaignData || []).reduce((s, c) => s + parseFloat(c.insights?.spend || 0), 0);
-          let sumCountrySpend = 0;
-          for (const cc of Object.keys(byCountry)) sumCountrySpend += (byCountry[cc].spend || 0);
-          if (totalCampaignSpend > 0 && sumCountrySpend > 0 && Math.abs(sumCountrySpend - totalCampaignSpend) > 0.5) {
-            const factor = totalCampaignSpend / sumCountrySpend;
-            for (const cc of Object.keys(byCountry)) byCountry[cc].spend = byCountry[cc].spend * factor;
-          }
-        } catch(e) { console.warn('[base-report] rescale failed', e.message); }
+        }
 
         // Also aggregate by type (from campaign names)
         for (const c of campaignData) {
