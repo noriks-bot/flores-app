@@ -2591,6 +2591,17 @@ const server = http.createServer(async (req, res) => {
           }
         } catch(e) { console.warn('[base-report] Meta country breakdown failed:', e.message); }
 
+        // Rescale country spend so sum(byCountry.spend) === total campaign spend (single source of truth)
+        try {
+          const totalCampaignSpend = (campaignData || []).reduce((s, c) => s + parseFloat(c.insights?.spend || 0), 0);
+          let sumCountrySpend = 0;
+          for (const cc of Object.keys(byCountry)) sumCountrySpend += (byCountry[cc].spend || 0);
+          if (totalCampaignSpend > 0 && sumCountrySpend > 0 && Math.abs(sumCountrySpend - totalCampaignSpend) > 0.5) {
+            const factor = totalCampaignSpend / sumCountrySpend;
+            for (const cc of Object.keys(byCountry)) byCountry[cc].spend = byCountry[cc].spend * factor;
+          }
+        } catch(e) { console.warn('[base-report] rescale failed', e.message); }
+
         // Also aggregate by type (from campaign names)
         for (const c of campaignData) {
           const spend = parseFloat(c.insights?.spend || 0);

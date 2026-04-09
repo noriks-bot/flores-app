@@ -7179,7 +7179,7 @@ function renderDashboard(data) {
     });
   }
   // Load country breakdown cards (use prefetched data in ADV mode to avoid refetch flicker)
-  if (data.__advBaseReport) renderCountryCardsFromData(data.__advBaseReport, { liveSpend: k.spend });
+  if (data.__advBaseReport) renderCountryCardsFromData(data.__advBaseReport);
   else loadCountryCards();
 }
 
@@ -7220,29 +7220,12 @@ async function loadCountryCards() {
   } catch(e) { console.error('[Country Cards]', e); }
 }
 
-function renderCountryCardsFromData(data, opts) {
-  opts = opts || {};
+function renderCountryCardsFromData(data) {
   const order = ['HR','CZ','PL','GR','SK','IT','HU'];
   try {
     const fb = (data && data.byCountry) || {};
     const all = (data && data.byCountryAll) || {};
     const isAdv = document.body.classList.contains('advertiser-mode');
-    // If caller provided authoritative live spend (same as FB Spend KPI), rescale per-country spend proportionally
-    if (typeof opts.liveSpend === 'number' && opts.liveSpend >= 0) {
-      let sumSpend = 0;
-      for (const cc of order) { const c = fb[cc]; if (c && typeof c.spend === 'number') sumSpend += c.spend; }
-      if (sumSpend > 0 && Math.abs(sumSpend - opts.liveSpend) > 0.5) {
-        const factor = opts.liveSpend / sumSpend;
-        for (const cc of order) {
-          const c = fb[cc]; if (!c) continue;
-          c.spend = Math.round((c.spend || 0) * factor * 100) / 100;
-          if (c.orders > 0) c.cpa = Math.round((c.spend / c.orders) * 100) / 100;
-          c.netProfit = Math.round(((c.profit || 0) - c.spend) * 100) / 100;
-          c.ppo = c.orders > 0 ? Math.round((c.netProfit / c.orders) * 100) / 100 : 0;
-          c.roas = c.spend > 0 && c.revenue ? Math.round((c.revenue / c.spend) * 100) / 100 : 0;
-        }
-      }
-    }
 
     const elAll = document.getElementById('dashCountryCardsAll');
     const elFb = document.getElementById('dashCountryCardsFb');
