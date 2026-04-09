@@ -2676,26 +2676,39 @@ const server = http.createServer(async (req, res) => {
             byCountry[cc].campNetProfit = 0;
             byCountry[cc].advCut = 0;
           }
+          // Build campaign → per-country orders distribution from DB (authoritative)
+          const campCountryDist = {};
+          for (const row of dbOrdersByCampaign) {
+            if (!campCountryDist[row.utm_campaign]) campCountryDist[row.utm_campaign] = {};
+            campCountryDist[row.utm_campaign][row.country] = (campCountryDist[row.utm_campaign][row.country] || 0) + row.orders;
+          }
           const seen = new Set();
           for (const camp of campaignData) {
             if (!camp || !camp.wc || !(camp.wc.orders > 0)) continue;
             if (seen.has(camp.id)) continue;
             seen.add(camp.id);
-            const ccs = (camp._parsed && camp._parsed.countries) || [];
-            if (!ccs.length) continue;
             const netProfit = Number(camp.wc.profit) || 0; // already net (gross − spend)
             const orders = Number(camp.wc.orders) || 0;
             const netPpo = netProfit / orders;
             const cut = cutFor(netPpo);
-            // Distribute proportionally across targeted countries
-            const perCcOrders = orders / ccs.length;
-            const perCcNet = netProfit / ccs.length;
-            const perCcCut = cut * perCcOrders;
-            for (const cc of ccs) {
+            const totalCut = cut * orders;
+            // Distribute across countries using DB order distribution (fallback: parsed name countries, else single OTHER)
+            let dist = campCountryDist[camp.id] || {};
+            let distTotal = Object.values(dist).reduce((s, n) => s + n, 0);
+            if (distTotal <= 0) {
+              const ccs = (camp._parsed && camp._parsed.countries) || [];
+              if (ccs.length) {
+                dist = {}; for (const cc of ccs) dist[cc] = 1; distTotal = ccs.length;
+              } else {
+                dist = { OTHER: 1 }; distTotal = 1;
+              }
+            }
+            for (const [cc, cnt] of Object.entries(dist)) {
+              const share = cnt / distTotal;
               if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0, campOrders: 0, campNetProfit: 0, advCut: 0 };
-              byCountry[cc].campOrders += perCcOrders;
-              byCountry[cc].campNetProfit += perCcNet;
-              byCountry[cc].advCut += perCcCut;
+              byCountry[cc].campOrders += orders * share;
+              byCountry[cc].campNetProfit += netProfit * share;
+              byCountry[cc].advCut += totalCut * share;
             }
           }
           for (const cc of Object.keys(byCountry)) {
