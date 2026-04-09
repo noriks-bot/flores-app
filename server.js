@@ -2721,9 +2721,16 @@ const server = http.createServer(async (req, res) => {
           for (const cc of Object.keys(byCountry)) {
             const c = byCountry[cc];
             c.advCut = Math.round(c.advCut * 100) / 100;
-            c.advProfit = Math.round((c.campNetProfit - c.advCut) * 100) / 100;
-            c.advOrders = Math.round(c.campOrders);
-            c.advPpo = c.advOrders > 0 ? Math.round((c.advProfit / c.advOrders) * 100) / 100 : 0;
+            // If no FB-attributed campaign orders, advProfit = -spend (still losing the ad money)
+            if ((c.campOrders || 0) <= 0) {
+              c.advProfit = Math.round((-(c.spend || 0)) * 100) / 100;
+              c.advOrders = 0;
+              c.advPpo = 0;
+            } else {
+              c.advProfit = Math.round((c.campNetProfit - c.advCut) * 100) / 100;
+              c.advOrders = Math.round(c.campOrders);
+              c.advPpo = c.advOrders > 0 ? Math.round((c.advProfit / c.advOrders) * 100) / 100 : 0;
+            }
           }
         } catch(e) { console.warn('[base-report] adv per-country failed', e.message); }
 
