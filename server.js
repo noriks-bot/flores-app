@@ -4088,7 +4088,7 @@ function getRates2() {
             fbPixelPurchases,
             profitPerOrder: todayStats.orders > 0 ? Math.round(((todayStats.profit || 0) - fbSpendRange) / todayStats.orders * 100) / 100 : 0,
             fbProfitPerOrder: fbOrderCount > 0 ? Math.round(fbProfit / fbOrderCount * 100) / 100 : 0,
-            ordersBySource: (() => { try { const allOrd = db.prepare("SELECT wc_order_id, utm_source, utm_medium, utm_campaign, is_fb_attributed, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ?").all(dashFrom, dashTo); const m = {}; allOrd.forEach(o => { let origin = 'Direct'; try { const rawM2 = JSON.parse(o.raw_meta || '{}'); origin = classifySourceDash(rawM2, []); } catch(e2) { if (o.is_fb_attributed === 1) origin = 'Facebook'; else if (o.utm_source === 'callcenter') origin = 'Call Center'; else if ((o.utm_source||'').includes('google') && (o.utm_medium === 'cpc' || o.utm_medium === 'paid' || (o.utm_campaign||'').includes('google_cpc'))) origin = 'Google Paid'; else if ((o.utm_source||'').includes('google')) origin = 'Google Organic'; } m[origin] = (m[origin] || 0) + 1; }); return m; } catch(e) { return {}; } })(),
+            ordersBySource: (() => { try { const allOrd = db.prepare("SELECT wc_order_id, utm_source, utm_medium, utm_campaign, is_fb_attributed, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ?").all(dashFrom, dashTo); const m = {}; allOrd.forEach(o => { let origin = 'Direct'; try { const rawM2 = JSON.parse(o.raw_meta || '{}'); origin = classifySourceDash(rawM2, []); } catch(e2) { if (o.is_fb_attributed === 1) origin = 'Facebook'; else if (o.utm_source === 'callcenter') origin = 'Call Center'; else if ((o.utm_source||'').includes('google') && (o.utm_medium === 'cpc' || o.utm_medium === 'paid' || (o.utm_campaign||'').includes('google_cpc'))) origin = 'Google Paid'; else if ((o.utm_source||'').includes('google')) origin = 'Google Organic'; } m[origin] = (m[origin] || 0) + 1; }); return m; } catch(e) { return {}; } })().catch(e => { console.warn("chartData error", e); return []; }),
             fbMeasuredOrders,
             fbUnmeasuredOrders,
             fbCpa,
@@ -4102,14 +4102,31 @@ function getRates2() {
             spend: Math.round(fbSpendRange * 100) / 100,
             cpa: todayStats.orders > 0 ? Math.round((fbSpendRange / todayStats.orders) * 100) / 100 : 0,
             campaigns: Array.isArray(topCampaignsRaw) ? topCampaignsRaw.filter(c => parseFloat(c.insights?.spend) > 0).length : 0,
-            adsets: await (async () => { try { let cnt = 0; for (const acct of Object.values(AD_ACCOUNTS_MAP)) { const ins = await metaGetAll(acct + '/insights', { level: 'adset', fields: 'spend', time_range: JSON.stringify({since:dashFrom,until:dashTo}), limit:'200' }); cnt += ins.filter(a => parseFloat(a.spend) > 0).length; } return cnt; } catch(e) { return 0; } })(),
-            ads: await (async () => { try { let cnt = 0; for (const acct of Object.values(AD_ACCOUNTS_MAP)) { const ins = await metaGetAll(acct + '/insights', { level: 'ad', fields: 'spend', time_range: JSON.stringify({since:dashFrom,until:dashTo}), limit:'500' }); cnt += ins.filter(a => parseFloat(a.spend) > 0).length; } return cnt; } catch(e) { return 0; } })(),
+            adsets: await (async () => { try { let cnt = 0; for (const acct of Object.values(AD_ACCOUNTS_MAP)) { const ins = await metaGetAll(acct + '/insights', { level: 'adset', fields: 'spend', time_range: JSON.stringify({since:dashFrom,until:dashTo}), limit:'200' }); cnt += ins.filter(a => parseFloat(a.spend) > 0).length; } return cnt; } catch(e) { return 0; } })().catch(e => { console.warn("chartData error", e); return []; }),
+            ads: await (async () => { try { let cnt = 0; for (const acct of Object.values(AD_ACCOUNTS_MAP)) { const ins = await metaGetAll(acct + '/insights', { level: 'ad', fields: 'spend', time_range: JSON.stringify({since:dashFrom,until:dashTo}), limit:'500' }); cnt += ins.filter(a => parseFloat(a.spend) > 0).length; } return cnt; } catch(e) { return 0; } })().catch(e => { console.warn("chartData error", e); return []; }),
             weekSpend: Math.round(fbSpend7d * 100) / 100
           },
           topCampaigns: enrichedCampaigns,
           topProducts,
           byCountry: byCountry.map(c => ({ country: c.country, orders: c.orders, revenue: Math.round(c.revenue * 100) / 100, profit: Math.round(c.profit * 100) / 100 })),
-          chartData: (function(){
+          chartData: await (async function(){
+            // Get per-day spend from Meta API (accurate, not from dash-cache)
+            let metaSpendByDay = {};
+            try {
+              for (const acct of Object.values(AD_ACCOUNTS_MAP)) {
+                const dayInsights = await metaGetAll(acct + '/insights', {
+                  fields: 'spend',
+                  time_increment: '1',
+                  time_range: JSON.stringify({ since: d7ago, until: today }),
+                  limit: '30'
+                });
+                for (const row of dayInsights) {
+                  const d = row.date_start;
+                  if (!metaSpendByDay[d]) metaSpendByDay[d] = 0;
+                  metaSpendByDay[d] += parseFloat(row.spend || 0);
+                }
+              }
+            } catch(e) { console.warn('[Chart] Meta per-day spend failed:', e.message); }
             // Per-day ADV profit: per-campaign-per-day tier cut (matches KPI card exactly)
             const advCampDayRows = db.prepare("SELECT order_date as date, utm_campaign, COUNT(*) as cnt, COALESCE(SUM(profit),0) as totalProfit, COALESCE(SUM(gross_eur),0) as rev FROM wc_orders WHERE order_date >= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date, utm_campaign").all(d7ago);
             // Load tier config once
@@ -4131,9 +4148,8 @@ function getRates2() {
               advDayData[r.date].revenue += r.rev;
             }
             return chartData.map(d => {
-              let daySpend = 0;
+              let daySpend = metaSpendByDay[d.date] || 0;
               if (d.date === today && fbSpendToday > 0) daySpend = fbSpendToday;
-              else { try { const dd = (dashCacheData||{})[d.date]||{}; for (const [,v] of Object.entries(dd)) { if (v && typeof v.spend === 'number') daySpend += v.spend; } } catch(e){} }
               // ADV profit: per-campaign tier cut (same as KPI card)
               const _dd = advDayData[d.date] || { orders: 0, profit: 0, revenue: 0 };
               const fbProfitDay = _dd.profit - daySpend;
@@ -4158,7 +4174,7 @@ function getRates2() {
                 advOrders: advCnt
               };
             });
-          })(),
+          })().catch(e => { console.warn("chartData error", e); return []; }),
           alerts: alerts,
           topCreatives: topCreativesData,
           date: today
@@ -4224,7 +4240,7 @@ function getRates2() {
             fbProfit: Math.round(fbProfitFinal * 100) / 100,
             fbProfitPerOrder: fbOrders > 0 ? Math.round(fbProfitFinal/fbOrders*100)/100 : 0,
             fbCpa: fbOrders > 0 ? Math.round(fbSpendRange/fbOrders*100)/100 : 0,
-            fbMeasuredOrders: (() => { try { return db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.cnt || 0; } catch(e) { return 0; } })(),
+            fbMeasuredOrders: (() => { try { return db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.cnt || 0; } catch(e) { return 0; } })().catch(e => { console.warn("chartData error", e); return []; }),
             fbUnmeasuredOrders: (() => { try { var t = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1").get(dashFrom, dashTo)?.cnt || 0; var m = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.cnt || 0; return Math.max(0, t - m); } catch(e) { return 0; } })()
           }
         });
