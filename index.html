@@ -7133,15 +7133,11 @@ function renderDashboard(data) {
         labels: data.chartData.map(d => d.date.slice(5)),
         datasets: (function(){
           const isAdv = document.body.classList.contains('advertiser-mode');
-          if (isAdv) {
-            return [
-              { label: 'Spend', data: data.chartData.map(d => d.spend), backgroundColor: 'rgba(37,99,235,0.7)', borderRadius: 4, order: 2 },
-              { label: 'ADV Profit', data: data.chartData.map(d => d.advProfit || 0), backgroundColor: data.chartData.map(d => (d.advProfit||0) >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)'), borderRadius: 4, order: 1 }
-            ];
-          }
+          const profitField = isAdv ? 'advProfit' : 'fbProfit';
+          const profitLabel = isAdv ? 'ADV Profit' : 'FB Profit';
           return [
             { label: 'Spend', data: data.chartData.map(d => d.spend), backgroundColor: 'rgba(37,99,235,0.7)', borderRadius: 4, order: 2 },
-            { label: 'FB Profit', data: data.chartData.map(d => d.fbProfit || d.profit || 0), backgroundColor: data.chartData.map(d => ((d.fbProfit||d.profit||0)) >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)'), borderRadius: 4, order: 1 }
+            { label: profitLabel, data: data.chartData.map(d => d[profitField] || 0), backgroundColor: data.chartData.map(d => (d[profitField]||0) >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)'), borderRadius: 4, order: 1 }
           ];
         })()
       },
