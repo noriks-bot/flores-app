@@ -7065,6 +7065,20 @@ function renderDashboard(data) {
   document.getElementById('dashLoading').style.display = 'none';
   document.getElementById('dashContent').style.display = 'block';
   const k = data.kpis;
+  // Single source for spend: sum byCountry from /api/base-report. Keep all dependent KPIs in sync.
+  if (data.__advBaseReport && data.__advBaseReport.byCountry) {
+    let _sum = 0;
+    for (const cc of Object.keys(data.__advBaseReport.byCountry)) _sum += data.__advBaseReport.byCountry[cc].spend || 0;
+    const newSpend = Math.round(_sum * 100) / 100;
+    const delta = newSpend - (k.spend || 0);
+    k.spend = newSpend;
+    k.cpa = k.orders > 0 ? Math.round((newSpend / k.orders) * 100) / 100 : 0;
+    k.fbCpa = k.fbOrders > 0 ? Math.round((newSpend / k.fbOrders) * 100) / 100 : 0;
+    k.profit = Math.round(((k.profit || 0) - delta) * 100) / 100;
+    k.fbProfit = Math.round(((k.fbProfit || 0) - delta) * 100) / 100;
+    k.profitPerOrder = k.orders > 0 ? Math.round((k.profit / k.orders) * 100) / 100 : 0;
+    k.fbProfitPerOrder = k.fbOrders > 0 ? Math.round((k.fbProfit / k.fbOrders) * 100) / 100 : 0;
+  }
   
   // KPI Cards
   document.getElementById('dashKpis').innerHTML = [
