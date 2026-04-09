@@ -130,7 +130,7 @@ if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
 const DASH_CACHE_FILE = path.join(CACHE_DIR, 'dash-cache.json');
 const ORIGIN_CACHE_FILE = path.join(CACHE_DIR, 'origin-data.json');
 
-const PRODUCT_COSTS = { tshirt: 3.5, boxers: 2.25 };
+const PRODUCT_COSTS = { tshirt: 3.5, boxers: 2.25, socks: 1.0 };
 const EUR_RATES = { HR: 1, CZ: 0.041, PL: 0.232, GR: 1, IT: 1, HU: 0.00256, SK: 1 };
 
 // WooCommerce API keys per country store
@@ -445,6 +445,7 @@ function seedOrgSettings() {
     // Product Costs
     upsertSetting.run(1, 'product_costs', 'tshirt', '3.50');
     upsertSetting.run(1, 'product_costs', 'boxers', '2.25');
+    upsertSetting.run(1, 'product_costs', 'socks', '1.00');
 
     // Rejection Rates (%)
     const rejections = { HR: 15, CZ: 15, PL: 15, SK: 15, HU: 15, GR: 25, IT: 25 };
@@ -633,15 +634,16 @@ function calculateOrderProfit(order, country) {
   const netRevenue = effectiveGrossEur / (1 + vatRate);
 
   // Product cost: use shared detectProduct (same as dash) to decompose bundles
-  let totalTshirts = 0, totalBoxers = 0;
+  let totalTshirts = 0, totalBoxers = 0, totalSocks = 0;
   const items = order.line_items || [];
   for (const item of items) {
     const qty = item.quantity || 1;
     const detected = sharedDetectProduct(item.name || '', true, item.meta_data || null, item.sku || null);
     totalTshirts += (detected.tshirts || 0) * qty;
     totalBoxers += (detected.boxers || 0) * qty;
+    totalSocks += (detected.socks || 0) * qty;
   }
-  const productCost = (totalTshirts * PRODUCT_COSTS.tshirt) + (totalBoxers * PRODUCT_COSTS.boxers);
+  const productCost = (totalTshirts * PRODUCT_COSTS.tshirt) + (totalBoxers * PRODUCT_COSTS.boxers) + (totalSocks * PRODUCT_COSTS.socks);
 
   // Shipping ALWAYS applied per order (matches dash behavior)
   const SHIPPING_COSTS = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 5.5 };
