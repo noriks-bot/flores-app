@@ -3936,7 +3936,7 @@ function getRates2() {
           let tierState = null;
           if (tierRow && tierRow.value) { try { tierState = JSON.parse(tierRow.value); } catch(e){} }
           const _defaults = {
-            light: [{max:5,cut:1},{max:10,cut:3},{max:15,cut:5},{max:20,cut:8},{max:25,cut:12},{max:35,cut:16},{max:null,cut:20}],
+            light: [{max:5,cut:1},{max:10,cut:1},{max:15,cut:1},{max:20,cut:1},{max:25,cut:1},{max:35,cut:1},{max:null,cut:1}],
             medium: [{max:5,cut:2},{max:10,cut:4},{max:15,cut:7},{max:20,cut:11},{max:25,cut:16},{max:35,cut:22},{max:null,cut:28}],
             max: [{max:5,cut:3},{max:10,cut:6},{max:15,cut:10},{max:20,cut:15},{max:25,cut:20},{max:35,cut:28},{max:null,cut:35}]
           };
@@ -4105,9 +4105,9 @@ function getRates2() {
                 const tierRow = db.prepare("SELECT value FROM flores_settings WHERE key = ?").get('adv_tier_state');
                 let tierState = null;
                 if (tierRow && tierRow.value) { try { tierState = JSON.parse(tierRow.value); } catch(e){} }
-                const _def = { medium: [{max:5,cut:2},{max:10,cut:4},{max:15,cut:7},{max:20,cut:11},{max:25,cut:16},{max:35,cut:22},{max:null,cut:28}] };
-                const active = (tierState && tierState.active) || 'medium';
-                const ts = (tierState && tierState.presets && tierState.presets[active]) || _def[active] || _def.medium;
+                const _def = { light: [{max:5,cut:1},{max:10,cut:1},{max:15,cut:1},{max:20,cut:1},{max:25,cut:1},{max:35,cut:1},{max:null,cut:1}], medium: [{max:5,cut:2},{max:10,cut:4},{max:15,cut:7},{max:20,cut:11},{max:25,cut:16},{max:35,cut:22},{max:null,cut:28}] };
+                const active = (tierState && tierState.active) || 'light';
+                const ts = (tierState && tierState.presets && tierState.presets[active]) || _def[active] || _def.light;
                 for (const t of ts) { const mx = (t.max === null || t.max === undefined) ? Infinity : Number(t.max); if (ppo <= mx) { cut = Number(t.cut)||0; break; } }
               } catch(e){}
               const advProfit = (Number(r.totalProfit) || 0) - cut * cnt;

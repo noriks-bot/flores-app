@@ -1279,9 +1279,9 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <div style="font-size:16px;font-weight:800;color:#1e3a5f;margin-bottom:8px;display:flex;align-items:center;gap:8px"><i class="fas fa-chart-bar" style="color:#2563eb"></i>DASHBOARD 1</div>
         <div class="dash-kpis" id="dashKpis"></div>
         <div class="dash-kpis dash-kpis-fb" id="dashKpisFb" style="margin-top:16px"></div>
-        <div id="dashV2Divider" style="margin-top:20px;border-top:2px solid #e5e7eb;padding-top:12px;display:none"><div style="font-size:16px;font-weight:800;color:#1e3a5f;display:flex;align-items:center;gap:8px"><i class="fas fa-chart-line" style="color:#10b981"></i>DASHBOARD 2</div></div>
-        <div class="dash-kpis admin-only-v2" id="dashKpisV2" style="margin-top:8px;display:none"></div>
-        <div class="dash-kpis dash-kpis-fb admin-only-v2" id="dashKpisFbV2" style="margin-top:16px;display:none"></div>
+        <div id="dashV2Divider" style="display:none"></div>
+        <div class="dash-kpis admin-only-v2" id="dashKpisV2" style="display:none"></div>
+        <div class="dash-kpis dash-kpis-fb admin-only-v2" id="dashKpisFbV2" style="display:none"></div>
         <div style="margin-top:20px;border-top:2px solid #e5e7eb;padding-top:12px"><div style="font-size:16px;font-weight:800;color:#1e3a5f;display:flex;align-items:center;gap:8px"><i class="fas fa-user-secret" style="color:#f59e0b"></i>ADV DASH</div></div>
         <div id="dashManipulation" style="margin-top:16px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px 20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
           <div style="font-weight:800;font-size:14px;color:#111;display:flex;align-items:center;gap:8px"><i class="fas fa-magic" style="color:#f59e0b"></i>Manipulation</div>
@@ -3198,12 +3198,12 @@ function updateSummary() {
 const ADV_CUT_PRESETS = {
   light: [
     { max: 5,   cut: 1 },
-    { max: 10,  cut: 3 },
-    { max: 15,  cut: 5 },
-    { max: 20,  cut: 8 },
-    { max: 25,  cut: 12 },
-    { max: 35,  cut: 16 },
-    { max: Infinity, cut: 20 }
+    { max: 10,  cut: 1 },
+    { max: 15,  cut: 1 },
+    { max: 20,  cut: 1 },
+    { max: 25,  cut: 1 },
+    { max: 35,  cut: 1 },
+    { max: Infinity, cut: 1 }
   ],
   medium: [
     { max: 5,   cut: 2 },
@@ -7071,7 +7071,7 @@ function renderDashboard(data) {
   ].map(c => '<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="' + c.icon + '" style="margin-right:6px"></i>' + c.label + '</div><div class="dash-kpi-value">' + c.value + '</div></div>').join('');
 
   // V2 KPI Cards (admin only)
-  try { loadDashboardV2(); } catch(e) {}
+  /* Dashboard 2 disabled */
 
   // ADV KPI Cards (FB metrics with per-order tier-based cut applied — backend computed)
   const fbOrdersAdv = k.fbOrders || 0;
