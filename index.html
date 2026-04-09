@@ -7254,6 +7254,24 @@ async function loadCountryCards() {
           { label: "ADV Profit", value: '\u20ac' + advTotalProfit.toFixed(2) + '<div style="font-size:12px;font-weight:700;color:#fff;margin-top:3px">\u20ac' + advPpo.toFixed(2) + '/order</div>', icon: 'fas fa-chart-line' }
         ].map(function(c) { return '<div class="dash-kpi-card"><div class="dash-kpi-label"><i class="' + c.icon + '" style="margin-right:6px"></i>' + c.label + '</div><div class="dash-kpi-value">' + c.value + '</div></div>'; }).join('');
       }
+      // Sync today's ADV Profit bar on chart (advertiser mode only) with country-cards sum
+      try {
+        if (document.body.classList.contains('advertiser-mode') && typeof dashChart !== 'undefined' && dashChart && dashChart.data && dashChart.data.labels && dashChart.data.labels.length) {
+          var todayIso = (new Date()).toISOString().slice(0,10);
+          var todayLabel = todayIso.slice(5);
+          var idx = dashChart.data.labels.indexOf(todayLabel);
+          if (idx >= 0) {
+            var profitDs = (dashChart.data.datasets || []).find(function(ds){ return /Profit/i.test(ds.label||''); });
+            if (profitDs) {
+              profitDs.data[idx] = Math.round(advTotalProfit * 100) / 100;
+              if (Array.isArray(profitDs.backgroundColor)) {
+                profitDs.backgroundColor[idx] = advTotalProfit >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)';
+              }
+              dashChart.update('none');
+            }
+          }
+        }
+      } catch(e) { console.warn('[ADV chart sync]', e); }
     }
   } catch(e) { console.error('[Country Cards]', e); }
 }
