@@ -3975,7 +3975,7 @@ function getRates2() {
           let tierState = null;
           if (tierRow && tierRow.value) { try { tierState = JSON.parse(tierRow.value); } catch(e){} }
           const _defaults = {
-            light: [{max:5,cut:1},{max:10,cut:1},{max:15,cut:1},{max:20,cut:1},{max:25,cut:1},{max:35,cut:1},{max:null,cut:1}],
+            light: [{max:5,cut:1},{max:10,cut:3},{max:15,cut:5},{max:20,cut:8},{max:25,cut:12},{max:35,cut:16},{max:null,cut:20}],
             medium: [{max:5,cut:2},{max:10,cut:4},{max:15,cut:7},{max:20,cut:11},{max:25,cut:16},{max:35,cut:22},{max:null,cut:28}],
             max: [{max:5,cut:3},{max:10,cut:6},{max:15,cut:10},{max:20,cut:15},{max:25,cut:20},{max:35,cut:28},{max:null,cut:35}]
           };
