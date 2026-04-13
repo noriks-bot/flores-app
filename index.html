@@ -1277,8 +1277,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <div class="dash-loading" id="dashLoading" style="text-align:center;padding:60px;color:var(--text-muted)"><i class="fas fa-spinner fa-spin"></i> Loading dashboard...</div>
       <div id="dashContent" style="display:none">
         <!-- KPI Cards -->
-        <div class="filters-bar" style="background:transparent;backdrop-filter:none;border:none;padding:0;margin:0 0 24px 0;justify-content:space-between"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span class="filter-label">Period</span><div class="preset-tabs" id="dashDateFilter"><button class="preset-tab dash-date-btn active" onclick="setDashDate(this,'today')">Today</button><button class="preset-tab dash-date-btn" onclick="setDashDate(this,'yesterday')">Yesterday</button><button class="preset-tab dash-date-btn" onclick="setDashDate(this,'3d')">3D</button><button class="preset-tab dash-date-btn" onclick="setDashDate(this,'7d')">7D</button><button class="preset-tab dash-date-btn" onclick="setDashDate(this,'14d')">14D</button><button class="preset-tab dash-date-btn" onclick="setDashDate(this,'30d')">30D</button></div><input type="date" id="dashCustomFrom" class="dash-date-input" onchange="applyDashCustomRange()" style="padding:5px 8px;border:1px solid var(--border-color);border-radius:6px;font-size:12px;background:var(--card-bg);color:var(--text-primary)"><span style="color:var(--text-muted);font-size:13px">→</span><input type="date" id="dashCustomTo" class="dash-date-input" onchange="applyDashCustomRange()" style="padding:5px 8px;border:1px solid var(--border-color);border-radius:6px;font-size:12px;background:var(--card-bg);color:var(--text-primary)"></div>
-          <button onclick="refreshDashboard(this)" style="padding:10px 24px;border:none;background:#2563eb;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px;box-shadow:0 2px 4px rgba(37,99,235,0.3)"><i class="fas fa-sync-alt"></i> Refresh</button>
+        <div class="filters-bar" style="background:transparent;backdrop-filter:none;border:none;padding:0;margin:0 0 24px 0;justify-content:space-between"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span class="filter-label">Period</span><div class="preset-tabs" id="dashDateFilter"><button class="preset-tab dash-date-btn active" onclick="setDashDate(this,'today')">Today</button><button class="preset-tab dash-date-btn" onclick="setDashDate(this,'yesterday')">Yesterday</button><button class="preset-tab dash-date-btn" onclick="setDashDate(this,'3d')">3D</button><button class="preset-tab dash-date-btn" onclick="setDashDate(this,'7d')">7D</button><button class="preset-tab dash-date-btn" onclick="setDashDate(this,'14d')">14D</button><button class="preset-tab dash-date-btn" onclick="setDashDate(this,'30d')">30D</button></div><span style="color:var(--text-muted);font-size:11px;font-weight:600;letter-spacing:0.5px">RANGE</span><input type="date" id="dashCustomFrom" class="dash-date-input" style="padding:5px 8px;border:1px solid var(--border-color);border-radius:6px;font-size:12px;background:var(--card-bg);color:var(--text-primary)"><span style="color:var(--text-muted);font-size:13px">→</span><input type="date" id="dashCustomTo" class="dash-date-input" style="padding:5px 8px;border:1px solid var(--border-color);border-radius:6px;font-size:12px;background:var(--card-bg);color:var(--text-primary)"><button onclick="applyDashCustomRange()" style="padding:8px 20px;border:none;background:#2563eb;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#fff;box-shadow:0 2px 4px rgba(37,99,235,0.3)">Apply</button></div>
         </div>
         <!-- DASHBOARD 2 (admin only, compact rows — placeholder, no data) -->
         <div id="dashV2Divider" class="admin-only-v2" style="display:none;margin-bottom:8px"><div style="font-size:16px;font-weight:800;color:#1e3a5f;display:flex;align-items:center;gap:8px"><i class="fas fa-chart-line" style="color:#10b981"></i>DASHBOARD 2</div></div>
@@ -2794,22 +2793,18 @@ function setDashDate(btn, range) {
   document.querySelectorAll(".dash-date-btn").forEach(function(b){b.classList.remove("active");});
   btn.classList.add("active");
   dashDateRange = range;
-  // Clear custom date inputs when switching to a preset
-  document.getElementById('dashCustomFrom').value = '';
-  document.getElementById('dashCustomTo').value = '';
   dashboardLoaded = false;
   loadDashboard();
 }
 function applyDashCustomRange() {
   var f = document.getElementById('dashCustomFrom').value;
   var t = document.getElementById('dashCustomTo').value;
-  if (f && t && f <= t) {
-    // Deactivate preset buttons
-    document.querySelectorAll(".dash-date-btn").forEach(function(b){b.classList.remove("active");});
-    dashDateRange = 'custom';
-    dashboardLoaded = false;
-    loadDashboard();
-  }
+  if (!f || !t) { alert('Izberi oba datuma.'); return; }
+  if (f > t) { alert('Od datum mora biti pred Do datumom.'); return; }
+  document.querySelectorAll(".dash-date-btn").forEach(function(b){b.classList.remove("active");});
+  dashDateRange = 'custom';
+  dashboardLoaded = false;
+  loadDashboard();
 }
 function getDashDateRange() {
   var today = new Date().toISOString().slice(0,10);
