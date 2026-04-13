@@ -6,6 +6,11 @@ const crypto = require('crypto');
 const Database = require('better-sqlite3');
 const { detectProduct: sharedDetectProduct } = require('./detect-product');
 
+// Ljubljana timestamp (Europe/Ljubljana = UTC+1/UTC+2)
+function ljNow() {
+  return new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Ljubljana' }).replace('T', ' ');
+}
+
 // Load rejection rates from dash
 let dashRejectionRates = {};
 try {
@@ -1914,12 +1919,12 @@ setInterval(() => {
 }, 300000);
 
 // ═══ ACTIVITY LOGGING ═══
-const logActivity = db.prepare(`INSERT INTO activity_log (user_id, username, action, details, entity_type, entity_id, org_id) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+const logActivity = db.prepare(`INSERT INTO activity_log (user_id, username, action, details, entity_type, entity_id, org_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
 
 function actLog(req, action, details, entityType, entityId) {
   try {
     const user = getSessionUser(req);
-    logActivity.run(user?.userId || null, user?.username || 'system', action, details || null, entityType || null, entityId || null, 1);
+    logActivity.run(user?.userId || null, user?.username || 'system', action, details || null, entityType || null, entityId || null, 1, ljNow());
   } catch(e) { console.error('Activity log error:', e.message); }
 }
 
@@ -1929,10 +1934,10 @@ function serverLogChange(req, changeType, entityId, oldValue, newValue, extra) {
     const user = getSessionUser(req);
     const username = user?.username || 'unknown';
     extra = extra || {};
-    db.prepare('INSERT INTO change_log (change_type, entity_id, entity_name, country, old_value, new_value, user, spend_at_change, orders_at_change, profit_at_change, cpa_at_change, roas_at_change) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
+    db.prepare('INSERT INTO change_log (change_type, entity_id, entity_name, country, old_value, new_value, user, spend_at_change, orders_at_change, profit_at_change, cpa_at_change, roas_at_change, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
       changeType, String(entityId || ''), extra.name || '', extra.country || '',
       String(oldValue || ''), String(newValue || ''), username,
-      extra.spend || 0, extra.orders || 0, extra.profit || 0, extra.cpa || 0, extra.roas || 0
+      extra.spend || 0, extra.orders || 0, extra.profit || 0, extra.cpa || 0, extra.roas || 0, ljNow()
     );
   } catch(e) { console.error('serverLogChange error:', e.message); }
 }
@@ -1972,7 +1977,7 @@ const server = http.createServer(async (req, res) => {
           saveSessions();
           db.prepare('UPDATE flores_users SET last_login = datetime(\'now\') WHERE id = ?').run(user.id);
           // Log login activity
-          try { logActivity.run(user.id, user.username, 'login', 'User logged in', 'user', String(user.id), user.org_id || 1); } catch(e) {}
+          try { logActivity.run(user.id, user.username, 'login', 'User logged in', 'user', String(user.id), user.org_id || 1, ljNow()); } catch(e) {}
           res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': `flores_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400` });
           res.end(JSON.stringify({ ok: true, role: user.role, username: user.username, redirect: '/app' }));
         } else {
@@ -2025,7 +2030,7 @@ const server = http.createServer(async (req, res) => {
         sessionStore[token] = { username, role: 'admin', userId, displayName: company_name + ' Admin', orgId };
           saveSessions();
         // Log
-        try { logActivity.run(userId, username, 'register', `New organization: ${company_name}`, 'organization', String(orgId), orgId); } catch(e) {}
+        try { logActivity.run(userId, username, 'register', `New organization: ${company_name}`, 'organization', String(orgId), orgId, ljNow()); } catch(e) {}
         // Notify super admins
         try { db.prepare('INSERT INTO notifications (user_id, type, title, message, org_id) VALUES (NULL, ?, ?, ?, 1)').run('new_org', 'New Organization Registered', `${company_name} (${email}) started a free trial`); } catch(e) {}
         res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': `flores_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400` });
@@ -2338,7 +2343,7 @@ const server = http.createServer(async (req, res) => {
         // Always attribute to actual logged-in user (never trust body.user to prevent hardcoded 'noriks')
         const sessionUser = getSessionUser(req);
         const actualUser = sessionUser?.username || 'unknown';
-        db.prepare('INSERT INTO change_log (change_type, entity_id, entity_name, country, old_value, new_value, user, spend_at_change, orders_at_change, profit_at_change, cpa_at_change, roas_at_change) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(changeType, entityId, entityName || '', country || '', oldValue || '', newValue || '', actualUser, spendAtChange || 0, ordersAtChange || 0, profitAtChange || 0, cpaAtChange, roasAtChange);
+        db.prepare('INSERT INTO change_log (change_type, entity_id, entity_name, country, old_value, new_value, user, spend_at_change, orders_at_change, profit_at_change, cpa_at_change, roas_at_change, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(changeType, entityId, entityName || '', country || '', oldValue || '', newValue || '', actualUser, spendAtChange || 0, ordersAtChange || 0, profitAtChange || 0, cpaAtChange, roasAtChange, ljNow());
         return sendJSON(res, { ok: true });
       }
       if (urlPath === '/api/log' && req.method === 'GET') {
