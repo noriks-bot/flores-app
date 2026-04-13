@@ -2794,6 +2794,10 @@ function setDashDate(btn, range) {
   document.querySelectorAll(".dash-date-btn").forEach(function(b){b.classList.remove("active");});
   btn.classList.add("active");
   dashDateRange = range;
+  if (range === 'custom') {
+    // Just activate custom mode — don't reload until both dates are picked
+    return;
+  }
   // Sync the date inputs to reflect the chosen preset
   var r = getDashDateRange();
   document.getElementById('dashCustomFrom').value = r.from;
@@ -2804,7 +2808,7 @@ function setDashDate(btn, range) {
 function applyDashCustomRange() {
   var f = document.getElementById('dashCustomFrom').value;
   var t = document.getElementById('dashCustomTo').value;
-  if (f && t) {
+  if (f && t && f <= t) {
     dashDateRange = 'custom';
     document.querySelectorAll(".dash-date-btn").forEach(function(b){b.classList.remove("active");});
     var customBtn = document.querySelector('.dash-date-btn[onclick*="custom"]');
