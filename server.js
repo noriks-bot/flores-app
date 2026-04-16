@@ -992,10 +992,10 @@ async function initialSync() {
 // Run initial sync on startup (non-blocking)
 initialSync().catch(e => console.error('[FLORES] Initial sync error:', e.message));
 
-// Periodic sync every 2 minutes
+// Periodic sync every 5 minutes
 setInterval(() => {
   syncAllCountries().catch(e => console.error('[FLORES] Periodic sync error:', e.message));
-}, 2 * 60 * 1000);
+}, 5 * 60 * 1000);
 
 // Fetch Advertiser profit data from local dash server
 let advCache = { data: null, ts: 0, key: '' };
