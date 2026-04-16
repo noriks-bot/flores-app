@@ -183,10 +183,10 @@ thead th:nth-child(1), thead th:nth-child(2) { text-align: left; }
 tr.totals-row td { padding: 6px 10px; font-weight: 600; font-size: 11px; background: linear-gradient(135deg, #1a2332 0%, #1f3044 100%) !important; color: #fff !important; border: none; border-top: 2px solid #1a2430; text-align: right; position: sticky; top: 34px; z-index: 9; }
 tr.totals-row td:nth-child(2) { font-size: 12px; font-weight: 700; }
 tr.totals-row:hover td { background: linear-gradient(135deg, #1a2332 0%, #1f3044 100%) !important; }
-tr.totals-row .pill-green { color: #fff; background: #4caf50; }
+tr.totals-row .pill-green { color: #fff; background: #3a9b3e; }
 tr.totals-row .pill-red { color: #fff; background: #ef5350; }
 tr.totals-row .pill-neutral { color: #fff; background: rgba(255,255,255,0.15); }
-tr.totals-row .pill-light-green { color: #166534; background: #86efac; }
+tr.totals-row .pill-light-green { color: #fff; background: #5dbc61; }
 tr.totals-row .badge-profit, tr.totals-row .badge-loss, tr.totals-row .badge-neutral { color: #fff; background: rgba(255,255,255,0.15); }
 thead th:nth-child(1) { cursor: default; }
 thead th.wc-col, thead th.fb-col, thead th.profit-col { color: #6b6f75; background: none !important; }
@@ -207,7 +207,7 @@ tbody td {
 tbody td:nth-child(1), tbody td:nth-child(2) { text-align: left; }
 tbody tr:last-child td { border-bottom: none; }
 tbody tr:hover td { background: inherit; }
-#section-ads-manager table tbody tr:hover td.cell-pl-green { background: #4db87a !important; color:#fff !important; } #section-ads-manager table tbody tr:hover td.cell-pl-red { background: #e85555 !important; color:#fff !important; }
+#section-ads-manager table tbody tr:hover td.cell-pl-green { background: #3a9b3e !important; color:#fff !important; } #section-ads-manager table tbody tr:hover td.cell-pl-red { background: #e85555 !important; color:#fff !important; }
 tbody tr.level-campaign:nth-child(odd) td { background: #fbfbfb; }
 tbody tr.level-campaign:nth-child(even) td { background: #fff; }
 
@@ -350,7 +350,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 .type-tag { display: inline-block; padding: 0px 3px; font-size: 9px; font-weight: 600; border-radius: 3px; flex-shrink: 0; opacity: 0.7; }
 .type-tag.shirts { background: #ccfbf1; color: #0f766e; }
 .type-tag.boxers { background: #fce7f3; color: #9d174d; }
-.type-tag.starter { background: #dcfce7; color: #166534; }
+.type-tag.starter { background: #dcfce7; color: #fff; }
 .type-tag.kompleti { background: #fef3c7; color: #92400e; }
 .type-tag.catalog { background: #f1f5f9; color: #475569; }
 
@@ -363,10 +363,10 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 .badge-neutral { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; background: #FEF3C7; color: #92400E; border-radius: 4px; font-size: 11px; font-weight: 700; }
 .badge-loss { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; background: var(--danger-soft); color: var(--danger); border-radius: 4px; font-size: 11px; font-weight: 700; }
 .badge-roas { display: inline-block; padding: 0; background: transparent; color: var(--text-primary); border-radius: 0; font-size: 13px; font-weight: 400; text-align: right; }
-.pill-green { display: block; padding: 2px 5px; background: #4caf50; color: #fff; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; text-align: right; }
+.pill-green { display: block; padding: 2px 5px; background: #3a9b3e; color: #fff; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; text-align: right; }
 .pill-red { display: block; padding: 2px 5px; background: #ef5350; color: #fff; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; text-align: right; }
 .pill-neutral { display: block; padding: 3px 6px; background: #f0f0f0; color: #666; border-radius: 3px; font-size: 12px; font-weight: 400; text-align: right; }
-.pill-light-green { display: block; padding: 2px 5px; background: #86efac; color: #166534; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; text-align: right; }
+.pill-light-green { display: block; padding: 2px 5px; background: #5dbc61; color: #fff; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; text-align: right; }
 
 /* Edit btn */
 .edit-btn {
@@ -1087,12 +1087,12 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 #section-ads-manager table tbody td.pl-day-cell .muted { color: #fff !important; }
 /* Override global nth-child zebra — ci- classes are source of truth */
 #section-ads-manager table tbody tr:nth-child(even):not(.totals-row):not(.ci-even):not(.ci-odd) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #ececec !important; }
-#section-ads-manager td.cell-pl-green { background: #4db87a !important; color: #fff !important; font-weight: 400; text-align: right; }
+#section-ads-manager td.cell-pl-green { background: #3a9b3e !important; color: #fff !important; font-weight: 400; text-align: right; }
 #section-ads-manager td.cell-pl-red { background: #e85555 !important; color: #fff !important; font-weight: 400; text-align: right; }
-#section-ads-manager td.cell-pl-light-green { background: #86efac !important; color: #166534 !important; font-weight: 400; text-align: right; }
+#section-ads-manager td.cell-pl-light-green { background: #5dbc61 !important; color: #fff !important; font-weight: 400; text-align: right; }
 /* ads-manager hover intentionally disabled */
 #section-ads-manager table tbody tr:not(.totals-row):hover td { background: inherit !important; }
-#section-ads-manager table tbody tr:hover td.cell-pl-green { background: #4db87a !important; }
+#section-ads-manager table tbody tr:hover td.cell-pl-green { background: #3a9b3e !important; }
 #section-ads-manager table tbody tr:hover td.cell-pl-red { background: #e85555 !important; }
 #section-ads-manager table tbody tr.ci-even:hover td { background: #ececec !important; }
 #section-ads-manager table tbody tr.ci-odd:hover td { background: #ffffff !important; }
@@ -1124,7 +1124,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 #section-ads-manager table tbody tr.campaign-profit:hover td.cell-pl-green,
 #section-ads-manager table tbody tr.campaign-loss:hover td.cell-pl-green,
 #section-ads-manager table tbody tr.ci-even:hover td.cell-pl-green,
-#section-ads-manager table tbody tr.ci-odd:hover td.cell-pl-green { background: #4db87a !important; color: #fff !important; }
+#section-ads-manager table tbody tr.ci-odd:hover td.cell-pl-green { background: #3a9b3e !important; color: #fff !important; }
 #section-ads-manager table tbody tr:hover td.cell-pl-red,
 #section-ads-manager table tbody tr.level-adset:hover td.cell-pl-red,
 #section-ads-manager table tbody tr.level-ad:hover td.cell-pl-red,
@@ -3430,7 +3430,7 @@ function getCountryTags(name) {
 }
 function getProductTag(name) {
   const n=(name||'').toUpperCase();
-  if(n.includes('SHIRT')||n.includes('TSHIRT')||n.includes('MAJIC')) return '<span style="background:#dcfce7;color:#166534;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">Shirts</span>';
+  if(n.includes('SHIRT')||n.includes('TSHIRT')||n.includes('MAJIC')) return '<span style="background:#dcfce7;color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">Shirts</span>';
   if(n.includes('BOXER')) return '<span style="background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">Boxers</span>';
   if(n.includes('SOCK')) return '<span style="background:#fce7f3;color:#9d174d;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">Socks</span>';
   if(n.includes('STARTER')) return '<span style="background:#fae8ff;color:#86198f;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">Starter</span>';
@@ -3649,8 +3649,8 @@ function profitCell(p, singleDay) {
     // Full-fill cell for single-day columns (Yesterday, -2d, -3d)
     let bg='#9ca3af', label='€0';
     const poo = orders > 0 ? profit / orders : 0;
-    if (profit > 0) { bg='#4caf50'; label='+'+fmtEur(profit); }
-    else if (profit < 0 && poo >= -3) { bg='#86efac'; label=fmtEur(profit); }
+    if (profit > 0) { bg='#3a9b3e'; label='+'+fmtEur(profit); }
+    else if (profit < 0 && poo >= -3) { bg='#5dbc61'; label=fmtEur(profit); }
     else if (profit < 0) { bg='#ef5350'; label=fmtEur(profit); }
     return `<td class="pl-day-cell" style="background:${bg};color:#fff;text-align:center;line-height:1.2;padding:6px 6px"><div style="font-weight:700;font-size:12px;white-space:nowrap">${label}</div><div style="font-size:9px;opacity:0.9;white-space:nowrap">${orders} orders</div><div style="font-size:9px;opacity:0.9;white-space:nowrap">${cpa} CPA</div></td>`;
   }
@@ -3728,7 +3728,7 @@ function makeRow(item,level,bgClass) {
   const bidMap={'LOWEST_COST_WITHOUT_CAP':'Lowest cost','LOWEST_COST_WITH_BID_CAP':'Bid cap','COST_CAP':'Cost cap','LOWEST_COST_WITH_MIN_ROAS':'Min ROAS'};
   const bidLabel=bidMap[item.bid_strategy||'']||'Lowest cost';
   // FPA
-  const fpaHtml=wcCount>0?'<span style="color:#4db87a;font-size:13px">\u25cf</span>':'<span style="color:#ccc;font-size:13px">\u2298</span>';
+  const fpaHtml=wcCount>0?'<span style="color:#3a9b3e;font-size:13px">\u25cf</span>':'<span style="color:#ccc;font-size:13px">\u2298</span>';
   // Profit/loss cell
   let plCls='', plHtml='<span class="muted">\u2014</span>';
   if(wc?.profit!==undefined&&wc.profit!==0){ plCls=wc.profit>0?'cell-pl-green':((wc.orders>0?wc.profit/wc.orders:wc.profit)>=-3?'cell-pl-light-green':'cell-pl-red'); plHtml=(wc.profit>0?'':'')+wc.profit.toFixed(2)+' \u20ac'; }
@@ -3776,10 +3776,10 @@ function makeRow(item,level,bgClass) {
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td style="white-space:nowrap;vertical-align:middle">${wcCount>0?`<button onclick="event.stopPropagation();showCampaignOrders('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-right:5px;border-radius:4px;vertical-align:middle;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:22px;height:18px"><i class="fas fa-list-ul" style="font-size:9px"></i></button>`:''}<strong style="font-size:13px;vertical-align:middle">${wcCount||0}</strong></td>
     <td style="font-size:11px;color:#8b5cf6">${(fpaData[level==="campaign"?"campaigns":level==="adset"?"adsets":"ads"][item.id])||0}</td>
-    <td class="col-profit-orig ${plCls}" style="${plCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":plCls==="cell-pl-light-green"?"background:#86efac !important;color:#166534 !important;":plCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plHtml}</td>
-    <td class="col-profit-orig ${ppoCls}" style="${ppoCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":ppoCls==="cell-pl-light-green"?"background:#86efac !important;color:#166534 !important;":ppoCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoHtml}</td>
-    <td class="${plAdvCls}" style="${plAdvCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":plAdvCls==="cell-pl-light-green"?"background:#86efac !important;color:#166534 !important;":plAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plAdvHtml}</td>
-    <td class="${ppoAdvCls}" style="${ppoAdvCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":ppoAdvCls==="cell-pl-light-green"?"background:#86efac !important;color:#166534 !important;":ppoAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoAdvHtml}</td>
+    <td class="col-profit-orig ${plCls}" style="${plCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":plCls==="cell-pl-light-green"?"background:#5dbc61 !important;color:#fff !important;":plCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plHtml}</td>
+    <td class="col-profit-orig ${ppoCls}" style="${ppoCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":ppoCls==="cell-pl-light-green"?"background:#5dbc61 !important;color:#fff !important;":ppoCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoHtml}</td>
+    <td class="${plAdvCls}" style="${plAdvCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":plAdvCls==="cell-pl-light-green"?"background:#5dbc61 !important;color:#fff !important;":plAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plAdvHtml}</td>
+    <td class="${ppoAdvCls}" style="${ppoAdvCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":ppoAdvCls==="cell-pl-light-green"?"background:#5dbc61 !important;color:#fff !important;":ppoAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoAdvHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${florexCpa}</td>
     <td>${roas}</td>
@@ -4275,7 +4275,7 @@ function makeFlatRow(item, level) {
   const bidMap={'LOWEST_COST_WITHOUT_CAP':'Lowest cost','LOWEST_COST_WITH_BID_CAP':'Bid cap','COST_CAP':'Cost cap','LOWEST_COST_WITH_MIN_ROAS':'Min ROAS'};
   const bidLabel=bidMap[item.bid_strategy||'']||'Lowest cost';
   // FPA
-  const fpaHtml=wcCount>0?'<span style="color:#4db87a;font-size:13px">\u25cf</span>':'<span style="color:#ccc;font-size:13px">\u2298</span>';
+  const fpaHtml=wcCount>0?'<span style="color:#3a9b3e;font-size:13px">\u25cf</span>':'<span style="color:#ccc;font-size:13px">\u2298</span>';
   // Profit cells
   let plCls='',plHtml='<span class="muted">\u2014</span>';
   if(wc?.profit!==undefined&&wc.profit!==0){ plCls=wc.profit>0?'cell-pl-green':((wc.orders>0?wc.profit/wc.orders:wc.profit)>=-3?'cell-pl-light-green':'cell-pl-red'); plHtml=wc.profit.toFixed(2)+' \u20ac'; }
@@ -4321,10 +4321,10 @@ function makeFlatRow(item, level) {
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td style="white-space:nowrap;vertical-align:middle">${wcCount>0?`<button onclick="event.stopPropagation();showCampaignOrders('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-right:5px;border-radius:4px;vertical-align:middle;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:22px;height:18px"><i class="fas fa-list-ul" style="font-size:9px"></i></button>`:''}<strong style="font-size:13px;vertical-align:middle">${wcCount||0}</strong></td>
     <td style="font-size:11px;color:#8b5cf6">${(fpaData[level==="campaign"?"campaigns":level==="adset"?"adsets":"ads"][item.id])||0}</td>
-    <td class="col-profit-orig ${plCls}" style="${plCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":plCls==="cell-pl-light-green"?"background:#86efac !important;color:#166534 !important;":plCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plHtml}</td>
-    <td class="col-profit-orig ${ppoCls}" style="${ppoCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":ppoCls==="cell-pl-light-green"?"background:#86efac !important;color:#166534 !important;":ppoCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoHtml}</td>
-    <td class="${plAdvCls}" style="${plAdvCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":plAdvCls==="cell-pl-light-green"?"background:#86efac !important;color:#166534 !important;":plAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plAdvHtml}</td>
-    <td class="${ppoAdvCls}" style="${ppoAdvCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":ppoAdvCls==="cell-pl-light-green"?"background:#86efac !important;color:#166534 !important;":ppoAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoAdvHtml}</td>
+    <td class="col-profit-orig ${plCls}" style="${plCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":plCls==="cell-pl-light-green"?"background:#5dbc61 !important;color:#fff !important;":plCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plHtml}</td>
+    <td class="col-profit-orig ${ppoCls}" style="${ppoCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":ppoCls==="cell-pl-light-green"?"background:#5dbc61 !important;color:#fff !important;":ppoCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoHtml}</td>
+    <td class="${plAdvCls}" style="${plAdvCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":plAdvCls==="cell-pl-light-green"?"background:#5dbc61 !important;color:#fff !important;":plAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plAdvHtml}</td>
+    <td class="${ppoAdvCls}" style="${ppoAdvCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":ppoAdvCls==="cell-pl-light-green"?"background:#5dbc61 !important;color:#fff !important;":ppoAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoAdvHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${florexCpa}</td>
     <td>${roas}</td>
@@ -4518,14 +4518,14 @@ async function loadBaseReport() {
 function brCpaCell(val) {
   if (!val || val === 0) return '<td><span class="muted">—</span></td>';
   let bg = '#ef5350'; // >25
-  if (val <= 15) bg = '#4caf50';
+  if (val <= 15) bg = '#3a9b3e';
   else if (val <= 25) bg = '#f59e0b';
   return `<td style="background:${bg};color:#fff;font-weight:600;text-align:right">${fmtEur(val)}</td>`;
 }
 
 function brProfitCell(val) {
   if (!val && val !== 0) return '<td><span class="muted">—</span></td>';
-  const bg = val >= 0 ? '#4caf50' : '#ef5350';
+  const bg = val >= 0 ? '#3a9b3e' : '#ef5350';
   const sign = val >= 0 ? '+' : '';
   return `<td style="background:${bg};color:#fff;font-weight:600;text-align:right">${sign}${fmtEur(val)}</td>`;
 }
@@ -4553,9 +4553,9 @@ function brTotalsRow(items, cols) {
   const roas = spend > 0 ? revenue / spend : 0;
   const ppo = orders > 0 ? netProfit / orders : 0;
   let cpaBg = '#ef5350';
-  if (cpa <= 15) cpaBg = '#4caf50';
+  if (cpa <= 15) cpaBg = '#3a9b3e';
   else if (cpa <= 25) cpaBg = '#f59e0b';
-  const profitBg = netProfit >= 0 ? '#4caf50' : '#ef5350';
+  const profitBg = netProfit >= 0 ? '#3a9b3e' : '#ef5350';
   const sign = netProfit >= 0 ? '+' : '';
   return `<tr class="totals-row">
     <td colspan="${cols - 8}"><strong>TOTAL</strong></td>
@@ -4634,7 +4634,7 @@ const originColors = {
   'FB Measured': '#3b82f6',
   'FB Unmeasured': '#60a5fa',
   'Google Ads': '#22c55e',
-  'Google Organic': '#86efac',
+  'Google Organic': '#5dbc61',
   'Klaviyo': '#a855f7',
   'Call Center': '#f59e0b',
   'Direct': '#94a3b8',
@@ -5129,7 +5129,7 @@ async function loadCreativeReport() {
 function crCpaStyle(spend, purchases) {
   if (!purchases || purchases === 0) return '';
   const cpa = spend / purchases;
-  if (cpa <= 18) return 'background:#4caf50;color:#fff;font-weight:600';
+  if (cpa <= 18) return 'background:#3a9b3e;color:#fff;font-weight:600';
   if (cpa <= 22) return 'background:#81c784;color:#fff;font-weight:600';
   if (cpa <= 28) return 'background:#f59e0b;color:#fff;font-weight:600';
   return 'background:#ef5350;color:#fff;font-weight:600';
@@ -5427,7 +5427,7 @@ async function generateUploadPlan() {
       if (!expandTo.size) continue;
       let priority,pColor,pLabel;
       if(bestCpa<=10){priority='Excellent';pColor='#16a34a';pLabel='🟢 Excellent';}
-      else if(bestCpa<=15){priority='Strong';pColor='#4caf50';pLabel='🟢 Strong';}
+      else if(bestCpa<=15){priority='Strong';pColor='#3a9b3e';pLabel='🟢 Strong';}
       else if(bestCpa<=20){priority='Good';pColor='#84cc16';pLabel='🟡 Good';}
       else{priority='Low';pColor='#fb923c';pLabel='🟠 Low';}
       winners.push({id:cr.id,winCountries,bestCpa,expandTo:[...expandTo],priority,pColor,pLabel,adCount:cr.adCount,totalSpend:cr.totalSpend,totalPurchases:cr.totalPurchases,overallCpa:cr.cpa});
@@ -5439,16 +5439,16 @@ async function generateUploadPlan() {
     document.getElementById('uploadSummarySubtitle').textContent=totalExp+' expansion opportunities across '+ALL_COUNTRIES.length+' countries';
     if(winners.length>0){
       document.getElementById('uploadBody').innerHTML=winners.map(w=>{
-        const winFlags=w.winCountries.map(wc=>'<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;background:rgba(76,175,80,0.1);border-radius:4px;font-size:11px;margin:1px">'+FLAGS[wc.country]+' '+wc.country+' <span style="color:#4caf50;font-weight:600">'+wc.cpa.toFixed(0)+'€</span> <span style="color:#9ca3af;font-size:9px">'+wc.purchases+'p/'+wc.spend.toFixed(0)+'€</span></span>').join('');
+        const winFlags=w.winCountries.map(wc=>'<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;background:rgba(76,175,80,0.1);border-radius:4px;font-size:11px;margin:1px">'+FLAGS[wc.country]+' '+wc.country+' <span style="color:#3a9b3e;font-weight:600">'+wc.cpa.toFixed(0)+'€</span> <span style="color:#9ca3af;font-size:9px">'+wc.purchases+'p/'+wc.spend.toFixed(0)+'€</span></span>').join('');
         const expandFlags=w.expandTo.map(cc=>'<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;background:rgba(59,130,246,0.1);border-radius:4px;font-size:11px;margin:1px">'+FLAGS[cc]+' '+cc+'</span>').join('');
-        const cpaStyle=w.overallCpa>0?(w.overallCpa<=15?'background:#4caf50;color:#fff':w.overallCpa<=20?'background:#84cc16;color:#fff':w.overallCpa<=25?'background:#f59e0b;color:#fff':'background:#ef5350;color:#fff'):'';
+        const cpaStyle=w.overallCpa>0?(w.overallCpa<=15?'background:#3a9b3e;color:#fff':w.overallCpa<=20?'background:#84cc16;color:#fff':w.overallCpa<=25?'background:#f59e0b;color:#fff':'background:#ef5350;color:#fff'):'';
         return '<tr>'+
           '<td style="text-align:left"><span style="font-weight:700;font-size:13px">'+w.id+'</span><span style="font-size:10px;color:#9ca3af;margin-left:6px">'+w.adCount+' ads</span></td>'+
           '<td style="text-align:right;font-weight:600">'+w.totalSpend.toFixed(0)+' €</td>'+
           '<td style="text-align:right">'+w.totalPurchases+'</td>'+
           '<td style="text-align:right;'+cpaStyle+';font-weight:600;padding:4px 8px;border-radius:3px">'+(w.overallCpa>0?w.overallCpa.toFixed(2)+' €':'—')+'</td>'+
           '<td style="text-align:left">'+winFlags+'</td>'+
-          '<td style="font-weight:600;color:'+(w.bestCpa<=15?'#4caf50':w.bestCpa<=20?'#84cc16':'#f59e0b')+'">'+w.bestCpa.toFixed(2)+' €</td>'+
+          '<td style="font-weight:600;color:'+(w.bestCpa<=15?'#3a9b3e':w.bestCpa<=20?'#84cc16':'#f59e0b')+'">'+w.bestCpa.toFixed(2)+' €</td>'+
           '<td style="text-align:left">'+expandFlags+'</td>'+
           '<td><span style="display:inline-block;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;background:'+w.pColor+'20;color:'+w.pColor+'">'+w.pLabel+'</span></td>'+
         '</tr>';
@@ -5479,7 +5479,7 @@ async function generateUploadPlan() {
       if (waitingCZ.length > 0) {
         document.getElementById('waitingCZCount').textContent = waitingCZ.length + ' creatives';
         document.getElementById('waitingCZBody').innerHTML = waitingCZ.map(w => {
-          const cpaStyle = w.bestCPA <= 15 ? 'background:#4caf50;color:#fff;font-weight:600' : w.bestCPA <= 20 ? 'background:#84cc16;color:#fff;font-weight:600' : 'background:#f59e0b;color:#fff;font-weight:600';
+          const cpaStyle = w.bestCPA <= 15 ? 'background:#3a9b3e;color:#fff;font-weight:600' : w.bestCPA <= 20 ? 'background:#84cc16;color:#fff;font-weight:600' : 'background:#f59e0b;color:#fff;font-weight:600';
           const status = w.czSpend === 0 ? '<span style="color:#ef4444;font-weight:600">Not tested</span>' : '<span style="color:#f59e0b">Low spend (' + w.czSpend.toFixed(0) + '€)</span>';
           return '<tr>' +
             '<td style="text-align:left;font-weight:700">' + w.id + ' <span style="font-size:10px;color:#9ca3af">' + w.adCount + ' ads</span></td>' +
@@ -5789,7 +5789,7 @@ function renderAIHints(s, isCampaignMode) {
   document.getElementById('ahResults').style.display = 'block';
 
   // Summary cards
-  const profitColor = s.totalProfit >= 0 ? '#4caf50' : '#ef5350';
+  const profitColor = s.totalProfit >= 0 ? '#3a9b3e' : '#ef5350';
   document.getElementById('ahSummaryCards').innerHTML = `
     <div style="background:var(--card-bg);border-radius:var(--card-radius);border:1px solid var(--border-color);padding:20px">
       <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted)">Total Spend</div>
@@ -5830,7 +5830,7 @@ function renderAIHints(s, isCampaignMode) {
   // Recommendations with color coding
   const recStyles = {
     pause: { color: '#ef5350', icon: '🔴', label: 'PAUSE' },
-    scale: { color: '#4caf50', icon: '🟢', label: 'SCALE' },
+    scale: { color: '#3a9b3e', icon: '🟢', label: 'SCALE' },
     adjust: { color: '#f59e0b', icon: '🟡', label: 'ADJUST' },
     watch: { color: '#3b82f6', icon: '🔵', label: 'WATCH' }
   };
@@ -5868,7 +5868,7 @@ function renderAIHints(s, isCampaignMode) {
             <th style="text-align:left;padding:8px;font-weight:700">Status</th>
           </tr></thead>
           <tbody>${s.adsets.map(a => {
-            const cpaStyle = a.cpa > 0 ? (a.cpa <= 15 ? 'background:#4caf50;color:#fff;font-weight:600' : a.cpa <= 20 ? 'background:#84cc16;color:#fff;font-weight:600' : a.cpa <= 25 ? 'background:#f59e0b;color:#fff;font-weight:600' : 'background:#ef5350;color:#fff;font-weight:600') : '';
+            const cpaStyle = a.cpa > 0 ? (a.cpa <= 15 ? 'background:#3a9b3e;color:#fff;font-weight:600' : a.cpa <= 20 ? 'background:#84cc16;color:#fff;font-weight:600' : a.cpa <= 25 ? 'background:#f59e0b;color:#fff;font-weight:600' : 'background:#ef5350;color:#fff;font-weight:600') : '';
             return '<tr>' +
               '<td style="text-align:left;font-size:12px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (a.name||'—') + '</td>' +
               '<td style="text-align:center;font-size:11px">' + (a.status==='ACTIVE'?'<span style="color:#22c55e">● Active</span>':'<span style="color:#9ca3af">● Paused</span>') + '</td>' +
@@ -5889,14 +5889,14 @@ function renderAIHints(s, isCampaignMode) {
       <div style="font-weight:700;font-size:14px;margin-bottom:12px">🏆 Top 5 Campaigns by Profit</div>
       ${s.topCampaigns.map((c, i) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-color);font-size:12px">
         <div style="display:flex;align-items:center;gap:8px;overflow:hidden"><span style="font-weight:700;color:var(--text-muted);width:18px">${i+1}.</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(c.name||'').replace(/"/g,'&quot;')}">${(c.name||'').slice(0,45)}</span></div>
-        <span style="font-weight:700;color:${c.profit>=0?'#4caf50':'#ef5350'};white-space:nowrap;margin-left:8px">${c.profit>=0?'+':''}€${c.profit.toFixed(2)}</span>
+        <span style="font-weight:700;color:${c.profit>=0?'#3a9b3e':'#ef5350'};white-space:nowrap;margin-left:8px">${c.profit>=0?'+':''}€${c.profit.toFixed(2)}</span>
       </div>`).join('')}`;
 
     document.getElementById('ahWorstCampaigns').innerHTML = `
       <div style="font-weight:700;font-size:14px;margin-bottom:12px">⚠️ Bottom 5 Campaigns by Profit</div>
       ${s.worstCampaigns.map((c, i) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-color);font-size:12px">
         <div style="display:flex;align-items:center;gap:8px;overflow:hidden"><span style="font-weight:700;color:var(--text-muted);width:18px">${i+1}.</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(c.name||'').replace(/"/g,'&quot;')}">${(c.name||'').slice(0,45)}</span></div>
-        <span style="font-weight:700;color:${c.profit>=0?'#4caf50':'#ef5350'};white-space:nowrap;margin-left:8px">${c.profit>=0?'+':''}€${c.profit.toFixed(2)}</span>
+        <span style="font-weight:700;color:${c.profit>=0?'#3a9b3e':'#ef5350'};white-space:nowrap;margin-left:8px">${c.profit>=0?'+':''}€${c.profit.toFixed(2)}</span>
       </div>`).join('')}`;
     document.getElementById('ahTopCampaigns').style.display = 'block';
     document.getElementById('ahWorstCampaigns').style.display = 'block';
@@ -6055,7 +6055,7 @@ function optRangeRow(campaignId) {
       if (p === 0) {
         html += '<td class="opt-range-cell">\u2014</td>';
       } else {
-        var st = p > 0 ? 'background:#4caf50;color:#fff;font-weight:600;border-radius:4px;padding:2px 6px' : 'background:#ef5350;color:#fff;font-weight:600;border-radius:4px;padding:2px 6px';
+        var st = p > 0 ? 'background:#3a9b3e;color:#fff;font-weight:600;border-radius:4px;padding:2px 6px' : 'background:#ef5350;color:#fff;font-weight:600;border-radius:4px;padding:2px 6px';
         html += '<td class="opt-range-cell"><span style="' + st + '">' + p.toFixed(2) + ' \u20ac</span></td>';
       }
     }
@@ -6138,8 +6138,8 @@ function renderOptimizer() {
     const cpaVal = purchases > 0 ? spend/purchases : 0;
     const roas = c.wc?.roas||0;
     const budget = c.daily_budget ? (parseFloat(c.daily_budget)/100).toFixed(0) : '';
-    const profitStyle = profit > 0 ? 'background:#4caf50;color:#fff;font-weight:600;border-radius:4px;padding:2px 6px' : profit < 0 ? 'background:#ef5350;color:#fff;font-weight:600;border-radius:4px;padding:2px 6px' : '';
-    const cpaStyle = cpaVal > 0 ? (cpaVal <= 15 ? 'background:#4caf50;color:#fff;border-radius:4px;padding:2px 6px' : cpaVal <= 25 ? 'background:#f59e0b;color:#fff;border-radius:4px;padding:2px 6px' : 'background:#ef5350;color:#fff;border-radius:4px;padding:2px 6px') : '';
+    const profitStyle = profit > 0 ? 'background:#3a9b3e;color:#fff;font-weight:600;border-radius:4px;padding:2px 6px' : profit < 0 ? 'background:#ef5350;color:#fff;font-weight:600;border-radius:4px;padding:2px 6px' : '';
+    const cpaStyle = cpaVal > 0 ? (cpaVal <= 15 ? 'background:#3a9b3e;color:#fff;border-radius:4px;padding:2px 6px' : cpaVal <= 25 ? 'background:#f59e0b;color:#fff;border-radius:4px;padding:2px 6px' : 'background:#ef5350;color:#fff;border-radius:4px;padding:2px 6px') : '';
     const isExp = optExpanded[c.id];
     const flags = optGetFlags(c.name);
     const typeTag = optGetType(c.name);
@@ -6166,7 +6166,7 @@ function renderOptimizer() {
         const asOrders = as.wc?.orders||0;
         const asRevenue = as.wc?.revenueGross||0;
         const asProfit = as.wc?.profit||0;
-        const asProfitStyle = asProfit > 0 ? 'background:#4caf50;color:#fff;border-radius:4px;padding:2px 6px' : asProfit < 0 ? 'background:#ef5350;color:#fff;border-radius:4px;padding:2px 6px' : '';
+        const asProfitStyle = asProfit > 0 ? 'background:#3a9b3e;color:#fff;border-radius:4px;padding:2px 6px' : asProfit < 0 ? 'background:#ef5350;color:#fff;border-radius:4px;padding:2px 6px' : '';
         const asName = (as.name||'').toUpperCase();
         let asMatchesCountry = optCountry === 'ALL';
         if (!asMatchesCountry && optCountry !== 'SOFI') {
@@ -6190,7 +6190,7 @@ function renderOptimizer() {
         html += '<td style="text-align:right"><span style="'+asProfitStyle+'">'+(asProfit!==0?asProfit.toFixed(2)+' €':'—')+'</span></td>';
         const asPurch = optGetPurchases(as.insights);
         const asCpa = asPurch > 0 ? asSpend/asPurch : 0;
-        const asCpaStyle = asCpa > 0 ? (asCpa <= 15 ? 'background:#4caf50;color:#fff;border-radius:4px;padding:2px 6px' : asCpa <= 25 ? 'background:#f59e0b;color:#fff;border-radius:4px;padding:2px 6px' : 'background:#ef5350;color:#fff;border-radius:4px;padding:2px 6px') : '';
+        const asCpaStyle = asCpa > 0 ? (asCpa <= 15 ? 'background:#3a9b3e;color:#fff;border-radius:4px;padding:2px 6px' : asCpa <= 25 ? 'background:#f59e0b;color:#fff;border-radius:4px;padding:2px 6px' : 'background:#ef5350;color:#fff;border-radius:4px;padding:2px 6px') : '';
         html += '<td style="text-align:right"><span style="'+asCpaStyle+'">'+(asCpa>0?asCpa.toFixed(2)+' €':'—')+'</span></td>';
         html += '<td style="text-align:right">'+(asRevenue>0&&asSpend>0?((asRevenue/asSpend)).toFixed(2)+'x':'—')+'</td>';
         html += '<td style="text-align:center">'+optActionBtn(as.status)+'</td>';
@@ -6202,7 +6202,7 @@ function renderOptimizer() {
             const adSpend = parseFloat(ad.insights?.spend||0);
             const adPurch = optGetPurchases(ad.insights);
             const adCpa = adPurch > 0 ? adSpend/adPurch : 0;
-            const adCpaStyle = adCpa > 0 ? (adCpa <= 15 ? 'background:#4caf50;color:#fff;border-radius:4px;padding:2px 6px' : adCpa <= 25 ? 'background:#f59e0b;color:#fff;border-radius:4px;padding:2px 6px' : 'background:#ef5350;color:#fff;border-radius:4px;padding:2px 6px') : '';
+            const adCpaStyle = adCpa > 0 ? (adCpa <= 15 ? 'background:#3a9b3e;color:#fff;border-radius:4px;padding:2px 6px' : adCpa <= 25 ? 'background:#f59e0b;color:#fff;border-radius:4px;padding:2px 6px' : 'background:#ef5350;color:#fff;border-radius:4px;padding:2px 6px') : '';
             html += '<tr class="opt-ad-row" style="'+grayStyle+'">';
             html += '<td></td>';
             html += '<td></td>';
@@ -7145,7 +7145,7 @@ function renderDashboard(data) {
       var pfColor = o.profit >= 0 ? '#10b981' : '#ef4444';
       var campName = o.campaign_name || o.campaign_id || '';
       if (campName.length > 30) campName = campName.slice(0,30) + '...';
-      return '<tr><td>'+(i+1)+'</td><td style="white-space:nowrap">'+dateStr+'</td><td>'+(fl[o.country]||'')+' '+(o.country||'')+'</td><td><span style="background:'+bg+';color:#fff;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600">'+(o.origin||'')+'</span>'+(o.fbMeasured ? ' <span style="font-size:9px;padding:1px 4px;border-radius:3px;background:'+(o.fbMeasured==='Measured'?'#dcfce7':'#fef3c7')+';color:'+(o.fbMeasured==='Measured'?'#166534':'#92400e')+'">'+o.fbMeasured+'</span>' : '')+'</td><td style="font-size:10px;color:#6b7280;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(o.campaign_id||'')+'">'+campName+'</td><td>'+(o.customer||'#'+o.id)+'</td><td style="font-size:11px;color:#6b7280">'+(o.items||'')+'</td><td style="text-align:right;color:'+pfColor+';font-weight:600">'+(o.profit||0).toFixed(2)+' EUR</td><td style="text-align:right;font-weight:600">'+(o.revenue||0).toFixed(2)+' EUR</td></tr>';
+      return '<tr><td>'+(i+1)+'</td><td style="white-space:nowrap">'+dateStr+'</td><td>'+(fl[o.country]||'')+' '+(o.country||'')+'</td><td><span style="background:'+bg+';color:#fff;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600">'+(o.origin||'')+'</span>'+(o.fbMeasured ? ' <span style="font-size:9px;padding:1px 4px;border-radius:3px;background:'+(o.fbMeasured==='Measured'?'#dcfce7':'#fef3c7')+';color:'+(o.fbMeasured==='Measured'?'#fff':'#92400e')+'">'+o.fbMeasured+'</span>' : '')+'</td><td style="font-size:10px;color:#6b7280;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(o.campaign_id||'')+'">'+campName+'</td><td>'+(o.customer||'#'+o.id)+'</td><td style="font-size:11px;color:#6b7280">'+(o.items||'')+'</td><td style="text-align:right;color:'+pfColor+';font-weight:600">'+(o.profit||0).toFixed(2)+' EUR</td><td style="text-align:right;font-weight:600">'+(o.revenue||0).toFixed(2)+' EUR</td></tr>';
     }).join('');
     // Totals row
     var totProfit = data.orders_list.reduce(function(s,o){return s+(o.profit||0);},0);
@@ -8037,7 +8037,7 @@ async function openTrendChart(id, name, level) {
       var dayPurch = purchases[di] || 0;
       if (daySpend <= 0 && dayPurch <= 0) continue;
       var dayCpa = dayPurch > 0 ? (daySpend / dayPurch).toFixed(0) : '';
-      var bg = dayPurch > 0 ? 'background:#4caf50;color:#fff' : 'background:#ef5350;color:#fff';
+      var bg = dayPurch > 0 ? 'background:#3a9b3e;color:#fff' : 'background:#ef5350;color:#fff';
       var label = dayPurch > 0 ? dayPurch + '×' + dayCpa + '€' : '-' + daySpend.toFixed(0) + '€';
       var subText = dayPurch > 0 ? dayPurch + ' ord · ' + dayCpa + '€ CPA' : 'no orders';
       pillsHtml += '<div style="flex-shrink:0;text-align:center;line-height:1.2"><div style="display:inline-block;padding:3px 6px;border-radius:3px;font-size:11px;font-weight:700;' + bg + ';white-space:nowrap">' + label + '</div><div style="font-size:9px;color:#333;margin-top:1px;font-weight:500">' + days[di] + '</div><div style="font-size:8px;color:#999;white-space:nowrap">' + subText + '</div></div>';
