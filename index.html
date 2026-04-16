@@ -1082,7 +1082,9 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 #section-ads-manager table tbody tr.ci-even:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #ececec !important; }
 #section-ads-manager table tbody tr.ci-odd:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #fff !important; }
 #section-ads-manager table tbody td.pl-day-cell { background-image: none !important; width: 78px; min-width: 78px; max-width: 78px; }
-#section-ads-manager table tbody tr:hover td.pl-day-cell { background: inherit !important; color: inherit !important; }
+#section-ads-manager table tbody tr:hover td.pl-day-cell,
+#section-ads-manager table tbody tr.ci-even:hover td.pl-day-cell,
+#section-ads-manager table tbody tr.ci-odd:hover td.pl-day-cell { background: unset !important; }
 /* Hover disabled entirely for ads-manager */
 #section-ads-manager table thead th.pl-day-col { width: 78px; min-width: 78px; max-width: 78px; text-align: center; }
 #section-ads-manager table tbody td.pl-day-cell .muted { color: #fff !important; }
@@ -1095,8 +1097,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 #section-ads-manager table tbody tr:not(.totals-row):hover td { background: inherit !important; }
 #section-ads-manager table tbody tr:hover td.cell-pl-green { background: #3a9b3e !important; }
 #section-ads-manager table tbody tr:hover td.cell-pl-red { background: #e85555 !important; }
-#section-ads-manager table tbody tr.ci-even:hover td { background: #ececec !important; }
-#section-ads-manager table tbody tr.ci-odd:hover td { background: #ffffff !important; }
+#section-ads-manager table tbody tr.ci-even:hover td:not(.pl-day-cell) { background: #ececec !important; }
+#section-ads-manager table tbody tr.ci-odd:hover td:not(.pl-day-cell) { background: #ffffff !important; }
 #section-ads-manager table tbody tr.level-adset:hover td,
 #section-ads-manager table tbody tr.level-ad:hover td,
 #section-ads-manager table tbody tr.campaign-profit:hover td,
