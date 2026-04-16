@@ -206,7 +206,8 @@ tbody td {
 }
 tbody td:nth-child(1), tbody td:nth-child(2) { text-align: left; }
 tbody tr:last-child td { border-bottom: none; }
-tbody tr:hover td { background: inherit; }
+tbody tr:hover td { background: inherit !important; }
+#section-ads-manager table tbody tr:hover td { background: inherit !important; }
 #section-ads-manager table tbody tr:hover td.cell-pl-green { background: #3a9b3e !important; color:#fff !important; } #section-ads-manager table tbody tr:hover td.cell-pl-red { background: #e85555 !important; color:#fff !important; }
 tbody tr.level-campaign:nth-child(odd) td { background: #fbfbfb; }
 tbody tr.level-campaign:nth-child(even) td { background: #fff; }
@@ -1081,7 +1082,15 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 /* Campaign rows: zebra by ci-even/ci-odd (set in JS based on campaign index) */
 #section-ads-manager table tbody tr.ci-even:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #ececec !important; }
 #section-ads-manager table tbody tr.ci-odd:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #fff !important; }
-#section-ads-manager table tbody td.pl-day-cell { background-image: none !important; width: 78px; min-width: 78px; max-width: 78px; pointer-events: none !important; }
+#section-ads-manager table tbody td.pl-day-cell { background-image: none !important; width: 78px; min-width: 78px; max-width: 78px; }
+#section-ads-manager table tbody tr:hover td.pl-day-cell,
+#section-ads-manager table tbody tr.ci-even:hover td.pl-day-cell,
+#section-ads-manager table tbody tr.ci-odd:hover td.pl-day-cell,
+#section-ads-manager table tbody tr.level-campaign:hover td.pl-day-cell,
+#section-ads-manager table tbody tr.level-adset:hover td.pl-day-cell,
+#section-ads-manager table tbody tr.level-ad:hover td.pl-day-cell,
+#section-ads-manager table tbody tr.campaign-profit:hover td.pl-day-cell,
+#section-ads-manager table tbody tr.campaign-loss:hover td.pl-day-cell { background: var(--pl-day-bg, transparent) !important; }
 #section-ads-manager table tbody tr:hover td.pl-day-cell,
 #section-ads-manager table tbody tr.ci-even:hover td.pl-day-cell,
 #section-ads-manager table tbody tr.ci-odd:hover td.pl-day-cell { background: unset !important; }
@@ -3659,7 +3668,7 @@ function profitCell(p, singleDay) {
     else if (profit < 0) { bg='#ef5350'; label=fmtEur(profit); }
     const txtColor=bg==='#87d28a'?'#1a1a1a':'#fff';
     const _s=`background:${bg}!important;color:${txtColor}!important;text-align:center;line-height:1.2;padding:6px 6px`;
-    return `<td class="pl-day-cell" style="${_s}" onmouseover="this.style.cssText=this.getAttribute('data-s')" onmouseout="this.style.cssText=this.getAttribute('data-s')" data-s="${_s}"><div style="font-weight:700;font-size:12px;white-space:nowrap">${label}</div><div style="font-size:9px;opacity:0.9;white-space:nowrap">${orders} orders</div><div style="font-size:9px;opacity:0.9;white-space:nowrap">${cpa} CPA</div></td>`;
+    return `<td class="pl-day-cell" style="background:${bg}!important;color:${txtColor}!important;text-align:center;line-height:1.2;padding:6px 6px" onmouseover="this.style.cssText=this.getAttribute('data-s')" onmouseout="this.style.cssText=this.getAttribute('data-s')" data-s="${_s}"><div style="font-weight:700;font-size:12px;white-space:nowrap">${label}</div><div style="font-size:9px;opacity:0.9;white-space:nowrap">${orders} orders</div><div style="font-size:9px;opacity:0.9;white-space:nowrap">${cpa} CPA</div></td>`;
   }
   const pill=profitPill(profit, orders);
   const ordTag=`<span style="display:block;font-size:9px;color:#666;margin-top:1px">${orders} orders</span>`;
