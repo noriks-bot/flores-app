@@ -1089,6 +1089,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 #section-ads-manager table tbody tr:nth-child(even):not(.totals-row):not(.ci-even):not(.ci-odd) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #ececec !important; }
 #section-ads-manager td.cell-pl-green { background: #4db87a !important; color: #fff !important; font-weight: 400; text-align: right; }
 #section-ads-manager td.cell-pl-red { background: #e85555 !important; color: #fff !important; font-weight: 400; text-align: right; }
+#section-ads-manager td.cell-pl-light-green { background: #86efac !important; color: #166534 !important; font-weight: 400; text-align: right; }
 /* ads-manager hover intentionally disabled */
 #section-ads-manager table tbody tr:not(.totals-row):hover td { background: inherit !important; }
 #section-ads-manager table tbody tr:hover td.cell-pl-green { background: #4db87a !important; }
@@ -3730,20 +3731,20 @@ function makeRow(item,level,bgClass) {
   const fpaHtml=wcCount>0?'<span style="color:#4db87a;font-size:13px">\u25cf</span>':'<span style="color:#ccc;font-size:13px">\u2298</span>';
   // Profit/loss cell
   let plCls='', plHtml='<span class="muted">\u2014</span>';
-  if(wc?.profit!==undefined&&wc.profit!==0){ plCls=wc.profit>0?'cell-pl-green':'cell-pl-red'; plHtml=(wc.profit>0?'':'')+wc.profit.toFixed(2)+' \u20ac'; }
+  if(wc?.profit!==undefined&&wc.profit!==0){ plCls=wc.profit>0?'cell-pl-green':((wc.orders>0?wc.profit/wc.orders:wc.profit)>=-3?'cell-pl-light-green':'cell-pl-red'); plHtml=(wc.profit>0?'':'')+wc.profit.toFixed(2)+' \u20ac'; }
   else if(wc?.profit===0){ plHtml='0 \u20ac'; }
   // Profit per order
   let ppoCls='', ppoHtml='<span class="muted">\u2014</span>';
-  if(wc?.orders>0){ const ppo=wc.profit/wc.orders; ppoCls=ppo>=0?'cell-pl-green':'cell-pl-red'; ppoHtml=ppo.toFixed(2)+' \u20ac'; }
+  if(wc?.orders>0){ const ppo=wc.profit/wc.orders; ppoCls=ppo>=0?'cell-pl-green':(ppo>=-3?'cell-pl-light-green':'cell-pl-red'); ppoHtml=ppo.toFixed(2)+' \u20ac'; }
   else if(wc?.profit!==undefined&&wc.profit<0){ ppoCls='cell-pl-red'; ppoHtml=wc.profit.toFixed(2)+' \u20ac'; }
   // ADV variants (firma profit after tiered cut per order)
   let plAdvCls='', plAdvHtml='<span class="muted">\u2014</span>';
   let ppoAdvCls='', ppoAdvHtml='<span class="muted">\u2014</span>';
   if(wc?.orders>0){
     const adv=advProfitForRow(wc);
-    plAdvCls=adv.profit>=0?'cell-pl-green':'cell-pl-red';
+    const _plAdvPoo=wc.orders>0?adv.profit/wc.orders:adv.profit; plAdvCls=adv.profit>=0?'cell-pl-green':(_plAdvPoo>=-3?'cell-pl-light-green':'cell-pl-red');
     plAdvHtml=adv.profit.toFixed(2)+' \u20ac';
-    ppoAdvCls=adv.ppo>=0?'cell-pl-green':'cell-pl-red';
+    ppoAdvCls=adv.ppo>=0?'cell-pl-green':(adv.ppo>=-3?'cell-pl-light-green':'cell-pl-red');
     ppoAdvHtml=adv.ppo.toFixed(2)+' \u20ac';
   } else if(wc?.profit!==undefined&&wc.profit<0){
     plAdvCls='cell-pl-red'; plAdvHtml=wc.profit.toFixed(2)+' \u20ac';
@@ -3775,10 +3776,10 @@ function makeRow(item,level,bgClass) {
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td style="white-space:nowrap;vertical-align:middle">${wcCount>0?`<button onclick="event.stopPropagation();showCampaignOrders('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-right:5px;border-radius:4px;vertical-align:middle;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:22px;height:18px"><i class="fas fa-list-ul" style="font-size:9px"></i></button>`:''}<strong style="font-size:13px;vertical-align:middle">${wcCount||0}</strong></td>
     <td style="font-size:11px;color:#8b5cf6">${(fpaData[level==="campaign"?"campaigns":level==="adset"?"adsets":"ads"][item.id])||0}</td>
-    <td class="col-profit-orig ${plCls}" style="${plCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":plCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plHtml}</td>
-    <td class="col-profit-orig ${ppoCls}" style="${ppoCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":ppoCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoHtml}</td>
-    <td class="${plAdvCls}" style="${plAdvCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":plAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plAdvHtml}</td>
-    <td class="${ppoAdvCls}" style="${ppoAdvCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":ppoAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoAdvHtml}</td>
+    <td class="col-profit-orig ${plCls}" style="${plCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":plCls==="cell-pl-light-green"?"background:#86efac !important;color:#166534 !important;":plCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plHtml}</td>
+    <td class="col-profit-orig ${ppoCls}" style="${ppoCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":ppoCls==="cell-pl-light-green"?"background:#86efac !important;color:#166534 !important;":ppoCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoHtml}</td>
+    <td class="${plAdvCls}" style="${plAdvCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":plAdvCls==="cell-pl-light-green"?"background:#86efac !important;color:#166534 !important;":plAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plAdvHtml}</td>
+    <td class="${ppoAdvCls}" style="${ppoAdvCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":ppoAdvCls==="cell-pl-light-green"?"background:#86efac !important;color:#166534 !important;":ppoAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoAdvHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${florexCpa}</td>
     <td>${roas}</td>
@@ -4277,19 +4278,19 @@ function makeFlatRow(item, level) {
   const fpaHtml=wcCount>0?'<span style="color:#4db87a;font-size:13px">\u25cf</span>':'<span style="color:#ccc;font-size:13px">\u2298</span>';
   // Profit cells
   let plCls='',plHtml='<span class="muted">\u2014</span>';
-  if(wc?.profit!==undefined&&wc.profit!==0){ plCls=wc.profit>0?'cell-pl-green':'cell-pl-red'; plHtml=wc.profit.toFixed(2)+' \u20ac'; }
+  if(wc?.profit!==undefined&&wc.profit!==0){ plCls=wc.profit>0?'cell-pl-green':((wc.orders>0?wc.profit/wc.orders:wc.profit)>=-3?'cell-pl-light-green':'cell-pl-red'); plHtml=wc.profit.toFixed(2)+' \u20ac'; }
   else if(wc?.profit===0){ plHtml='0 \u20ac'; }
   let ppoCls='',ppoHtml='<span class="muted">\u2014</span>';
-  if(wcCount>0){ const ppo=wc.profit/wc.orders; ppoCls=ppo>=0?'cell-pl-green':'cell-pl-red'; ppoHtml=ppo.toFixed(2)+' \u20ac'; }
+  if(wcCount>0){ const ppo=wc.profit/wc.orders; ppoCls=ppo>=0?'cell-pl-green':(ppo>=-3?'cell-pl-light-green':'cell-pl-red'); ppoHtml=ppo.toFixed(2)+' \u20ac'; }
   else if(wc?.profit!==undefined&&wc.profit<0){ ppoCls='cell-pl-red'; ppoHtml=wc.profit.toFixed(2)+' \u20ac'; }
   // ADV variants
   let plAdvCls='',plAdvHtml='<span class="muted">\u2014</span>';
   let ppoAdvCls='',ppoAdvHtml='<span class="muted">\u2014</span>';
   if(wcCount>0){
     const adv=advProfitForRow(wc);
-    plAdvCls=adv.profit>=0?'cell-pl-green':'cell-pl-red';
+    const _plAdvPoo=wc.orders>0?adv.profit/wc.orders:adv.profit; plAdvCls=adv.profit>=0?'cell-pl-green':(_plAdvPoo>=-3?'cell-pl-light-green':'cell-pl-red');
     plAdvHtml=adv.profit.toFixed(2)+' \u20ac';
-    ppoAdvCls=adv.ppo>=0?'cell-pl-green':'cell-pl-red';
+    ppoAdvCls=adv.ppo>=0?'cell-pl-green':(adv.ppo>=-3?'cell-pl-light-green':'cell-pl-red');
     ppoAdvHtml=adv.ppo.toFixed(2)+' \u20ac';
   } else if(wc?.profit!==undefined&&wc.profit<0){
     plAdvCls='cell-pl-red'; plAdvHtml=wc.profit.toFixed(2)+' \u20ac';
@@ -4320,10 +4321,10 @@ function makeFlatRow(item, level) {
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td style="white-space:nowrap;vertical-align:middle">${wcCount>0?`<button onclick="event.stopPropagation();showCampaignOrders('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-right:5px;border-radius:4px;vertical-align:middle;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:22px;height:18px"><i class="fas fa-list-ul" style="font-size:9px"></i></button>`:''}<strong style="font-size:13px;vertical-align:middle">${wcCount||0}</strong></td>
     <td style="font-size:11px;color:#8b5cf6">${(fpaData[level==="campaign"?"campaigns":level==="adset"?"adsets":"ads"][item.id])||0}</td>
-    <td class="col-profit-orig ${plCls}" style="${plCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":plCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plHtml}</td>
-    <td class="col-profit-orig ${ppoCls}" style="${ppoCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":ppoCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoHtml}</td>
-    <td class="${plAdvCls}" style="${plAdvCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":plAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plAdvHtml}</td>
-    <td class="${ppoAdvCls}" style="${ppoAdvCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":ppoAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoAdvHtml}</td>
+    <td class="col-profit-orig ${plCls}" style="${plCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":plCls==="cell-pl-light-green"?"background:#86efac !important;color:#166534 !important;":plCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plHtml}</td>
+    <td class="col-profit-orig ${ppoCls}" style="${ppoCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":ppoCls==="cell-pl-light-green"?"background:#86efac !important;color:#166534 !important;":ppoCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoHtml}</td>
+    <td class="${plAdvCls}" style="${plAdvCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":plAdvCls==="cell-pl-light-green"?"background:#86efac !important;color:#166534 !important;":plAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plAdvHtml}</td>
+    <td class="${ppoAdvCls}" style="${ppoAdvCls==="cell-pl-green"?"background:#4db87a !important;color:#fff !important;":ppoAdvCls==="cell-pl-light-green"?"background:#86efac !important;color:#166534 !important;":ppoAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoAdvHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${florexCpa}</td>
     <td>${roas}</td>
