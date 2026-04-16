@@ -186,7 +186,7 @@ tr.totals-row:hover td { background: linear-gradient(135deg, #1a2332 0%, #1f3044
 tr.totals-row .pill-green { color: #fff; background: #3a9b3e; }
 tr.totals-row .pill-red { color: #fff; background: #ef5350; }
 tr.totals-row .pill-neutral { color: #fff; background: rgba(255,255,255,0.15); }
-tr.totals-row .pill-light-green { color: #1a1a1a; background: #5dbc61; }
+tr.totals-row .pill-light-green { color: #1a1a1a; background: #87d28a; }
 tr.totals-row .badge-profit, tr.totals-row .badge-loss, tr.totals-row .badge-neutral { color: #fff; background: rgba(255,255,255,0.15); }
 thead th:nth-child(1) { cursor: default; }
 thead th.wc-col, thead th.fb-col, thead th.profit-col { color: #6b6f75; background: none !important; }
@@ -366,7 +366,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 .pill-green { display: block; padding: 2px 5px; background: #3a9b3e; color: #fff; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; text-align: right; }
 .pill-red { display: block; padding: 2px 5px; background: #ef5350; color: #fff; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; text-align: right; }
 .pill-neutral { display: block; padding: 3px 6px; background: #f0f0f0; color: #666; border-radius: 3px; font-size: 12px; font-weight: 400; text-align: right; }
-.pill-light-green { display: block; padding: 2px 5px; background: #5dbc61; color: #1a1a1a; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; text-align: right; }
+.pill-light-green { display: block; padding: 2px 5px; background: #87d28a; color: #1a1a1a; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; text-align: right; }
 
 /* Edit btn */
 .edit-btn {
@@ -1089,7 +1089,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 #section-ads-manager table tbody tr:nth-child(even):not(.totals-row):not(.ci-even):not(.ci-odd) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #ececec !important; }
 #section-ads-manager td.cell-pl-green { background: #3a9b3e !important; color: #fff !important; font-weight: 400; text-align: right; }
 #section-ads-manager td.cell-pl-red { background: #e85555 !important; color: #fff !important; font-weight: 400; text-align: right; }
-#section-ads-manager td.cell-pl-light-green { background: #5dbc61 !important; color: #1a1a1a !important; font-weight: 400; text-align: right; }
+#section-ads-manager td.cell-pl-light-green { background: #87d28a !important; color: #1a1a1a !important; font-weight: 400; text-align: right; }
 /* ads-manager hover intentionally disabled */
 #section-ads-manager table tbody tr:not(.totals-row):hover td { background: inherit !important; }
 #section-ads-manager table tbody tr:hover td.cell-pl-green { background: #3a9b3e !important; }
@@ -3652,9 +3652,9 @@ function profitCell(p, singleDay) {
     if (orders === 0 && profit === 0) { return '<td class="pl-day-cell"></td>'; }
     if (orders === 0) { bg='#ef5350'; label=fmtEur(profit); }
     else if (profit > 0) { bg='#3a9b3e'; label='+'+fmtEur(profit); }
-    else if (profit < 0 && poo >= -3) { bg='#5dbc61'; label=fmtEur(profit); }
+    else if (profit < 0 && poo >= -3) { bg='#87d28a'; label=fmtEur(profit); }
     else if (profit < 0) { bg='#ef5350'; label=fmtEur(profit); }
-    const txtColor=bg==='#5dbc61'?'#1a1a1a':'#fff';
+    const txtColor=bg==='#87d28a'?'#1a1a1a':'#fff';
     return `<td class="pl-day-cell" style="background:${bg};color:${txtColor};text-align:center;line-height:1.2;padding:6px 6px"><div style="font-weight:700;font-size:12px;white-space:nowrap">${label}</div><div style="font-size:9px;opacity:0.9;white-space:nowrap">${orders} orders</div><div style="font-size:9px;opacity:0.9;white-space:nowrap">${cpa} CPA</div></td>`;
   }
   const pill=profitPill(profit, orders);
@@ -3779,10 +3779,10 @@ function makeRow(item,level,bgClass) {
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td style="white-space:nowrap;vertical-align:middle">${wcCount>0?`<button onclick="event.stopPropagation();showCampaignOrders('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-right:5px;border-radius:4px;vertical-align:middle;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:22px;height:18px"><i class="fas fa-list-ul" style="font-size:9px"></i></button>`:''}<strong style="font-size:13px;vertical-align:middle">${wcCount||0}</strong></td>
     <td style="font-size:11px;color:#8b5cf6">${(fpaData[level==="campaign"?"campaigns":level==="adset"?"adsets":"ads"][item.id])||0}</td>
-    <td class="col-profit-orig ${plCls}" style="${plCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":plCls==="cell-pl-light-green"?"background:#5dbc61 !important;color:#1a1a1a !important;":plCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plHtml}</td>
-    <td class="col-profit-orig ${ppoCls}" style="${ppoCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":ppoCls==="cell-pl-light-green"?"background:#5dbc61 !important;color:#1a1a1a !important;":ppoCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoHtml}</td>
-    <td class="${plAdvCls}" style="${plAdvCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":plAdvCls==="cell-pl-light-green"?"background:#5dbc61 !important;color:#1a1a1a !important;":plAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plAdvHtml}</td>
-    <td class="${ppoAdvCls}" style="${ppoAdvCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":ppoAdvCls==="cell-pl-light-green"?"background:#5dbc61 !important;color:#1a1a1a !important;":ppoAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoAdvHtml}</td>
+    <td class="col-profit-orig ${plCls}" style="${plCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":plCls==="cell-pl-light-green"?"background:#87d28a !important;color:#1a1a1a !important;":plCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plHtml}</td>
+    <td class="col-profit-orig ${ppoCls}" style="${ppoCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":ppoCls==="cell-pl-light-green"?"background:#87d28a !important;color:#1a1a1a !important;":ppoCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoHtml}</td>
+    <td class="${plAdvCls}" style="${plAdvCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":plAdvCls==="cell-pl-light-green"?"background:#87d28a !important;color:#1a1a1a !important;":plAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plAdvHtml}</td>
+    <td class="${ppoAdvCls}" style="${ppoAdvCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":ppoAdvCls==="cell-pl-light-green"?"background:#87d28a !important;color:#1a1a1a !important;":ppoAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoAdvHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${florexCpa}</td>
     <td>${roas}</td>
@@ -4324,10 +4324,10 @@ function makeFlatRow(item, level) {
     <td>${spend>0?spend.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td style="white-space:nowrap;vertical-align:middle">${wcCount>0?`<button onclick="event.stopPropagation();showCampaignOrders('${item.id}','${(item.name||'').replace(/'/g,'').substring(0,60)}')" title="View orders" style="border:none;background:#333;color:#fff;cursor:pointer;font-size:10px;padding:4px 7px;margin-right:5px;border-radius:4px;vertical-align:middle;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:22px;height:18px"><i class="fas fa-list-ul" style="font-size:9px"></i></button>`:''}<strong style="font-size:13px;vertical-align:middle">${wcCount||0}</strong></td>
     <td style="font-size:11px;color:#8b5cf6">${(fpaData[level==="campaign"?"campaigns":level==="adset"?"adsets":"ads"][item.id])||0}</td>
-    <td class="col-profit-orig ${plCls}" style="${plCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":plCls==="cell-pl-light-green"?"background:#5dbc61 !important;color:#1a1a1a !important;":plCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plHtml}</td>
-    <td class="col-profit-orig ${ppoCls}" style="${ppoCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":ppoCls==="cell-pl-light-green"?"background:#5dbc61 !important;color:#1a1a1a !important;":ppoCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoHtml}</td>
-    <td class="${plAdvCls}" style="${plAdvCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":plAdvCls==="cell-pl-light-green"?"background:#5dbc61 !important;color:#1a1a1a !important;":plAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plAdvHtml}</td>
-    <td class="${ppoAdvCls}" style="${ppoAdvCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":ppoAdvCls==="cell-pl-light-green"?"background:#5dbc61 !important;color:#1a1a1a !important;":ppoAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoAdvHtml}</td>
+    <td class="col-profit-orig ${plCls}" style="${plCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":plCls==="cell-pl-light-green"?"background:#87d28a !important;color:#1a1a1a !important;":plCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plHtml}</td>
+    <td class="col-profit-orig ${ppoCls}" style="${ppoCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":ppoCls==="cell-pl-light-green"?"background:#87d28a !important;color:#1a1a1a !important;":ppoCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoHtml}</td>
+    <td class="${plAdvCls}" style="${plAdvCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":plAdvCls==="cell-pl-light-green"?"background:#87d28a !important;color:#1a1a1a !important;":plAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${plAdvHtml}</td>
+    <td class="${ppoAdvCls}" style="${ppoAdvCls==="cell-pl-green"?"background:#3a9b3e !important;color:#fff !important;":ppoAdvCls==="cell-pl-light-green"?"background:#87d28a !important;color:#1a1a1a !important;":ppoAdvCls==="cell-pl-red"?"background:#e85555 !important;color:#fff !important;":""}">${ppoAdvHtml}</td>
     <td>${wc?.revenueGross?wc.revenueGross.toFixed(2)+' \u20ac':'0 \u20ac'}</td>
     <td>${florexCpa}</td>
     <td>${roas}</td>
@@ -4637,7 +4637,7 @@ const originColors = {
   'FB Measured': '#3b82f6',
   'FB Unmeasured': '#60a5fa',
   'Google Ads': '#22c55e',
-  'Google Organic': '#5dbc61',
+  'Google Organic': '#87d28a',
   'Klaviyo': '#a855f7',
   'Call Center': '#f59e0b',
   'Direct': '#94a3b8',
