@@ -3649,7 +3649,8 @@ function profitCell(p, singleDay) {
     // Full-fill cell for single-day columns (Yesterday, -2d, -3d)
     let bg='#9ca3af', label='€0';
     const poo = orders > 0 ? profit / orders : null;
-    if (orders === 0) { bg=profit!==0?'#ef5350':'#9ca3af'; label=profit!==0?fmtEur(profit):'€0'; }
+    if (orders === 0 && profit === 0) { return '<td class="pl-day-cell"></td>'; }
+    if (orders === 0) { bg='#ef5350'; label=fmtEur(profit); }
     else if (profit > 0) { bg='#3a9b3e'; label='+'+fmtEur(profit); }
     else if (profit < 0 && poo >= -3) { bg='#5dbc61'; label=fmtEur(profit); }
     else if (profit < 0) { bg='#ef5350'; label=fmtEur(profit); }
