@@ -186,6 +186,7 @@ tr.totals-row:hover td { background: linear-gradient(135deg, #1a2332 0%, #1f3044
 tr.totals-row .pill-green { color: #fff; background: #4caf50; }
 tr.totals-row .pill-red { color: #fff; background: #ef5350; }
 tr.totals-row .pill-neutral { color: #fff; background: rgba(255,255,255,0.15); }
+tr.totals-row .pill-light-green { color: #166534; background: #86efac; }
 tr.totals-row .badge-profit, tr.totals-row .badge-loss, tr.totals-row .badge-neutral { color: #fff; background: rgba(255,255,255,0.15); }
 thead th:nth-child(1) { cursor: default; }
 thead th.wc-col, thead th.fb-col, thead th.profit-col { color: #6b6f75; background: none !important; }
@@ -365,6 +366,7 @@ tr.level-campaign .name-text { font-size: 13px; font-weight: 500; color: #111827
 .pill-green { display: block; padding: 2px 5px; background: #4caf50; color: #fff; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; text-align: right; }
 .pill-red { display: block; padding: 2px 5px; background: #ef5350; color: #fff; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; text-align: right; }
 .pill-neutral { display: block; padding: 3px 6px; background: #f0f0f0; color: #666; border-radius: 3px; font-size: 12px; font-weight: 400; text-align: right; }
+.pill-light-green { display: block; padding: 2px 5px; background: #86efac; color: #166534; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; text-align: right; }
 
 /* Edit btn */
 .edit-btn {
@@ -3621,10 +3623,12 @@ function renderHoverActions(name, id) {
   </span>`;
 }
 
-function profitPill(val) {
+function profitPill(val, orders) {
   if(val===undefined||val===null) return '<span class="muted">—</span>';
   if(val===0) return '<span class="pill-neutral">€0</span>';
   if(val>0) return `<span class="pill-green">+${fmtEur(val)}</span>`;
+  const poo = (orders && orders > 0) ? val / orders : val;
+  if(poo >= -3) return `<span class="pill-light-green">${fmtEur(val)}</span>`;
   return `<span class="pill-red">${fmtEur(val)}</span>`;
 }
 
@@ -3643,11 +3647,13 @@ function profitCell(p, singleDay) {
   if (singleDay) {
     // Full-fill cell for single-day columns (Yesterday, -2d, -3d)
     let bg='#9ca3af', label='€0';
+    const poo = orders > 0 ? profit / orders : 0;
     if (profit > 0) { bg='#4caf50'; label='+'+fmtEur(profit); }
+    else if (profit < 0 && poo >= -3) { bg='#86efac'; label=fmtEur(profit); }
     else if (profit < 0) { bg='#ef5350'; label=fmtEur(profit); }
     return `<td class="pl-day-cell" style="background:${bg};color:#fff;text-align:center;line-height:1.2;padding:6px 6px"><div style="font-weight:700;font-size:12px;white-space:nowrap">${label}</div><div style="font-size:9px;opacity:0.9;white-space:nowrap">${orders} orders</div><div style="font-size:9px;opacity:0.9;white-space:nowrap">${cpa} CPA</div></td>`;
   }
-  const pill=profitPill(profit);
+  const pill=profitPill(profit, orders);
   const ordTag=`<span style="display:block;font-size:9px;color:#666;margin-top:1px">${orders} orders</span>`;
   const cpaTag=`<span style="display:block;font-size:9px;color:#666">${cpa} CPA</span>`;
   return `<td style="line-height:1.2">${pill}${ordTag}${cpaTag}</td>`;
