@@ -1,12 +1,4 @@
 const http = require('http');
-
-// Prevent crash on unhandled rejections/exceptions
-process.on('unhandledRejection', (reason) => {
-  console.error('[FLORES] Unhandled Rejection:', reason);
-});
-process.on('uncaughtException', (err) => {
-  console.error('[FLORES] Uncaught Exception:', err);
-});
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
@@ -685,12 +677,6 @@ function fetchWcOrdersForCountry(country, modifiedAfter) {
 
         const data = await new Promise((res, rej) => {
           https.get(wcUrl, resp => {
-            if (resp.statusCode !== 200) {
-              console.warn(`[FLORES] WC ${country} HTTP ${resp.statusCode}, skip`);
-              resp.resume();
-              rej(new Error(`HTTP ${resp.statusCode}`));
-              return;
-            }
             let d = '';
             resp.on('data', c => d += c);
             resp.on('end', () => {
@@ -921,12 +907,6 @@ async function syncCountry(country) {
     const cancelledUrl = `${store.url}/wp-json/wc/v3/orders?status=cancelled&per_page=100&modified_after=${modifiedAfter || new Date(Date.now() - 7 * 86400000).toISOString()}&consumer_key=${store.ck}&consumer_secret=${store.cs}`;
     const cancelledOrders = await new Promise((res, rej) => {
       https.get(cancelledUrl, resp => {
-        if (resp.statusCode !== 200) {
-          console.warn(`[FLORES] Cancelled fetch HTTP ${resp.statusCode}, skip`);
-          resp.resume();
-          rej(new Error(`HTTP ${resp.statusCode}`));
-          return;
-        }
         let d = '';
         resp.on('data', c => d += c);
         resp.on('end', () => { try { res(JSON.parse(d)); } catch(e) { rej(e); } });
@@ -989,24 +969,21 @@ async function syncAllCountries() {
   return { synced: results, totalNew };
 }
 
-// Initial sync: only sets 7-day fallback for countries with NO existing sync state
+// Initial sync: last 7 days
 async function initialSync() {
-  console.log('[FLORES] Starting initial WC sync...');
+  console.log('[FLORES] Starting initial WC sync (last 7 days)...');
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  // Temporarily override sync_state to force 7-day lookback
   for (const country of Object.keys(WC_STORES)) {
     const state = getSyncState.get(country);
     if (!state || !state.last_sync_at) {
-      // First time - set 7 day fallback
       updateSyncState.run({
         country,
         last_synced_order_id: 0,
         last_sync_at: sevenDaysAgo.toISOString(),
         total_orders: 0
       });
-      console.log(`[FLORES] ${country}: no sync state, 7day fallback`);
-    } else {
-      console.log(`[FLORES] ${country}: incremental from ${state.last_sync_at}`);
     }
   }
   await syncAllCountries();

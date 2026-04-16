@@ -1,23 +1,10 @@
 const http = require('http');
-
-// Prevent crash on unhandled rejections/exceptions
-process.on('unhandledRejection', (reason) => {
-  console.error('[FLORES] Unhandled Rejection:', reason);
-});
-process.on('uncaughtException', (err) => {
-  console.error('[FLORES] Uncaught Exception:', err);
-});
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const Database = require('better-sqlite3');
 const { detectProduct: sharedDetectProduct } = require('./detect-product');
-
-// Ljubljana timestamp (Europe/Ljubljana = UTC+1/UTC+2)
-function ljNow() {
-  return new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Ljubljana' }).replace('T', ' ');
-}
 
 // Load rejection rates from dash
 let dashRejectionRates = {};
@@ -134,7 +121,7 @@ let DROPBOX_ACCESS_TOKEN = null;
 let dropboxTokenExpires = 0;
 let videosCache = null;
 let videosCacheTime = 0;
-const VIDEOS_CACHE_TTL = 5 * 60 * 1000; // 15 minutes
+const VIDEOS_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 const API_VERSION = 'v21.0';
 const CACHE_DIR = path.join(__dirname, 'cache');
 if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
@@ -143,7 +130,7 @@ if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
 const DASH_CACHE_FILE = path.join(CACHE_DIR, 'dash-cache.json');
 const ORIGIN_CACHE_FILE = path.join(CACHE_DIR, 'origin-data.json');
 
-const PRODUCT_COSTS = { tshirt: 3.5, boxers: 2.25, socks: 1.0 };
+const PRODUCT_COSTS = { tshirt: 3.5, boxers: 2.25 };
 const EUR_RATES = { HR: 1, CZ: 0.041, PL: 0.232, GR: 1, IT: 1, HU: 0.00256, SK: 1 };
 
 // WooCommerce API keys per country store
@@ -458,7 +445,6 @@ function seedOrgSettings() {
     // Product Costs
     upsertSetting.run(1, 'product_costs', 'tshirt', '3.50');
     upsertSetting.run(1, 'product_costs', 'boxers', '2.25');
-    upsertSetting.run(1, 'product_costs', 'socks', '1.00');
 
     // Rejection Rates (%)
     const rejections = { HR: 15, CZ: 15, PL: 15, SK: 15, HU: 15, GR: 25, IT: 25 };
@@ -470,18 +456,6 @@ function seedOrgSettings() {
     const shipping = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 5.5 };
     for (const [cc, cost] of Object.entries(shipping)) {
       upsertSetting.run(1, 'shipping_costs', cc, String(cost));
-    }
-
-    // Rejection Rates 2 (admin v2)
-    const rejections2 = { HR: 8, CZ: 8, PL: 5, SK: 4, HU: 7, GR: 15, IT: 15 };
-    for (const [cc, rate] of Object.entries(rejections2)) {
-      upsertSetting.run(1, 'rejection_rates2', cc, String(rate));
-    }
-
-    // Shipping Costs 2 (admin v2)
-    const shipping2 = { HR: 3, CZ: 3.3, PL: 3.5, SK: 3.1, HU: 3, GR: 4.5, IT: 5.5 };
-    for (const [cc, cost] of Object.entries(shipping2)) {
-      upsertSetting.run(1, 'shipping_costs2', cc, String(cost));
     }
 
     // VAT Rates (%)
@@ -647,16 +621,15 @@ function calculateOrderProfit(order, country) {
   const netRevenue = effectiveGrossEur / (1 + vatRate);
 
   // Product cost: use shared detectProduct (same as dash) to decompose bundles
-  let totalTshirts = 0, totalBoxers = 0, totalSocks = 0;
+  let totalTshirts = 0, totalBoxers = 0;
   const items = order.line_items || [];
   for (const item of items) {
     const qty = item.quantity || 1;
     const detected = sharedDetectProduct(item.name || '', true, item.meta_data || null, item.sku || null);
     totalTshirts += (detected.tshirts || 0) * qty;
     totalBoxers += (detected.boxers || 0) * qty;
-    totalSocks += (detected.socks || 0) * qty;
   }
-  const productCost = (totalTshirts * PRODUCT_COSTS.tshirt) + (totalBoxers * PRODUCT_COSTS.boxers) + (totalSocks * PRODUCT_COSTS.socks);
+  const productCost = (totalTshirts * PRODUCT_COSTS.tshirt) + (totalBoxers * PRODUCT_COSTS.boxers);
 
   // Shipping ALWAYS applied per order (matches dash behavior)
   const SHIPPING_COSTS = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 5.5 };
@@ -685,12 +658,6 @@ function fetchWcOrdersForCountry(country, modifiedAfter) {
 
         const data = await new Promise((res, rej) => {
           https.get(wcUrl, resp => {
-            if (resp.statusCode !== 200) {
-              console.warn(`[FLORES] WC ${country} HTTP ${resp.statusCode}, skip`);
-              resp.resume();
-              rej(new Error(`HTTP ${resp.statusCode}`));
-              return;
-            }
             let d = '';
             resp.on('data', c => d += c);
             resp.on('end', () => {
@@ -921,12 +888,6 @@ async function syncCountry(country) {
     const cancelledUrl = `${store.url}/wp-json/wc/v3/orders?status=cancelled&per_page=100&modified_after=${modifiedAfter || new Date(Date.now() - 7 * 86400000).toISOString()}&consumer_key=${store.ck}&consumer_secret=${store.cs}`;
     const cancelledOrders = await new Promise((res, rej) => {
       https.get(cancelledUrl, resp => {
-        if (resp.statusCode !== 200) {
-          console.warn(`[FLORES] Cancelled fetch HTTP ${resp.statusCode}, skip`);
-          resp.resume();
-          rej(new Error(`HTTP ${resp.statusCode}`));
-          return;
-        }
         let d = '';
         resp.on('data', c => d += c);
         resp.on('end', () => { try { res(JSON.parse(d)); } catch(e) { rej(e); } });
@@ -989,24 +950,21 @@ async function syncAllCountries() {
   return { synced: results, totalNew };
 }
 
-// Initial sync: only sets 7-day fallback for countries with NO existing sync state
+// Initial sync: last 7 days
 async function initialSync() {
-  console.log('[FLORES] Starting initial WC sync...');
+  console.log('[FLORES] Starting initial WC sync (last 7 days)...');
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  // Temporarily override sync_state to force 7-day lookback
   for (const country of Object.keys(WC_STORES)) {
     const state = getSyncState.get(country);
     if (!state || !state.last_sync_at) {
-      // First time - set 7 day fallback
       updateSyncState.run({
         country,
         last_synced_order_id: 0,
         last_sync_at: sevenDaysAgo.toISOString(),
         total_orders: 0
       });
-      console.log(`[FLORES] ${country}: no sync state, 7day fallback`);
-    } else {
-      console.log(`[FLORES] ${country}: incremental from ${state.last_sync_at}`);
     }
   }
   await syncAllCountries();
@@ -1015,10 +973,10 @@ async function initialSync() {
 // Run initial sync on startup (non-blocking)
 initialSync().catch(e => console.error('[FLORES] Initial sync error:', e.message));
 
-// Periodic sync every 5 minutes
+// Periodic sync every 15 minutes
 setInterval(() => {
   syncAllCountries().catch(e => console.error('[FLORES] Periodic sync error:', e.message));
-}, 5 * 60 * 1000);
+}, 15 * 60 * 1000);
 
 // Fetch Advertiser profit data from local dash server
 let advCache = { data: null, ts: 0, key: '' };
@@ -1081,46 +1039,16 @@ function fetchActualWcOrders(dateFrom, dateTo) {
 
 // Fetch WC orders from DB, grouped by campaign ID
 // Returns: { campaignId: [{ orderId, country, grossEur, profit, ... }] }
-// If `catalogCampaignByCountry` provided (e.g. { HR: '123...', CZ: '456...' }),
-// legacy catalog orders (non-numeric utm_campaign like "noriks-facebook-hr") are
-// attributed to that country's catalog campaign.
-function fetchWcOrdersByCampaign(dateFrom, dateTo, catalogCampaignByCountry) {
+function fetchWcOrdersByCampaign(dateFrom, dateTo) {
   const rows = db.prepare(`
-    SELECT wc_order_id, country, gross_eur, net_revenue, product_cost, shipping_cost, profit, utm_campaign, adset_id, ad_id, raw_meta
+    SELECT wc_order_id, country, gross_eur, net_revenue, product_cost, shipping_cost, profit, utm_campaign, adset_id, ad_id
     FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''
   `).all(dateFrom, dateTo);
 
   const byCampaign = {};
   for (const r of rows) {
-    let campaignKey = r.utm_campaign;
-    // If utm_campaign is non-numeric (legacy catalog campaigns like "noriks-facebook-hr"),
-    // try to recover the numeric Meta campaign id from raw_meta attribution fields,
-    // else fall back to country-level catalog campaign id.
-    if (!/^\d+$/.test(campaignKey)) {
-      let resolved = null;
-      try {
-        const m = JSON.parse(r.raw_meta || '{}');
-        const candidates = [
-          m._flores_campaign_id,
-          m._wc_order_attribution_utm_id,
-          m._wc_order_attribution_utm_content
-        ];
-        if (Array.isArray(m.meta_data)) {
-          for (const md of m.meta_data) {
-            if (md && md.key && /_flores_campaign_id|attribution_utm_id|attribution_utm_content/i.test(md.key)) candidates.push(md.value);
-          }
-        }
-        for (const cand of candidates) {
-          if (cand && /^\d+$/.test(String(cand))) { resolved = String(cand); break; }
-        }
-      } catch(e) {}
-      if (!resolved && catalogCampaignByCountry && r.country && catalogCampaignByCountry[r.country]) {
-        resolved = catalogCampaignByCountry[r.country];
-      }
-      if (resolved) campaignKey = resolved;
-    }
-    if (!byCampaign[campaignKey]) byCampaign[campaignKey] = [];
-    byCampaign[campaignKey].push({
+    if (!byCampaign[r.utm_campaign]) byCampaign[r.utm_campaign] = [];
+    byCampaign[r.utm_campaign].push({
       orderId: r.wc_order_id,
       country: r.country,
       grossEur: r.gross_eur,
@@ -1137,17 +1065,7 @@ function fetchWcOrdersByCampaign(dateFrom, dateTo, catalogCampaignByCountry) {
 
 // Calculate WC profit per campaign from its ACTUAL orders (matched by utm_campaign ID)
 function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
-  // Build country -> catalog campaign id lookup (for legacy non-numeric utm orders)
-  const catalogByCountry = {};
-  for (const c of campaigns) {
-    if (!/catalog/i.test(c.name || '')) continue;
-    const p = parseCampaignName(c.name || '');
-    const ccs = (p && p.countries) || [];
-    for (const cc of ccs) {
-      if (!catalogByCountry[cc]) catalogByCountry[cc] = c.id;
-    }
-  }
-  const byCampaign = fetchWcOrdersByCampaign(dateFrom, dateTo, catalogByCountry);
+  const byCampaign = fetchWcOrdersByCampaign(dateFrom, dateTo);
   const matchedCampaignIds = new Set();
   
   for (const c of campaigns) {
@@ -1170,10 +1088,10 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
     c.wc.roas = metaSpend > 0 ? Math.round(c.wc.revenueGross / metaSpend * 100) / 100 : 0;
   }
 
-  // Add campaigns that have WC orders but weren't in Meta API results
-  // (paused/old campaigns + legacy catalog orders with non-numeric utm_campaign)
+  // Add campaigns that have WC orders but weren't in Meta API results (paused/old campaigns)
   for (const [campaignId, orders] of Object.entries(byCampaign)) {
     if (matchedCampaignIds.has(campaignId)) continue;
+    if (!/^\d+$/.test(campaignId)) continue; // skip non-numeric IDs
     const totalProfit = orders.reduce((s, o) => s + o.profit, 0);
     const totalRevenue = orders.reduce((s, o) => s + o.grossEur, 0);
     // Try to get campaign name from DB
@@ -1534,8 +1452,6 @@ async function getMultiPeriodProfit() {
   
   const periods = {
     yesterday: { from: fmt(addD(today,-1)), to: fmt(addD(today,-1)) },
-    y2: { from: fmt(addD(today,-2)), to: fmt(addD(today,-2)) },
-    y3: { from: fmt(addD(today,-3)), to: fmt(addD(today,-3)) },
     d3: { from: fmt(addD(today,-3)), to: fmt(addD(today,-1)) },
     d7: { from: fmt(addD(today,-7)), to: fmt(addD(today,-1)) },
     d14: { from: fmt(addD(today,-14)), to: fmt(addD(today,-1)) },
@@ -1942,27 +1858,13 @@ setInterval(() => {
 }, 300000);
 
 // ═══ ACTIVITY LOGGING ═══
-const logActivity = db.prepare(`INSERT INTO activity_log (user_id, username, action, details, entity_type, entity_id, org_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+const logActivity = db.prepare(`INSERT INTO activity_log (user_id, username, action, details, entity_type, entity_id, org_id) VALUES (?, ?, ?, ?, ?, ?, ?)`);
 
 function actLog(req, action, details, entityType, entityId) {
   try {
     const user = getSessionUser(req);
-    logActivity.run(user?.userId || null, user?.username || 'system', action, details || null, entityType || null, entityId || null, 1, ljNow());
+    logActivity.run(user?.userId || null, user?.username || 'system', action, details || null, entityType || null, entityId || null, 1);
   } catch(e) { console.error('Activity log error:', e.message); }
-}
-
-// Server-side change_log writer (safety net for mutation endpoints)
-function serverLogChange(req, changeType, entityId, oldValue, newValue, extra) {
-  try {
-    const user = getSessionUser(req);
-    const username = user?.username || 'unknown';
-    extra = extra || {};
-    db.prepare('INSERT INTO change_log (change_type, entity_id, entity_name, country, old_value, new_value, user, spend_at_change, orders_at_change, profit_at_change, cpa_at_change, roas_at_change, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
-      changeType, String(entityId || ''), extra.name || '', extra.country || '',
-      String(oldValue || ''), String(newValue || ''), username,
-      extra.spend || 0, extra.orders || 0, extra.profit || 0, extra.cpa || 0, extra.roas || 0, ljNow()
-    );
-  } catch(e) { console.error('serverLogChange error:', e.message); }
 }
 
 // ═══ APP VERSION ═══
@@ -2000,7 +1902,7 @@ const server = http.createServer(async (req, res) => {
           saveSessions();
           db.prepare('UPDATE flores_users SET last_login = datetime(\'now\') WHERE id = ?').run(user.id);
           // Log login activity
-          try { logActivity.run(user.id, user.username, 'login', 'User logged in', 'user', String(user.id), user.org_id || 1, ljNow()); } catch(e) {}
+          try { logActivity.run(user.id, user.username, 'login', 'User logged in', 'user', String(user.id), user.org_id || 1); } catch(e) {}
           res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': `flores_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400` });
           res.end(JSON.stringify({ ok: true, role: user.role, username: user.username, redirect: '/app' }));
         } else {
@@ -2053,7 +1955,7 @@ const server = http.createServer(async (req, res) => {
         sessionStore[token] = { username, role: 'admin', userId, displayName: company_name + ' Admin', orgId };
           saveSessions();
         // Log
-        try { logActivity.run(userId, username, 'register', `New organization: ${company_name}`, 'organization', String(orgId), orgId, ljNow()); } catch(e) {}
+        try { logActivity.run(userId, username, 'register', `New organization: ${company_name}`, 'organization', String(orgId), orgId); } catch(e) {}
         // Notify super admins
         try { db.prepare('INSERT INTO notifications (user_id, type, title, message, org_id) VALUES (NULL, ?, ?, ?, 1)').run('new_org', 'New Organization Registered', `${company_name} (${email}) started a free trial`); } catch(e) {}
         res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': `flores_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400` });
@@ -2279,6 +2181,7 @@ const server = http.createServer(async (req, res) => {
         const body = await new Promise((res,rej)=>{ let d=''; req.on('data',c=>d+=c); req.on('end',()=>res(JSON.parse(d))); req.on('error',rej); });
         const { campaignId, name } = body;
         if (!campaignId || !name) return sendJSON(res, {error:'Missing campaignId or name'}, 400);
+        // Find which account owns this campaign
         let acct = AD_ACCOUNT;
         for (const [,a] of Object.entries(AD_ACCOUNTS_MAP)) {
           try { const r = await metaGet(campaignId, {fields:'id'}); if(r.id) { acct = a; break; } } catch(e) {}
@@ -2297,6 +2200,7 @@ const server = http.createServer(async (req, res) => {
           if (dailyBudget !== undefined) params.daily_budget = String(dailyBudget);
           if (lifetimeBudget !== undefined) params.lifetime_budget = String(lifetimeBudget);
           const result = await fbPost(`/${campaignId}`, params);
+          // Clear cache so new value shows immediately
           const files = fs.readdirSync(CACHE_DIR).filter(f => f.startsWith("campaigns_"));
           files.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
           return sendJSON(res, { ok: result.success === true || !!result });
@@ -2311,6 +2215,7 @@ const server = http.createServer(async (req, res) => {
           if (dailyBudget !== undefined) params.daily_budget = String(dailyBudget);
           if (lifetimeBudget !== undefined) params.lifetime_budget = String(lifetimeBudget);
           const result = await fbPost(`/${adsetId}`, params);
+          // Clear adset cache
           const files2 = fs.readdirSync(CACHE_DIR).filter(f => f.startsWith("adsets_") || f.startsWith("campaigns_"));
           files2.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
           return sendJSON(res, { ok: result.success === true || !!result });
@@ -2360,26 +2265,15 @@ const server = http.createServer(async (req, res) => {
       try { db.exec("ALTER TABLE change_log ADD COLUMN profit_at_change REAL DEFAULT 0"); } catch(e) {}
       if (urlPath === '/api/log' && req.method === 'POST') {
         const body = await new Promise((res,rej)=>{ let d=''; req.on('data',c=>d+=c); req.on('end',()=>res(JSON.parse(d))); req.on('error',rej); });
-        const { changeType, entityId, oldValue, newValue, entityName, country, spendAtChange, ordersAtChange, profitAtChange } = body;
+        const { changeType, entityId, oldValue, newValue, entityName, country, user, spendAtChange, ordersAtChange, profitAtChange } = body;
         const cpaAtChange = body.cpaAtChange || 0;
         const roasAtChange = body.roasAtChange || 0;
-        // Always attribute to actual logged-in user (never trust body.user to prevent hardcoded 'noriks')
-        const sessionUser = getSessionUser(req);
-        const actualUser = sessionUser?.username || 'unknown';
-        db.prepare('INSERT INTO change_log (change_type, entity_id, entity_name, country, old_value, new_value, user, spend_at_change, orders_at_change, profit_at_change, cpa_at_change, roas_at_change, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(changeType, entityId, entityName || '', country || '', oldValue || '', newValue || '', actualUser, spendAtChange || 0, ordersAtChange || 0, profitAtChange || 0, cpaAtChange, roasAtChange, ljNow());
+        db.prepare('INSERT INTO change_log (change_type, entity_id, entity_name, country, old_value, new_value, user, spend_at_change, orders_at_change, profit_at_change, cpa_at_change, roas_at_change) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(changeType, entityId, entityName || '', country || '', oldValue || '', newValue || '', user || 'noriks', spendAtChange || 0, ordersAtChange || 0, profitAtChange || 0, cpaAtChange, roasAtChange);
         return sendJSON(res, { ok: true });
       }
       if (urlPath === '/api/log' && req.method === 'GET') {
         const limit = parseInt(query.limit) || 100;
-        // Admin/super_admin sees all users; everyone else sees only their own changes
-        const sessionUser = getSessionUser(req);
-        const isAdmin = sessionUser && (sessionUser.role === 'admin' || sessionUser.role === 'super_admin');
-        let rows;
-        if (isAdmin) {
-          rows = db.prepare('SELECT * FROM change_log ORDER BY id DESC LIMIT ?').all(limit);
-        } else {
-          rows = db.prepare('SELECT * FROM change_log WHERE user = ? ORDER BY id DESC LIMIT ?').all(sessionUser?.username || '', limit);
-        }
+        const rows = db.prepare('SELECT * FROM change_log ORDER BY id DESC LIMIT ?').all(limit);
         return sendJSON(res, rows);
       }
       if (urlPath === '/api/campaign-orders') {
@@ -2467,8 +2361,6 @@ const server = http.createServer(async (req, res) => {
         const addD = (d,n) => { const r=new Date(d); r.setDate(r.getDate()+n); return r; };
         const periods = {
           yesterday: { from: fmt(addD(today,-1)), to: fmt(addD(today,-1)) },
-          y2: { from: fmt(addD(today,-2)), to: fmt(addD(today,-2)) },
-          y3: { from: fmt(addD(today,-3)), to: fmt(addD(today,-3)) },
           d3: { from: fmt(addD(today,-3)), to: fmt(addD(today,-1)) },
           d7: { from: fmt(addD(today,-7)), to: fmt(addD(today,-1)) },
           d14: { from: fmt(addD(today,-14)), to: fmt(addD(today,-1)) },
@@ -2629,7 +2521,6 @@ const server = http.createServer(async (req, res) => {
         const dbOrderRows = db.prepare(`
           SELECT country, COUNT(*) as orders, SUM(gross_eur) as revenue, SUM(profit) as profit
           FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1
-           AND LOWER(billing_name) NOT LIKE '%test%'
           GROUP BY country
         `).all(start, end);
         for (const r of dbOrderRows) {
@@ -2655,55 +2546,59 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
-        // 3. Spend by country: sum campaign spend per country using DB order distribution
-        // (same basis as overall: overall = sum campaignData.insights.spend)
+        // 3. Aggregate spend by country and type
         const byCountry = {};
         const byType = {};
         const byCountryAndType = {};
-        {
-          // Preload DB order distribution per campaign
-          const _dRows = db.prepare(`
-            SELECT utm_campaign, country, COUNT(*) as o
-            FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1
-            AND utm_campaign IS NOT NULL AND utm_campaign != ''
-            AND LOWER(billing_name) NOT LIKE '%test%'
-            GROUP BY utm_campaign, country
-          `).all(start, end);
-          const distMap = {};
-          for (const r of _dRows) {
-            if (!distMap[r.utm_campaign]) distMap[r.utm_campaign] = {};
-            distMap[r.utm_campaign][r.country] = r.o;
-          }
-          for (const c of campaignData) {
-            const spend = parseFloat(c.insights?.spend || 0);
-            if (spend <= 0) continue;
-            const pAct = (c.insights?.actions || []).find(a => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'omni_purchase');
-            const purchases = pAct ? parseInt(pAct.value) : 0;
-            // Distribution: DB orders → parsed name countries → HR fallback
-            let dist = distMap[c.id] || {};
-            let total = Object.values(dist).reduce((s,n)=>s+n,0);
-            if (total <= 0) {
-              const ccs = (c._parsed && c._parsed.countries) || [];
-              if (ccs.length) { dist = {}; for (const cc of ccs) dist[cc] = 1; total = ccs.length; }
-              else { dist = { HR: 1 }; total = 1; }
-            }
-            for (const [cc, cnt] of Object.entries(dist)) {
-              const share = cnt / total;
-              if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
-              byCountry[cc].spend += spend * share;
-              byCountry[cc].purchases += purchases * share;
-            }
-          }
-        }
 
-        // Also aggregate by type (from campaign names)
         for (const c of campaignData) {
           const spend = parseFloat(c.insights?.spend || 0);
           if (spend <= 0) continue;
+          const parsed = parseCampaignName(c.name);
           const campType = parseCampaignType(c.name);
-          if (!byType[campType]) byType[campType] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
-          byType[campType].spend += spend;
-          byType[campType].purchases += (campaignPurchases[c.id] || 0);
+          const countries = parsed.countries.length > 0 ? parsed.countries : Object.keys(WC_STORES);
+
+          // Split spend proportionally by order count in those countries
+          let relevantOrders = 0;
+          for (const cc of countries) {
+            relevantOrders += (totalOrdersByCountry[cc] || 0);
+          }
+
+          for (const cc of countries) {
+            const ccOrders = totalOrdersByCountry[cc] || 0;
+            // Proportional split: if there are orders, use order ratio; otherwise equal split
+            let spendShare;
+            if (relevantOrders > 0) {
+              spendShare = spend * (ccOrders / relevantOrders);
+            } else {
+              spendShare = spend / countries.length;
+            }
+
+            // Distribute FB purchases proportionally
+            const fbPurchases = campaignPurchases[c.id] || 0;
+            let purchShare;
+            if (relevantOrders > 0) {
+              purchShare = fbPurchases * (ccOrders / relevantOrders);
+            } else {
+              purchShare = fbPurchases / countries.length;
+            }
+
+            // By Country
+            if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
+            byCountry[cc].spend += spendShare;
+            byCountry[cc].purchases += purchShare;
+
+            // By Type
+            if (!byType[campType]) byType[campType] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
+            byType[campType].spend += spendShare;
+            byType[campType].purchases += purchShare;
+
+            // By Country + Type
+            const key = `${cc}_${campType}`;
+            if (!byCountryAndType[key]) byCountryAndType[key] = { country: cc, type: campType, spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
+            byCountryAndType[key].spend += spendShare;
+            byCountryAndType[key].purchases += purchShare;
+          }
         }
 
         // Fill in orders/revenue/profit from DB
@@ -2720,69 +2615,6 @@ const server = http.createServer(async (req, res) => {
           byCountry[cc].netProfit = Math.round((dbData.profit - byCountry[cc].spend) * 100) / 100;
           byCountry[cc].ppo = byCountry[cc].orders > 0 ? Math.round(byCountry[cc].netProfit / byCountry[cc].orders * 100) / 100 : 0;
         }
-
-        // Per-country ADV cut computed per-campaign (same basis as Ads Manager + dashboard totals)
-        try {
-          const tierRow = db.prepare("SELECT value FROM flores_settings WHERE key = ?").get('adv_tier_state');
-          let tierState = null;
-          if (tierRow && tierRow.value) { try { tierState = JSON.parse(tierRow.value); } catch(e){} }
-          const _defaults = {
-            light: [{max:5,cut:1},{max:10,cut:3},{max:15,cut:5},{max:20,cut:8},{max:25,cut:12},{max:35,cut:16},{max:null,cut:20}],
-            medium: [{max:5,cut:2},{max:10,cut:4},{max:15,cut:7},{max:20,cut:11},{max:25,cut:16},{max:35,cut:22},{max:null,cut:28}],
-            max: [{max:5,cut:3},{max:10,cut:6},{max:15,cut:10},{max:20,cut:15},{max:25,cut:20},{max:35,cut:28},{max:null,cut:35}]
-          };
-          const active = (tierState && tierState.active) || 'light';
-          const tiers = (tierState && tierState.presets && tierState.presets[active]) || _defaults[active] || _defaults.light;
-          const cutFor = (ppo) => {
-            for (const t of tiers) { const max = (t.max === null || t.max === undefined) ? Infinity : Number(t.max); if (ppo <= max) return Number(t.cut)||0; }
-            return Number(tiers[tiers.length-1].cut)||0;
-          };
-          // Per-country ADV cut: distribute each campaign's cut across countries by DB order share
-          for (const cc of Object.keys(byCountry)) byCountry[cc].advCut = 0;
-          const _distRows = db.prepare(`
-            SELECT utm_campaign, country, COUNT(*) as orders
-            FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1
-            AND utm_campaign IS NOT NULL AND utm_campaign != ''
-            AND LOWER(billing_name) NOT LIKE '%test%'
-            GROUP BY utm_campaign, country
-          `).all(start, end);
-          const campCountryDist = {};
-          for (const row of _distRows) {
-            if (!campCountryDist[row.utm_campaign]) campCountryDist[row.utm_campaign] = {};
-            campCountryDist[row.utm_campaign][row.country] = (campCountryDist[row.utm_campaign][row.country] || 0) + row.orders;
-          }
-          const seenCamp = new Set();
-          for (const camp of campaignData) {
-            if (!camp || !camp.wc || !(camp.wc.orders > 0)) continue;
-            if (seenCamp.has(camp.id)) continue;
-            seenCamp.add(camp.id);
-            const netProfit = Number(camp.wc.profit) || 0;
-            const orders = Number(camp.wc.orders) || 0;
-            const netPpo = netProfit / orders;
-            const totalCut = cutFor(netPpo) * orders;
-            let dist = campCountryDist[camp.id] || {};
-            let distTotal = Object.values(dist).reduce((s, n) => s + n, 0);
-            if (distTotal <= 0) {
-              // No DB orders match this campaign — fall back to parsed countries from name
-              const ccs = (camp._parsed && camp._parsed.countries) || [];
-              if (ccs.length) { dist = {}; for (const cc of ccs) dist[cc] = 1; distTotal = ccs.length; }
-              else { dist = { HR: 1 }; distTotal = 1; } // last resort: HR bucket
-            }
-            for (const [cc, cnt] of Object.entries(dist)) {
-              const share = cnt / distTotal;
-              if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0, netProfit: 0, advCut: 0 };
-              byCountry[cc].advCut += totalCut * share;
-            }
-          }
-          // ADV profit per country = FB Attributed netProfit − advCut (same orders as FB block)
-          for (const cc of Object.keys(byCountry)) {
-            const c = byCountry[cc];
-            c.advCut = Math.round((c.advCut || 0) * 100) / 100;
-            c.advProfit = Math.round(((c.netProfit || 0) - c.advCut) * 100) / 100;
-            c.advOrders = c.orders || 0;
-            c.advPpo = c.advOrders > 0 ? Math.round((c.advProfit / c.advOrders) * 100) / 100 : 0;
-          }
-        } catch(e) { console.warn('[base-report] adv per-country failed', e.message); }
 
         // Orders/revenue/profit by type: get from DB grouped by type
         // We need to distribute DB orders by type based on campaign attribution
@@ -2836,41 +2668,7 @@ const server = http.createServer(async (req, res) => {
           v.ppo = v.orders > 0 ? Math.round(v.netProfit / v.orders * 100) / 100 : 0;
         }
 
-        // byCountryAll: ALL orders (not just FB-attributed) with spend from FB data
-        const byCountryAll = {};
-        try {
-          const allRows = db.prepare("SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ?  AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY country").all(start, end);
-          for (const r of allRows) {
-            const fbSpend = (byCountry[r.country] && byCountry[r.country].spend) || 0;
-            const netProfit = Math.round(((r.profit||0) - fbSpend) * 100) / 100;
-            byCountryAll[r.country] = {
-              orders: r.orders,
-              revenue: Math.round((r.revenue||0) * 100) / 100,
-              profit: netProfit,
-              ppo: r.orders > 0 ? Math.round((netProfit / r.orders) * 100) / 100 : 0,
-              spend: Math.round(fbSpend * 100) / 100,
-              cpa: r.orders > 0 ? Math.round((fbSpend / r.orders) * 100) / 100 : 0,
-              roas: fbSpend > 0 ? Math.round(((r.revenue||0) / fbSpend) * 100) / 100 : 0
-            };
-          }
-          // Include countries that have FB spend but zero orders (so spend still shows in ALL row)
-          for (const cc of Object.keys(byCountry)) {
-            if (byCountryAll[cc]) continue;
-            const fbSpend = byCountry[cc].spend || 0;
-            if (fbSpend <= 0) continue;
-            const netProfit = Math.round((0 - fbSpend) * 100) / 100;
-            byCountryAll[cc] = {
-              orders: 0,
-              revenue: 0,
-              profit: netProfit,
-              ppo: 0,
-              spend: Math.round(fbSpend * 100) / 100,
-              cpa: 0,
-              roas: 0
-            };
-          }
-        } catch(e) { console.warn('[base-report] byCountryAll failed', e.message); }
-        return sendJSON(res, { byCountry, byType, byCountryAndType, byCountryAll });
+        return sendJSON(res, { byCountry, byType, byCountryAndType });
       }
       if (urlPath === '/api/origin-report') {
         const start = query.start || dateFrom;
@@ -3271,7 +3069,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             const cached = db.prepare("SELECT data, computed_at FROM fatigue_cache ORDER BY id DESC LIMIT 1").get();
             if (cached) {
               const age = Date.now() - new Date(cached.computed_at + 'Z').getTime();
-              if (age < 5 * 60 * 1000) {
+              if (age < 15 * 60 * 1000) {
                 const parsed = JSON.parse(cached.data);
                 parsed._cached = true;
                 parsed._cachedAt = cached.computed_at;
@@ -3942,20 +3740,6 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
       }
 
       // ═══ DASHBOARD API ═══
-      // Load V2 rates from org_settings
-function getRates2() {
-  const rej = {}, ship = {};
-  try {
-    const rows = db.prepare("SELECT key, value FROM org_settings WHERE org_id = 1 AND category = 'rejection_rates2'").all();
-    for (const r of rows) rej[r.key] = parseFloat(r.value);
-  } catch(e) {}
-  try {
-    const rows = db.prepare("SELECT key, value FROM org_settings WHERE org_id = 1 AND category = 'shipping_costs2'").all();
-    for (const r of rows) ship[r.key] = parseFloat(r.value);
-  } catch(e) {}
-  return { rej, ship };
-}
-
       if (urlPath === '/api/dashboard') {
         const dashFrom = query.date_from || getToday(); const dashTo = query.date_to || getToday();
         // Dashboard reads from SQLite - no Meta API calls, instant response
@@ -3963,11 +3747,11 @@ function getRates2() {
         const d7ago = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
         
         // Today's KPIs from wc_orders
-        const todayStats = db.prepare("SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
-        const fbOrders = db.prepare("SELECT COUNT(*) as orders FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
+        const todayStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ?').get(dashFrom, dashTo);
+        const fbOrders = db.prepare('SELECT COUNT(*) as orders FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1').get(dashFrom, dashTo);
         
         // 7-day daily chart data
-        const chartData = db.prepare("SELECT order_date as date, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ?  AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date ORDER BY order_date").all(d7ago);
+        const chartData = db.prepare('SELECT order_date as date, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? GROUP BY order_date ORDER BY order_date').all(d7ago);
         
         // Top campaigns - from Meta API (has campaign names)
         let topCampaignsRaw = [];
@@ -4096,37 +3880,7 @@ function getRates2() {
         } catch(e) { console.warn('[DASH] Top creatives fetch error:', e.message); }
 
         // FB KPI data
-        const fbAttributedProfit = db.prepare("SELECT COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
-        // ADV manipulation: per-campaign tier cut on net PPO (same basis as Ads Manager).
-        // Guarantee: advCutTotal = FB Profit − ADV Profit, always.
-        let advCutTotal = 0; let advTierName = 'light';
-        try {
-          const tierRow = db.prepare("SELECT value FROM flores_settings WHERE key = ?").get('adv_tier_state');
-          let tierState = null;
-          if (tierRow && tierRow.value) { try { tierState = JSON.parse(tierRow.value); } catch(e){} }
-          const _defaults = {
-            light: [{max:5,cut:1},{max:10,cut:3},{max:15,cut:5},{max:20,cut:8},{max:25,cut:12},{max:35,cut:16},{max:null,cut:20}],
-            medium: [{max:5,cut:2},{max:10,cut:4},{max:15,cut:7},{max:20,cut:11},{max:25,cut:16},{max:35,cut:22},{max:null,cut:28}],
-            max: [{max:5,cut:3},{max:10,cut:6},{max:15,cut:10},{max:20,cut:15},{max:25,cut:20},{max:35,cut:28},{max:null,cut:35}]
-          };
-          advTierName = (tierState && tierState.active) || 'light';
-          const tiers = (tierState && tierState.presets && tierState.presets[advTierName]) || _defaults[advTierName] || _defaults.light;
-          const cutFor = (ppo) => {
-            for (const t of tiers) { const max = (t.max === null || t.max === undefined) ? Infinity : Number(t.max); if (ppo <= max) return Number(t.cut)||0; }
-            return Number(tiers[tiers.length-1].cut)||0;
-          };
-          if (Array.isArray(topCampaignsRaw)) {
-            const seen = new Set();
-            for (const camp of topCampaignsRaw) {
-              if (!camp || !camp.wc || !(camp.wc.orders > 0)) continue;
-              if (seen.has(camp.id)) continue;
-              seen.add(camp.id);
-              const netPpo = (Number(camp.wc.profit) || 0) / camp.wc.orders; // wc.profit is already net (gross − spend)
-              advCutTotal += cutFor(netPpo) * camp.wc.orders;
-            }
-          }
-          console.log('[ADV] cut total:', advCutTotal, 'tier:', advTierName);
-        } catch(e) { console.warn('[ADV] cut calc failed', e.message); }
+        const fbAttributedProfit = db.prepare('SELECT COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1').get(dashFrom, dashTo);
         // FB pixel purchases from Meta API (what FB reports)
         let fbPixelPurchases = 0;
         if (Array.isArray(topCampaignsRaw)) {
@@ -4136,7 +3890,7 @@ function getRates2() {
           }
         }
         const fbOrderCount = fbOrders?.orders || 0;
-        const fbMeasuredResult = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != '' AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
+        const fbMeasuredResult = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo);
         const fbMeasuredOrders = fbMeasuredResult?.cnt || 0;
         const fbUnmeasuredOrders = fbOrderCount - fbMeasuredOrders;
         const fbCpa = fbOrderCount > 0 ? Math.round((fbSpendRange / fbOrderCount) * 100) / 100 : 0;
@@ -4219,8 +3973,7 @@ function getRates2() {
           if (!orderDatetime2 || orderDatetime2.length < 11) {
             try { const mm2 = JSON.parse(o.raw_meta || '{}'); if (mm2.date_created) orderDatetime2 = mm2.date_created.replace('T',' ').slice(0,16); } catch(e6) {}
           }
-          const isTestOrder = /test/i.test(o.billing_name || '');
-          return { id: o.wc_order_id, date: o.order_date, datetime: orderDatetime2, country: o.country, customer, email: o.billing_email || '', origin, fbMeasured, items, campaign_id: o.utm_campaign || '', campaign_name: o.campaign_name || '', revenue: isTestOrder ? 0 : Math.round(o.gross_eur * 100) / 100, profit: isTestOrder ? 0 : Math.round(o.profit * 100) / 100, isTest: isTestOrder };
+          return { id: o.wc_order_id, date: o.order_date, datetime: orderDatetime2, country: o.country, customer, email: o.billing_email || '', origin, fbMeasured, items, campaign_id: o.utm_campaign || '', campaign_name: o.campaign_name || '', revenue: Math.round(o.gross_eur * 100) / 100, profit: Math.round(o.profit * 100) / 100 };
         });
 
         return sendJSON(res, {
@@ -4238,9 +3991,6 @@ function getRates2() {
             fbUnmeasuredOrders,
             fbCpa,
             fbProfit,
-            advProfit: Math.round((fbProfit - advCutTotal) * 100) / 100,
-            advCutTotal: Math.round(advCutTotal * 100) / 100,
-            advTierName,
             weekOrders: weekStats?.orders || 0,
             weekRevenue: Math.round((weekStats?.revenue || 0) * 100) / 100,
             weekProfit: Math.round(((weekStats?.profit || 0) - fbSpend7d) * 100) / 100,
@@ -4254,42 +4004,16 @@ function getRates2() {
           topCampaigns: enrichedCampaigns,
           topProducts,
           byCountry: byCountry.map(c => ({ country: c.country, orders: c.orders, revenue: Math.round(c.revenue * 100) / 100, profit: Math.round(c.profit * 100) / 100 })),
-          chartData: (function(){
-            // Resolve active flat cut per order from tier state
-            let cutPerOrder = 1;
-            try {
-              const tierRow = db.prepare("SELECT value FROM flores_settings WHERE key = ?").get('adv_tier_state');
-              let tierState = null;
-              if (tierRow && tierRow.value) { try { tierState = JSON.parse(tierRow.value); } catch(e){} }
-              const _def = { light: [{max:null,cut:1}], medium: [{max:null,cut:28}], max: [{max:null,cut:35}] };
-              const active = (tierState && tierState.active) || 'light';
-              const ts = (tierState && tierState.presets && tierState.presets[active]) || _def[active] || _def.light;
-              // With flat tiers (all cuts equal) we can just take the first
-              cutPerOrder = Number(ts[0] && ts[0].cut) || 1;
-            } catch(e){}
-            // Per-day FB-attributed profit + orders (single source of truth)
-            const fbByDay = db.prepare("SELECT order_date as date, COUNT(*) as cnt, COALESCE(SUM(profit),0) as prof, COALESCE(SUM(gross_eur),0) as rev FROM wc_orders WHERE order_date >= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date").all(d7ago);
-            const fbMap = {};
-            for (const r of fbByDay) fbMap[r.date] = { cnt: r.cnt, prof: r.prof, rev: r.rev };
-            return chartData.map(d => {
-              let daySpend = 0;
-              if (d.date === today && fbSpendToday > 0) daySpend = fbSpendToday;
-              else { try { const dd = (dashCacheData||{})[d.date]||{}; for (const [,v] of Object.entries(dd)) { if (v && typeof v.spend === 'number') daySpend += v.spend; } } catch(e){} }
-              const fb = fbMap[d.date] || { cnt: 0, prof: 0, rev: 0 };
-              const fbProfitDay = (Number(fb.prof) || 0) - daySpend;          // FB profit = FB gross - ad spend
-              const advProfitDay = fbProfitDay - (Number(fb.cnt) || 0) * cutPerOrder; // ADV profit = FB profit - €cut × FB orders
-              return {
-                date: d.date,
-                orders: d.orders,
-                revenue: Math.round(d.revenue * 100) / 100,
-                profit: Math.round((d.profit - daySpend) * 100) / 100,
-                spend: Math.round(daySpend * 100) / 100,
-                fbProfit: Math.round(fbProfitDay * 100) / 100,
-                advProfit: Math.round(advProfitDay * 100) / 100,
-                advOrders: Number(fb.cnt) || 0
-              };
-            });
-          })(),
+          chartData: chartData.map(d => {
+            let daySpend = 0;
+            if (d.date === today && fbSpendToday > 0) {
+              // Use live Meta API spend for today instead of stale cache
+              daySpend = fbSpendToday;
+            } else {
+              try { const dd = (dashCacheData||{})[d.date]||{}; for (const [,v] of Object.entries(dd)) { if (v && typeof v.spend === 'number') daySpend += v.spend; } } catch(e){}
+            }
+            return { date: d.date, orders: d.orders, revenue: Math.round(d.revenue * 100) / 100, profit: Math.round((d.profit - daySpend) * 100) / 100, spend: Math.round(daySpend * 100) / 100 };
+          }),
           alerts: alerts,
           topCreatives: topCreativesData,
           date: today
@@ -4297,70 +4021,6 @@ function getRates2() {
       }
 
             // ═══ ACTIVITY LOG API ═══
-      if (urlPath === '/api/dashboard2') {
-        const user = getSessionUser(req);
-        if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) return sendJSON(res, { error: 'Admin required' }, 403);
-        const dashFrom = query.date_from || getToday(); const dashTo = query.date_to || getToday();
-        const rates2 = getRates2();
-        const VAT_RATES_LOCAL = { HR: 0.25, CZ: 0.21, PL: 0.23, GR: 0.24, IT: 0.22, HU: 0.27, SK: 0.23 };
-        const rows = db.prepare("SELECT country, gross_eur, product_cost, shipping_cost, profit, is_fb_attributed FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND LOWER(billing_name) NOT LIKE '%test%'").all(dashFrom, dashTo);
-        let orders = 0, revenue = 0, profit2Total = 0, fbOrders = 0, fbProfit2Total = 0;
-        for (const r of rows) {
-          const country = r.country;
-          const rejRate1 = (dashRejectionRates[country] || 15) / 100;
-          const rejRate2 = (rates2.rej[country] != null ? rates2.rej[country] : (rejRate1*100)) / 100;
-          const ship2Cost = rates2.ship[country] != null ? rates2.ship[country] : r.shipping_cost;
-          const vat = VAT_RATES_LOCAL[country] || 0;
-          const grossEur = r.gross_eur || 0;
-          const netRev2 = grossEur * (1 - rejRate2) / (1 + vat);
-          // Reverse product cost bruto from stored effective
-          const productCostBruto = (1 - rejRate1) > 0 ? (r.product_cost || 0) / (1 - rejRate1) : (r.product_cost || 0);
-          const productCost2 = productCostBruto * (1 - rejRate2);
-          const profit2 = netRev2 - productCost2 - ship2Cost;
-          orders++;
-          revenue += grossEur;
-          profit2Total += profit2;
-          if (r.is_fb_attributed === 1) {
-            fbOrders++;
-            fbProfit2Total += profit2;
-          }
-        }
-        // FB spend (live or cache)
-        let fbSpendRange = 0;
-        try {
-          const camps = await getCampaigns(dashFrom, dashTo);
-          if (Array.isArray(camps)) fbSpendRange = camps.reduce((s,c) => s + parseFloat(c.insights?.spend||0), 0);
-        } catch(e) {}
-        if (fbSpendRange === 0) {
-          try {
-            const dc = JSON.parse(fs.readFileSync(DASH_CACHE_FILE, 'utf8'));
-            for (const [date, countries] of Object.entries(dc.data || {})) {
-              if (date >= dashFrom && date <= dashTo) {
-                for (const [,v] of Object.entries(countries)) { if (v && typeof v.spend === 'number') fbSpendRange += v.spend; }
-              }
-            }
-          } catch(e) {}
-        }
-        const profitFinal = profit2Total - fbSpendRange;
-        const fbProfitFinal = fbProfit2Total - fbSpendRange;
-        return sendJSON(res, {
-          kpis: {
-            orders,
-            revenue: Math.round(revenue * 100) / 100,
-            profit: Math.round(profitFinal * 100) / 100,
-            profitPerOrder: orders > 0 ? Math.round(profitFinal/orders*100)/100 : 0,
-            spend: Math.round(fbSpendRange * 100) / 100,
-            cpa: orders > 0 ? Math.round(fbSpendRange/orders*100)/100 : 0,
-            fbOrders,
-            fbProfit: Math.round(fbProfitFinal * 100) / 100,
-            fbProfitPerOrder: fbOrders > 0 ? Math.round(fbProfitFinal/fbOrders*100)/100 : 0,
-            fbCpa: fbOrders > 0 ? Math.round(fbSpendRange/fbOrders*100)/100 : 0,
-            fbMeasuredOrders: (() => { try { return db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.cnt || 0; } catch(e) { return 0; } })(),
-            fbUnmeasuredOrders: (() => { try { var t = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1").get(dashFrom, dashTo)?.cnt || 0; var m = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.cnt || 0; return Math.max(0, t - m); } catch(e) { return 0; } })()
-          }
-        });
-      }
-
       if (urlPath === '/api/activity-log') {
         const page = parseInt(query.page) || 1;
         const limit = Math.min(parseInt(query.limit) || 50, 200);
