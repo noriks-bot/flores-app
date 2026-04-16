@@ -3669,12 +3669,14 @@ function profitCell(p, singleDay) {
     else if (profit < 0) { bg='#ef5350'; label=fmtEur(profit); }
     const txtColor=bg==='#87d28a'?'#1a1a1a':'#fff';
     const _s=`background:${bg}!important;color:${txtColor}!important;text-align:center;line-height:1.2;padding:6px 6px`;
-    return `<td class="pl-day-cell" style="background:${bg}!important;color:${txtColor}!important;text-align:center;line-height:1.2;padding:6px 6px" onmouseover="this.style.cssText=this.getAttribute('data-s')" onmouseout="this.style.cssText=this.getAttribute('data-s')" data-s="${_s}"><div style="font-weight:700;font-size:12px;white-space:nowrap">${label}</div><div style="font-size:9px;opacity:0.9;white-space:nowrap">${orders} orders</div><div style="font-size:9px;opacity:0.9;white-space:nowrap">${cpa} CPA</div></td>`;
+    return `<td class="pl-day-cell" style="background:${bg}!important;color:${txtColor}!important;text-align:center;line-height:1.2;padding:6px 6px" onmouseover="this.style.cssText=this.getAttribute('data-s')" onmouseout="this.style.cssText=this.getAttribute('data-s')" data-s="${_s}"><div style="font-weight:700;font-size:12px;white-space:nowrap">${label}</div><div style="font-size:9px;opacity:0.85;white-space:nowrap">${poo !== null ? poo.toFixed(2) + " PPO" : ""}</div><div style="font-size:9px;opacity:0.9;white-space:nowrap">${orders} orders</div><div style="font-size:9px;opacity:0.9;white-space:nowrap">${cpa} CPA</div></td>`;
   }
   const pill=profitPill(profit, orders);
+  const pooVal = orders > 0 ? (profit / orders).toFixed(2) : null;
+  const ppoTag = pooVal !== null ? `<span style="display:block;font-size:9px;color:#888;margin-top:1px">${pooVal} PPO</span>` : '';
   const ordTag=`<span style="display:block;font-size:9px;color:#666;margin-top:1px">${orders} orders</span>`;
   const cpaTag=`<span style="display:block;font-size:9px;color:#666">${cpa} CPA</span>`;
-  return `<td style="line-height:1.2">${pill}${ordTag}${cpaTag}</td>`;
+  return `<td style="line-height:1.2">${pill}${ppoTag}${ordTag}${cpaTag}</td>`;
 }
 let multiProfitChildren = {}; // adsetId/adId -> {yesterday, d3, ...}
 function profitPeriodCells(item,level) {
