@@ -1081,7 +1081,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 /* Campaign rows: zebra by ci-even/ci-odd (set in JS based on campaign index) */
 #section-ads-manager table tbody tr.ci-even:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #ececec !important; }
 #section-ads-manager table tbody tr.ci-odd:not(.totals-row) > td:not(.cell-pl-green):not(.cell-pl-red):not(.pl-day-cell) { background-color: #fff !important; }
-#section-ads-manager table tbody td.pl-day-cell { background-image: none !important; width: 78px; min-width: 78px; max-width: 78px; }
+#section-ads-manager table tbody td.pl-day-cell { background-image: none !important; width: 78px; min-width: 78px; max-width: 78px; pointer-events: none !important; }
 #section-ads-manager table tbody tr:hover td.pl-day-cell,
 #section-ads-manager table tbody tr.ci-even:hover td.pl-day-cell,
 #section-ads-manager table tbody tr.ci-odd:hover td.pl-day-cell { background: unset !important; }
