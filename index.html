@@ -216,10 +216,10 @@ tr.level-campaign td { font-weight: 400; font-size: 13px; }
 tr.level-campaign td:nth-child(2) .name-text { font-size: 13px; font-weight: 500; color: #111827; }
 tr.level-adset td { font-size: 12px; color: #4b5563; font-weight: 400; }
 tr.level-adset td:nth-child(2) { padding-left: 32px; border-left: 2px solid #e5e7eb; }
-tr.level-adset:hover td { background: #e8eaf0 !important; }
+tr.level-adset:hover td:not(.pl-day-cell) { background: #e8eaf0 !important; }
 tr.level-ad td { font-size: 11.5px; color: #6b7280; font-weight: 400; }
 tr.level-ad td:nth-child(2) { padding-left: 52px; border-left: 2px solid #d1d5db; }
-tr.level-ad:hover td { background: #e5e7eb !important; }
+tr.level-ad:hover td:not(.pl-day-cell) { background: #e5e7eb !important; }
 tr.level-adset .name-text { font-weight: 400; color: #4b5563; }
 tr.level-ad .name-text { font-weight: 400; color: #6b7280; }
 
@@ -233,13 +233,13 @@ tr.campaign-profit td {
   background: #fff;
 }
 tr.campaign-profit td:first-child { box-shadow: none; }
-tr.campaign-profit:hover td { background: #f3f4f6 !important; }
+tr.campaign-profit:hover td:not(.pl-day-cell) { background: #f3f4f6 !important; }
 
 tr.campaign-loss td {
   background: #fff;
 }
 tr.campaign-loss td:first-child { box-shadow: none; }
-tr.campaign-loss:hover td { background: #f3f4f6 !important; }
+tr.campaign-loss:hover td:not(.pl-day-cell) { background: #f3f4f6 !important; }
 
 /* Expand */
 .expand-btn {
@@ -326,8 +326,8 @@ tr:hover .hover-actions { opacity: 0.6; }
 /* Ensure sticky cells inherit row background */
 tr.campaign-profit td:nth-child(1), tr.campaign-profit td:nth-child(2) { background: #fff !important; }
 tr.campaign-loss td:nth-child(1), tr.campaign-loss td:nth-child(2) { background: #fff !important; }
-tr.campaign-profit:hover td:nth-child(1), tr.campaign-profit:hover td:nth-child(2) { background: #f3f4f6 !important; }
-tr.campaign-loss:hover td:nth-child(1), tr.campaign-loss:hover td:nth-child(2) { background: #f3f4f6 !important; }
+tr.campaign-profit:hover td:nth-child(1):not(.pl-day-cell), tr.campaign-profit:hover td:nth-child(2):not(.pl-day-cell) { background: #f3f4f6 !important; }
+tr.campaign-loss:hover td:nth-child(1):not(.pl-day-cell), tr.campaign-loss:hover td:nth-child(2):not(.pl-day-cell) { background: #f3f4f6 !important; }
 /* tbody tr:hover td nth-child 1/2 override removed */
 tr.level-adset td:nth-child(1), tr.level-adset td:nth-child(2) { background: inherit; }
 tr.level-ad td:nth-child(1), tr.level-ad td:nth-child(2) { background: inherit; }
