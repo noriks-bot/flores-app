@@ -3648,8 +3648,9 @@ function profitCell(p, singleDay) {
   if (singleDay) {
     // Full-fill cell for single-day columns (Yesterday, -2d, -3d)
     let bg='#9ca3af', label='€0';
-    const poo = orders > 0 ? profit / orders : 0;
-    if (profit > 0) { bg='#3a9b3e'; label='+'+fmtEur(profit); }
+    const poo = orders > 0 ? profit / orders : null;
+    if (orders === 0) { bg='#9ca3af'; label=profit!==0?fmtEur(profit):'€0'; }
+    else if (profit > 0) { bg='#3a9b3e'; label='+'+fmtEur(profit); }
     else if (profit < 0 && poo >= -3) { bg='#5dbc61'; label=fmtEur(profit); }
     else if (profit < 0) { bg='#ef5350'; label=fmtEur(profit); }
     const txtColor=bg==='#5dbc61'?'#1a1a1a':'#fff';
@@ -3732,7 +3733,7 @@ function makeRow(item,level,bgClass) {
   const fpaHtml=wcCount>0?'<span style="color:#3a9b3e;font-size:13px">\u25cf</span>':'<span style="color:#ccc;font-size:13px">\u2298</span>';
   // Profit/loss cell
   let plCls='', plHtml='<span class="muted">\u2014</span>';
-  if(wc?.profit!==undefined&&wc.profit!==0){ plCls=wc.profit>0?'cell-pl-green':((wc.orders>0?wc.profit/wc.orders:wc.profit)>=-3?'cell-pl-light-green':'cell-pl-red'); plHtml=(wc.profit>0?'':'')+wc.profit.toFixed(2)+' \u20ac'; }
+  if(wc?.profit!==undefined&&wc.profit!==0){ if(wc.orders>0){const _plPoo=wc.profit/wc.orders;plCls=wc.profit>0?'cell-pl-green':(_plPoo>=-3?'cell-pl-light-green':'cell-pl-red');} plHtml=(wc.profit>0?'':'')+wc.profit.toFixed(2)+' €'; }
   else if(wc?.profit===0){ plHtml='0 \u20ac'; }
   // Profit per order
   let ppoCls='', ppoHtml='<span class="muted">\u2014</span>';
@@ -4279,7 +4280,7 @@ function makeFlatRow(item, level) {
   const fpaHtml=wcCount>0?'<span style="color:#3a9b3e;font-size:13px">\u25cf</span>':'<span style="color:#ccc;font-size:13px">\u2298</span>';
   // Profit cells
   let plCls='',plHtml='<span class="muted">\u2014</span>';
-  if(wc?.profit!==undefined&&wc.profit!==0){ plCls=wc.profit>0?'cell-pl-green':((wc.orders>0?wc.profit/wc.orders:wc.profit)>=-3?'cell-pl-light-green':'cell-pl-red'); plHtml=wc.profit.toFixed(2)+' \u20ac'; }
+  if(wc?.profit!==undefined&&wc.profit!==0){ if(wc.orders>0){const _plPoo=wc.profit/wc.orders;plCls=wc.profit>0?'cell-pl-green':(_plPoo>=-3?'cell-pl-light-green':'cell-pl-red');} plHtml=wc.profit.toFixed(2)+' €'; }
   else if(wc?.profit===0){ plHtml='0 \u20ac'; }
   let ppoCls='',ppoHtml='<span class="muted">\u2014</span>';
   if(wcCount>0){ const ppo=wc.profit/wc.orders; ppoCls=ppo>=0?'cell-pl-green':(ppo>=-3?'cell-pl-light-green':'cell-pl-red'); ppoHtml=ppo.toFixed(2)+' \u20ac'; }
