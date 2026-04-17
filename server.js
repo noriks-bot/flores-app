@@ -144,7 +144,7 @@ const DASH_CACHE_FILE = path.join(CACHE_DIR, 'dash-cache.json');
 const ORIGIN_CACHE_FILE = path.join(CACHE_DIR, 'origin-data.json');
 
 const PRODUCT_COSTS = { tshirt: 3.5, boxers: 2.25, socks: 1.0 };
-const EUR_RATES = { HR: 1, CZ: 0.041, PL: 0.232, GR: 1, IT: 1, HU: 0.00256, SK: 1 };
+const EUR_RATES = { HR: 1, CZ: 0.041, PL: 0.232, GR: 1, IT: 1, HU: 0.00256, SK: 1, SI: 1, RO: 0.196 };
 
 // WooCommerce API keys per country store
 const WC_STORES = {
@@ -154,16 +154,18 @@ const WC_STORES = {
   GR: { url: 'https://noriks.com/gr', ck: 'ck_2595568b83966151e08031e42388dd1c34307107', cs: 'cs_dbd091b4fc11091638f8ec4c838483be32cfb15b' },
   SK: { url: 'https://noriks.com/sk', ck: 'ck_1abaeb006bb9039da0ad40f00ab674067ff1d978', cs: 'cs_32b33bc2716b07a738ff18eb377a767ef60edfe7' },
   IT: { url: 'https://noriks.com/it', ck: 'ck_84a1e1425710ff9eeed69b100ed9ac445efc39e2', cs: 'cs_81d25dcb0371773387da4d30482afc7ce83d1b3e' },
-  HU: { url: 'https://noriks.com/hu', ck: 'ck_e591c2a0bf8c7a59ec5893e03adde3c760fbdaae', cs: 'cs_d84113ee7a446322d191be0725c0c92883c984c3' }
+  HU: { url: 'https://noriks.com/hu', ck: 'ck_e591c2a0bf8c7a59ec5893e03adde3c760fbdaae', cs: 'cs_d84113ee7a446322d191be0725c0c92883c984c3' },
+  SI: { url: 'https://noriks.com/si', ck: 'ck_8fe81e37ac7c8aca9fe47ac3bbe27482d62d2e32', cs: 'cs_0be037bb7bf9a92ed7f886c5ceb9dd279f564900' },
+  RO: { url: 'https://noriks.com/ro', ck: 'ck_69ef14e1be3423cb74613c64ce4243e8c47e0e00', cs: 'cs_a00df9b005bb9e964df5e3bf3af816b9c49a9423' }
 };
-const VAT_RATES = { HR: 0.25, CZ: 0.21, PL: 0.23, GR: 0.24, IT: 0.22, HU: 0.27, SK: 0.23 };
+const VAT_RATES = { HR: 0.25, CZ: 0.21, PL: 0.23, GR: 0.24, IT: 0.22, HU: 0.27, SK: 0.23, SI: 0.22, RO: 0.19 };
 
 // Parse campaign name for country + product type
 // Supports both old format: DRŽAVA__TIP and new format: cc:DRŽAVA | TIP | sku:PRODUCT | date: DD.MM.YYYY
 function parseCampaignName(name) {
   if (!name) return { countries: [], productType: null };
   const n = name.toUpperCase();
-  const VALID_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU'];
+  const VALID_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
   
   let countries = [];
   
@@ -432,7 +434,7 @@ function seedOrgSettings() {
 
   db.transaction(() => {
     // Countries
-    const countries = ['HR','CZ','PL','GR','SK','IT','HU'];
+    const countries = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
     upsertSetting.run(1, 'countries', 'active', JSON.stringify(countries));
 
     // WC Stores
@@ -461,31 +463,31 @@ function seedOrgSettings() {
     upsertSetting.run(1, 'product_costs', 'socks', '1.00');
 
     // Rejection Rates (%)
-    const rejections = { HR: 15, CZ: 15, PL: 15, SK: 15, HU: 15, GR: 25, IT: 25 };
+    const rejections = { HR: 15, CZ: 15, PL: 15, SK: 15, HU: 15, GR: 25, IT: 25, SI: 15, RO: 20 };
     for (const [cc, rate] of Object.entries(rejections)) {
       upsertSetting.run(1, 'rejection_rates', cc, String(rate));
     }
 
     // Shipping Costs (EUR)
-    const shipping = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 5.5 };
+    const shipping = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 5.5, SI: 4, RO: 4.5 };
     for (const [cc, cost] of Object.entries(shipping)) {
       upsertSetting.run(1, 'shipping_costs', cc, String(cost));
     }
 
     // Rejection Rates 2 (admin v2)
-    const rejections2 = { HR: 8, CZ: 8, PL: 5, SK: 4, HU: 7, GR: 15, IT: 15 };
+    const rejections2 = { HR: 8, CZ: 8, PL: 5, SK: 4, HU: 7, GR: 15, IT: 15, SI: 8, RO: 12 };
     for (const [cc, rate] of Object.entries(rejections2)) {
       upsertSetting.run(1, 'rejection_rates2', cc, String(rate));
     }
 
     // Shipping Costs 2 (admin v2)
-    const shipping2 = { HR: 3, CZ: 3.3, PL: 3.5, SK: 3.1, HU: 3, GR: 4.5, IT: 5.5 };
+    const shipping2 = { HR: 3, CZ: 3.3, PL: 3.5, SK: 3.1, HU: 3, GR: 4.5, IT: 5.5, SI: 3.5, RO: 4 };
     for (const [cc, cost] of Object.entries(shipping2)) {
       upsertSetting.run(1, 'shipping_costs2', cc, String(cost));
     }
 
     // VAT Rates (%)
-    const vat = { HR: 25, CZ: 21, PL: 23, GR: 24, IT: 22, HU: 27, SK: 23 };
+    const vat = { HR: 25, CZ: 21, PL: 23, GR: 24, IT: 22, HU: 27, SK: 23, SI: 22, RO: 19 };
     for (const [cc, rate] of Object.entries(vat)) {
       upsertSetting.run(1, 'vat_rates', cc, String(rate));
     }
@@ -659,7 +661,7 @@ function calculateOrderProfit(order, country) {
   const productCost = (totalTshirts * PRODUCT_COSTS.tshirt) + (totalBoxers * PRODUCT_COSTS.boxers) + (totalSocks * PRODUCT_COSTS.socks);
 
   // Shipping ALWAYS applied per order (matches dash behavior)
-  const SHIPPING_COSTS = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 5.5 };
+  const SHIPPING_COSTS = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 5.5, SI: 4, RO: 4.5 };
   const shippingCost = SHIPPING_COSTS[country] || 4;
   const effectiveProductCost = productCost * (1 - rejRate);
   // profit per order (FB spend subtracted at aggregate level in dashboard API)
@@ -1881,7 +1883,7 @@ async function dropboxListAllFiles(folderPath) {
 
 function parseVideoFilename(name) {
   const idMatch = name.match(/ID(\d+)/i);
-  const countries = ['HR','CZ','PL','GR','SK','IT','HU'];
+  const countries = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
   const foundCountry = countries.find(c => name.toUpperCase().includes('_' + c + '_') || name.toUpperCase().includes('_' + c + '.') || name.toUpperCase().startsWith(c + '_'));
   let productType = null;
   const upper = name.toUpperCase();
@@ -2995,7 +2997,7 @@ const server = http.createServer(async (req, res) => {
         // Fetch all ads with insights for date range
         const allAdsData = await getAllAds(start, end);
 
-        const COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU'];
+        const COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
         const creativeMap = {};
 
         for (const ad of allAdsData) {
@@ -3015,7 +3017,7 @@ const server = http.createServer(async (req, res) => {
           }
 
           // Parse country - prefer Meta API country breakdown
-          const COUNTRY_MAP = { 'HR': 'HR', 'CZ': 'CZ', 'PL': 'PL', 'GR': 'GR', 'SK': 'SK', 'IT': 'IT', 'HU': 'HU' };
+          const COUNTRY_MAP = { 'HR': 'HR', 'CZ': 'CZ', 'PL': 'PL', 'GR': 'GR', 'SK': 'SK', 'IT': 'IT', 'HU': 'HU', 'SI': 'SI', 'RO': 'RO' };
           let adCountry = COUNTRY_MAP[(ins.country || '').toUpperCase()] || null;
           if (!adCountry) {
             const namesToCheck = [ad.campaign_name || '', ad.adset_name || '', name];
@@ -4302,7 +4304,7 @@ function getRates2() {
         if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) return sendJSON(res, { error: 'Admin required' }, 403);
         const dashFrom = query.date_from || getToday(); const dashTo = query.date_to || getToday();
         const rates2 = getRates2();
-        const VAT_RATES_LOCAL = { HR: 0.25, CZ: 0.21, PL: 0.23, GR: 0.24, IT: 0.22, HU: 0.27, SK: 0.23 };
+        const VAT_RATES_LOCAL = { HR: 0.25, CZ: 0.21, PL: 0.23, GR: 0.24, IT: 0.22, HU: 0.27, SK: 0.23, SI: 0.22, RO: 0.19 };
         const rows = db.prepare("SELECT country, gross_eur, product_cost, shipping_cost, profit, is_fb_attributed FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND LOWER(billing_name) NOT LIKE '%test%'").all(dashFrom, dashTo);
         let orders = 0, revenue = 0, profit2Total = 0, fbOrders = 0, fbProfit2Total = 0;
         for (const r of rows) {
