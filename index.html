@@ -1345,15 +1345,15 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <div id="dashCountrySection" style="margin-top:24px">
           <div class="country-block" data-mode="all">
             <h3 style="font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#111;margin:16px 0 10px">Vse (All orders)</h3>
-            <div id="dashCountryCardsAll" class="country-cards-grid" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px"></div>
+            <div id="dashCountryCardsAll" class="country-cards-grid" style="display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:8px"></div>
           </div>
           <div class="country-block" data-mode="fb">
             <h3 style="font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#1877f2;margin:24px 0 10px">FB Attributed</h3>
-            <div id="dashCountryCardsFb" class="country-cards-grid" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px"></div>
+            <div id="dashCountryCardsFb" class="country-cards-grid" style="display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:8px"></div>
           </div>
           <div class="country-block" data-mode="adv">
             <h3 style="font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#f59e0b;margin:24px 0 10px">FB ADV (with manipulation)</h3>
-            <div id="dashCountryCardsAdv" class="country-cards-grid" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px"></div>
+            <div id="dashCountryCardsAdv" class="country-cards-grid" style="display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:8px"></div>
           </div>
         </div>
 
@@ -1414,6 +1414,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     <button class="fpill" data-ft="country" data-fv="SK" onclick="toggleFilterPill(this)">🇸🇰 SK</button>
     <button class="fpill" data-ft="country" data-fv="IT" onclick="toggleFilterPill(this)">🇮🇹 IT</button>
     <button class="fpill" data-ft="country" data-fv="HU" onclick="toggleFilterPill(this)">🇭🇺 HU</button>
+    <button class="fpill" data-ft="country" data-fv="SI" onclick="toggleFilterPill(this)">🇸🇮 SI</button>
+    <button class="fpill" data-ft="country" data-fv="RO" onclick="toggleFilterPill(this)">🇷🇴 RO</button>
     <span style="width:1px;height:20px;background:var(--border-color);margin:0 8px"></span>
     <span style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-right:4px">Type:</span>
     <button class="fpill fpill-active" data-ft="type" data-fv="ALL" onclick="toggleFilterPill(this)">All</button>
@@ -1644,6 +1646,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <button class="cr-filter-btn" onclick="setCrCountryFilter('SK',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--card-bg);color:var(--text-muted)">🇸🇰 SK</button>
       <button class="cr-filter-btn" onclick="setCrCountryFilter('IT',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--card-bg);color:var(--text-muted)">🇮🇹 IT</button>
       <button class="cr-filter-btn" onclick="setCrCountryFilter('HU',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--card-bg);color:var(--text-muted)">🇭🇺 HU</button>
+      <button class="cr-filter-btn" onclick="setCrCountryFilter('SI',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--card-bg);color:var(--text-muted)">🇸🇮 SI</button>
+      <button class="cr-filter-btn" onclick="setCrCountryFilter('RO',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--card-bg);color:var(--text-muted)">🇷🇴 RO</button>
       <span style="width:1px;height:20px;background:var(--border-color);margin:0 4px"></span>
       <span style="font-size:11px;font-weight:600;color:var(--text-muted)">Product:</span>
       <button class="cr-prod-btn active" onclick="setCrProductFilter('all',this)" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;background:var(--text-primary);color:#fff">All</button>
@@ -1678,6 +1682,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
                   <th class="cr-th cr-country-th" data-sort="SK">🇸🇰 SK</th>
                   <th class="cr-th cr-country-th" data-sort="IT">🇮🇹 IT</th>
                   <th class="cr-th cr-country-th" data-sort="HU">🇭🇺 HU</th>
+                  <th class="cr-th cr-country-th" data-sort="SI">🇸🇮 SI</th>
+                  <th class="cr-th cr-country-th" data-sort="RO">🇷🇴 RO</th>
                 </tr>
               </thead>
               <tbody id="crBody">
@@ -1794,6 +1800,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <button class="opt-fpill" onclick="switchOptTab(this,'SK')">🇸🇰 SK</button>
       <button class="opt-fpill" onclick="switchOptTab(this,'IT')">🇮🇹 IT</button>
       <button class="opt-fpill" onclick="switchOptTab(this,'HU')">🇭🇺 HU</button>
+      <button class="opt-fpill" onclick="switchOptTab(this,'SI')">🇸🇮 SI</button>
+      <button class="opt-fpill" onclick="switchOptTab(this,'RO')">🇷🇴 RO</button>
       <span style="width:1px;height:16px;background:#dadde1"></span>
       <button class="opt-fpill" onclick="switchOptTab(this,'SOFI')">SOFI</button>
       <button class="opt-fpill" onclick="switchOptTab(this,'ALL')">All</button>
@@ -2063,6 +2071,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px"><input type="checkbox" class="upCountry" value="SK" checked style="accent-color:#6366f1"> 🇸🇰</label>
               <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px"><input type="checkbox" class="upCountry" value="IT" checked style="accent-color:#6366f1"> 🇮🇹</label>
               <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px"><input type="checkbox" class="upCountry" value="HU" checked style="accent-color:#6366f1"> 🇭🇺</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px"><input type="checkbox" class="upCountry" value="SI" checked style="accent-color:#6366f1"> 🇸🇮</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px"><input type="checkbox" class="upCountry" value="RO" checked style="accent-color:#6366f1"> 🇷🇴</label>
             </div>
           </div>
           <div>
@@ -2297,6 +2307,8 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           <button class="vid-filter-pill" data-country="SK" onclick="setVidCountry('SK',this)">🇸🇰 SK</button>
           <button class="vid-filter-pill" data-country="IT" onclick="setVidCountry('IT',this)">🇮🇹 IT</button>
           <button class="vid-filter-pill" data-country="HU" onclick="setVidCountry('HU',this)">🇭🇺 HU</button>
+          <button class="vid-filter-pill" data-country="SI" onclick="setVidCountry('SI',this)">🇸🇮 SI</button>
+          <button class="vid-filter-pill" data-country="RO" onclick="setVidCountry('RO',this)">🇷🇴 RO</button>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap" id="vidProductFilters">
           <button class="vid-filter-pill active" data-product="all" onclick="setVidProduct('all',this)">All</button>
@@ -2641,7 +2653,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
             <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:4px">Default Country</label>
             <select id="settingsDefaultCountry" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:8px 14px;border-radius:8px;font-size:13px;width:100%">
               <option value="HR">🇭🇷 Croatia</option><option value="CZ">🇨🇿 Czech Republic</option><option value="PL">🇵🇱 Poland</option>
-              <option value="GR">🇬🇷 Greece</option><option value="SK">🇸🇰 Slovakia</option><option value="IT">🇮🇹 Italy</option><option value="HU">🇭🇺 Hungary</option>
+              <option value="GR">🇬🇷 Greece</option><option value="SK">🇸🇰 Slovakia</option><option value="IT">🇮🇹 Italy</option><option value="HU">🇭🇺 Hungary</option><option value="SI">🇸🇮 Slovenia</option><option value="RO">🇷🇴 Romania</option>
             </select>
           </div>
           <div style="margin-bottom:16px">
@@ -3418,9 +3430,9 @@ function parseCampTags(name) {
   let countries=[];
   // New format: cc:HR or cc:GR+IT+SK
   const ccMatch=n.match(/CC:([A-Z+]+)/);
-  if(ccMatch) countries=ccMatch[1].split('+').filter(c=>['HR','CZ','PL','GR','SK','IT','HU'].includes(c));
+  if(ccMatch) countries=ccMatch[1].split('+').filter(c=>['HR','CZ','PL','GR','SK','IT','HU','SI','RO'].includes(c));
   // Old format fallback
-  if(!countries.length){ const cm=n.match(/^([A-Z+_]+)__/); if(cm) countries=cm[1].split(/[+_]/).filter(c=>['HR','CZ','PL','GR','SK','IT','HU'].includes(c)); }
+  if(!countries.length){ const cm=n.match(/^([A-Z+_]+)__/); if(cm) countries=cm[1].split(/[+_]/).filter(c=>['HR','CZ','PL','GR','SK','IT','HU','SI','RO'].includes(c)); }
   let type=null;
   if(/MAJICE|SHIRT/i.test(n)) type='shirts';
   else if(/BOXERS|BOXER/i.test(n)) type='boxers';
@@ -3436,7 +3448,7 @@ function nameHtml(name,level) {
 }
 function getCountryTags(name) {
   const t=parseCampTags(name);
-  const flags={HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
+  const flags={HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
   const items=t.countries.map(c=>`<span style="white-space:nowrap;font-size:9px;font-weight:600;display:flex;align-items:center;gap:2px;height:14px">${flags[c]||''} ${c}</span>`);
   if(items.length<=2) return '<div style="display:flex;gap:6px">'+items.join('')+'</div>';
   return '<div style="display:grid;grid-template-columns:auto auto;gap:0px 8px;line-height:1">'+items.join('')+'</div>';
@@ -4594,7 +4606,7 @@ function brTotalsRow(items, cols) {
 }
 
 function renderBaseReport(data) {
-  const FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
+  const FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
   // By Country - sort by spend desc
   const countries = Object.entries(data.byCountry)
     .map(([k, v]) => ({ label: (FLAGS[k]||'') + ' ' + k, ...v }))
@@ -5071,7 +5083,7 @@ var crData = null;
 function crFmtSpend(v) { return v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(2); }
 let crSortKey = 'totalSpend';
 let crSortDir = 'desc';
-const CR_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU'];
+const CR_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
 
 (function initCreativeReport() {
   const crFrom = document.getElementById('crDateFrom');
@@ -5207,7 +5219,7 @@ function switchCrTab(tab) {
 
 function renderCrExtraTabs() {
   if (!crData || !crData.creatives) return;
-  var FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
+  var FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
   var filtered = [];
   crData.creatives.forEach(function(c) {
     if (!c.totalPurchases) return;
@@ -5400,7 +5412,7 @@ const MARKET_SUGGESTIONS = {
   HU: ['CZ', 'SK', 'PL', 'HR', 'GR'],
   IT: ['GR', 'HR', 'CZ', 'SK', 'PL', 'HU']
 };
-const COUNTRY_FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
+const COUNTRY_FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
 
 async function generateUploadPlan() {
   document.getElementById('uploadInitial').style.display = 'none';
@@ -5412,8 +5424,8 @@ async function generateUploadPlan() {
     const res = await fetch('/api/creative-report?start=2026-01-01&end='+todayStr);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
-    const ALL_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU'];
-    const FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
+    const ALL_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
+    const FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
     const MARKET_MAP = {HR:['GR','IT','SK'],GR:['IT','HR','CZ'],IT:['GR','HR'],HU:['CZ','SK','PL'],CZ:['SK','HU','PL'],SK:['CZ','HU','PL'],PL:['CZ','SK','HU']};
     // Get filter values
     const selectedProducts = [...document.querySelectorAll('.upProd:checked')].map(c=>c.value);
@@ -5479,7 +5491,7 @@ async function generateUploadPlan() {
       document.getElementById('uploadTable').style.display='block';
 
       // Creatives waiting for CZ
-      // FLAGS already declared above = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
+      // FLAGS already declared above = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
       const waitingCZ = [];
       for (const cr of data.creatives) {
         if (cr.id === 'Other') continue;
@@ -6004,7 +6016,7 @@ async function loadOptimizer() {
 }
 
 function optGetFlags(name) {
-  var flagMap = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
+  var flagMap = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
   var upper = (name||'').toUpperCase();
   var isSofi = upper.includes('SOFI');
   if (!isSofi) { var _ccM = upper.match(/CC:([A-Z+]+)/); if (_ccM && _ccM[1].split('+').length > 1) isSofi = true; }
@@ -6038,7 +6050,7 @@ function optGetType(name) {
   return '<span style="font-size:9px;color:#999">—</span>';
 }
 function optGetCountryFlags(name) {
-  var flagMap = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺'};
+  var flagMap = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
   var upper = (name||'').toUpperCase();
   var ccMatch = upper.match(/CC:([A-Z+]+)/);
   var countries = [];
@@ -6385,7 +6397,7 @@ function bulkAddRow(clone) {
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-family:monospace" id="bulk-name-${id}">—</div>
     <div class="bulk-fields">
       <div class="bulk-field"><label>Ad Account</label><select data-f="ad_account" onchange="bulkUpdateName(${id})"><option value="top_noriks_2" ${d.ad_account==='top_noriks_2'?'selected':''}>top_noriks_2</option><option value="top_noriks_4" ${d.ad_account==='top_noriks_4'?'selected':''}>top_noriks_4</option></select></div>
-      <div class="bulk-field"><label>Country</label><select data-f="country" onchange="bulkUpdateName(${id})"><option value="HR" ${d.country==='HR'?'selected':''}>🇭🇷 HR</option><option value="CZ" ${d.country==='CZ'?'selected':''}>🇨🇿 CZ</option><option value="PL" ${d.country==='PL'?'selected':''}>🇵🇱 PL</option><option value="GR" ${d.country==='GR'?'selected':''}>🇬🇷 GR</option><option value="SK" ${d.country==='SK'?'selected':''}>🇸🇰 SK</option><option value="IT" ${d.country==='IT'?'selected':''}>🇮🇹 IT</option><option value="HU" ${d.country==='HU'?'selected':''}>🇭🇺 HU</option></select></div>
+      <div class="bulk-field"><label>Country</label><select data-f="country" onchange="bulkUpdateName(${id})"><option value="HR" ${d.country==='HR'?'selected':''}>🇭🇷 HR</option><option value="CZ" ${d.country==='CZ'?'selected':''}>🇨🇿 CZ</option><option value="PL" ${d.country==='PL'?'selected':''}>🇵🇱 PL</option><option value="GR" ${d.country==='GR'?'selected':''}>🇬🇷 GR</option><option value="SK" ${d.country==='SK'?'selected':''}>🇸🇰 SK</option><option value="IT" ${d.country==='IT'?'selected':''}>🇮🇹 IT</option><option value="HU" ${d.country==='HU'?'selected':''}>🇭🇺 HU</option><option value="SI" ${d.country==='SI'?'selected':''}>🇸🇮 SI</option><option value="RO" ${d.country==='RO'?'selected':''}>🇷🇴 RO</option></select></div>
       <div class="bulk-field"><label>Product</label><select data-f="product" onchange="bulkUpdateName(${id})"><option value="shirts" ${d.product==='shirts'?'selected':''}>Shirts</option><option value="boxers" ${d.product==='boxers'?'selected':''}>Boxers</option><option value="starter" ${d.product==='starter'?'selected':''}>Starter</option><option value="kompleti" ${d.product==='kompleti'?'selected':''}>Kompleti</option></select></div>
       <div class="bulk-field"><label>Type</label><select data-f="campaign_type" onchange="bulkUpdateName(${id})"><option value="CBO" ${d.campaign_type==='CBO'?'selected':''}>CBO</option><option value="ABO" ${d.campaign_type==='ABO'?'selected':''}>ABO</option></select></div>
       <div class="bulk-field"><label>Daily Budget €</label><input type="number" data-f="daily_budget" value="${d.daily_budget}" min="1" onchange="bulkUpdateStats()"></div>
@@ -7252,7 +7264,7 @@ async function loadCountryCards() {
 }
 
 function renderCountryCardsFromData(data) {
-  const order = ['HR','CZ','PL','GR','SK','IT','HU'];
+  const order = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
   try {
     const fb = (data && data.byCountry) || {};
     const all = (data && data.byCountryAll) || {};
