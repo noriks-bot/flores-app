@@ -463,25 +463,25 @@ function seedOrgSettings() {
     upsertSetting.run(1, 'product_costs', 'socks', '1.00');
 
     // Rejection Rates (%)
-    const rejections = { HR: 15, CZ: 15, PL: 15, SK: 15, HU: 15, GR: 25, IT: 25, SI: 15, RO: 20 };
+    const rejections = { HR: 15, CZ: 15, PL: 15, SK: 15, HU: 15, GR: 25, IT: 25, SI: 15, RO: 25 };
     for (const [cc, rate] of Object.entries(rejections)) {
       upsertSetting.run(1, 'rejection_rates', cc, String(rate));
     }
 
     // Shipping Costs (EUR)
-    const shipping = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 5.5, SI: 4, RO: 4.5 };
+    const shipping = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 6, SI: 4.5, RO: 4.5 };
     for (const [cc, cost] of Object.entries(shipping)) {
       upsertSetting.run(1, 'shipping_costs', cc, String(cost));
     }
 
     // Rejection Rates 2 (admin v2)
-    const rejections2 = { HR: 8, CZ: 8, PL: 5, SK: 4, HU: 7, GR: 15, IT: 15, SI: 8, RO: 12 };
+    const rejections2 = { HR: 8, CZ: 8, PL: 5, SK: 4, HU: 7, GR: 16, IT: 15, SI: 15, RO: 18 };
     for (const [cc, rate] of Object.entries(rejections2)) {
       upsertSetting.run(1, 'rejection_rates2', cc, String(rate));
     }
 
     // Shipping Costs 2 (admin v2)
-    const shipping2 = { HR: 3, CZ: 3.3, PL: 3.5, SK: 3.1, HU: 3, GR: 4.5, IT: 5.5, SI: 3.5, RO: 4 };
+    const shipping2 = { HR: 3, CZ: 3.3, PL: 3.5, SK: 3.1, HU: 3, GR: 4.5, IT: 6, SI: 4, RO: 4 };
     for (const [cc, cost] of Object.entries(shipping2)) {
       upsertSetting.run(1, 'shipping_costs2', cc, String(cost));
     }
@@ -661,7 +661,7 @@ function calculateOrderProfit(order, country) {
   const productCost = (totalTshirts * PRODUCT_COSTS.tshirt) + (totalBoxers * PRODUCT_COSTS.boxers) + (totalSocks * PRODUCT_COSTS.socks);
 
   // Shipping ALWAYS applied per order (matches dash behavior)
-  const SHIPPING_COSTS = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 5.5, SI: 4, RO: 4.5 };
+  const SHIPPING_COSTS = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 6, SI: 4.5, RO: 4.5 };
   const shippingCost = SHIPPING_COSTS[country] || 4;
   const effectiveProductCost = productCost * (1 - rejRate);
   // profit per order (FB spend subtracted at aggregate level in dashboard API)
