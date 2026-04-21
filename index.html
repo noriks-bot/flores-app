@@ -1186,6 +1186,9 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <a class="nav-item" data-section="log" onclick="navigateTo('log')">
         <i class="fas fa-history"></i><span class="nav-item-text">Log</span>
       </a>
+      <a class="nav-item admin-only" data-section="google-ads" onclick="navigateTo('google-ads')">
+        <i class="fab fa-google"></i><span class="nav-item-text">Google Ads</span>
+      </a>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Analytics</div>
@@ -1543,6 +1546,24 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           </table>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- GOOGLE ADS (admin only) -->
+  <div id="section-google-ads" class="content-section">
+    <div style="background:linear-gradient(135deg,#fafbff,#f0f4ff);border:1px solid #c7d2fe;border-radius:12px;padding:20px 24px;margin:16px 24px;box-shadow:0 4px 16px rgba(30,58,95,0.06)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;background:linear-gradient(135deg,#ea4335,#fbbc04);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">📢</div>
+        <div>
+          <div style="font-size:18px;font-weight:800;color:#1E3A5F">Google Ads</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:1px">Google Ads management — coming soon</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:40px 24px;text-align:center;color:#9ca3af">
+      <i class="fab fa-google" style="font-size:48px;margin-bottom:16px;color:#dadce0"></i>
+      <div style="font-size:14px;font-weight:600;color:#6b7280">Google Ads section</div>
+      <div style="font-size:12px;margin-top:4px">This page will be configured soon.</div>
     </div>
   </div>
 
@@ -2812,7 +2833,8 @@ const sectionTitles = {
   'organizations': 'Organizations',
   'saas-dashboard': 'SaaS Dashboard',
   'activity-log': 'Activity Log',
-  'log': 'Change Log'
+  'log': 'Change Log',
+  'google-ads': 'Google Ads'
 };
 
 var dashboardLoaded = false;
@@ -7942,6 +7964,11 @@ function initSaasAdminMode() {
     if(sr) sr.textContent = u.role;
     if(sa) sa.textContent = (u.displayName||u.username).charAt(0).toUpperCase();
     document.body.classList.add('role-loaded');
+
+    // Hide admin-only nav items for non-admin users
+    if (u.role !== 'admin' && u.role !== 'super_admin') {
+      document.querySelectorAll('.nav-item.admin-only').forEach(function(el) { el.style.display = 'none'; });
+    }
     
     // Advertiser role: only Dashboard, Ads Manager, Creative Reporting
     if (u.role === 'advertiser') {
