@@ -4513,7 +4513,8 @@ function getRates2() {
             const entry = meta._wc_order_attribution_session_entry || '';
             const m = entry.match(/gad_campaignid=(\d+)/);
             if (m) googleCampaignId = m[1];
-            campaignName = (r.country || '').toLowerCase() + '-google-cpc';
+            const utmCamp = (meta._wc_order_attribution_utm_campaign || r.utm_campaign || '').trim();
+            campaignName = utmCamp || '';
           } catch(e) {}
           return {
             orderId: r.wc_order_id,
