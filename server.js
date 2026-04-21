@@ -4489,6 +4489,47 @@ function getRates2() {
         });
       }
 
+      // ═══ GOOGLE ADS ORDERS (admin only) ═══
+      if (urlPath === '/api/google-ads-orders') {
+        if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) return sendJSON(res, { error: 'Admin access required' }, 403);
+        const year = params.get('year') || new Date().getFullYear().toString();
+        const dateFrom = year + '-01-01';
+        const dateTo = year + '-12-31';
+        const rows = db.prepare(
+          `SELECT wc_order_id, country, order_date, order_datetime, gross_eur, net_revenue, profit, product_type, utm_campaign, billing_name, billing_city, raw_meta
+           FROM wc_orders
+           WHERE order_date >= ? AND order_date <= ?
+           AND (raw_meta LIKE '%gclid%' OR raw_meta LIKE '%gad_source%' OR utm_campaign LIKE '%google_cpc%')
+           ORDER BY order_date DESC, wc_order_id DESC`
+        ).all(dateFrom, dateTo);
+        const orders = rows.map(r => {
+          let googleCampaignId = '';
+          try {
+            const meta = JSON.parse(r.raw_meta || '{}');
+            const entry = meta._wc_order_attribution_session_entry || '';
+            const m = entry.match(/gad_campaignid=(\d+)/);
+            if (m) googleCampaignId = m[1];
+          } catch(e) {}
+          return {
+            orderId: r.wc_order_id,
+            country: r.country,
+            date: r.order_date,
+            datetime: r.order_datetime || r.order_date,
+            revenue: r.gross_eur,
+            netRevenue: r.net_revenue,
+            profit: r.profit,
+            productType: r.product_type,
+            utmCampaign: r.utm_campaign,
+            googleCampaignId,
+            billingName: r.billing_name,
+            billingCity: r.billing_city
+          };
+        });
+        const totalRevenue = orders.reduce((s, o) => s + (o.revenue || 0), 0);
+        const totalProfit = orders.reduce((s, o) => s + (o.profit || 0), 0);
+        return sendJSON(res, { orders, summary: { total: orders.length, totalRevenue, totalProfit, year } });
+      }
+
       return sendJSON(res, { error: 'not found' }, 404);
     } catch (err) {
       console.error('API error:', err);
