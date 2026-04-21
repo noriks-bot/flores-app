@@ -4493,7 +4493,7 @@ function getRates2() {
       if (urlPath === '/api/google-ads-orders') {
         const user = getSessionUser(req);
         if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) return sendJSON(res, { error: 'Admin access required' }, 403);
-        const year = params.get('year') || new Date().getFullYear().toString();
+        const year = query.year || new Date().getFullYear().toString();
         const dateFrom = year + '-01-01';
         const dateTo = year + '-12-31';
         const rows = db.prepare(
