@@ -1609,8 +1609,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <th style="text-align:center;width:3%">🌍</th>
               <th style="text-align:left;width:11%">Campaign ID</th>
               <th style="text-align:left;width:10%">Campaign</th>
-              <th style="text-align:left;width:11%">Customer</th>
-              <th style="text-align:left;width:9%">City</th>
+              <th style="text-align:left;width:13%">Customer</th>
               <th style="text-align:right;width:7%">Revenue</th>
               <th style="text-align:right;width:7%">Profit</th>
               <th style="text-align:left;width:7%">Product</th>
@@ -3064,7 +3063,6 @@ function filterGoogleAdsTable() {
       '<td style="font-family:monospace;font-size:10px;color:#6b7280">'+(o.googleCampaignId||'—')+'</td>' +
       '<td><span style="font-size:10px;font-weight:600;color:#3b82f6;background:rgba(59,130,246,0.08);padding:2px 6px;border-radius:4px">'+(o.campaignName||'—')+'</span></td>' +
       '<td style="color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(o.billingName||'—')+'</td>' +
-      '<td style="color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(o.billingCity||'—')+'</td>' +
       '<td style="text-align:right;font-weight:600;color:var(--text-primary)">€'+(o.revenue||0).toFixed(2)+'</td>' +
       '<td style="text-align:right;font-weight:600;color:'+profitColor+'">€'+(o.profit||0).toFixed(2)+'</td>' +
       '<td style="color:#6b7280">'+(o.productType||'—')+'</td>' +
