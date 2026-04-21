@@ -1587,17 +1587,18 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <div style="overflow-y:auto;max-height:calc(100vh - 300px)">
           <table style="width:100%;min-width:0;table-layout:fixed;font-size:11px">
             <thead><tr>
-              <th style="text-align:left;width:7%">Order</th>
-              <th style="text-align:left;width:9%">Date</th>
-              <th style="text-align:center;width:4%">🌍</th>
-              <th style="text-align:left;width:12%">Campaign</th>
-              <th style="text-align:left;width:12%">Customer</th>
-              <th style="text-align:left;width:10%">City</th>
-              <th style="text-align:right;width:8%">Revenue</th>
-              <th style="text-align:right;width:8%">Profit</th>
-              <th style="text-align:left;width:8%">Product</th>
+              <th style="text-align:left;width:6%">Order</th>
+              <th style="text-align:left;width:8%">Date</th>
+              <th style="text-align:center;width:3%">🌍</th>
+              <th style="text-align:left;width:11%">Campaign ID</th>
+              <th style="text-align:left;width:10%">Campaign</th>
+              <th style="text-align:left;width:11%">Customer</th>
+              <th style="text-align:left;width:9%">City</th>
+              <th style="text-align:right;width:7%">Revenue</th>
+              <th style="text-align:right;width:7%">Profit</th>
+              <th style="text-align:left;width:7%">Product</th>
             </tr></thead>
-            <tbody id="gaBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
+            <tbody id="gaBody"><tr><td colspan="10" style="text-align:center;padding:30px;color:#9ca3af">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -2960,11 +2961,11 @@ const countryFlags = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',SK:'🇸🇰',GR
 async function loadGoogleAdsOrders() {
   const year = document.getElementById('gaYearSelect').value;
   const body = document.getElementById('gaBody');
-  body.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#9ca3af"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+  body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#9ca3af"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
   try {
     const r = await fetch('/api/google-ads-orders?year=' + year, {credentials:'same-origin'});
     const d = await r.json();
-    if (d.error) { body.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#ef4444">' + d.error + '</td></tr>'; return; }
+    if (d.error) { body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#ef4444">' + d.error + '</td></tr>'; return; }
     gaOrdersData = d.orders || [];
     // Populate filters
     const countries = [...new Set(gaOrdersData.map(o => o.country))].sort();
@@ -2983,7 +2984,7 @@ async function loadGoogleAdsOrders() {
     ].map(k => '<div style="flex:1;background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:14px 16px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><i class="'+k.icon+'" style="color:'+k.color+';font-size:14px"></i><span style="font-size:10px;color:#6b7280;font-weight:600;text-transform:uppercase">'+k.label+'</span></div><div style="font-size:20px;font-weight:800;color:var(--text-primary)">'+k.value+'</div></div>').join('');
     filterGoogleAdsTable();
   } catch(e) {
-    body.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#ef4444">Error: '+e.message+'</td></tr>';
+    body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#ef4444">Error: '+e.message+'</td></tr>';
   }
 }
 function filterGoogleAdsTable() {
@@ -3002,15 +3003,15 @@ function filterGoogleAdsTable() {
   ));
   document.getElementById('gaCount').textContent = filtered.length + ' order' + (filtered.length !== 1 ? 's' : '');
   const body = document.getElementById('gaBody');
-  if (!filtered.length) { body.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#9ca3af">No Google Ads orders found</td></tr>'; return; }
+  if (!filtered.length) { body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#9ca3af">No Google Ads orders found</td></tr>'; return; }
   body.innerHTML = filtered.map(o => {
     const profitColor = (o.profit||0) >= 0 ? '#10b981' : '#ef4444';
-    const campLabel = o.campaignName || (o.googleCampaignId ? o.googleCampaignId : '—');
     return '<tr>' +
       '<td style="font-weight:600;color:var(--text-primary)">#'+o.orderId+'</td>' +
       '<td style="color:#6b7280">'+o.date+'</td>' +
       '<td style="text-align:center">'+(countryFlags[o.country]||o.country)+'</td>' +
-      '<td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="font-size:10px;font-weight:600;color:#3b82f6;background:rgba(59,130,246,0.08);padding:2px 6px;border-radius:4px">'+campLabel+'</span></td>' +
+      '<td style="font-family:monospace;font-size:10px;color:#6b7280">'+(o.googleCampaignId||'—')+'</td>' +
+      '<td><span style="font-size:10px;font-weight:600;color:#3b82f6;background:rgba(59,130,246,0.08);padding:2px 6px;border-radius:4px">'+(o.campaignName||'—')+'</span></td>' +
       '<td style="color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(o.billingName||'—')+'</td>' +
       '<td style="color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(o.billingCity||'—')+'</td>' +
       '<td style="text-align:right;font-weight:600;color:var(--text-primary)">€'+(o.revenue||0).toFixed(2)+'</td>' +
