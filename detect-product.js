@@ -81,15 +81,16 @@ function detectProduct(name, useOverride = true, metadata = null, sku = null) {
                 const key = (meta.key || '').toLowerCase();
                 const isShirt = val.includes('majic') || val.includes('shirt') || val.includes('tričk') || val.includes('triko') || val.includes('tricka') ||
                                val.includes('μπλουζάκ') || val.includes('μπλούζ') || val.includes('magliett') || val.includes('póló') ||
+                               val.includes('tricou') || val.includes('tricouri') ||
                                key.includes('majic') || key.includes('shirt') || key.includes('tričk') || key.includes('tricka') || key.includes('mployz');
                 const isBoxer = val.includes('bokser') || val.includes('boxer') || val.includes('trenýr') || val.includes('trenk') || val.includes('boxerky') ||
-                               val.includes('μπόξερ') || val.includes('εσώρουχ') || val.includes('gatk') ||
+                               val.includes('μπόξερ') || val.includes('εσώρουχ') || val.includes('gatk') || val.includes('boxeri') ||
                                key.includes('bokser') || key.includes('boxer') || key.includes('mpoxer') || key.includes('boxerky');
                 
                 if (isShirt) tshirtCount++;
                 else if (isBoxer) boxerCount++;
                 else {
-                    if (lower.includes('majic') || lower.includes('shirt') || lower.includes('μπλουζ') || lower.includes('magliet') || 
+                    if (lower.includes('majic') || lower.includes('shirt') || lower.includes('μπλουζ') || lower.includes('magliet') || lower.includes('tricou') || 
                         lower.includes('póló') || lower.includes('tričk') || lower.includes('tricka') || lower.includes('triko')) tshirtCount++;
                     else if (lower.includes('bokser') || lower.includes('boxer') || lower.includes('modal') || lower.includes('airflow')) boxerCount++;
                 }
@@ -125,10 +126,11 @@ function detectProduct(name, useOverride = true, metadata = null, sku = null) {
                      lower.includes('tričk') || lower.includes('triček') || lower.includes('koszulk') || lower.includes('koszulek') ||
                      lower.includes('μπλουζάκ') || lower.includes('μπλούζ') ||
                      lower.includes('magliett') || lower.includes('magli') ||
-                     lower.includes('póló');
+                     lower.includes('póló') ||
+                     lower.includes('tricou') || lower.includes('tricouri');
     const isExplicitBoxers = lower.includes('bokser') || lower.includes('boxer') || lower.includes('trenk') || lower.includes('trenýr') ||
                              lower.includes('μπόξερ') || lower.includes('εσώρουχ') ||
-                             lower.includes('boxerals');
+                             lower.includes('boxerals') || lower.includes('boxeri');
     const isBoxerPack = (lower.includes('miješan') || lower.includes('tamni') || lower.includes('ponoćn') || 
                         lower.includes('urbano') || lower.includes('monokrom') || lower.includes('airflow') || lower.includes('modal') ||
                         lower.includes('μεσονύκτ') || lower.includes('μονόχρωμ') ||
@@ -148,10 +150,11 @@ function detectProduct(name, useOverride = true, metadata = null, sku = null) {
         for (const meta of metadata) {
             const value = (meta.value || '').toString().toLowerCase();
             if (value.includes('majica') || value.includes('shirt') || value.includes('triko') || value.includes('tričko') || value.includes('koszulk') ||
-                value.includes('μπλουζάκ') || value.includes('μπλούζ') || value.includes('magliett') || value.includes('póló')) {
+                value.includes('μπλουζάκ') || value.includes('μπλούζ') || value.includes('magliett') || value.includes('póló') ||
+                value.includes('tricou') || value.includes('tricouri')) {
                 tshirtCount++;
             } else if (value.includes('bokserica') || value.includes('boxer') || value.includes('trenýr') || value.includes('trenk') || value.includes('boxerky') ||
-                       value.includes('μπόξερ') || value.includes('εσώρουχ')) {
+                       value.includes('μπόξερ') || value.includes('εσώρουχ') || value.includes('boxeri')) {
                 boxerCount++;
             } else if (/^\d+$/.test(meta.key)) {
                 if (isTshirt && !isBoxers) tshirtCount++;
@@ -179,6 +182,8 @@ function detectProduct(name, useOverride = true, metadata = null, sku = null) {
     const itSetMatch = lower.match(/(\d+)\s*magliet.*?(\d+)\s*boxer/i);
     if (itSetMatch) return { tshirts: parseInt(itSetMatch[1]), boxers: parseInt(itSetMatch[2]), socks: 0 };
     const czSetMatch = lower.match(/(\d+)\s*tričk.*?(\d+)\s*boxer/i);
+    const roSetMatch = lower.match(/(\d+)\s*tricou.*?(\d+)\s*boxer/i);
+    if (roSetMatch) return { tshirts: parseInt(roSetMatch[1]), boxers: parseInt(roSetMatch[2]), socks: 0 };
     if (czSetMatch) return { tshirts: parseInt(czSetMatch[1]), boxers: parseInt(czSetMatch[2]), socks: 0 };
     if (lower.includes('majica') && lower.includes('bokser') && lower.includes('+')) {
         return { tshirts: 1, boxers: 1, socks: 0 };
@@ -188,7 +193,7 @@ function detectProduct(name, useOverride = true, metadata = null, sku = null) {
     }
     
     // Starter packs
-    if (lower.includes('starter') || lower.includes('εκκίνησης') || lower.includes('εκκινησης')) {
+    if (lower.includes('starter') || lower.includes('εκκίνησης') || lower.includes('εκκινησης') || lower.includes('pachet de start')) {
         if ((lower.includes('μπλουζάκ') || lower.includes('majic') || lower.includes('tričk') || lower.includes('magliett')) && 
             (lower.includes('μπόξερ') || lower.includes('bokser') || lower.includes('boxer'))) {
             return { tshirts: 1, boxers: 1, socks: 0 };
@@ -206,11 +211,13 @@ function detectProduct(name, useOverride = true, metadata = null, sku = null) {
     const grPackMatch = lower.match(/συσκευασία\s*(\d+)/i) || lower.match(/(\d+)\s*τεμ/i);
     const itPackMatch = lower.match(/pacco\s*da\s*(\d+)/i);
     const czPackMatch = lower.match(/(\d+)[-\s]?balí[čk]/i) || lower.match(/balí[čk]ek\s*(\d+)/i) || lower.match(/balení\s*(\d+)/i) || lower.match(/(\d+)\s*ks/i);
+    const roPackMatch = lower.match(/(\d+)\s*buc/i);
     
     if (packMatch) packCount = parseInt(packMatch[1]);
     else if (grPackMatch) packCount = parseInt(grPackMatch[1]);
     else if (itPackMatch) packCount = parseInt(itPackMatch[1]);
     else if (czPackMatch) packCount = parseInt(czPackMatch[1]);
+    else if (roPackMatch) packCount = parseInt(roPackMatch[1]);
     
     if (packCount > 0) {
         if (isTshirt && !isBoxers) return { tshirts: packCount, boxers: 0, socks: 0 };
