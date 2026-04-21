@@ -1564,7 +1564,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       </div>
     </div>
     <!-- Date Filters -->
-    <div class="filters-bar" style="padding:0 24px;margin-bottom:8px">
+    <div class="filters-bar" style="padding:0;margin:0 24px 8px 24px">
       <span class="filter-label">Period</span>
       <div class="preset-tabs" id="gaPresetTabs">
         <button class="preset-tab active" onclick="setGaDate(this,'today')">Today</button>
@@ -1581,9 +1581,9 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <button onclick="applyGaCustomRange()" style="padding:5px 14px;background:#1E3A5F;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">Apply</button>
     </div>
     <!-- Summary KPIs -->
-    <div id="gaSummary" style="display:flex;gap:12px;padding:0 24px;margin-bottom:12px"></div>
+    <div id="gaSummary" style="display:flex;gap:12px;margin:0 24px 12px 24px"></div>
     <!-- Filters -->
-    <div style="padding:0 24px;margin-bottom:8px;display:flex;gap:8px;align-items:center">
+    <div style="margin:0 24px 8px 24px;display:flex;gap:8px;align-items:center">
       <input type="text" id="gaSearchInput" placeholder="Search order, name, city..." oninput="filterGoogleAdsTable()" style="padding:6px 12px;border:1px solid var(--border-color);border-radius:8px;font-size:11px;background:var(--card-bg);color:var(--text-primary);width:220px">
       <select id="gaCountryFilter" onchange="filterGoogleAdsTable()" style="padding:6px 10px;border:1px solid var(--border-color);border-radius:8px;font-size:11px;background:var(--card-bg);color:var(--text-primary)">
         <option value="">All Countries</option>
@@ -1594,7 +1594,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       <span id="gaCount" style="font-size:11px;color:#6b7280;margin-left:auto"></span>
     </div>
     <!-- Table -->
-    <div class="content" style="padding:0 16px 16px">
+    <div class="content" style="padding:0 24px 16px 24px">
       <div class="table-card" style="overflow:hidden">
         <div style="overflow-y:auto;max-height:calc(100vh - 300px)">
           <table style="width:100%;min-width:0;table-layout:fixed;font-size:11px">
