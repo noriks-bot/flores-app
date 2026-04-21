@@ -4514,7 +4514,7 @@ function getRates2() {
             const m = entry.match(/gad_campaignid=(\d+)/);
             if (m) googleCampaignId = m[1];
             const utmCamp = (meta._wc_order_attribution_utm_campaign || r.utm_campaign || '').trim();
-            campaignName = utmCamp || '';
+            campaignName = utmCamp || googleCampaignId || '';
           } catch(e) {}
           return {
             orderId: r.wc_order_id,
