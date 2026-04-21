@@ -1568,6 +1568,23 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         </div>
       </div>
     </div>
+    <!-- Date Filters -->
+    <div class="filters-bar" style="padding:0 24px;margin-bottom:8px">
+      <span class="filter-label">Period</span>
+      <div class="preset-tabs" id="gaPresetTabs">
+        <button class="preset-tab active" onclick="setGaDate(this,'today')">Today</button>
+        <button class="preset-tab" onclick="setGaDate(this,'yesterday')">Yesterday</button>
+        <button class="preset-tab" onclick="setGaDate(this,'3d')">3D</button>
+        <button class="preset-tab" onclick="setGaDate(this,'7d')">7D</button>
+        <button class="preset-tab" onclick="setGaDate(this,'14d')">14D</button>
+        <button class="preset-tab" onclick="setGaDate(this,'30d')">30D</button>
+      </div>
+      <span style="font-size:11px;color:#9ca3af;font-weight:600;margin-left:8px">RANGE</span>
+      <input type="date" id="gaDateFrom" style="padding:5px 8px;border:1px solid var(--border-color);border-radius:6px;font-size:11px;background:var(--card-bg);color:var(--text-primary)">
+      <span style="font-size:11px;color:#9ca3af">→</span>
+      <input type="date" id="gaDateTo" style="padding:5px 8px;border:1px solid var(--border-color);border-radius:6px;font-size:11px;background:var(--card-bg);color:var(--text-primary)">
+      <button onclick="applyGaCustomRange()" style="padding:5px 14px;background:#1E3A5F;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">Apply</button>
+    </div>
     <!-- Summary KPIs -->
     <div id="gaSummary" style="display:flex;gap:12px;padding:0 24px;margin-bottom:12px"></div>
     <!-- Filters -->
@@ -2957,6 +2974,37 @@ function navigateTo(section) {
 
 // ═══ GOOGLE ADS ORDERS ═══
 let gaOrdersData = [];
+let gaDateFilter = 'today';
+function setGaDate(btn, range) {
+  document.querySelectorAll('#gaPresetTabs .preset-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  gaDateFilter = range;
+  document.getElementById('gaDateFrom').value = '';
+  document.getElementById('gaDateTo').value = '';
+  filterGoogleAdsTable();
+}
+function applyGaCustomRange() {
+  const from = document.getElementById('gaDateFrom').value;
+  const to = document.getElementById('gaDateTo').value;
+  if (from && to) {
+    gaDateFilter = 'custom';
+    document.querySelectorAll('#gaPresetTabs .preset-tab').forEach(b => b.classList.remove('active'));
+    filterGoogleAdsTable();
+  }
+}
+function getGaDateRange() {
+  const today = new Date().toISOString().slice(0,10);
+  const d = new Date();
+  switch(gaDateFilter) {
+    case 'yesterday': d.setDate(d.getDate()-1); return {from:d.toISOString().slice(0,10),to:d.toISOString().slice(0,10)};
+    case '3d': d.setDate(d.getDate()-2); return {from:d.toISOString().slice(0,10),to:today};
+    case '7d': d.setDate(d.getDate()-6); return {from:d.toISOString().slice(0,10),to:today};
+    case '14d': d.setDate(d.getDate()-13); return {from:d.toISOString().slice(0,10),to:today};
+    case '30d': d.setDate(d.getDate()-29); return {from:d.toISOString().slice(0,10),to:today};
+    case 'custom': return {from:document.getElementById('gaDateFrom').value||today, to:document.getElementById('gaDateTo').value||today};
+    default: return {from:today,to:today};
+  }
+}
 const countryFlags = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',SK:'🇸🇰',GR:'🇬🇷',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
 async function loadGoogleAdsOrders() {
   const year = document.getElementById('gaYearSelect').value;
@@ -2974,14 +3022,6 @@ async function loadGoogleAdsOrders() {
     cf.innerHTML = '<option value="">All Countries</option>' + countries.map(c => '<option value="'+c+'">'+countryFlags[c]+' '+c+'</option>').join('');
     const cpf = document.getElementById('gaCampaignFilter');
     cpf.innerHTML = '<option value="">All Campaigns</option>' + campaigns.map(c => '<option value="'+c+'">'+c+'</option>').join('');
-    // Summary
-    const sum = d.summary || {};
-    document.getElementById('gaSummary').innerHTML = [
-      {label:'Orders',value:sum.total||0,icon:'fas fa-shopping-bag',color:'#7c3aed'},
-      {label:'Revenue',value:'€'+(sum.totalRevenue||0).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}),icon:'fas fa-euro-sign',color:'#10b981'},
-      {label:'Profit',value:'€'+(sum.totalProfit||0).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}),icon:'fas fa-chart-line',color:(sum.totalProfit||0)>=0?'#10b981':'#ef4444'},
-      {label:'Countries',value:countries.length,icon:'fas fa-globe',color:'#2563eb'}
-    ].map(k => '<div style="flex:1;background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:14px 16px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><i class="'+k.icon+'" style="color:'+k.color+';font-size:14px"></i><span style="font-size:10px;color:#6b7280;font-weight:600;text-transform:uppercase">'+k.label+'</span></div><div style="font-size:20px;font-weight:800;color:var(--text-primary)">'+k.value+'</div></div>').join('');
     filterGoogleAdsTable();
   } catch(e) {
     body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#ef4444">Error: '+e.message+'</td></tr>';
@@ -2991,7 +3031,8 @@ function filterGoogleAdsTable() {
   const search = (document.getElementById('gaSearchInput').value || '').toLowerCase();
   const country = document.getElementById('gaCountryFilter').value;
   const campaign = document.getElementById('gaCampaignFilter').value;
-  let filtered = gaOrdersData;
+  const dr = getGaDateRange();
+  let filtered = gaOrdersData.filter(o => o.date >= dr.from && o.date <= dr.to);
   if (country) filtered = filtered.filter(o => o.country === country);
   if (campaign) filtered = filtered.filter(o => o.googleCampaignId === campaign);
   if (search) filtered = filtered.filter(o => (
@@ -3001,6 +3042,16 @@ function filterGoogleAdsTable() {
     (o.country||'').toLowerCase().includes(search) ||
     (o.googleCampaignId||'').includes(search)
   ));
+  // Update summary KPIs based on filtered data
+  const totalRevenue = filtered.reduce((s,o) => s + (o.revenue||0), 0);
+  const totalProfit = filtered.reduce((s,o) => s + (o.profit||0), 0);
+  const countries = [...new Set(filtered.map(o => o.country))];
+  document.getElementById('gaSummary').innerHTML = [
+    {label:'Orders',value:filtered.length,icon:'fas fa-shopping-bag',color:'#7c3aed'},
+    {label:'Revenue',value:'\u20ac'+totalRevenue.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}),icon:'fas fa-euro-sign',color:'#10b981'},
+    {label:'Profit',value:'\u20ac'+totalProfit.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}),icon:'fas fa-chart-line',color:totalProfit>=0?'#10b981':'#ef4444'},
+    {label:'Countries',value:countries.length,icon:'fas fa-globe',color:'#2563eb'}
+  ].map(k => '<div style="flex:1;background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:14px 16px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><i class="'+k.icon+'" style="color:'+k.color+';font-size:14px"></i><span style="font-size:10px;color:#6b7280;font-weight:600;text-transform:uppercase">'+k.label+'</span></div><div style="font-size:20px;font-weight:800;color:var(--text-primary)">'+k.value+'</div></div>').join('');
   document.getElementById('gaCount').textContent = filtered.length + ' order' + (filtered.length !== 1 ? 's' : '');
   const body = document.getElementById('gaBody');
   if (!filtered.length) { body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#9ca3af">No Google Ads orders found</td></tr>'; return; }
