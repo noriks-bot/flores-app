@@ -4505,11 +4505,19 @@ function getRates2() {
         ).all(dateFrom, dateTo);
         const orders = rows.map(r => {
           let googleCampaignId = '';
+          let campaignName = '';
           try {
             const meta = JSON.parse(r.raw_meta || '{}');
             const entry = meta._wc_order_attribution_session_entry || '';
             const m = entry.match(/gad_campaignid=(\d+)/);
             if (m) googleCampaignId = m[1];
+            // Build campaign name from utm_campaign or country
+            const utmCamp = (meta._wc_order_attribution_utm_campaign || r.utm_campaign || '').toLowerCase();
+            if (utmCamp && utmCamp !== 'google_cpc') {
+              campaignName = utmCamp;
+            } else {
+              campaignName = (r.country || '').toLowerCase() + '-google-cpc';
+            }
           } catch(e) {}
           return {
             orderId: r.wc_order_id,
@@ -4522,6 +4530,7 @@ function getRates2() {
             productType: r.product_type,
             utmCampaign: r.utm_campaign,
             googleCampaignId,
+            campaignName,
             billingName: r.billing_name,
             billingCity: r.billing_city
           };
