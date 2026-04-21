@@ -1573,6 +1573,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <button class="preset-tab" onclick="setGaDate(this,'7d')">7D</button>
         <button class="preset-tab" onclick="setGaDate(this,'14d')">14D</button>
         <button class="preset-tab" onclick="setGaDate(this,'30d')">30D</button>
+        <button class="preset-tab" onclick="setGaDate(this,'2026')">2026</button>
       </div>
       <span style="font-size:11px;color:#9ca3af;font-weight:600;margin-left:8px">RANGE</span>
       <input type="date" id="gaDateFrom" style="padding:5px 8px;border:1px solid var(--border-color);border-radius:6px;font-size:11px;background:var(--card-bg);color:var(--text-primary)">
@@ -2995,6 +2996,7 @@ function getGaDateRange() {
     case '7d': d.setDate(d.getDate()-6); return {from:d.toISOString().slice(0,10),to:today};
     case '14d': d.setDate(d.getDate()-13); return {from:d.toISOString().slice(0,10),to:today};
     case '30d': d.setDate(d.getDate()-29); return {from:d.toISOString().slice(0,10),to:today};
+    case '2026': return {from:'2026-01-01',to:'2026-12-31'};
     case 'custom': return {from:document.getElementById('gaDateFrom').value||today, to:document.getElementById('gaDateTo').value||today};
     default: return {from:today,to:today};
   }
