@@ -1583,15 +1583,24 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     <!-- Summary KPIs -->
     <div id="gaSummary" style="display:flex;gap:12px;margin:0 24px 12px 24px"></div>
     <!-- Filters -->
-    <div style="margin:0 24px 8px 24px;display:flex;gap:8px;align-items:center">
-      <input type="text" id="gaSearchInput" placeholder="Search order, name, city..." oninput="filterGoogleAdsTable()" style="padding:6px 12px;border:1px solid var(--border-color);border-radius:8px;font-size:11px;background:var(--card-bg);color:var(--text-primary);width:220px">
-      <select id="gaCountryFilter" onchange="filterGoogleAdsTable()" style="padding:6px 10px;border:1px solid var(--border-color);border-radius:8px;font-size:11px;background:var(--card-bg);color:var(--text-primary)">
-        <option value="">All Countries</option>
-      </select>
-      <select id="gaCampaignFilter" onchange="filterGoogleAdsTable()" style="padding:6px 10px;border:1px solid var(--border-color);border-radius:8px;font-size:11px;background:var(--card-bg);color:var(--text-primary)">
-        <option value="">All Campaigns</option>
-      </select>
-      <span id="gaCount" style="font-size:11px;color:#6b7280;margin-left:auto"></span>
+    <div style="margin:0 24px 12px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div style="position:relative;flex:0 0 240px">
+        <i class="fas fa-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:12px"></i>
+        <input type="text" id="gaSearchInput" placeholder="Search order, name..." oninput="filterGoogleAdsTable()" style="width:100%;padding:8px 12px 8px 30px;border:1px solid var(--border-color);border-radius:8px;font-size:12px;background:var(--card-bg);color:var(--text-primary);outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor=''">
+      </div>
+      <div style="position:relative">
+        <i class="fas fa-globe" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:12px;pointer-events:none"></i>
+        <select id="gaCountryFilter" onchange="filterGoogleAdsTable()" style="padding:8px 28px 8px 30px;border:1px solid var(--border-color);border-radius:8px;font-size:12px;background:var(--card-bg);color:var(--text-primary);cursor:pointer;appearance:auto">
+          <option value="">All Countries</option>
+        </select>
+      </div>
+      <div style="position:relative">
+        <i class="fas fa-bullhorn" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:11px;pointer-events:none"></i>
+        <select id="gaCampaignFilter" onchange="filterGoogleAdsTable()" style="padding:8px 28px 8px 30px;border:1px solid var(--border-color);border-radius:8px;font-size:12px;background:var(--card-bg);color:var(--text-primary);cursor:pointer;appearance:auto">
+          <option value="">All Campaigns</option>
+        </select>
+      </div>
+      <span id="gaCount" style="font-size:11px;color:#6b7280;margin-left:auto;font-weight:600"></span>
     </div>
     <!-- Table -->
     <div class="content" style="padding:0 24px 16px 24px">
