@@ -3003,7 +3003,7 @@ function getGaDateRange() {
 }
 const countryFlags = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',SK:'🇸🇰',GR:'🇬🇷',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
 async function loadGoogleAdsOrders() {
-  const year = document.getElementById('gaYearSelect').value;
+  const year = new Date().getFullYear().toString();
   const body = document.getElementById('gaBody');
   body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#9ca3af"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
   try {
