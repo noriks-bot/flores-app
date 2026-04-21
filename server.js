@@ -4511,14 +4511,7 @@ function getRates2() {
             const entry = meta._wc_order_attribution_session_entry || '';
             const m = entry.match(/gad_campaignid=(\d+)/);
             if (m) googleCampaignId = m[1];
-            // Build campaign name from utm_campaign or country
-            const utmCamp = (meta._wc_order_attribution_utm_campaign || r.utm_campaign || '').toLowerCase().trim();
-            // Skip generic/empty/numeric-only values
-            if (utmCamp && utmCamp !== 'google_cpc' && utmCamp !== 'undefined' && !/^\d+$/.test(utmCamp)) {
-              campaignName = utmCamp;
-            } else {
-              campaignName = (r.country || '').toLowerCase() + '-google-cpc';
-            }
+            campaignName = (r.country || '').toLowerCase() + '-google-cpc';
           } catch(e) {}
           return {
             orderId: r.wc_order_id,
