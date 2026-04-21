@@ -605,6 +605,7 @@ function classifySourceDash(meta, coupons) {
     if (src.includes('meta') && (med === 'cpc' || med === 'paid')) return 'Facebook';
     if ((src === 'google' || src === 'google.com') && (med === 'cpc' || med === 'paid')) return 'Google Paid';
     if (referrer.includes('gclid') || entry.includes('gclid')) return 'Google Paid';
+    if (entry.includes('gad_source') || entry.includes('gad_campaignid')) return 'Google Paid';
     if (src === 'google' || src === 'google.com') return 'Google Organic';
     if (src === 'klaviyo' || med === 'email') return 'Klaviyo';
     if (coupons && coupons.length > 0) {
@@ -2908,6 +2909,7 @@ const server = http.createServer(async (req, res) => {
           if (src.includes('google') && (med.includes('cpc') || med.includes('paid') || med.includes('ppc'))) return 'Google Ads';
           if (camp.toLowerCase().includes('google_cpc') || camp.toLowerCase().includes('google_ads')) return 'Google Ads';
           if (referrer.includes('gclid') || entry.includes('gclid')) return 'Google Ads';
+          if (entry.includes('gad_source') || entry.includes('gad_campaignid')) return 'Google Ads';
           if (src.includes('google') && referrer.includes('google.com') && (referrer.includes('ads') || entry.includes('gad_source'))) return 'Google Ads';
 
           // Google Organic
