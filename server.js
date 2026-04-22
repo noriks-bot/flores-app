@@ -2804,6 +2804,8 @@ const server = http.createServer(async (req, res) => {
           byCountry[cc].ppo = byCountry[cc].orders > 0 ? Math.round(byCountry[cc].netProfit / byCountry[cc].orders * 100) / 100 : 0;
         }
 
+        const _manipEnabled2 = getOrgSetting((getSessionUser(req))?.orgId || 1, "adv_config", "manipulation_enabled");
+        const _skipManip2 = _manipEnabled2 === "0" || _manipEnabled2 === 0;
         // Per-country ADV cut computed per-campaign (same basis as Ads Manager + dashboard totals)
         try {
           const tierRow = db.prepare("SELECT value FROM flores_settings WHERE key = ?").get('adv_tier_state');
@@ -2862,6 +2864,7 @@ const server = http.createServer(async (req, res) => {
             const c = byCountry[cc];
             c.advCut = Math.round((c.advCut || 0) * 100) / 100;
             c.advProfit = Math.round(((c.netProfit || 0) - c.advCut) * 100) / 100;
+          if (_skipManip2) { for (const cc of Object.keys(byCountry)) byCountry[cc].advCut = 0; }
             c.advOrders = c.orders || 0;
             c.advPpo = c.advOrders > 0 ? Math.round((c.advProfit / c.advOrders) * 100) / 100 : 0;
           }
@@ -4183,6 +4186,9 @@ function getRates2(orgId) {
 
         // FB KPI data
         const fbAttributedProfit = db.prepare("SELECT COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo, userOrgId);
+        // Skip manipulation for orgs that have it disabled
+        const _manipEnabled = getOrgSetting(userOrgId, "adv_config", "manipulation_enabled");
+        const _skipManip = _manipEnabled === "0" || _manipEnabled === 0;
         // ADV manipulation: per-campaign tier cut on net PPO (same basis as Ads Manager).
         // Guarantee: advCutTotal = FB Profit − ADV Profit, always.
         let advCutTotal = 0; let advTierName = 'light';
@@ -4212,6 +4218,7 @@ function getRates2(orgId) {
             }
           }
           console.log('[ADV] cut total:', advCutTotal, 'tier:', advTierName);
+          if (_skipManip) { advCutTotal = 0; advTierName = "none"; }
         } catch(e) { console.warn('[ADV] cut calc failed', e.message); }
         // FB pixel purchases from Meta API (what FB reports)
         let fbPixelPurchases = 0;
@@ -4354,7 +4361,8 @@ function getRates2(orgId) {
               cutPerOrder = Number(ts[0] && ts[0].cut) || 1;
             } catch(e){}
             // Per-day FB-attributed profit + orders (single source of truth)
-            const fbByDay = db.prepare("SELECT order_date as date, COUNT(*) as cnt, COALESCE(SUM(profit),0) as prof, COALESCE(SUM(gross_eur),0) as rev FROM wc_orders WHERE order_date >= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date").all(d7ago);
+            if (_skipManip) cutPerOrder = 0;
+            const fbByDay = db.prepare("SELECT order_date as date, COUNT(*) as cnt, COALESCE(SUM(profit),0) as prof, COALESCE(SUM(gross_eur),0) as rev FROM wc_orders WHERE order_date >= ? AND org_id = ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date").all(d7ago, userOrgId);
             const fbMap = {};
             for (const r of fbByDay) fbMap[r.date] = { cnt: r.cnt, prof: r.prof, rev: r.rev };
             return chartData.map(d => {
