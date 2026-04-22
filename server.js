@@ -1049,7 +1049,7 @@ async function syncCountry(country, orgId, storeOverride) {
   const totalOrders = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE country = ? AND org_id = ?").get(country, syncOrgId).cnt;
   const maxId = db.prepare("SELECT MAX(wc_order_id) as mid FROM wc_orders WHERE country = ? AND org_id = ?").get(country, syncOrgId).mid || 0;
   updateSyncState.run({
-    _syncKey,
+    country: _syncKey,
     last_synced_order_id: maxId,
     last_sync_at: new Date().toISOString(),
     total_orders: totalOrders
