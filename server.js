@@ -2357,7 +2357,7 @@ const server = http.createServer(async (req, res) => {
   if (urlPath === '/app' || urlPath === '/app/') {
     const _appUser = getSessionUser(req);
     const _appOrgId = _appUser ? _appUser.orgId || 1 : 1;
-    const _appManipDisabled = getOrgSetting(_appOrgId, 'adv_config', 'manipulation_enabled') === '0';
+    const _manipVal = getOrgSetting(_appOrgId, 'adv_config', 'manipulation_enabled'); const _appManipDisabled = _manipVal === '0' || _manipVal === 0;
     const _appActiveCountries = getOrgActiveCountries(_appOrgId);
     const _appInject = '<script>window._manipDisabled=' + JSON.stringify(!!_appManipDisabled) + ';window._activeCountries=' + JSON.stringify(_appActiveCountries) + ';<\/script>';
     const appHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8').replace('</head>', '<meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">' + _appInject + '</head>').replace('</body>', '<script>/* v' + Date.now() + ' */</script></body>');
