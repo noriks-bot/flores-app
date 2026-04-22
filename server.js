@@ -534,7 +534,7 @@ function getOrgVatRates(orgId) {
 function getOrgMetaConfig(orgId) {
   if (!orgId || orgId === 1) {
     // Default Noriks config
-    return { token: FB_TOKEN, adAccount: AD_ACCOUNT, adAccounts: Object.values(AD_ACCOUNTS_MAP) };
+    return { token: META_TOKEN, adAccount: AD_ACCOUNT, adAccounts: Object.values(AD_ACCOUNTS_MAP) };
   }
   const token = getOrgSetting(orgId, 'meta_ads', 'access_token');
   const adAccount = getOrgSetting(orgId, 'meta_ads', 'ad_account_id') || AD_ACCOUNT;
@@ -544,7 +544,7 @@ function getOrgMetaConfig(orgId) {
     adAccounts = typeof raw === 'string' ? JSON.parse(raw) : (Array.isArray(raw) ? raw : []);
   } catch(e) { adAccounts = [adAccount]; }
   if (!adAccounts.length) adAccounts = [adAccount];
-  return { token: token || FB_TOKEN, adAccount, adAccounts };
+  return { token: token || META_TOKEN, adAccount, adAccounts };
 }
 
 function getOrgProductCosts(orgId) {
@@ -702,7 +702,7 @@ function fetchWcOrdersForCountry(country, modifiedAfter, storeOverride) {
     while (hasMore) {
       try {
         let wcUrl = `${store.url}/wp-json/wc/v3/orders?per_page=100&page=${page}&status=processing,completed&consumer_key=${store.ck}&consumer_secret=${store.cs}`;
-        if (modifiedAfter) wcUrl += `&modified_after=${modifiedAfter}`;
+        if (modifiedAfter) wcUrl += `&modified_after=${modifiedAfter}&after=${modifiedAfter}`;
 
         const data = await new Promise((res, rej) => {
           https.get(wcUrl, resp => {
