@@ -3629,7 +3629,7 @@ function nameHtml(name,level) {
 }
 function getCountryTags(name) {
   const t=parseCampTags(name);
-  const flags={HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
+  const flags={HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴',DE:'🇩🇪',BG:'🇧🇬',EN:'🇬🇧'};
   const items=t.countries.map(c=>`<span style="white-space:nowrap;font-size:9px;font-weight:600;display:flex;align-items:center;gap:2px;height:14px">${flags[c]||''} ${c}</span>`);
   if(items.length<=2) return '<div style="display:flex;gap:6px">'+items.join('')+'</div>';
   return '<div style="display:grid;grid-template-columns:auto auto;gap:0px 8px;line-height:1">'+items.join('')+'</div>';
@@ -4787,7 +4787,7 @@ function brTotalsRow(items, cols) {
 }
 
 function renderBaseReport(data) {
-  const FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
+  const FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴',DE:'🇩🇪',BG:'🇧🇬',EN:'🇬🇧'};
   // By Country - sort by spend desc
   const countries = Object.entries(data.byCountry)
     .map(([k, v]) => ({ label: (FLAGS[k]||'') + ' ' + k, ...v }))
@@ -5400,7 +5400,7 @@ function switchCrTab(tab) {
 
 function renderCrExtraTabs() {
   if (!crData || !crData.creatives) return;
-  var FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
+  var FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴',DE:'🇩🇪',BG:'🇧🇬',EN:'🇬🇧'};
   var filtered = [];
   crData.creatives.forEach(function(c) {
     if (!c.totalPurchases) return;
@@ -5593,7 +5593,7 @@ const MARKET_SUGGESTIONS = {
   HU: ['CZ', 'SK', 'PL', 'HR', 'GR'],
   IT: ['GR', 'HR', 'CZ', 'SK', 'PL', 'HU']
 };
-const COUNTRY_FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
+const COUNTRY_FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴',DE:'🇩🇪',BG:'🇧🇬',EN:'🇬🇧'};
 
 async function generateUploadPlan() {
   document.getElementById('uploadInitial').style.display = 'none';
@@ -5606,7 +5606,7 @@ async function generateUploadPlan() {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     const ALL_COUNTRIES = window._activeCountries || ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
-    const FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
+    const FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴',DE:'🇩🇪',BG:'🇧🇬',EN:'🇬🇧'};
     const MARKET_MAP = {HR:['GR','IT','SK'],GR:['IT','HR','CZ'],IT:['GR','HR'],HU:['CZ','SK','PL'],CZ:['SK','HU','PL'],SK:['CZ','HU','PL'],PL:['CZ','SK','HU']};
     // Get filter values
     const selectedProducts = [...document.querySelectorAll('.upProd:checked')].map(c=>c.value);
@@ -5672,7 +5672,7 @@ async function generateUploadPlan() {
       document.getElementById('uploadTable').style.display='block';
 
       // Creatives waiting for CZ
-      // FLAGS already declared above = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
+      // FLAGS already declared above = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴',DE:'🇩🇪',BG:'🇧🇬',EN:'🇬🇧'};
       const waitingCZ = [];
       for (const cr of data.creatives) {
         if (cr.id === 'Other') continue;
@@ -6197,7 +6197,7 @@ async function loadOptimizer() {
 }
 
 function optGetFlags(name) {
-  var flagMap = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
+  var flagMap = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴',DE:'🇩🇪',BG:'🇧🇬',EN:'🇬🇧'};
   var upper = (name||'').toUpperCase();
   var isSofi = upper.includes('SOFI');
   if (!isSofi) { var _ccM = upper.match(/CC:([A-Z+]+)/); if (_ccM && _ccM[1].split('+').length > 1) isSofi = true; }
@@ -6231,7 +6231,7 @@ function optGetType(name) {
   return '<span style="font-size:9px;color:#999">—</span>';
 }
 function optGetCountryFlags(name) {
-  var flagMap = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
+  var flagMap = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴',DE:'🇩🇪',BG:'🇧🇬',EN:'🇬🇧'};
   var upper = (name||'').toUpperCase();
   var ccMatch = upper.match(/CC:([A-Z+]+)/);
   var countries = [];
