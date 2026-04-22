@@ -541,6 +541,32 @@ function getOrgActiveCountries(orgId) {
   } catch(e) { return null; }
 }
 
+
+async function getSpendByCountryFromMeta(dateFrom, dateTo, orgId) {
+  const orgMeta = getOrgMetaConfig(orgId);
+  const result = {};
+  try {
+    for (const acct of orgMeta.adAccounts) {
+      const data = await metaGetAll(acct + '/insights', {
+        fields: 'spend',
+        breakdowns: 'country',
+        level: 'account',
+        time_range: JSON.stringify({ since: dateFrom, until: dateTo }),
+        time_increment: 1,
+        limit: 5000
+      }, orgMeta.token);
+      for (const row of data) {
+        const cc = (row.country || '').toUpperCase();
+        if (!cc) continue;
+        result[cc] = (result[cc] || 0) + parseFloat(row.spend || 0);
+      }
+    }
+  } catch(e) { console.warn('[getSpendByCountry] Error:', e.message); }
+  // Round
+  for (const cc of Object.keys(result)) result[cc] = Math.round(result[cc] * 100) / 100;
+  return result;
+}
+
 function getOrgMetaConfig(orgId) {
   if (!orgId || orgId === 1) {
     // Default Noriks config
@@ -2753,8 +2779,13 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
-        // 3. Spend by country: sum campaign spend per country using DB order distribution
-        // (same basis as overall: overall = sum campaignData.insights.spend)
+        // 3. Spend by country
+        const _reportOrgId = (getSessionUser(req))?.orgId || 1;
+        const _useCountryBreakdown = _reportOrgId !== 1; // Non-Noriks orgs use Meta country breakdown
+        let _metaSpendByCountry = {};
+        if (_useCountryBreakdown) {
+          _metaSpendByCountry = await getSpendByCountryFromMeta(start, end, _reportOrgId);
+        }
         const byCountry = {};
         const byType = {};
         const byCountryAndType = {};
@@ -2788,8 +2819,8 @@ const server = http.createServer(async (req, res) => {
             for (const [cc, cnt] of Object.entries(dist)) {
               const share = cnt / total;
               if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
-              byCountry[cc].spend += spend * share;
-              byCountry[cc].purchases += purchases * share;
+              if (!_useCountryBreakdown) byCountry[cc].spend += spend * share;
+              if (!_useCountryBreakdown) byCountry[cc].purchases += purchases * share;
             }
           }
         }
