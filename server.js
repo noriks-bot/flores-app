@@ -1666,8 +1666,9 @@ async function getMultiPeriodProfit() {
 }
 
 // Fetch ALL adsets across the account (flat list for Ad Sets tab)
-async function getAllAdsets(dateFrom, dateTo) {
-  const cacheKey = `all_adsets_${dateFrom}_${dateTo}`;
+async function getAllAdsets(dateFrom, dateTo, orgId) {
+  orgId = orgId || 1;
+  const cacheKey = `all_adsets_${dateFrom}_${dateTo}_org${orgId}`;
   const isToday = dateTo === new Date().toISOString().slice(0,10);
   let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
   if (cached) return cached;
@@ -1736,15 +1737,17 @@ async function getAllAdsets(dateFrom, dateTo) {
 }
 
 // Fetch ALL ads across the account (flat list for Ads tab)
-async function getAllAds(dateFrom, dateTo) {
-  const cacheKey = `all_ads_${dateFrom}_${dateTo}`;
+async function getAllAds(dateFrom, dateTo, orgId) {
+  orgId = orgId || 1;
+  const cacheKey = `all_ads_${dateFrom}_${dateTo}_org${orgId}`;
   const isToday = dateTo === new Date().toISOString().slice(0,10);
   let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
   if (cached) return cached;
 
   // Fetch from ALL ad accounts
   let insights = [];
-  for (const acct of Object.values(AD_ACCOUNTS_MAP)) {
+  const _orgMeta = getOrgMetaConfig(orgId);
+  for (const acct of _orgMeta.adAccounts) {
     try {
       const acctInsights = await metaGetAll(`${acct}/insights`, {
         fields: INSIGHT_FIELDS + ',ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name',
@@ -1752,7 +1755,7 @@ async function getAllAds(dateFrom, dateTo) {
         breakdowns: 'country',
         time_range: JSON.stringify({ since: dateFrom, until: dateTo }),
         limit: 500
-      });
+      }, _orgMeta.token);
       insights = insights.concat(acctInsights);
     } catch(e) { console.error(`[getAllAds] Error fetching ${acct}:`, e.message); }
   }
@@ -2030,7 +2033,7 @@ const logActivity = db.prepare(`INSERT INTO activity_log (user_id, username, act
 function actLog(req, action, details, entityType, entityId) {
   try {
     const user = getSessionUser(req);
-    logActivity.run(user?.userId || null, user?.username || 'system', action, details || null, entityType || null, entityId || null, 1, ljNow());
+    logActivity.run(user?.userId || null, user?.username || "system", action, details || null, entityType || null, entityId || null, user?.orgId || 1, ljNow());
   } catch(e) { console.error('Activity log error:', e.message); }
 }
 
@@ -2346,11 +2349,11 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, data);
       }
       if (urlPath === '/api/all-adsets') {
-        const data = await getAllAdsets(dateFrom, dateTo);
+        const data = await getAllAdsets(dateFrom, dateTo, (getSessionUser(req))?.orgId || 1);
         return sendJSON(res, data);
       }
       if (urlPath === '/api/all-ads') {
-        const data = await getAllAds(dateFrom, dateTo);
+        const data = await getAllAds(dateFrom, dateTo, (getSessionUser(req))?.orgId || 1);
         return sendJSON(res, data);
       }
       if (urlPath === '/api/ads') {
@@ -2363,7 +2366,8 @@ const server = http.createServer(async (req, res) => {
         const { campaignId, name } = body;
         if (!campaignId || !name) return sendJSON(res, {error:'Missing campaignId or name'}, 400);
         let acct = AD_ACCOUNT;
-        for (const [,a] of Object.entries(AD_ACCOUNTS_MAP)) {
+        const _adOrgMeta = getOrgMetaConfig((getSessionUser(req))?.orgId || 1);
+        for (const a of _adOrgMeta.adAccounts) {
           try { const r = await metaGet(campaignId, {fields:'id'}); if(r.id) { acct = a; break; } } catch(e) {}
         }
         try {
@@ -3080,7 +3084,7 @@ const server = http.createServer(async (req, res) => {
         if (crCached) { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify(crCached)); }
 
         // Fetch all ads with insights for date range
-        const allAdsData = await getAllAds(start, end);
+        const allAdsData = await getAllAds(start, end, (getSessionUser(req))?.orgId || 1);
 
         const COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
         const creativeMap = {};
@@ -4340,7 +4344,7 @@ function getRates2(orgId) {
             spend: Math.round(fbSpendRange * 100) / 100,
             cpa: todayStats.orders > 0 ? Math.round((fbSpendRange / todayStats.orders) * 100) / 100 : 0,
             campaigns: Array.isArray(topCampaignsRaw) ? topCampaignsRaw.filter(c => parseFloat(c.insights?.spend) > 0).length : 0,
-            adsets: await (async () => { try { let cnt = 0; for (const acct of Object.values(AD_ACCOUNTS_MAP)) { const ins = await metaGetAll(acct + '/insights', { level: 'adset', fields: 'spend', time_range: JSON.stringify({since:dashFrom,until:dashTo}), limit:'200' }); cnt += ins.filter(a => parseFloat(a.spend) > 0).length; } return cnt; } catch(e) { return 0; } })(),
+            adsets: await (async () => { try { let cnt = 0; const _dashOrgMeta = getOrgMetaConfig(userOrgId); for (const acct of _dashOrgMeta.adAccounts) { const ins = await metaGetAll(acct + '/insights', { level: 'adset', fields: 'spend', time_range: JSON.stringify({since:dashFrom,until:dashTo}), limit:'200' }); cnt += ins.filter(a => parseFloat(a.spend) > 0).length; } return cnt; } catch(e) { return 0; } })(),
             ads: await (async () => { try { let cnt = 0; for (const acct of Object.values(AD_ACCOUNTS_MAP)) { const ins = await metaGetAll(acct + '/insights', { level: 'ad', fields: 'spend', time_range: JSON.stringify({since:dashFrom,until:dashTo}), limit:'500' }); cnt += ins.filter(a => parseFloat(a.spend) > 0).length; } return cnt; } catch(e) { return 0; } })(),
             weekSpend: Math.round(fbSpend7d * 100) / 100
           },
