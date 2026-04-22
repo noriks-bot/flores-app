@@ -835,7 +835,8 @@ async function syncCountry(country, orgId, storeOverride) {
   const syncOrgId = orgId || 1;
   const _syncKey = syncOrgId === 1 ? country : country + "_org" + syncOrgId;
   const state = getSyncState.get(_syncKey);
-  const modifiedAfter = state?.last_sync_at || null;
+  const rawSyncAt = state?.last_sync_at || null;
+  const modifiedAfter = rawSyncAt ? new Date(new Date(rawSyncAt).getTime() - 60000).toISOString() : null; // 60s overlap to catch edge cases
 
   const orders = await fetchWcOrdersForCountry(country, modifiedAfter, storeOverride);
   console.log(`[FLORES] syncCountry ${country} org=${syncOrgId}: fetched ${orders.length} orders, modifiedAfter=${modifiedAfter}`);
