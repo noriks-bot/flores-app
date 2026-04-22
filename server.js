@@ -4406,16 +4406,16 @@ function getRates2(orgId) {
         if (query.to) { where += ' AND created_at <= ?'; params.push(query.to + ' 23:59:59'); }
         const total = db.prepare(`SELECT COUNT(*) as cnt FROM activity_log ${where}`).get(...params).cnt;
         const rows = db.prepare(`SELECT * FROM activity_log ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`).all(...params, limit, offset);
-        const users = db.prepare('SELECT DISTINCT username FROM activity_log WHERE org_id = ?').all().map(r => r.username);
-        const actions = db.prepare('SELECT DISTINCT action FROM activity_log WHERE org_id = ?').all().map(r => r.action);
+        const users = db.prepare('SELECT DISTINCT username FROM activity_log WHERE org_id = ?').all(user?.orgId || 1).map(r => r.username);
+        const actions = db.prepare('SELECT DISTINCT action FROM activity_log WHERE org_id = ?').all(user?.orgId || 1).map(r => r.action);
         return sendJSON(res, { data: rows, meta: { total, page, limit, pages: Math.ceil(total / limit) }, filters: { users, actions } });
       }
 
       // ═══ NOTIFICATIONS API ═══
       if (urlPath === '/api/notifications') {
         const user = getSessionUser(req);
-        const rows = db.prepare('SELECT * FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND org_id = ? ORDER BY created_at DESC LIMIT 50').all(user?.userId || 0);
-        const unread = db.prepare('SELECT COUNT(*) as cnt FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND read = 0 AND org_id = ?').get(user?.userId || 0).cnt;
+        const rows = db.prepare('SELECT * FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND org_id = ? ORDER BY created_at DESC LIMIT 50').all(user?.userId || 0, user?.orgId || 1);
+        const unread = db.prepare('SELECT COUNT(*) as cnt FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND read = 0 AND org_id = ?').get(user?.userId || 0, user?.orgId || 1).cnt;
         return sendJSON(res, { notifications: rows, unread });
       }
       if (urlPath === '/api/notifications/mark-read' && req.method === 'POST') {
@@ -4423,7 +4423,7 @@ function getRates2(orgId) {
         const body = await readBody(req);
         const { id, all: markAll } = JSON.parse(body || '{}');
         if (markAll) {
-          db.prepare('UPDATE notifications SET read = 1 WHERE (user_id = ? OR user_id IS NULL) AND org_id = ?').run(user?.userId || 0);
+          db.prepare('UPDATE notifications SET read = 1 WHERE (user_id = ? OR user_id IS NULL) AND org_id = ?').run(user?.userId || 0, user?.orgId || 1);
         } else if (id) {
           db.prepare('UPDATE notifications SET read = 1 WHERE id = ?').run(id);
         }
