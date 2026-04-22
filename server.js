@@ -2855,7 +2855,7 @@ const server = http.createServer(async (req, res) => {
               const share = cnt / total;
               if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
               if (!_useCountryBreakdown) byCountry[cc].spend += spend * share;
-              if (!_useCountryBreakdown) byCountry[cc].purchases += purchases * share;
+              byCountry[cc].purchases += purchases * share;
             }
           }
         }
