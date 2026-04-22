@@ -144,7 +144,7 @@ const DASH_CACHE_FILE = path.join(CACHE_DIR, 'dash-cache.json');
 const ORIGIN_CACHE_FILE = path.join(CACHE_DIR, 'origin-data.json');
 
 const PRODUCT_COSTS = { tshirt: 3.5, boxers: 2.25, socks: 1.0 };
-const EUR_RATES = { HR: 1, CZ: 0.041, PL: 0.232, GR: 1, IT: 1, HU: 0.00256, SK: 1, SI: 1, RO: 0.196 };
+const EUR_RATES = { HR: 1, CZ: 0.041, PL: 0.232, GR: 1, IT: 1, HU: 0.00256, SK: 1 };
 
 // WooCommerce API keys per country store
 const WC_STORES = {
@@ -154,18 +154,16 @@ const WC_STORES = {
   GR: { url: 'https://noriks.com/gr', ck: 'ck_2595568b83966151e08031e42388dd1c34307107', cs: 'cs_dbd091b4fc11091638f8ec4c838483be32cfb15b' },
   SK: { url: 'https://noriks.com/sk', ck: 'ck_1abaeb006bb9039da0ad40f00ab674067ff1d978', cs: 'cs_32b33bc2716b07a738ff18eb377a767ef60edfe7' },
   IT: { url: 'https://noriks.com/it', ck: 'ck_84a1e1425710ff9eeed69b100ed9ac445efc39e2', cs: 'cs_81d25dcb0371773387da4d30482afc7ce83d1b3e' },
-  HU: { url: 'https://noriks.com/hu', ck: 'ck_e591c2a0bf8c7a59ec5893e03adde3c760fbdaae', cs: 'cs_d84113ee7a446322d191be0725c0c92883c984c3' },
-  SI: { url: 'https://noriks.com/si', ck: 'ck_8fe81e37ac7c8aca9fe47ac3bbe27482d62d2e32', cs: 'cs_0be037bb7bf9a92ed7f886c5ceb9dd279f564900' },
-  RO: { url: 'https://noriks.com/ro', ck: 'ck_69ef14e1be3423cb74613c64ce4243e8c47e0e00', cs: 'cs_a00df9b005bb9e964df5e3bf3af816b9c49a9423' }
+  HU: { url: 'https://noriks.com/hu', ck: 'ck_e591c2a0bf8c7a59ec5893e03adde3c760fbdaae', cs: 'cs_d84113ee7a446322d191be0725c0c92883c984c3' }
 };
-const VAT_RATES = { HR: 0.25, CZ: 0.21, PL: 0.23, GR: 0.24, IT: 0.22, HU: 0.27, SK: 0.23, SI: 0.22, RO: 0.19 };
+const VAT_RATES = { HR: 0.25, CZ: 0.21, PL: 0.23, GR: 0.24, IT: 0.22, HU: 0.27, SK: 0.23 };
 
 // Parse campaign name for country + product type
 // Supports both old format: DRŽAVA__TIP and new format: cc:DRŽAVA | TIP | sku:PRODUCT | date: DD.MM.YYYY
 function parseCampaignName(name) {
   if (!name) return { countries: [], productType: null };
   const n = name.toUpperCase();
-  const VALID_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
+  const VALID_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU'];
   
   let countries = [];
   
@@ -434,7 +432,7 @@ function seedOrgSettings() {
 
   db.transaction(() => {
     // Countries
-    const countries = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
+    const countries = ['HR','CZ','PL','GR','SK','IT','HU'];
     upsertSetting.run(1, 'countries', 'active', JSON.stringify(countries));
 
     // WC Stores
@@ -463,31 +461,31 @@ function seedOrgSettings() {
     upsertSetting.run(1, 'product_costs', 'socks', '1.00');
 
     // Rejection Rates (%)
-    const rejections = { HR: 15, CZ: 15, PL: 15, SK: 15, HU: 15, GR: 25, IT: 25, SI: 15, RO: 25 };
+    const rejections = { HR: 15, CZ: 15, PL: 15, SK: 15, HU: 15, GR: 25, IT: 25 };
     for (const [cc, rate] of Object.entries(rejections)) {
       upsertSetting.run(1, 'rejection_rates', cc, String(rate));
     }
 
     // Shipping Costs (EUR)
-    const shipping = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 6, SI: 4.5, RO: 4.5 };
+    const shipping = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 5.5 };
     for (const [cc, cost] of Object.entries(shipping)) {
       upsertSetting.run(1, 'shipping_costs', cc, String(cost));
     }
 
     // Rejection Rates 2 (admin v2)
-    const rejections2 = { HR: 8, CZ: 8, PL: 5, SK: 4, HU: 7, GR: 16, IT: 15, SI: 15, RO: 18 };
+    const rejections2 = { HR: 8, CZ: 8, PL: 5, SK: 4, HU: 7, GR: 15, IT: 15 };
     for (const [cc, rate] of Object.entries(rejections2)) {
       upsertSetting.run(1, 'rejection_rates2', cc, String(rate));
     }
 
     // Shipping Costs 2 (admin v2)
-    const shipping2 = { HR: 3, CZ: 3.3, PL: 3.5, SK: 3.1, HU: 3, GR: 4.5, IT: 6, SI: 4, RO: 4 };
+    const shipping2 = { HR: 3, CZ: 3.3, PL: 3.5, SK: 3.1, HU: 3, GR: 4.5, IT: 5.5 };
     for (const [cc, cost] of Object.entries(shipping2)) {
       upsertSetting.run(1, 'shipping_costs2', cc, String(cost));
     }
 
     // VAT Rates (%)
-    const vat = { HR: 25, CZ: 21, PL: 23, GR: 24, IT: 22, HU: 27, SK: 23, SI: 22, RO: 19 };
+    const vat = { HR: 25, CZ: 21, PL: 23, GR: 24, IT: 22, HU: 27, SK: 23 };
     for (const [cc, rate] of Object.entries(vat)) {
       upsertSetting.run(1, 'vat_rates', cc, String(rate));
     }
@@ -552,8 +550,7 @@ const newColumns = [
   'billing_name TEXT DEFAULT ""',
   'billing_city TEXT DEFAULT ""',
   'billing_email TEXT DEFAULT ""',
-  'order_datetime TEXT DEFAULT ""',
-  'org_id INTEGER DEFAULT 1'
+  'order_datetime TEXT DEFAULT ""'
 ];
 for (const col of newColumns) {
   try { db.exec(`ALTER TABLE wc_orders ADD COLUMN ${col}`); } catch(e) { /* column exists */ }
@@ -561,8 +558,8 @@ for (const col of newColumns) {
 
 // Prepared statements for WC sync
 const upsertOrder = db.prepare(`
-  INSERT INTO wc_orders (country, wc_order_id, order_date, status, gross_total, gross_eur, net_revenue, product_cost, shipping_cost, profit, product_type, utm_source, utm_campaign, is_fb_attributed, raw_meta, created_at, adset_id, ad_id, campaign_name, adset_name, ad_name, utm_medium, landing_page, placement, billing_name, billing_city, billing_email, order_datetime, org_id)
-  VALUES (@country, @wc_order_id, @order_date, @status, @gross_total, @gross_eur, @net_revenue, @product_cost, @shipping_cost, @profit, @product_type, @utm_source, @utm_campaign, @is_fb_attributed, @raw_meta, datetime('now'), @adset_id, @ad_id, @campaign_name, @adset_name, @ad_name, @utm_medium, @landing_page, @placement, @billing_name, @billing_city, @billing_email, @order_datetime, @org_id)
+  INSERT INTO wc_orders (country, wc_order_id, order_date, status, gross_total, gross_eur, net_revenue, product_cost, shipping_cost, profit, product_type, utm_source, utm_campaign, is_fb_attributed, raw_meta, created_at, adset_id, ad_id, campaign_name, adset_name, ad_name, utm_medium, landing_page, placement, billing_name, billing_city, billing_email, order_datetime)
+  VALUES (@country, @wc_order_id, @order_date, @status, @gross_total, @gross_eur, @net_revenue, @product_cost, @shipping_cost, @profit, @product_type, @utm_source, @utm_campaign, @is_fb_attributed, @raw_meta, datetime('now'), @adset_id, @ad_id, @campaign_name, @adset_name, @ad_name, @utm_medium, @landing_page, @placement, @billing_name, @billing_city, @billing_email, @order_datetime)
   ON CONFLICT(country, wc_order_id) DO UPDATE SET
     order_date=excluded.order_date, status=excluded.status, gross_total=excluded.gross_total,
     gross_eur=excluded.gross_eur, net_revenue=excluded.net_revenue, product_cost=excluded.product_cost,
@@ -606,7 +603,6 @@ function classifySourceDash(meta, coupons) {
     if (src.includes('meta') && (med === 'cpc' || med === 'paid')) return 'Facebook';
     if ((src === 'google' || src === 'google.com') && (med === 'cpc' || med === 'paid')) return 'Google Paid';
     if (referrer.includes('gclid') || entry.includes('gclid')) return 'Google Paid';
-    if (entry.includes('gad_source') || entry.includes('gad_campaignid')) return 'Google Paid';
     if (src === 'google' || src === 'google.com') return 'Google Organic';
     if (src === 'klaviyo' || med === 'email') return 'Klaviyo';
     if (coupons && coupons.length > 0) {
@@ -663,7 +659,7 @@ function calculateOrderProfit(order, country) {
   const productCost = (totalTshirts * PRODUCT_COSTS.tshirt) + (totalBoxers * PRODUCT_COSTS.boxers) + (totalSocks * PRODUCT_COSTS.socks);
 
   // Shipping ALWAYS applied per order (matches dash behavior)
-  const SHIPPING_COSTS = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 6, SI: 4.5, RO: 4.5 };
+  const SHIPPING_COSTS = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 5.5 };
   const shippingCost = SHIPPING_COSTS[country] || 4;
   const effectiveProductCost = productCost * (1 - rejRate);
   // profit per order (FB spend subtracted at aggregate level in dashboard API)
@@ -673,8 +669,8 @@ function calculateOrderProfit(order, country) {
 }
 
 // Fetch WC orders for a single country with pagination
-function fetchWcOrdersForCountry(country, modifiedAfter, storeOverride) {
-  const store = storeOverride || WC_STORES[country];
+function fetchWcOrdersForCountry(country, modifiedAfter) {
+  const store = WC_STORES[country];
   if (!store) return Promise.resolve([]);
 
   return new Promise(async (resolve) => {
@@ -720,12 +716,11 @@ function fetchWcOrdersForCountry(country, modifiedAfter, storeOverride) {
 }
 
 // Sync orders for a single country into SQLite
-async function syncCountry(country, orgId, storeOverride) {
-  const syncOrgId = orgId || 1;
+async function syncCountry(country) {
   const state = getSyncState.get(country);
   const modifiedAfter = state?.last_sync_at || null;
 
-  const orders = await fetchWcOrdersForCountry(country, modifiedAfter, storeOverride);
+  const orders = await fetchWcOrdersForCountry(country, modifiedAfter);
   let count = 0;
 
   // Pre-resolve ad_id → campaign_id/adset_id via Meta API for orders missing campaign data
@@ -899,7 +894,6 @@ async function syncCountry(country, orgId, storeOverride) {
         billing_name: ((order.billing?.first_name || '') + ' ' + (order.billing?.last_name || '')).trim(),
         billing_city: order.billing?.city || '',
         billing_email: order.billing?.email || '',
-        org_id: syncOrgId || 1,
         order_datetime: (order.date_created || '').replace('T', ' ').slice(0, 16)
       });
 
@@ -972,7 +966,7 @@ async function syncAllCountries() {
   for (let i = 0; i < countries.length; i++) {
     const country = countries[i];
     try {
-      const count = await syncCountry(country, 1);
+      const count = await syncCountry(country);
       results[country] = count;
       totalNew += count;
     } catch (e) {
@@ -992,26 +986,6 @@ async function syncAllCountries() {
     files.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
     if (files.length) console.log(`[FLORES] Cleared ${files.length} campaign cache files`);
   } catch(e) {}
-  // === Multi-org sync ===
-  try {
-    const orgs = db.prepare('SELECT id, name FROM organizations WHERE id != 1 AND active = 1').all();
-    for (const org of orgs) {
-      const orgStores = getOrgWcStores(org.id);
-      if (!Object.keys(orgStores).length) continue;
-      console.log('[FLORES] Syncing org ' + org.name + ' (' + Object.keys(orgStores).length + ' stores)...');
-      for (const [cc, store] of Object.entries(orgStores)) {
-        try {
-          const count = await syncCountry(cc, org.id, store);
-          totalNew += count;
-          console.log('[FLORES] Org ' + org.name + ' ' + cc + ': ' + count + ' orders');
-        } catch(e) {
-          console.error('[FLORES] Org ' + org.name + ' sync failed for ' + cc + ':', e.message);
-        }
-        await new Promise(r => setTimeout(r, 500));
-      }
-    }
-  } catch(e) { console.error('[FLORES] Multi-org sync error:', e.message); }
-
   return { synced: results, totalNew };
 }
 
@@ -1087,7 +1061,7 @@ async function fetchAdvertiserData(dateFrom, dateTo) {
 function fetchActualWcOrders(dateFrom, dateTo) {
   const rows = db.prepare(`
     SELECT country, product_type, COUNT(*) as orders, SUM(profit) as totalProfit, SUM(gross_eur) as totalRevenue
-    FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1
+    FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1
     GROUP BY country, product_type
   `).all(dateFrom, dateTo);
 
@@ -1113,7 +1087,7 @@ function fetchActualWcOrders(dateFrom, dateTo) {
 function fetchWcOrdersByCampaign(dateFrom, dateTo, catalogCampaignByCountry) {
   const rows = db.prepare(`
     SELECT wc_order_id, country, gross_eur, net_revenue, product_cost, shipping_cost, profit, utm_campaign, adset_id, ad_id, raw_meta
-    FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''
+    FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''
   `).all(dateFrom, dateTo);
 
   const byCampaign = {};
@@ -1907,7 +1881,7 @@ async function dropboxListAllFiles(folderPath) {
 
 function parseVideoFilename(name) {
   const idMatch = name.match(/ID(\d+)/i);
-  const countries = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
+  const countries = ['HR','CZ','PL','GR','SK','IT','HU'];
   const foundCountry = countries.find(c => name.toUpperCase().includes('_' + c + '_') || name.toUpperCase().includes('_' + c + '.') || name.toUpperCase().startsWith(c + '_'));
   let productType = null;
   const upper = name.toUpperCase();
@@ -2622,7 +2596,7 @@ const server = http.createServer(async (req, res) => {
             files.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
             console.log('[RESYNC] Cleared ' + files.length + ' cache files');
           } catch(e) {}
-          const totalOrders = db.prepare('SELECT COUNT(*) as cnt FROM wc_orders WHERE org_id = ?').get(user?.orgId || 1).cnt;
+          const totalOrders = db.prepare('SELECT COUNT(*) as cnt FROM wc_orders').get().cnt;
           console.log('[RESYNC] Complete. Total orders in DB: ' + totalOrders);
           return sendJSON(res, { ok: true, totalOrders, synced: result.synced });
         } catch (e) {
@@ -2640,7 +2614,7 @@ const server = http.createServer(async (req, res) => {
       }
       if (urlPath === '/api/sync-status') {
         const states = db.prepare('SELECT * FROM sync_state').all();
-        const totalOrders = db.prepare('SELECT COUNT(*) as cnt FROM wc_orders WHERE org_id = ?').get(user?.orgId || 1).cnt;
+        const totalOrders = db.prepare('SELECT COUNT(*) as cnt FROM wc_orders').get().cnt;
         return sendJSON(res, { countries: states, totalOrders });
       }
       if (urlPath === '/api/base-report') {
@@ -2654,7 +2628,7 @@ const server = http.createServer(async (req, res) => {
         const dbOrdersByCountry = {};
         const dbOrderRows = db.prepare(`
           SELECT country, COUNT(*) as orders, SUM(gross_eur) as revenue, SUM(profit) as profit
-          FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1
+          FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1
            AND LOWER(billing_name) NOT LIKE '%test%'
           GROUP BY country
         `).all(start, end);
@@ -2690,7 +2664,7 @@ const server = http.createServer(async (req, res) => {
           // Preload DB order distribution per campaign
           const _dRows = db.prepare(`
             SELECT utm_campaign, country, COUNT(*) as o
-            FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1
+            FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1
             AND utm_campaign IS NOT NULL AND utm_campaign != ''
             AND LOWER(billing_name) NOT LIKE '%test%'
             GROUP BY utm_campaign, country
@@ -2767,7 +2741,7 @@ const server = http.createServer(async (req, res) => {
           for (const cc of Object.keys(byCountry)) byCountry[cc].advCut = 0;
           const _distRows = db.prepare(`
             SELECT utm_campaign, country, COUNT(*) as orders
-            FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1
+            FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1
             AND utm_campaign IS NOT NULL AND utm_campaign != ''
             AND LOWER(billing_name) NOT LIKE '%test%'
             GROUP BY utm_campaign, country
@@ -2815,7 +2789,7 @@ const server = http.createServer(async (req, res) => {
         // Simplification: query DB orders by campaign, then map campaign→type
         const dbOrdersByCampaign = db.prepare(`
           SELECT utm_campaign, country, COUNT(*) as orders, SUM(gross_eur) as revenue, SUM(profit) as profit
-          FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1
+          FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1
           AND utm_campaign IS NOT NULL AND utm_campaign != ''
           GROUP BY utm_campaign, country
         `).all(start, end);
@@ -2865,7 +2839,7 @@ const server = http.createServer(async (req, res) => {
         // byCountryAll: ALL orders (not just FB-attributed) with spend from FB data
         const byCountryAll = {};
         try {
-          const allRows = db.prepare("SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY country").all(start, end, userOrgId || 1);
+          const allRows = db.prepare("SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ?  AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY country").all(start, end);
           for (const r of allRows) {
             const fbSpend = (byCountry[r.country] && byCountry[r.country].spend) || 0;
             const netProfit = Math.round(((r.profit||0) - fbSpend) * 100) / 100;
@@ -2932,7 +2906,6 @@ const server = http.createServer(async (req, res) => {
           if (src.includes('google') && (med.includes('cpc') || med.includes('paid') || med.includes('ppc'))) return 'Google Ads';
           if (camp.toLowerCase().includes('google_cpc') || camp.toLowerCase().includes('google_ads')) return 'Google Ads';
           if (referrer.includes('gclid') || entry.includes('gclid')) return 'Google Ads';
-          if (entry.includes('gad_source') || entry.includes('gad_campaignid')) return 'Google Ads';
           if (src.includes('google') && referrer.includes('google.com') && (referrer.includes('ads') || entry.includes('gad_source'))) return 'Google Ads';
 
           // Google Organic
@@ -3022,7 +2995,7 @@ const server = http.createServer(async (req, res) => {
         // Fetch all ads with insights for date range
         const allAdsData = await getAllAds(start, end);
 
-        const COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
+        const COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU'];
         const creativeMap = {};
 
         for (const ad of allAdsData) {
@@ -3042,7 +3015,7 @@ const server = http.createServer(async (req, res) => {
           }
 
           // Parse country - prefer Meta API country breakdown
-          const COUNTRY_MAP = { 'HR': 'HR', 'CZ': 'CZ', 'PL': 'PL', 'GR': 'GR', 'SK': 'SK', 'IT': 'IT', 'HU': 'HU', 'SI': 'SI', 'RO': 'RO' };
+          const COUNTRY_MAP = { 'HR': 'HR', 'CZ': 'CZ', 'PL': 'PL', 'GR': 'GR', 'SK': 'SK', 'IT': 'IT', 'HU': 'HU' };
           let adCountry = COUNTRY_MAP[(ins.country || '').toUpperCase()] || null;
           if (!adCountry) {
             const namesToCheck = [ad.campaign_name || '', ad.adset_name || '', name];
@@ -3970,46 +3943,44 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
 
       // ═══ DASHBOARD API ═══
       // Load V2 rates from org_settings
-function getRates2(orgId) {
-  orgId = orgId || 1;
+function getRates2() {
   const rej = {}, ship = {};
   try {
-    const rows = db.prepare("SELECT key, value FROM org_settings WHERE org_id = ? AND category = 'rejection_rates2'").all(orgId);
+    const rows = db.prepare("SELECT key, value FROM org_settings WHERE org_id = 1 AND category = 'rejection_rates2'").all();
     for (const r of rows) rej[r.key] = parseFloat(r.value);
   } catch(e) {}
   try {
-    const rows = db.prepare("SELECT key, value FROM org_settings WHERE org_id = ? AND category = 'shipping_costs2'").all(orgId);
+    const rows = db.prepare("SELECT key, value FROM org_settings WHERE org_id = 1 AND category = 'shipping_costs2'").all();
     for (const r of rows) ship[r.key] = parseFloat(r.value);
   } catch(e) {}
   return { rej, ship };
 }
 
       if (urlPath === '/api/dashboard') {
-        const userOrgId = user?.orgId || 1;
         const dashFrom = query.date_from || getToday(); const dashTo = query.date_to || getToday();
         // Dashboard reads from SQLite - no Meta API calls, instant response
         const today = getToday();
         const d7ago = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
         
         // Today's KPIs from wc_orders
-        const todayStats = db.prepare("SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo, userOrgId);
-        const fbOrders = db.prepare("SELECT COUNT(*) as orders FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo, userOrgId);
+        const todayStats = db.prepare("SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
+        const fbOrders = db.prepare("SELECT COUNT(*) as orders FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
         
         // 7-day daily chart data
-        const chartData = db.prepare("SELECT order_date as date, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND org_id = ? AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date ORDER BY order_date").all(d7ago, userOrgId);
+        const chartData = db.prepare("SELECT order_date as date, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ?  AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY order_date ORDER BY order_date").all(d7ago);
         
         // Top campaigns - from Meta API (has campaign names)
         let topCampaignsRaw = [];
         try { topCampaignsRaw = await getCampaigns(dashFrom, dashTo); } catch(e) {}
         
         // Top products
-        const topProducts = db.prepare("SELECT product_type, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? GROUP BY product_type ORDER BY orders DESC").all(dashFrom, dashTo, userOrgId);
+        const topProducts = db.prepare("SELECT product_type, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue FROM wc_orders WHERE order_date >= ? AND order_date <= ? GROUP BY product_type ORDER BY orders DESC").all(dashFrom, dashTo);
         
         // By country (today)
-        const byCountry = db.prepare('SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ? AND org_id = ? GROUP BY country ORDER BY orders DESC').all(today, userOrgId);
+        const byCountry = db.prepare('SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ? GROUP BY country ORDER BY orders DESC').all(today);
         
         // 7-day totals
-        const weekStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND org_id = ?').get(d7ago, userOrgId);
+        const weekStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ?').get(d7ago);
         
         // FB spend: live from Meta campaigns (primary), dash-cache (fallback for 7d)
         let fbSpendToday = 0, fbSpend7d = 0, fbSpendRange = 0;
@@ -4125,7 +4096,7 @@ function getRates2(orgId) {
         } catch(e) { console.warn('[DASH] Top creatives fetch error:', e.message); }
 
         // FB KPI data
-        const fbAttributedProfit = db.prepare("SELECT COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
+        const fbAttributedProfit = db.prepare("SELECT COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
         // ADV manipulation: per-campaign tier cut on net PPO (same basis as Ads Manager).
         // Guarantee: advCutTotal = FB Profit − ADV Profit, always.
         let advCutTotal = 0; let advTierName = 'light';
@@ -4165,7 +4136,7 @@ function getRates2(orgId) {
           }
         }
         const fbOrderCount = fbOrders?.orders || 0;
-        const fbMeasuredResult = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != '' AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
+        const fbMeasuredResult = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != '' AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
         const fbMeasuredOrders = fbMeasuredResult?.cnt || 0;
         const fbUnmeasuredOrders = fbOrderCount - fbMeasuredOrders;
         const fbCpa = fbOrderCount > 0 ? Math.round((fbSpendRange / fbOrderCount) * 100) / 100 : 0;
@@ -4224,7 +4195,7 @@ function getRates2(orgId) {
         }
 
         // Orders list for table
-        const ordersList = db.prepare("SELECT wc_order_id, order_date, order_datetime, country, gross_eur, profit, utm_source, utm_medium, utm_campaign, campaign_name, is_fb_attributed, product_type, billing_name, billing_city, billing_email, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? ORDER BY order_datetime DESC, wc_order_id DESC").all(dashFrom, dashTo, userOrgId);
+        const ordersList = db.prepare("SELECT wc_order_id, order_date, order_datetime, country, gross_eur, profit, utm_source, utm_medium, utm_campaign, campaign_name, is_fb_attributed, product_type, billing_name, billing_city, billing_email, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ? ORDER BY order_datetime DESC, wc_order_id DESC").all(dashFrom, dashTo);
         const ordersListFormatted = ordersList.map(o => {
           // Use dash classification from raw_meta
           let origin = 'Direct';
@@ -4262,7 +4233,7 @@ function getRates2(orgId) {
             fbPixelPurchases,
             profitPerOrder: todayStats.orders > 0 ? Math.round(((todayStats.profit || 0) - fbSpendRange) / todayStats.orders * 100) / 100 : 0,
             fbProfitPerOrder: fbOrderCount > 0 ? Math.round(fbProfit / fbOrderCount * 100) / 100 : 0,
-            ordersBySource: (() => { try { const allOrd = db.prepare("SELECT wc_order_id, utm_source, utm_medium, utm_campaign, is_fb_attributed, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ?").all(dashFrom, dashTo, userOrgId); const m = {}; allOrd.forEach(o => { let origin = 'Direct'; try { const rawM2 = JSON.parse(o.raw_meta || '{}'); origin = classifySourceDash(rawM2, []); } catch(e2) { if (o.is_fb_attributed === 1) origin = 'Facebook'; else if (o.utm_source === 'callcenter') origin = 'Call Center'; else if ((o.utm_source||'').includes('google') && (o.utm_medium === 'cpc' || o.utm_medium === 'paid' || (o.utm_campaign||'').includes('google_cpc'))) origin = 'Google Paid'; else if ((o.utm_source||'').includes('google')) origin = 'Google Organic'; } m[origin] = (m[origin] || 0) + 1; }); return m; } catch(e) { return {}; } })(),
+            ordersBySource: (() => { try { const allOrd = db.prepare("SELECT wc_order_id, utm_source, utm_medium, utm_campaign, is_fb_attributed, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ?").all(dashFrom, dashTo); const m = {}; allOrd.forEach(o => { let origin = 'Direct'; try { const rawM2 = JSON.parse(o.raw_meta || '{}'); origin = classifySourceDash(rawM2, []); } catch(e2) { if (o.is_fb_attributed === 1) origin = 'Facebook'; else if (o.utm_source === 'callcenter') origin = 'Call Center'; else if ((o.utm_source||'').includes('google') && (o.utm_medium === 'cpc' || o.utm_medium === 'paid' || (o.utm_campaign||'').includes('google_cpc'))) origin = 'Google Paid'; else if ((o.utm_source||'').includes('google')) origin = 'Google Organic'; } m[origin] = (m[origin] || 0) + 1; }); return m; } catch(e) { return {}; } })(),
             fbMeasuredOrders,
             fbUnmeasuredOrders,
             fbCpa,
@@ -4331,8 +4302,8 @@ function getRates2(orgId) {
         if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) return sendJSON(res, { error: 'Admin required' }, 403);
         const dashFrom = query.date_from || getToday(); const dashTo = query.date_to || getToday();
         const rates2 = getRates2();
-        const VAT_RATES_LOCAL = { HR: 0.25, CZ: 0.21, PL: 0.23, GR: 0.24, IT: 0.22, HU: 0.27, SK: 0.23, SI: 0.22, RO: 0.19 };
-        const rows = db.prepare("SELECT country, gross_eur, product_cost, shipping_cost, profit, is_fb_attributed FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND LOWER(billing_name) NOT LIKE '%test%'").all(dashFrom, dashTo, userOrgId);
+        const VAT_RATES_LOCAL = { HR: 0.25, CZ: 0.21, PL: 0.23, GR: 0.24, IT: 0.22, HU: 0.27, SK: 0.23 };
+        const rows = db.prepare("SELECT country, gross_eur, product_cost, shipping_cost, profit, is_fb_attributed FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND LOWER(billing_name) NOT LIKE '%test%'").all(dashFrom, dashTo);
         let orders = 0, revenue = 0, profit2Total = 0, fbOrders = 0, fbProfit2Total = 0;
         for (const r of rows) {
           const country = r.country;
@@ -4384,8 +4355,8 @@ function getRates2(orgId) {
             fbProfit: Math.round(fbProfitFinal * 100) / 100,
             fbProfitPerOrder: fbOrders > 0 ? Math.round(fbProfitFinal/fbOrders*100)/100 : 0,
             fbCpa: fbOrders > 0 ? Math.round(fbSpendRange/fbOrders*100)/100 : 0,
-            fbMeasuredOrders: (() => { try { return db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.cnt || 0; } catch(e) { return 0; } })(),
-            fbUnmeasuredOrders: (() => { try { var t = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1").get(dashFrom, dashTo)?.cnt || 0; var m = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.cnt || 0; return Math.max(0, t - m); } catch(e) { return 0; } })()
+            fbMeasuredOrders: (() => { try { return db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.cnt || 0; } catch(e) { return 0; } })(),
+            fbUnmeasuredOrders: (() => { try { var t = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1").get(dashFrom, dashTo)?.cnt || 0; var m = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.cnt || 0; return Math.max(0, t - m); } catch(e) { return 0; } })()
           }
         });
       }
@@ -4394,7 +4365,7 @@ function getRates2(orgId) {
         const page = parseInt(query.page) || 1;
         const limit = Math.min(parseInt(query.limit) || 50, 200);
         const offset = (page - 1) * limit;
-        let where = 'WHERE org_id = ' + (user?.orgId || 1);
+        let where = 'WHERE org_id = 1';
         const params = [];
         if (query.user) { where += ' AND username = ?'; params.push(query.user); }
         if (query.action) { where += ' AND action = ?'; params.push(query.action); }
@@ -4402,16 +4373,16 @@ function getRates2(orgId) {
         if (query.to) { where += ' AND created_at <= ?'; params.push(query.to + ' 23:59:59'); }
         const total = db.prepare(`SELECT COUNT(*) as cnt FROM activity_log ${where}`).get(...params).cnt;
         const rows = db.prepare(`SELECT * FROM activity_log ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`).all(...params, limit, offset);
-        const users = db.prepare('SELECT DISTINCT username FROM activity_log WHERE org_id = ?').all().map(r => r.username);
-        const actions = db.prepare('SELECT DISTINCT action FROM activity_log WHERE org_id = ?').all().map(r => r.action);
+        const users = db.prepare('SELECT DISTINCT username FROM activity_log WHERE org_id = 1').all().map(r => r.username);
+        const actions = db.prepare('SELECT DISTINCT action FROM activity_log WHERE org_id = 1').all().map(r => r.action);
         return sendJSON(res, { data: rows, meta: { total, page, limit, pages: Math.ceil(total / limit) }, filters: { users, actions } });
       }
 
       // ═══ NOTIFICATIONS API ═══
       if (urlPath === '/api/notifications') {
         const user = getSessionUser(req);
-        const rows = db.prepare('SELECT * FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND org_id = ? ORDER BY created_at DESC LIMIT 50').all(user?.userId || 0);
-        const unread = db.prepare('SELECT COUNT(*) as cnt FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND read = 0 AND org_id = ?').get(user?.userId || 0).cnt;
+        const rows = db.prepare('SELECT * FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND org_id = 1 ORDER BY created_at DESC LIMIT 50').all(user?.userId || 0);
+        const unread = db.prepare('SELECT COUNT(*) as cnt FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND read = 0 AND org_id = 1').get(user?.userId || 0).cnt;
         return sendJSON(res, { notifications: rows, unread });
       }
       if (urlPath === '/api/notifications/mark-read' && req.method === 'POST') {
@@ -4419,7 +4390,7 @@ function getRates2(orgId) {
         const body = await readBody(req);
         const { id, all: markAll } = JSON.parse(body || '{}');
         if (markAll) {
-          db.prepare('UPDATE notifications SET read = 1 WHERE (user_id = ? OR user_id IS NULL) AND org_id = ?').run(user?.userId || 0);
+          db.prepare('UPDATE notifications SET read = 1 WHERE (user_id = ? OR user_id IS NULL) AND org_id = 1').run(user?.userId || 0);
         } else if (id) {
           db.prepare('UPDATE notifications SET read = 1 WHERE id = ?').run(id);
         }
@@ -4514,52 +4485,6 @@ function getRates2(orgId) {
           orgId: user?.orgId,
           organization: org ? { name: org.name, plan: org.plan, trialDaysLeft, active: !!org.active } : null
         });
-      }
-
-      // ═══ GOOGLE ADS ORDERS (admin only) ═══
-      if (urlPath === '/api/google-ads-orders') {
-        const user = getSessionUser(req);
-        if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) return sendJSON(res, { error: 'Admin access required' }, 403);
-        const year = query.year || new Date().getFullYear().toString();
-        const dateFrom = year + '-01-01';
-        const dateTo = year + '-12-31';
-        const rows = db.prepare(
-          `SELECT wc_order_id, country, order_date, order_datetime, gross_eur, net_revenue, profit, product_type, utm_campaign, billing_name, billing_city, raw_meta
-           FROM wc_orders
-           WHERE order_date >= ? AND order_date <= ? AND org_id = ?
-           AND (raw_meta LIKE '%gclid%' OR raw_meta LIKE '%gad_source%' OR utm_campaign LIKE '%google_cpc%')
-           ORDER BY order_date DESC, wc_order_id DESC`
-        ).all(dateFrom, dateTo, user?.orgId || 1);
-        const orders = rows.map(r => {
-          let googleCampaignId = '';
-          let campaignName = '';
-          try {
-            const meta = JSON.parse(r.raw_meta || '{}');
-            const entry = meta._wc_order_attribution_session_entry || '';
-            const m = entry.match(/gad_campaignid=(\d+)/);
-            if (m) googleCampaignId = m[1];
-            const utmCamp = (meta._wc_order_attribution_utm_campaign || r.utm_campaign || '').trim();
-            campaignName = utmCamp || googleCampaignId || '';
-          } catch(e) {}
-          return {
-            orderId: r.wc_order_id,
-            country: r.country,
-            date: r.order_date,
-            datetime: r.order_datetime || r.order_date,
-            revenue: r.gross_eur,
-            netRevenue: r.net_revenue,
-            profit: r.profit,
-            productType: r.product_type,
-            utmCampaign: r.utm_campaign,
-            googleCampaignId,
-            campaignName,
-            billingName: r.billing_name,
-            billingCity: r.billing_city
-          };
-        });
-        const totalRevenue = orders.reduce((s, o) => s + (o.revenue || 0), 0);
-        const totalProfit = orders.reduce((s, o) => s + (o.profit || 0), 0);
-        return sendJSON(res, { orders, summary: { total: orders.length, totalRevenue, totalProfit, year } });
       }
 
       return sendJSON(res, { error: 'not found' }, 404);
