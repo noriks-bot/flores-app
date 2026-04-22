@@ -2781,9 +2781,26 @@ const server = http.createServer(async (req, res) => {
 
         // 3. Spend by country
         const _reportOrgId = (getSessionUser(req))?.orgId || 1;
-        const _useCountryBreakdown = _reportOrgId !== 1; // Non-Noriks orgs use Meta country breakdown
+        const _useCountryBreakdown = true; // All orgs use direct spend per country // Non-Noriks orgs use Meta country breakdown
         let _metaSpendByCountry = {};
-        if (_useCountryBreakdown) {
+        _metaSpendByCountry = {};
+        if (_reportOrgId === 1) {
+          // Noriks: read from dash-cache (source of truth)
+          try {
+            const _dc = JSON.parse(fs.readFileSync(DASH_CACHE_FILE, "utf8"));
+            const _dcData = _dc.data || {};
+            for (const date of Object.keys(_dcData)) {
+              if (date >= start && date <= end) {
+                for (const [cc, v] of Object.entries(_dcData[date])) {
+                  if (typeof v === "object" && v.spend !== undefined) {
+                    _metaSpendByCountry[cc] = (_metaSpendByCountry[cc] || 0) + (v.spend || 0);
+                  }
+                }
+              }
+            }
+            for (const cc of Object.keys(_metaSpendByCountry)) _metaSpendByCountry[cc] = Math.round(_metaSpendByCountry[cc] * 100) / 100;
+          } catch(e) { console.warn("[base-report] dash-cache read failed:", e.message); }
+        } else if (_reportOrgId !== 1) {
           _metaSpendByCountry = await getSpendByCountryFromMeta(start, end, _reportOrgId);
         }
         const byCountry = {};
