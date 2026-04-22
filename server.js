@@ -2622,7 +2622,7 @@ const server = http.createServer(async (req, res) => {
             files.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f)));
             console.log('[RESYNC] Cleared ' + files.length + ' cache files');
           } catch(e) {}
-          const totalOrders = db.prepare('SELECT COUNT(*) as cnt FROM wc_orders WHERE org_id = ?').get(user?.orgId || 1).cnt;
+          const totalOrders = db.prepare('SELECT COUNT(*) as cnt FROM wc_orders WHERE org_id = ?').get((getSessionUser(req))?.orgId || 1).cnt;
           console.log('[RESYNC] Complete. Total orders in DB: ' + totalOrders);
           return sendJSON(res, { ok: true, totalOrders, synced: result.synced });
         } catch (e) {
@@ -2640,7 +2640,7 @@ const server = http.createServer(async (req, res) => {
       }
       if (urlPath === '/api/sync-status') {
         const states = db.prepare('SELECT * FROM sync_state').all();
-        const totalOrders = db.prepare('SELECT COUNT(*) as cnt FROM wc_orders WHERE org_id = ?').get(user?.orgId || 1).cnt;
+        const totalOrders = db.prepare('SELECT COUNT(*) as cnt FROM wc_orders WHERE org_id = ?').get((getSessionUser(req))?.orgId || 1).cnt;
         return sendJSON(res, { countries: states, totalOrders });
       }
       if (urlPath === '/api/base-report') {
