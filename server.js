@@ -1649,8 +1649,9 @@ async function getAds(adsetId, dateFrom, dateTo) {
 }
 
 // Multi-period profit: returns {campaignId: {yesterday, d3, d7, d14, lifetime}} 
-async function getMultiPeriodProfit() {
-  const cacheKey = 'multiprofit_' + new Date().toISOString().slice(0,10);
+async function getMultiPeriodProfit(orgId) {
+  orgId = orgId || 1;
+  const cacheKey = 'multiprofit_' + new Date().toISOString().slice(0,10) + '_org' + orgId;
   let cached = getCached(cacheKey, 3600000); // 1 hour cache
   if (cached) return cached;
 
@@ -1671,7 +1672,8 @@ async function getMultiPeriodProfit() {
 
   const result = {};
 
-  const allAccounts = Object.values(AD_ACCOUNTS_MAP);
+  const _mpOrgMeta = getOrgMetaConfig(orgId);
+  const allAccounts = _mpOrgMeta.adAccounts;
   for (const [period, range] of Object.entries(periods)) {
     let allInsights = [];
     for (const acct of allAccounts) {
@@ -1681,7 +1683,7 @@ async function getMultiPeriodProfit() {
           level: 'campaign',
           time_range: JSON.stringify({ since: range.from, until: range.to }),
           limit: 500
-        });
+        }, _mpOrgMeta.token);
         allInsights = allInsights.concat(ins);
       } catch(e) { console.warn('[multiProfit] Account error:', acct, e.message); }
     }
@@ -1692,7 +1694,7 @@ async function getMultiPeriodProfit() {
       insights: { spend: i.spend }
     }));
 
-    enrichCampaignsWithProfit(camps, range.from, range.to, (getSessionUser(req))?.orgId || 1);
+    enrichCampaignsWithProfit(camps, range.from, range.to, orgId);
 
     for (const c of camps) {
       if (!result[c.id]) result[c.id] = {};
@@ -2584,7 +2586,7 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, days);
       }
       if (urlPath === '/api/multi-profit') {
-        const data = await getMultiPeriodProfit();
+        const data = await getMultiPeriodProfit((getSessionUser(req))?.orgId || 1);
         return sendJSON(res, data);
       }
       if (urlPath === '/api/multi-profit-children') {
