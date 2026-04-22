@@ -8115,11 +8115,6 @@ function initSaasAdminMode() {
     if (!u.username) return;
     window._currentUser = u;
     
-    // Fetch active countries for this org
-    try {
-      var orgCfg = await (await fetch('/api/org-config', {credentials:'same-origin'})).json();
-      window._activeCountries = orgCfg.activeCountries || null;
-    } catch(e) { window._activeCountries = null; }
     
     // Update sidebar user
     var sn = document.getElementById('sidebarUserName');
