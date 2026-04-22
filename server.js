@@ -547,6 +547,21 @@ function getOrgMetaConfig(orgId) {
   return { token: token || META_TOKEN, adAccount, adAccounts };
 }
 
+
+function getSkuBasedProductCost(items, orgId) {
+  if (!orgId || orgId === 1) return null; // Noriks uses detectProduct
+  const skuCosts = getOrgSettings(orgId, 'sku_costs');
+  if (!Object.keys(skuCosts).length) return null;
+  let totalCost = 0;
+  for (const item of (items || [])) {
+    const sku = (item.sku || '').toUpperCase();
+    const qty = item.quantity || 1;
+    const cost = parseFloat(skuCosts[sku]) || 0;
+    totalCost += cost * qty;
+  }
+  return totalCost;
+}
+
 function getOrgProductCosts(orgId) {
   const settings = getOrgSettings(orgId, 'product_costs');
   const costs = {};
@@ -654,10 +669,16 @@ function detectProductType(items) {
   return 'shirts'; // default
 }
 
-function calculateOrderProfit(order, country) {
+function calculateOrderProfit(order, country, orgId) {
   const eurRate = EUR_RATES[country] || 1;
   const vatRate = VAT_RATES[country] || 0;
-  const rejRate = (dashRejectionRates[country] || 15) / 100;
+  let rejRate;
+  if (orgId && orgId !== 1) {
+    const orgRej = getOrgSettings(orgId, "rejection_rates2");
+    rejRate = (parseFloat(orgRej[country]) || 15) / 100;
+  } else {
+    rejRate = (dashRejectionRates[country] || 15) / 100;
+  }
   const grossTotal = parseFloat(order.total || 0);
   const grossEur = grossTotal * eurRate;
 
@@ -677,11 +698,24 @@ function calculateOrderProfit(order, country) {
     totalBoxers += (detected.boxers || 0) * qty;
     totalSocks += (detected.socks || 0) * qty;
   }
-  const productCost = (totalTshirts * PRODUCT_COSTS.tshirt) + (totalBoxers * PRODUCT_COSTS.boxers) + (totalSocks * PRODUCT_COSTS.socks);
+  // Product cost: SKU-based for non-Noriks orgs, detectProduct for Noriks
+  let productCost;
+  const skuCost = getSkuBasedProductCost(order.line_items, syncOrgId);
+  if (skuCost !== null) {
+    productCost = skuCost;
+  } else {
+    productCost = (totalTshirts * PRODUCT_COSTS.tshirt) + (totalBoxers * PRODUCT_COSTS.boxers) + (totalSocks * PRODUCT_COSTS.socks);
+  }
 
-  // Shipping ALWAYS applied per order (matches dash behavior)
-  const SHIPPING_COSTS = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 6, SI: 4.5, RO: 4.5 };
-  const shippingCost = SHIPPING_COSTS[country] || 4;
+  // Shipping: use org-specific costs if available, else hardcoded defaults
+  const DEFAULT_SHIPPING = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 6, SI: 4.5, RO: 4.5 };
+  let shippingCost;
+  if (syncOrgId !== 1) {
+    const orgShipping = getOrgSettings(syncOrgId, 'shipping_costs2');
+    shippingCost = parseFloat(orgShipping[country]) || DEFAULT_SHIPPING[country] || 4;
+  } else {
+    shippingCost = DEFAULT_SHIPPING[country] || 4;
+  }
   const effectiveProductCost = productCost * (1 - rejRate);
   // profit per order (FB spend subtracted at aggregate level in dashboard API)
   const profit = netRevenue - effectiveProductCost - shippingCost;
@@ -873,7 +907,7 @@ async function syncCountry(country, orgId, storeOverride) {
       const orderOrigin = classifySourceDash(orderMeta, coupons);
       const isFB = orderOrigin === 'Facebook';
 
-      const calc = calculateOrderProfit(order, country);
+      const calc = calculateOrderProfit(order, country, syncOrgId);
       const ptype = detectProductType(order.line_items || []);
       const orderDate = (order.date_created || '').slice(0, 10);
 
