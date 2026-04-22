@@ -144,7 +144,7 @@ const DASH_CACHE_FILE = path.join(CACHE_DIR, 'dash-cache.json');
 const ORIGIN_CACHE_FILE = path.join(CACHE_DIR, 'origin-data.json');
 
 const PRODUCT_COSTS = { tshirt: 3.5, boxers: 2.25, socks: 1.0 };
-const EUR_RATES = { HR: 1, CZ: 0.041, PL: 0.232, GR: 1, IT: 1, HU: 0.00256, SK: 1, SI: 1, RO: 0.196 };
+const EUR_RATES = { HR: 1, CZ: 0.041, PL: 0.232, GR: 1, IT: 1, HU: 0.00256, SK: 1, SI: 1, RO: 0.196, DE: 1, BG: 1, EN: 1 };
 
 // WooCommerce API keys per country store
 const WC_STORES = {
@@ -156,16 +156,19 @@ const WC_STORES = {
   IT: { url: 'https://noriks.com/it', ck: 'ck_84a1e1425710ff9eeed69b100ed9ac445efc39e2', cs: 'cs_81d25dcb0371773387da4d30482afc7ce83d1b3e' },
   HU: { url: 'https://noriks.com/hu', ck: 'ck_e591c2a0bf8c7a59ec5893e03adde3c760fbdaae', cs: 'cs_d84113ee7a446322d191be0725c0c92883c984c3' },
   SI: { url: 'https://noriks.com/si', ck: 'ck_8fe81e37ac7c8aca9fe47ac3bbe27482d62d2e32', cs: 'cs_0be037bb7bf9a92ed7f886c5ceb9dd279f564900' },
-  RO: { url: 'https://noriks.com/ro', ck: 'ck_69ef14e1be3423cb74613c64ce4243e8c47e0e00', cs: 'cs_a00df9b005bb9e964df5e3bf3af816b9c49a9423' }
+  RO: { url: 'https://noriks.com/ro', ck: 'ck_69ef14e1be3423cb74613c64ce4243e8c47e0e00', cs: 'cs_a00df9b005bb9e964df5e3bf3af816b9c49a9423' },
+  DE: { url: 'https://noriks.com/de', ck: 'ck_aa7a83a913953447892295072cecb7ad7bb2b700', cs: 'cs_9feaecca33c0df3213abfbbb454ba00a1bdbc3f3' },
+  BG: { url: 'https://noriks.com/bg', ck: 'ck_da0017d35633e592ea20fc464aa3b4109ccdf5c2', cs: 'cs_51d455b0232cff26cf9e3645ef1c989b674975ac' },
+  EN: { url: 'https://noriks.com', ck: 'ck_b932ce76e99c8611a7937473a47935b66c7e355d', cs: 'cs_4ff7c1a5bd8fdd2643c271044bfa774c545bb4fd' }
 };
-const VAT_RATES = { HR: 0.25, CZ: 0.21, PL: 0.23, GR: 0.24, IT: 0.22, HU: 0.27, SK: 0.23, SI: 0.22, RO: 0.19 };
+const VAT_RATES = { HR: 0.25, CZ: 0.21, PL: 0.23, GR: 0.24, IT: 0.22, HU: 0.27, SK: 0.23, SI: 0.22, RO: 0.19, DE: 0.19, BG: 0.20, EN: 0.22 };
 
 // Parse campaign name for country + product type
 // Supports both old format: DRŽAVA__TIP and new format: cc:DRŽAVA | TIP | sku:PRODUCT | date: DD.MM.YYYY
 function parseCampaignName(name) {
   if (!name) return { countries: [], productType: null };
   const n = name.toUpperCase();
-  const VALID_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
+  const VALID_COUNTRIES = ["HR","CZ","PL","GR","SK","IT","HU","SI","RO","DE","BG","EN"];
   
   let countries = [];
   
@@ -744,7 +747,7 @@ function calculateOrderProfit(order, country, orgId) {
   }
 
   // Shipping: use org-specific costs if available, else hardcoded defaults
-  const DEFAULT_SHIPPING = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 6, SI: 4.5, RO: 4.5 };
+  const DEFAULT_SHIPPING = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 6, SI: 4.5, RO: 4.5, DE: 5, BG: 5, EN: 5 };
   let shippingCost;
   if (orgId && orgId !== 1) {
     const orgShipping = getOrgSettings(orgId, 'shipping_costs2');
