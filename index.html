@@ -5264,7 +5264,7 @@ var crData = null;
 function crFmtSpend(v) { return v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(2); }
 let crSortKey = 'totalSpend';
 let crSortDir = 'desc';
-const CR_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
+const CR_COUNTRIES = window._activeCountries || ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
 
 (function initCreativeReport() {
   const crFrom = document.getElementById('crDateFrom');
@@ -5605,7 +5605,7 @@ async function generateUploadPlan() {
     const res = await fetch('/api/creative-report?start=2026-01-01&end='+todayStr);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
-    const ALL_COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
+    const ALL_COUNTRIES = window._activeCountries || ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
     const FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
     const MARKET_MAP = {HR:['GR','IT','SK'],GR:['IT','HR','CZ'],IT:['GR','HR'],HU:['CZ','SK','PL'],CZ:['SK','HU','PL'],SK:['CZ','HU','PL'],PL:['CZ','SK','HU']};
     // Get filter values
@@ -7445,7 +7445,7 @@ async function loadCountryCards() {
 }
 
 function renderCountryCardsFromData(data) {
-  const order = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
+  const order = (window._activeCountries || ['HR','CZ','PL','GR','SK','IT','HU','SI','RO']);
   try {
     const fb = (data && data.byCountry) || {};
     const all = (data && data.byCountryAll) || {};
