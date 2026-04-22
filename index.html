@@ -7280,7 +7280,7 @@ function renderDashboard(data) {
   document.getElementById('dashContent').style.display = 'block';
   const k = data.kpis;
   // Single source for spend: sum byCountry from /api/base-report. Keep all dependent KPIs in sync.
-  if (data.__advBaseReport && data.__advBaseReport.byCountry) {
+  if (false && data.__advBaseReport && data.__advBaseReport.byCountry) { // DISABLED: spend comes from kpis directly
     let _sum = 0;
     for (const cc of Object.keys(data.__advBaseReport.byCountry)) _sum += data.__advBaseReport.byCountry[cc].spend || 0;
     const newSpend = Math.round(_sum * 100) / 100;
