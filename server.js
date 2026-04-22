@@ -1182,7 +1182,8 @@ function fetchWcOrdersByCampaign(dateFrom, dateTo, catalogCampaignByCountry, org
 }
 
 // Calculate WC profit per campaign from its ACTUAL orders (matched by utm_campaign ID)
-function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
+function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo, orgId) {
+  orgId = orgId || 1;
   // Build country -> catalog campaign id lookup (for legacy non-numeric utm orders)
   const catalogByCountry = {};
   for (const c of campaigns) {
@@ -1193,7 +1194,7 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
       if (!catalogByCountry[cc]) catalogByCountry[cc] = c.id;
     }
   }
-  const byCampaign = fetchWcOrdersByCampaign(dateFrom, dateTo, catalogByCountry);
+  const byCampaign = fetchWcOrdersByCampaign(dateFrom, dateTo, catalogByCountry, orgId);
   const matchedCampaignIds = new Set();
   
   for (const c of campaigns) {
@@ -1414,7 +1415,7 @@ async function getCampaigns(dateFrom, dateTo, orgId) {
     } catch(e) { console.warn('[getCampaigns] Second account error:', e.message); }
   }
 
-  enrichCampaignsWithProfit(result, dateFrom, dateTo);
+  enrichCampaignsWithProfit(result, dateFrom, dateTo, orgId);
   // Fill in missing budget/metadata from campaignMap for paused campaigns added by enrichment
   for (const c of result) {
     const meta = campaignMap[c.id];
@@ -1614,7 +1615,7 @@ async function getMultiPeriodProfit() {
       insights: { spend: i.spend }
     }));
 
-    enrichCampaignsWithProfit(camps, range.from, range.to);
+    enrichCampaignsWithProfit(camps, range.from, range.to, (getSessionUser(req))?.orgId || 1);
 
     for (const c of camps) {
       if (!result[c.id]) result[c.id] = {};
@@ -2490,7 +2491,7 @@ const server = http.createServer(async (req, res) => {
           
           // Get WC profit for this campaign on this day
           const camps = [{ id: query.campaign_id, name: query.campaign_name || '', insights: { spend: i.spend } }];
-          enrichCampaignsWithProfit(camps, day, day);
+          enrichCampaignsWithProfit(camps, day, day, (getSessionUser(req))?.orgId || 1);
           const profit = camps[0].wc?.profit ?? -spend;
           const orders = camps[0].wc?.orders ?? 0;
           
