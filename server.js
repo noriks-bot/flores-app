@@ -530,6 +530,23 @@ function getOrgVatRates(orgId) {
   return rates;
 }
 
+
+function getOrgMetaConfig(orgId) {
+  if (!orgId || orgId === 1) {
+    // Default Noriks config
+    return { token: FB_TOKEN, adAccount: AD_ACCOUNT, adAccounts: Object.values(AD_ACCOUNTS_MAP) };
+  }
+  const token = getOrgSetting(orgId, 'meta_ads', 'access_token');
+  const adAccount = getOrgSetting(orgId, 'meta_ads', 'ad_account_id') || AD_ACCOUNT;
+  let adAccounts = [];
+  try {
+    const raw = getOrgSetting(orgId, 'meta_ads', 'ad_accounts');
+    adAccounts = typeof raw === 'string' ? JSON.parse(raw) : (Array.isArray(raw) ? raw : []);
+  } catch(e) { adAccounts = [adAccount]; }
+  if (!adAccounts.length) adAccounts = [adAccount];
+  return { token: token || FB_TOKEN, adAccount, adAccounts };
+}
+
 function getOrgProductCosts(orgId) {
   const settings = getOrgSettings(orgId, 'product_costs');
   const costs = {};
@@ -722,8 +739,8 @@ function fetchWcOrdersForCountry(country, modifiedAfter, storeOverride) {
 // Sync orders for a single country into SQLite
 async function syncCountry(country, orgId, storeOverride) {
   const syncOrgId = orgId || 1;
-  const state = getSyncState.get(country);
-  const modifiedAfter = state?.last_sync_at || null;
+  const state = (syncOrgId === 1) ? getSyncState.get(country) : null;
+  const modifiedAfter = state?.last_sync_at || (syncOrgId !== 1 ? new Date(Date.now() - 30 * 86400000).toISOString() : null);
 
   const orders = await fetchWcOrdersForCountry(country, modifiedAfter, storeOverride);
   let count = 0;
@@ -1021,7 +1038,7 @@ async function initialSync() {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   for (const country of Object.keys(WC_STORES)) {
-    const state = getSyncState.get(country);
+    const state = (syncOrgId === 1) ? getSyncState.get(country) : null;
     if (!state || !state.last_sync_at) {
       // First time - set 7 day fallback
       updateSyncState.run({
@@ -1234,7 +1251,7 @@ function getSmartTTL(dateFrom, dateTo) {
 }
 
 // --- Meta API helper ---
-function _metaGetOnce(endpoint, params = {}) {
+function _metaGetOnce(endpoint, params = {}, customToken) {
   return new Promise((resolve, reject) => {
     params.access_token = META_TOKEN;
     const qs = Object.entries(params).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
@@ -1254,10 +1271,10 @@ function _metaGetOnce(endpoint, params = {}) {
   });
 }
 
-async function metaGet(endpoint, params = {}) {
+async function metaGet(endpoint, params = {}, customToken) {
   for (let i = 0; i < 3; i++) {
     try {
-      return await _metaGetOnce(endpoint, params);
+      return await _metaGetOnce(endpoint, params, customToken);
     } catch (err) {
       if ((err.code === 4 || err.code === 32) && i < 2) {
         console.warn('[Meta] Rate limited, retry ' + (i+1) + '/2 in 5s — ' + endpoint);
@@ -1287,9 +1304,9 @@ function setCache(key, data) {
 }
 
 // --- Fetch all pages ---
-async function metaGetAll(endpoint, params = {}) {
+async function metaGetAll(endpoint, params = {}, customToken) {
   let allData = [];
-  let result = await metaGet(endpoint, params);
+  let result = await metaGet(endpoint, params, customToken);
   allData = allData.concat(result.data || []);
   while (result.paging && result.paging.next) {
     result = await new Promise((resolve, reject) => {
@@ -1311,6 +1328,7 @@ const INSIGHT_FIELDS = 'spend,impressions,clicks,reach,cpm,cpc,ctr,actions,cost_
 
 async function getCampaigns(dateFrom, dateTo, orgId) {
   orgId = orgId || 1;
+  const orgMeta = getOrgMetaConfig(orgId);
   const cacheKey = `campaigns_${dateFrom}_${dateTo}`;
   const isToday = dateTo === new Date().toISOString().slice(0,10);
   let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
@@ -1318,7 +1336,7 @@ async function getCampaigns(dateFrom, dateTo, orgId) {
   try {
 
   // Get campaign insights (includes campaign_id and campaign_name)
-  const insights = await metaGetAll(`${AD_ACCOUNT}/insights`, {
+  const insights = await metaGetAll(`${orgMeta.adAccount}/insights`, {
     fields: INSIGHT_FIELDS + ',campaign_id,campaign_name',
     level: 'campaign',
     time_range: JSON.stringify({ since: dateFrom, until: dateTo }),
@@ -1326,7 +1344,7 @@ async function getCampaigns(dateFrom, dateTo, orgId) {
   });
 
   // Get all campaigns for status info
-  const campaigns = await metaGetAll(`${AD_ACCOUNT}/campaigns`, {
+  const campaigns = await metaGetAll(`${orgMeta.adAccount}/campaigns`, {
     fields: 'id,name,status,objective,daily_budget,lifetime_budget,bid_strategy',
     limit: 500
   });
@@ -1363,9 +1381,9 @@ async function getCampaigns(dateFrom, dateTo, orgId) {
   });
 
   // Also fetch from second ad account
-  const allAccounts = Object.values(AD_ACCOUNTS_MAP);
+  const allAccounts = orgMeta.adAccounts;
   for (const acct of allAccounts) {
-    if (acct === AD_ACCOUNT) continue; // Already fetched
+    if (acct === orgMeta.adAccount) continue; // Already fetched
     try {
       const ins2 = await metaGetAll(acct + '/insights', {
         fields: INSIGHT_FIELDS + ',campaign_id,campaign_name',
@@ -4606,7 +4624,7 @@ server.listen(PORT, () => {
       const today = getToday();
       const d7ago = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
       const dashFrom = today, dashTo = today;
-      const campaignData = await getCampaigns(dashFrom, dashTo, userOrgId);
+      const campaignData = await getCampaigns(dashFrom, dashTo, 1); // Background refresh for Noriks
       let totalSpend = 0, totalPurchases = 0, totalOrders = 0, totalRevenue = 0, totalProfit = 0, activeCampaigns = 0;
       const topCampaigns = [];
       for (const c of campaignData) {
