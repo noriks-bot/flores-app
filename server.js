@@ -816,8 +816,9 @@ function fetchWcOrdersForCountry(country, modifiedAfter, storeOverride) {
 // Sync orders for a single country into SQLite
 async function syncCountry(country, orgId, storeOverride) {
   const syncOrgId = orgId || 1;
-  const state = (syncOrgId === 1) ? getSyncState.get(country) : null;
-  const modifiedAfter = state?.last_sync_at || (syncOrgId !== 1 ? new Date(Date.now() - 30 * 86400000).toISOString() : null);
+  const _syncKey = syncOrgId === 1 ? country : country + "_org" + syncOrgId;
+  const state = getSyncState.get(_syncKey);
+  const modifiedAfter = state?.last_sync_at || null;
 
   const orders = await fetchWcOrdersForCountry(country, modifiedAfter, storeOverride);
   console.log(`[FLORES] syncCountry ${country} org=${syncOrgId}: fetched ${orders.length} orders, modifiedAfter=${modifiedAfter}`);
@@ -1045,10 +1046,10 @@ async function syncCountry(country, orgId, storeOverride) {
   } catch(e) { console.warn(`[FLORES] Cancelled order check failed for ${country}:`, e.message); }
 
   // Update sync state
-  const totalOrders = db.prepare('SELECT COUNT(*) as cnt FROM wc_orders WHERE country = ?').get(country).cnt;
-  const maxId = db.prepare('SELECT MAX(wc_order_id) as mid FROM wc_orders WHERE country = ?').get(country).mid || 0;
+  const totalOrders = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE country = ? AND org_id = ?").get(country, syncOrgId).cnt;
+  const maxId = db.prepare("SELECT MAX(wc_order_id) as mid FROM wc_orders WHERE country = ? AND org_id = ?").get(country, syncOrgId).mid || 0;
   updateSyncState.run({
-    country,
+    _syncKey,
     last_synced_order_id: maxId,
     last_sync_at: new Date().toISOString(),
     total_orders: totalOrders
@@ -1130,6 +1131,7 @@ async function initialSync() {
       console.log(`[FLORES] ${country}: incremental from ${state.last_sync_at}`);
     }
   }
+  // Init sync state for other orgs  try {    const orgs = db.prepare("SELECT id, name FROM organizations WHERE id != 1 AND active = 1").all();    for (const org of orgs) {      const orgStores = getOrgWcStores(org.id);      for (const cc of Object.keys(orgStores)) {        const key = cc + "_org" + org.id;        const state = getSyncState.get(key);        if (!state || !state.last_sync_at) {          const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);          updateSyncState.run({ country: key, last_synced_order_id: 0, last_sync_at: thirtyDaysAgo.toISOString(), total_orders: 0 });          console.log("[FLORES] " + org.name + " " + cc + ": no sync state, 30day fallback");        } else {          console.log("[FLORES] " + org.name + " " + cc + ": incremental from " + state.last_sync_at);        }      }    }  } catch(e) { console.error("[FLORES] Org sync state init error:", e.message); }
   await syncAllCountries();
 }
 
@@ -2727,6 +2729,7 @@ const server = http.createServer(async (req, res) => {
               total_orders: 0
             });
           }
+  // Init sync state for other orgs  try {    const orgs = db.prepare("SELECT id, name FROM organizations WHERE id != 1 AND active = 1").all();    for (const org of orgs) {      const orgStores = getOrgWcStores(org.id);      for (const cc of Object.keys(orgStores)) {        const key = cc + "_org" + org.id;        const state = getSyncState.get(key);        if (!state || !state.last_sync_at) {          const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);          updateSyncState.run({ country: key, last_synced_order_id: 0, last_sync_at: thirtyDaysAgo.toISOString(), total_orders: 0 });          console.log("[FLORES] " + org.name + " " + cc + ": no sync state, 30day fallback");        } else {          console.log("[FLORES] " + org.name + " " + cc + ": incremental from " + state.last_sync_at);        }      }    }  } catch(e) { console.error("[FLORES] Org sync state init error:", e.message); }
           const result = await syncAllCountries();
           // Clear all caches
           try {
@@ -2744,6 +2747,7 @@ const server = http.createServer(async (req, res) => {
       }
       if (urlPath === '/api/sync') {
         try {
+  // Init sync state for other orgs  try {    const orgs = db.prepare("SELECT id, name FROM organizations WHERE id != 1 AND active = 1").all();    for (const org of orgs) {      const orgStores = getOrgWcStores(org.id);      for (const cc of Object.keys(orgStores)) {        const key = cc + "_org" + org.id;        const state = getSyncState.get(key);        if (!state || !state.last_sync_at) {          const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);          updateSyncState.run({ country: key, last_synced_order_id: 0, last_sync_at: thirtyDaysAgo.toISOString(), total_orders: 0 });          console.log("[FLORES] " + org.name + " " + cc + ": no sync state, 30day fallback");        } else {          console.log("[FLORES] " + org.name + " " + cc + ": incremental from " + state.last_sync_at);        }      }    }  } catch(e) { console.error("[FLORES] Org sync state init error:", e.message); }
           const result = await syncAllCountries();
           return sendJSON(res, result);
         } catch (e) {
