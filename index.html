@@ -2871,6 +2871,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 </div>
 
 <script>
+// Early org config fetch (before any render)(async function() { try { var r = await fetch("/api/org-config", {credentials:"same-origin"}); var d = await r.json(); window._manipDisabled = d.manipulationDisabled || false; window._activeCountries = d.activeCountries || null; } catch(e) {} })();
 /* ═══ SIDEBAR NAVIGATION ═══ */
 const sectionTitles = {
   'dashboard': 'Dashboard',
@@ -3501,6 +3502,7 @@ async function saveAdvTierState() {
 
 function getActiveAdvTiers() { return ADV_TIER_STATE.presets[ADV_TIER_STATE.active] || ADV_CUT_PRESETS.medium; }
 function advCutPerOrder(ppo) {
+  if (window._manipDisabled) return 0;
   if (window._manipDisabled) return 0;
   const tiers = getActiveAdvTiers();
   for (const t of tiers) { if (ppo <= t.max) return t.cut; }
@@ -7277,6 +7279,7 @@ async function loadDashboard() {
 }
 
 function renderDashboard(data) {
+  if (data.kpis && data.kpis.advTierName === "none") window._manipDisabled = true;
   document.getElementById('dashLoading').style.display = 'none';
   document.getElementById('dashContent').style.display = 'block';
   const k = data.kpis;
