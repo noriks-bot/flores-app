@@ -739,10 +739,11 @@ function fetchWcOrdersForCountry(country, modifiedAfter, storeOverride) {
 // Sync orders for a single country into SQLite
 async function syncCountry(country, orgId, storeOverride) {
   const syncOrgId = orgId || 1;
-  const state = getSyncState.get(country);
+  const state = (syncOrgId === 1) ? getSyncState.get(country) : null;
   const modifiedAfter = state?.last_sync_at || (syncOrgId !== 1 ? new Date(Date.now() - 30 * 86400000).toISOString() : null);
 
   const orders = await fetchWcOrdersForCountry(country, modifiedAfter, storeOverride);
+  console.log(`[FLORES] syncCountry ${country} org=${syncOrgId}: fetched ${orders.length} orders, modifiedAfter=${modifiedAfter}`);
   let count = 0;
 
   // Pre-resolve ad_id → campaign_id/adset_id via Meta API for orders missing campaign data
