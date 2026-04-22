@@ -4083,7 +4083,7 @@ function getRates2(orgId) {
         const topProducts = db.prepare("SELECT product_type, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? GROUP BY product_type ORDER BY orders DESC").all(dashFrom, dashTo, userOrgId);
         
         // By country (today)
-        const byCountry = db.prepare('SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ? AND org_id = ?" + _countryFilter + " GROUP BY country ORDER BY orders DESC').all(today, userOrgId);
+        const byCountry = db.prepare("SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ? AND org_id = ?" + _countryFilter + " GROUP BY country ORDER BY orders DESC").all(today, userOrgId);
         
         // 7-day totals
         const weekStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND org_id = ?').get(d7ago, userOrgId);
