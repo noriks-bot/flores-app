@@ -1255,7 +1255,7 @@ function getSmartTTL(dateFrom, dateTo) {
 // --- Meta API helper ---
 function _metaGetOnce(endpoint, params = {}, customToken) {
   return new Promise((resolve, reject) => {
-    params.access_token = META_TOKEN;
+    params.access_token = customToken || META_TOKEN;
     const qs = Object.entries(params).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
     const url = `https://graph.facebook.com/${API_VERSION}/${endpoint}?${qs}`;
     
@@ -1331,7 +1331,7 @@ const INSIGHT_FIELDS = 'spend,impressions,clicks,reach,cpm,cpc,ctr,actions,cost_
 async function getCampaigns(dateFrom, dateTo, orgId) {
   orgId = orgId || 1;
   const orgMeta = getOrgMetaConfig(orgId);
-  const cacheKey = `campaigns_${dateFrom}_${dateTo}`;
+  const cacheKey = `campaigns_${dateFrom}_${dateTo}_org${orgId}`;
   const isToday = dateTo === new Date().toISOString().slice(0,10);
   let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
   if (cached) return cached;
@@ -1343,13 +1343,13 @@ async function getCampaigns(dateFrom, dateTo, orgId) {
     level: 'campaign',
     time_range: JSON.stringify({ since: dateFrom, until: dateTo }),
     limit: 500
-  });
+  }, orgMeta.token);
 
   // Get all campaigns for status info
   const campaigns = await metaGetAll(`${orgMeta.adAccount}/campaigns`, {
     fields: 'id,name,status,objective,daily_budget,lifetime_budget,bid_strategy',
     limit: 500
-  });
+  }, orgMeta.token);
 
   const campaignMap = {};
   for (const c of campaigns) campaignMap[c.id] = c;
@@ -1429,7 +1429,7 @@ async function getCampaigns(dateFrom, dateTo, orgId) {
   // Resolve names for campaigns that only have ID as name
   for (const c of result) {
     if (c._needsNameResolve) {
-      try { const m = await metaGet(c.id, { fields: 'id,name' }); if (m?.name) { c.name = m.name; c._parsed = parseCampaignName(m.name); } } catch(e) {}
+      try { const m = await metaGet(c.id, { fields: 'id,name' }, orgMeta.token); if (m?.name) { c.name = m.name; c._parsed = parseCampaignName(m.name); } } catch(e) {}
       delete c._needsNameResolve;
     }
   }
