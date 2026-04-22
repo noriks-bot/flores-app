@@ -4419,7 +4419,7 @@ function getRates2(orgId) {
         let orders = 0, revenue = 0, profit2Total = 0, fbOrders = 0, fbProfit2Total = 0;
         for (const r of rows) {
           const country = r.country;
-          const rejRate1 = (dashRejectionRates[country] || 15) / 100;
+          const rejRate1Org = getOrgSettings(userOrgId, "rejection_rates2"); const rejRate1 = (rejRate1Org[country] != null ? parseFloat(rejRate1Org[country]) : (dashRejectionRates[country] || 15)) / 100;
           const rejRate2 = (rates2.rej[country] != null ? rates2.rej[country] : (rejRate1*100)) / 100;
           const ship2Cost = rates2.ship[country] != null ? rates2.ship[country] : r.shipping_cost;
           const vat = VAT_RATES_LOCAL[country] || 0;
