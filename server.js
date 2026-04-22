@@ -580,7 +580,7 @@ for (const col of newColumns) {
 const upsertOrder = db.prepare(`
   INSERT INTO wc_orders (country, wc_order_id, order_date, status, gross_total, gross_eur, net_revenue, product_cost, shipping_cost, profit, product_type, utm_source, utm_campaign, is_fb_attributed, raw_meta, created_at, adset_id, ad_id, campaign_name, adset_name, ad_name, utm_medium, landing_page, placement, billing_name, billing_city, billing_email, order_datetime, org_id)
   VALUES (@country, @wc_order_id, @order_date, @status, @gross_total, @gross_eur, @net_revenue, @product_cost, @shipping_cost, @profit, @product_type, @utm_source, @utm_campaign, @is_fb_attributed, @raw_meta, datetime('now'), @adset_id, @ad_id, @campaign_name, @adset_name, @ad_name, @utm_medium, @landing_page, @placement, @billing_name, @billing_city, @billing_email, @order_datetime, @org_id)
-  ON CONFLICT(country, wc_order_id) DO UPDATE SET
+  ON CONFLICT(country, wc_order_id, org_id) DO UPDATE SET
     order_date=excluded.order_date, status=excluded.status, gross_total=excluded.gross_total,
     gross_eur=excluded.gross_eur, net_revenue=excluded.net_revenue, product_cost=excluded.product_cost,
     shipping_cost=excluded.shipping_cost, profit=excluded.profit, product_type=excluded.product_type,
@@ -739,7 +739,7 @@ function fetchWcOrdersForCountry(country, modifiedAfter, storeOverride) {
 // Sync orders for a single country into SQLite
 async function syncCountry(country, orgId, storeOverride) {
   const syncOrgId = orgId || 1;
-  const state = (syncOrgId === 1) ? getSyncState.get(country) : null;
+  const state = getSyncState.get(country);
   const modifiedAfter = state?.last_sync_at || (syncOrgId !== 1 ? new Date(Date.now() - 30 * 86400000).toISOString() : null);
 
   const orders = await fetchWcOrdersForCountry(country, modifiedAfter, storeOverride);
@@ -1038,7 +1038,7 @@ async function initialSync() {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   for (const country of Object.keys(WC_STORES)) {
-    const state = (syncOrgId === 1) ? getSyncState.get(country) : null;
+    const state = getSyncState.get(country);
     if (!state || !state.last_sync_at) {
       // First time - set 7 day fallback
       updateSyncState.run({
