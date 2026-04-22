@@ -2788,26 +2788,11 @@ const server = http.createServer(async (req, res) => {
 
         // 3. Spend by country
         const _reportOrgId = (getSessionUser(req))?.orgId || 1;
-        const _useCountryBreakdown = true; // All orgs use direct spend per country // Non-Noriks orgs use Meta country breakdown
+        const _useCountryBreakdown = _reportOrgId !== 1; // Only non-Noriks use Meta country breakdown // Non-Noriks orgs use Meta country breakdown
         let _metaSpendByCountry = {};
         _metaSpendByCountry = {};
         if (_reportOrgId === 1) {
-          // Noriks: read from dash-cache (source of truth)
-          try {
-            const _dc = JSON.parse(fs.readFileSync(DASH_CACHE_FILE, "utf8"));
-            const _dcData = _dc.data || {};
-            for (const date of Object.keys(_dcData)) {
-              if (date >= start && date <= end) {
-                for (const [cc, v] of Object.entries(_dcData[date])) {
-                  if (typeof v === "object" && v.spend !== undefined) {
-                    _metaSpendByCountry[cc] = (_metaSpendByCountry[cc] || 0) + (v.spend || 0);
-                  }
-                }
-              }
-            }
-            for (const cc of Object.keys(_metaSpendByCountry)) _metaSpendByCountry[cc] = Math.round(_metaSpendByCountry[cc] * 100) / 100;
-          } catch(e) { console.warn("[base-report] dash-cache read failed:", e.message); }
-        } else if (_reportOrgId !== 1) {
+        if (_reportOrgId !== 1) {
           _metaSpendByCountry = await getSpendByCountryFromMeta(start, end, _reportOrgId);
         }
         const byCountry = {};
@@ -4135,7 +4120,6 @@ function getRates2(orgId) {
         
         // Top campaigns - from Meta API (has campaign names)
         let topCampaignsRaw = [];
-        try { topCampaignsRaw = await getCampaigns(dashFrom, dashTo, userOrgId); } catch(e) {}
         
         // Top products
         const topProducts = db.prepare("SELECT product_type, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? GROUP BY product_type ORDER BY orders DESC").all(dashFrom, dashTo, userOrgId);
