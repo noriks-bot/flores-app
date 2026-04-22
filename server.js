@@ -700,7 +700,7 @@ function calculateOrderProfit(order, country, orgId) {
   }
   // Product cost: SKU-based for non-Noriks orgs, detectProduct for Noriks
   let productCost;
-  const skuCost = getSkuBasedProductCost(order.line_items, syncOrgId);
+  const skuCost = getSkuBasedProductCost(order.line_items, orgId);
   if (skuCost !== null) {
     productCost = skuCost;
   } else {
@@ -710,8 +710,8 @@ function calculateOrderProfit(order, country, orgId) {
   // Shipping: use org-specific costs if available, else hardcoded defaults
   const DEFAULT_SHIPPING = { HR: 4.5, CZ: 3.8, PL: 4, SK: 3.8, HU: 4, GR: 5, IT: 6, SI: 4.5, RO: 4.5 };
   let shippingCost;
-  if (syncOrgId !== 1) {
-    const orgShipping = getOrgSettings(syncOrgId, 'shipping_costs2');
+  if (orgId && orgId !== 1) {
+    const orgShipping = getOrgSettings(orgId, 'shipping_costs2');
     shippingCost = parseFloat(orgShipping[country]) || DEFAULT_SHIPPING[country] || 4;
   } else {
     shippingCost = DEFAULT_SHIPPING[country] || 4;
