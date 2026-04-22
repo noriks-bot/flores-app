@@ -545,7 +545,10 @@ function getOrgActiveCountries(orgId) {
 }
 
 
+const _spendCountryCache = {};
 async function getSpendByCountryFromMeta(dateFrom, dateTo, orgId) {
+  const _ck = orgId + "_" + dateFrom + "_" + dateTo;
+  if (_spendCountryCache[_ck] && Date.now() - _spendCountryCache[_ck].ts < 120000) return _spendCountryCache[_ck].data;
   const orgMeta = getOrgMetaConfig(orgId);
   const result = {};
   try {
@@ -567,6 +570,7 @@ async function getSpendByCountryFromMeta(dateFrom, dateTo, orgId) {
   } catch(e) { console.warn('[getSpendByCountry] Error:', e.message); }
   // Round
   for (const cc of Object.keys(result)) result[cc] = Math.round(result[cc] * 100) / 100;
+  _spendCountryCache[_ck] = { data: result, ts: Date.now() };
   return result;
 }
 
