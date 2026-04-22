@@ -4465,16 +4465,18 @@ function getRates2(orgId) {
         const page = parseInt(query.page) || 1;
         const limit = Math.min(parseInt(query.limit) || 50, 200);
         const offset = (page - 1) * limit;
-        let where = 'WHERE org_id = ' + (user?.orgId || 1);
-        const params = [];
+        const userOrgId = Number(user.orgId) || 1;
+        console.log('[ACTIVITY] User:', user.username, 'orgId:', userOrgId);
+        let where = 'WHERE org_id = ?';
+        const params = [userOrgId];
         if (query.user) { where += ' AND username = ?'; params.push(query.user); }
         if (query.action) { where += ' AND action = ?'; params.push(query.action); }
         if (query.from) { where += ' AND created_at >= ?'; params.push(query.from); }
         if (query.to) { where += ' AND created_at <= ?'; params.push(query.to + ' 23:59:59'); }
         const total = db.prepare(`SELECT COUNT(*) as cnt FROM activity_log ${where}`).get(...params).cnt;
         const rows = db.prepare(`SELECT * FROM activity_log ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`).all(...params, limit, offset);
-        const users = db.prepare('SELECT DISTINCT username FROM activity_log WHERE org_id = ?').all(user?.orgId || 1).map(r => r.username);
-        const actions = db.prepare('SELECT DISTINCT action FROM activity_log WHERE org_id = ?').all(user?.orgId || 1).map(r => r.action);
+        const users = db.prepare('SELECT DISTINCT username FROM activity_log WHERE org_id = ?').all(Number(user?.orgId) || 1).map(r => r.username);
+        const actions = db.prepare('SELECT DISTINCT action FROM activity_log WHERE org_id = ?').all(Number(user?.orgId) || 1).map(r => r.action);
         return sendJSON(res, { data: rows, meta: { total, page, limit, pages: Math.ceil(total / limit) }, filters: { users, actions } });
       }
 
