@@ -4460,6 +4460,7 @@ function getRates2(orgId) {
       }
 
       if (urlPath === '/api/activity-log') {
+        if (!getSessionUser(req)) return sendJSON(res, { error: "Unauthorized" }, 401);
         const user = getSessionUser(req);
         const page = parseInt(query.page) || 1;
         const limit = Math.min(parseInt(query.limit) || 50, 200);
