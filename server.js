@@ -2971,6 +2971,8 @@ const server = http.createServer(async (req, res) => {
             };
           }
         } catch(e) { console.warn('[base-report] byCountryAll failed', e.message); }
+        const _ac = getOrgActiveCountries((getSessionUser(req))?.orgId || 1);
+        if (_ac) { for (const cc of Object.keys(byCountry)) { if (!_ac.includes(cc)) delete byCountry[cc]; } for (const cc of Object.keys(byCountryAll || {})) { if (!_ac.includes(cc)) delete byCountryAll[cc]; } for (const k of Object.keys(byCountryAndType || {})) { const cc = k.split("_")[0]; if (!_ac.includes(cc)) delete byCountryAndType[k]; } }
         return sendJSON(res, { byCountry, byType, byCountryAndType, byCountryAll });
       }
       if (urlPath === '/api/origin-report') {
