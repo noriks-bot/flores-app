@@ -7414,7 +7414,7 @@ function renderDashboard(data) {
 // Country Cards
 function renderCountryCard(cc, data, opts) {
   opts = opts || {};
-  const flags = {HR:'\ud83c\udded\ud83c\uddf7',CZ:'\ud83c\udde8\ud83c\uddff',PL:'\ud83c\uddf5\ud83c\uddf1',GR:'\ud83c\uddec\ud83c\uddf7',SK:'\ud83c\uddf8\ud83c\uddf0',IT:'\ud83c\uddee\ud83c\uddf9',HU:'\ud83c\udded\ud83c\uddfa'};
+  const flags = countryFlags;
   const spend = data.spend || 0;
   const orders = data.orders || 0;
   const cpa = data.cpa != null ? data.cpa : (orders > 0 ? spend/orders : 0);
