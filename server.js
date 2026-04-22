@@ -805,7 +805,24 @@ function fetchWcOrdersForCountry(country, modifiedAfter, storeOverride) {
           else page++;
         }
       } catch (e) {
-        console.error(`[FLORES] WC fetch error for ${country} page ${page}:`, e.message);
+        const is502 = e.message.includes('502') || e.message.includes('503') || e.message.includes('429');
+        if (is502 && page === 1) {
+          console.warn(`[FLORES] WC ${country} ${e.message}, backoff 5s then retry...`);
+          await new Promise(r => setTimeout(r, 5000));
+          try {
+            let retryUrl = `${store.url}/wp-json/wc/v3/orders?per_page=100&page=${page}&status=processing,completed&consumer_key=${store.ck}&consumer_secret=${store.cs}`;
+            if (modifiedAfter) retryUrl += `&modified_after=${modifiedAfter}&after=${modifiedAfter}`;
+            const retryData = await new Promise((res2, rej2) => {
+              https.get(retryUrl, resp2 => {
+                if (resp2.statusCode !== 200) { resp2.resume(); rej2(new Error(`HTTP ${resp2.statusCode}`)); return; }
+                let d2 = ''; resp2.on('data', c2 => d2 += c2); resp2.on('end', () => { try { res2(JSON.parse(d2)); } catch(e2) { rej2(e2); } });
+              }).on('error', rej2);
+            });
+            if (Array.isArray(retryData) && retryData.length > 0) { allOrders.push(...retryData); if (retryData.length < 100) hasMore = false; else page++; continue; }
+          } catch(e2) { console.error(`[FLORES] WC ${country} retry also failed: ${e2.message}`); }
+        } else {
+          console.error(`[FLORES] WC fetch error for ${country} page ${page}: ${e.message}`);
+        }
         hasMore = false;
       }
     }
@@ -1111,6 +1128,50 @@ async function syncAllCountries() {
   return { synced: results, totalNew };
 }
 
+async function syncNoriksOnly() {
+  const results = {};
+  let totalNew = 0;
+  const countries = Object.keys(WC_STORES);
+  for (let i = 0; i < countries.length; i++) {
+    const country = countries[i];
+    try {
+      const count = await syncCountry(country, 1);
+      results[country] = count;
+      totalNew += count;
+    } catch (e) {
+      console.error(`[FLORES] Sync failed for ${country}:`, e.message);
+      results[country] = 0;
+    }
+    if (i < countries.length - 1) await new Promise(r => setTimeout(r, 500));
+  }
+  if (totalNew > 0) console.log(`[FLORES] Noriks sync: ${totalNew} new orders`);
+  try { const files = fs.readdirSync(CACHE_DIR).filter(f => f.startsWith("campaigns_")); files.forEach(f => fs.unlinkSync(path.join(CACHE_DIR, f))); } catch(e) {}
+  return { synced: results, totalNew };
+}
+
+async function syncOtherOrgs() {
+  let totalNew = 0;
+  try {
+    const orgs = db.prepare('SELECT id, name FROM organizations WHERE id != 1 AND active = 1').all();
+    for (const org of orgs) {
+      const orgStores = getOrgWcStores(org.id);
+      if (!Object.keys(orgStores).length) continue;
+      console.log('[FLORES] Syncing org ' + org.name + ' (' + Object.keys(orgStores).length + ' stores)...');
+      for (const [cc, store] of Object.entries(orgStores)) {
+        try {
+          const count = await syncCountry(cc, org.id, store);
+          totalNew += count;
+          if (count > 0) console.log('[FLORES] Org ' + org.name + ' ' + cc + ': ' + count + ' orders');
+        } catch(e) {
+          console.error('[FLORES] Org ' + org.name + ' sync failed for ' + cc + ':', e.message);
+        }
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
+  } catch(e) { console.error('[FLORES] Other orgs sync error:', e.message); }
+  return totalNew;
+}
+
 // Initial sync: only sets 7-day fallback for countries with NO existing sync state
 async function initialSync() {
   console.log('[FLORES] Starting initial WC sync...');
@@ -1138,10 +1199,13 @@ async function initialSync() {
 // Run initial sync on startup (non-blocking)
 initialSync().catch(e => console.error('[FLORES] Initial sync error:', e.message));
 
-// Periodic sync every 5 minutes
+// Periodic sync: Noriks every 5 min, other orgs every 10 min
 setInterval(() => {
-  syncAllCountries().catch(e => console.error('[FLORES] Periodic sync error:', e.message));
+  syncNoriksOnly().catch(e => console.error('[FLORES] Noriks sync error:', e.message));
 }, 5 * 60 * 1000);
+setInterval(() => {
+  syncOtherOrgs().catch(e => console.error('[FLORES] Other orgs sync error:', e.message));
+}, 10 * 60 * 1000);
 
 // Fetch Advertiser profit data from local dash server
 let advCache = { data: null, ts: 0, key: '' };
