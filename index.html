@@ -8115,6 +8115,12 @@ function initSaasAdminMode() {
     if (!u.username) return;
     window._currentUser = u;
     
+    // Fetch active countries for this org
+    try {
+      var orgCfg = await (await fetch('/api/org-config', {credentials:'same-origin'})).json();
+      window._activeCountries = orgCfg.activeCountries || null;
+    } catch(e) { window._activeCountries = null; }
+    
     // Update sidebar user
     var sn = document.getElementById('sidebarUserName');
     var sr = document.getElementById('sidebarUserRole');
@@ -8124,6 +8130,34 @@ function initSaasAdminMode() {
     if(sa) sa.textContent = (u.displayName||u.username).charAt(0).toUpperCase();
     document.body.classList.add('role-loaded');
 
+    // Fetch active countries
+    fetch('/api/org-config', {credentials:'same-origin'}).then(function(r){return r.json()}).then(function(cfg){
+      // Show active countries in settings
+      var ccDiv = document.getElementById('org-countries-list');
+      var ccContainer = document.getElementById('org-countries-config');
+      if (ccDiv && cfg.activeCountries) {
+        ccContainer.style.display = 'block';
+        var FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴',DE:'🇩🇪',BG:'🇧🇬',EN:'🇬🇧'};
+        ccDiv.innerHTML = (cfg.allCountries || []).map(function(cc) {
+          var active = cfg.activeCountries.includes(cc);
+          return '<span style="padding:6px 12px;border-radius:8px;font-size:13px;font-weight:600;cursor:default;' + (active ? 'background:#dcfce7;color:#166534;border:1px solid #86efac' : 'background:#f3f4f6;color:#9ca3af;border:1px solid #e5e7eb;text-decoration:line-through') + '">' + (FLAGS[cc]||'') + ' ' + cc + '</span>';
+        }).join('');
+      }
+      window._activeCountries = cfg.activeCountries || null;
+      // Filter country dropdowns if active countries set
+      if (window._activeCountries) {
+        document.querySelectorAll('select').forEach(function(sel) {
+          if (sel.id && (sel.id.toLowerCase().includes('country') || sel.id.toLowerCase().includes('ctry'))) {
+            Array.from(sel.options).forEach(function(opt) {
+              if (opt.value && opt.value.length === 2 && !window._activeCountries.includes(opt.value)) {
+                opt.style.display = 'none';
+              }
+            });
+          }
+        });
+      }
+    }).catch(function(){});
+    
     // Hide admin-only nav items for non-admin users
     if (u.role !== 'admin' && u.role !== 'super_admin') {
       document.querySelectorAll('.nav-item.admin-only').forEach(function(el) { el.style.display = 'none'; });

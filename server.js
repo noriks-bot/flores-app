@@ -531,6 +531,16 @@ function getOrgVatRates(orgId) {
 }
 
 
+
+function getOrgActiveCountries(orgId) {
+  const val = getOrgSetting(orgId, 'org_config', 'active_countries');
+  if (!val) return null; // null = all countries (no filter)
+  try {
+    const arr = typeof val === 'string' ? JSON.parse(val) : val;
+    return Array.isArray(arr) ? arr : null;
+  } catch(e) { return null; }
+}
+
 function getOrgMetaConfig(orgId) {
   if (!orgId || orgId === 1) {
     // Default Noriks config
@@ -4051,13 +4061,15 @@ function getRates2(orgId) {
 
       if (urlPath === '/api/dashboard') {
         const userOrgId = (getSessionUser(req))?.orgId || 1;
+        const _activeCountries = getOrgActiveCountries(userOrgId);
+        const _countryFilter = _activeCountries ? " AND country IN ('" + _activeCountries.join("','") + "')" : '';
         const dashFrom = query.date_from || getToday(); const dashTo = query.date_to || getToday();
         // Dashboard reads from SQLite - no Meta API calls, instant response
         const today = getToday();
         const d7ago = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
         
         // Today's KPIs from wc_orders
-        const todayStats = db.prepare("SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo, userOrgId);
+        const todayStats = db.prepare("SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND LOWER(billing_name) NOT LIKE '%test%'" + _countryFilter).get(dashFrom, dashTo, userOrgId);
         const fbOrders = db.prepare("SELECT COUNT(*) as orders FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo, userOrgId);
         
         // 7-day daily chart data
@@ -4071,7 +4083,7 @@ function getRates2(orgId) {
         const topProducts = db.prepare("SELECT product_type, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? GROUP BY product_type ORDER BY orders DESC").all(dashFrom, dashTo, userOrgId);
         
         // By country (today)
-        const byCountry = db.prepare('SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ? AND org_id = ? GROUP BY country ORDER BY orders DESC').all(today, userOrgId);
+        const byCountry = db.prepare('SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ? AND org_id = ?" + _countryFilter + " GROUP BY country ORDER BY orders DESC').all(today, userOrgId);
         
         // 7-day totals
         const weekStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND org_id = ?').get(d7ago, userOrgId);
@@ -4293,7 +4305,7 @@ function getRates2(orgId) {
         }
 
         // Orders list for table
-        const ordersList = db.prepare("SELECT wc_order_id, order_date, order_datetime, country, gross_eur, profit, utm_source, utm_medium, utm_campaign, campaign_name, is_fb_attributed, product_type, billing_name, billing_city, billing_email, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? ORDER BY order_datetime DESC, wc_order_id DESC").all(dashFrom, dashTo, userOrgId);
+        const ordersList = db.prepare("SELECT wc_order_id, order_date, order_datetime, country, gross_eur, profit, utm_source, utm_medium, utm_campaign, campaign_name, is_fb_attributed, product_type, billing_name, billing_city, billing_email, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ?" + _countryFilter + " ORDER BY order_datetime DESC, wc_order_id DESC").all(dashFrom, dashTo, userOrgId);
         const ordersListFormatted = ordersList.map(o => {
           // Use dash classification from raw_meta
           let origin = 'Direct';
@@ -4543,6 +4555,22 @@ function getRates2(orgId) {
       }
 
       // ═══ ORG SETTINGS API ═══
+      if (urlPath === '/api/org-config') {
+        const user = getSessionUser(req);
+        if (!user) return sendJSON(res, { error: 'Unauthorized' }, 401);
+        const orgId = user.orgId || 1;
+        const activeCountries = getOrgActiveCountries(orgId);
+        const allCountries = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO','DE','BG','EN'];
+        return sendJSON(res, { activeCountries: activeCountries || allCountries, allCountries });
+      }
+      if (urlPath === '/api/org-config' && req.method === 'POST') {
+        const user = getSessionUser(req);
+        if (!user) return sendJSON(res, { error: 'Unauthorized' }, 401);
+        const body = await new Promise((r) => { let d=''; req.on('data',c=>d+=c); req.on('end',()=>r(JSON.parse(d))); });
+        const upsert = db.prepare('INSERT INTO org_settings (org_id, category, key, value) VALUES (?, ?, ?, ?) ON CONFLICT(org_id, category, key) DO UPDATE SET value = excluded.value');
+        if (body.activeCountries) upsert.run(user.orgId || 1, 'org_config', 'active_countries', JSON.stringify(body.activeCountries));
+        return sendJSON(res, { ok: true });
+      }
       if (urlPath.match(/^\/api\/org-settings\/[\w-]+$/) && req.method === 'GET') {
         const user = getSessionUser(req);
         const category = urlPath.split('/').pop();
@@ -4586,7 +4614,7 @@ function getRates2(orgId) {
           role: user?.role,
           displayName: user?.displayName,
           orgId: user?.orgId,
-          organization: org ? { name: org.name, plan: org.plan, trialDaysLeft, active: !!org.active } : null
+          organization: org ? { name: org.name, plan: org.plan, trialDaysLeft, active: !!org.active, activeCountries: getOrgActiveCountries(user?.orgId || 1) } : null
         });
       }
 
