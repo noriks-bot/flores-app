@@ -4612,7 +4612,8 @@ function getRates2(orgId) {
         const orgId = user.orgId || 1;
         const activeCountries = getOrgActiveCountries(orgId);
         const allCountries = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO','DE','BG','EN'];
-        return sendJSON(res, { activeCountries: activeCountries || allCountries, allCountries });
+        const manipDisabled = getOrgSetting(orgId, "adv_config", "manipulation_enabled") === "0";
+        return sendJSON(res, { activeCountries: activeCountries || allCountries, allCountries, manipulationDisabled: manipDisabled });
       }
       if (urlPath === '/api/org-config' && req.method === 'POST') {
         const user = getSessionUser(req);

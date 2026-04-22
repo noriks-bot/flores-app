@@ -3501,6 +3501,7 @@ async function saveAdvTierState() {
 
 function getActiveAdvTiers() { return ADV_TIER_STATE.presets[ADV_TIER_STATE.active] || ADV_CUT_PRESETS.medium; }
 function advCutPerOrder(ppo) {
+  if (window._manipDisabled) return 0;
   const tiers = getActiveAdvTiers();
   for (const t of tiers) { if (ppo <= t.max) return t.cut; }
   return tiers[tiers.length - 1].cut;
@@ -8139,6 +8140,7 @@ function initSaasAdminMode() {
         }).join('');
       }
       window._activeCountries = cfg.activeCountries || null;
+      window._manipDisabled = cfg.manipulationDisabled || false;
       // Filter country dropdowns if active countries set
       if (window._activeCountries) {
         document.querySelectorAll('select').forEach(function(sel) {
