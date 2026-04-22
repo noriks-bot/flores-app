@@ -4145,8 +4145,22 @@ function getRates2(orgId) {
         // FB spend: live from Meta campaigns (primary), dash-cache (fallback for 7d)
         let fbSpendToday = 0, fbSpend7d = 0, fbSpendRange = 0;
         let dashCacheData = null;
-        // Primary: compute spend from live campaign data (topCampaignsRaw already fetched above)
-        if (Array.isArray(topCampaignsRaw) && topCampaignsRaw.length > 0) {
+        // Primary: compute spend from dash-cache (matches country breakdown source of truth)
+        // For Noriks: dash-cache. For other orgs: Meta API country breakdown.
+        if (_activeCountries === null) {
+          // Noriks: use dash-cache
+          try {
+            const _spendDc = JSON.parse(fs.readFileSync(DASH_CACHE_FILE, 'utf8'));
+            for (const [date, countries] of Object.entries(_spendDc.data || {})) {
+              if (date >= dashFrom && date <= dashTo) {
+                for (const [,v] of Object.entries(countries)) { if (v && typeof v.spend === 'number') fbSpendRange += v.spend; }
+              }
+            }
+            if (dashFrom === today) fbSpendToday = fbSpendRange;
+          } catch(e) {}
+        }
+        if (fbSpendRange === 0 && Array.isArray(topCampaignsRaw) && topCampaignsRaw.length > 0) {
+          // Fallback to campaign sum
           fbSpendRange = topCampaignsRaw.reduce((s, c) => s + parseFloat(c.insights?.spend || 0), 0);
           if (dashFrom === today) fbSpendToday = fbSpendRange;
         }
@@ -4490,22 +4504,6 @@ function getRates2(orgId) {
             fbOrders++;
             fbProfit2Total += profit2;
           }
-        }
-        // FB spend (live or cache)
-        let fbSpendRange = 0;
-        try {
-          const camps = await getCampaigns(dashFrom, dashTo, userOrgId);
-          if (Array.isArray(camps)) fbSpendRange = camps.reduce((s,c) => s + parseFloat(c.insights?.spend||0), 0);
-        } catch(e) {}
-        if (fbSpendRange === 0) {
-          try {
-            const dc = JSON.parse(fs.readFileSync(DASH_CACHE_FILE, 'utf8'));
-            for (const [date, countries] of Object.entries(dc.data || {})) {
-              if (date >= dashFrom && date <= dashTo) {
-                for (const [,v] of Object.entries(countries)) { if (v && typeof v.spend === 'number') fbSpendRange += v.spend; }
-              }
-            }
-          } catch(e) {}
         }
         const profitFinal = profit2Total - fbSpendRange;
         const fbProfitFinal = fbProfit2Total - fbSpendRange;
