@@ -1084,12 +1084,13 @@ async function fetchAdvertiserData(dateFrom, dateTo) {
 
 // Fetch all FB-attributed WC orders from DB
 // Returns: { "HR_shirts": { orders: N, totalProfit, totalRevenue, avgProfit, avgRevenue }, ... }
-function fetchActualWcOrders(dateFrom, dateTo) {
+function fetchActualWcOrders(dateFrom, dateTo, orgId) {
+  orgId = orgId || 1;
   const rows = db.prepare(`
     SELECT country, product_type, COUNT(*) as orders, SUM(profit) as totalProfit, SUM(gross_eur) as totalRevenue
     FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1
     GROUP BY country, product_type
-  `).all(dateFrom, dateTo);
+  `).all(dateFrom, dateTo, orgId);
 
   const result = {};
   for (const r of rows) {
@@ -1110,11 +1111,12 @@ function fetchActualWcOrders(dateFrom, dateTo) {
 // If `catalogCampaignByCountry` provided (e.g. { HR: '123...', CZ: '456...' }),
 // legacy catalog orders (non-numeric utm_campaign like "noriks-facebook-hr") are
 // attributed to that country's catalog campaign.
-function fetchWcOrdersByCampaign(dateFrom, dateTo, catalogCampaignByCountry) {
+function fetchWcOrdersByCampaign(dateFrom, dateTo, catalogCampaignByCountry, orgId) {
+  orgId = orgId || 1;
   const rows = db.prepare(`
     SELECT wc_order_id, country, gross_eur, net_revenue, product_cost, shipping_cost, profit, utm_campaign, adset_id, ad_id, raw_meta
     FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''
-  `).all(dateFrom, dateTo);
+  `).all(dateFrom, dateTo, orgId);
 
   const byCampaign = {};
   for (const r of rows) {
@@ -1203,7 +1205,7 @@ function enrichCampaignsWithProfit(campaigns, dateFrom, dateTo) {
     const totalProfit = orders.reduce((s, o) => s + o.profit, 0);
     const totalRevenue = orders.reduce((s, o) => s + o.grossEur, 0);
     // Try to get campaign name from DB
-    const dbName = db.prepare("SELECT campaign_name FROM wc_orders WHERE utm_campaign = ? AND campaign_name IS NOT NULL AND campaign_name != '' LIMIT 1").get(campaignId);
+    const dbName = db.prepare("SELECT campaign_name FROM wc_orders WHERE utm_campaign = ? AND org_id = ? AND campaign_name IS NOT NULL AND campaign_name != '' LIMIT 1").get(campaignId, orgId || 1);
     campaigns.push({
       id: campaignId,
       name: dbName?.campaign_name || campaignId,
@@ -1307,7 +1309,8 @@ async function metaGetAll(endpoint, params = {}) {
 // --- API handlers ---
 const INSIGHT_FIELDS = 'spend,impressions,clicks,reach,cpm,cpc,ctr,actions,cost_per_action_type';
 
-async function getCampaigns(dateFrom, dateTo) {
+async function getCampaigns(dateFrom, dateTo, orgId) {
+  orgId = orgId || 1;
   const cacheKey = `campaigns_${dateFrom}_${dateTo}`;
   const isToday = dateTo === new Date().toISOString().slice(0,10);
   let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
@@ -1644,7 +1647,7 @@ async function getAllAdsets(dateFrom, dateTo) {
 
   // Enrich with profit: distribute parent campaign WC data proportionally
   // First get campaign-level profit data
-  const campaignData = await getCampaigns(dateFrom, dateTo);
+  const campaignData = await getCampaigns(dateFrom, dateTo, (getSessionUser(req))?.orgId || 1);
   const campaignMap = {};
   for (const c of campaignData) campaignMap[c.id] = c;
 
@@ -1721,7 +1724,7 @@ async function getAllAds(dateFrom, dateTo) {
   }));
 
   // Distribute campaign profit proportionally by spend
-  const campaignData = await getCampaigns(dateFrom, dateTo);
+  const campaignData = await getCampaigns(dateFrom, dateTo, (getSessionUser(req))?.orgId || 1);
   const campaignMap = {};
   for (const c of campaignData) campaignMap[c.id] = c;
 
@@ -2263,7 +2266,7 @@ const server = http.createServer(async (req, res) => {
 
     try {
       if (urlPath === '/api/campaigns') {
-        const data = await getCampaigns(dateFrom, dateTo);
+        const data = await getCampaigns(dateFrom, dateTo, (getSessionUser(req))?.orgId || 1);
         return sendJSON(res, data);
       }
       if (urlPath === '/api/campaign-lookup') {
@@ -2415,7 +2418,7 @@ const server = http.createServer(async (req, res) => {
         // Query DB for orders matching this campaign
         const rows = db.prepare(`
           SELECT wc_order_id, country, order_date, gross_eur, net_revenue, product_cost, shipping_cost, profit, product_type, adset_id, ad_id, adset_name, ad_name, billing_name, billing_city, raw_meta
-          FROM wc_orders WHERE utm_campaign = ? AND order_date >= ? AND order_date <= ?
+          FROM wc_orders WHERE utm_campaign = ? AND order_date >= ? AND order_date <= ? AND org_id = ?
           ORDER BY order_date DESC
         `).all(campaignId, dateFrom, dateTo);
         
@@ -2523,7 +2526,7 @@ const server = http.createServer(async (req, res) => {
         } catch(e) { console.warn('[multiProfitChildren] insights error:', e.message); }
         // Get WC orders grouped by adset_id per period
         for (const [period, range] of Object.entries(periods)) {
-          const wcRows = db.prepare("SELECT adset_id, ad_id, COUNT(*) as orders, SUM(gross_eur) as revenue, SUM(profit) as profit FROM wc_orders WHERE utm_campaign = ? AND order_date >= ? AND order_date <= ? GROUP BY adset_id").all(campaignId, range.from, range.to);
+          const wcRows = db.prepare("SELECT adset_id, ad_id, COUNT(*) as orders, SUM(gross_eur) as revenue, SUM(profit) as profit FROM wc_orders WHERE utm_campaign = ? AND order_date >= ? AND order_date <= ? AND org_id = ? GROUP BY adset_id").all(campaignId, range.from, range.to, (getSessionUser(req))?.orgId || 1);
           for (const r of wcRows) {
             const id = r.adset_id || 'unknown';
             allEntityIds.add(id);
@@ -2556,7 +2559,7 @@ const server = http.createServer(async (req, res) => {
           }
         } catch(e) { console.warn('[multiProfitChildren] ad insights error:', e.message); }
         for (const [period, range] of Object.entries(periods)) {
-          const wcAds = db.prepare("SELECT ad_id, COUNT(*) as orders, SUM(gross_eur) as revenue, SUM(profit) as profit FROM wc_orders WHERE utm_campaign = ? AND order_date >= ? AND order_date <= ? AND ad_id IS NOT NULL AND ad_id != '' GROUP BY ad_id").all(campaignId, range.from, range.to);
+          const wcAds = db.prepare("SELECT ad_id, COUNT(*) as orders, SUM(gross_eur) as revenue, SUM(profit) as profit FROM wc_orders WHERE utm_campaign = ? AND order_date >= ? AND order_date <= ? AND org_id = ? AND ad_id IS NOT NULL AND ad_id != '' GROUP BY ad_id").all(campaignId, range.from, range.to, (getSessionUser(req))?.orgId || 1);
           for (const r of wcAds) {
             if (!result[r.ad_id]) result[r.ad_id] = {};
             const spend = adSpendByPeriod[r.ad_id]?.[period] || 0;
@@ -2648,7 +2651,7 @@ const server = http.createServer(async (req, res) => {
         const end = query.end || dateTo;
 
         // 1. Get campaign insights from Meta (use getCampaigns which is cached)
-        const campaignData = await getCampaigns(start, end);
+        const campaignData = await getCampaigns(start, end, (getSessionUser(req))?.orgId || 1);
 
         // 2. Get all DB orders for the period
         const dbOrdersByCountry = {};
@@ -2657,7 +2660,7 @@ const server = http.createServer(async (req, res) => {
           FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1
            AND LOWER(billing_name) NOT LIKE '%test%'
           GROUP BY country
-        `).all(start, end);
+        `).all(start, end, (getSessionUser(req))?.orgId || 1);
         for (const r of dbOrderRows) {
           dbOrdersByCountry[r.country] = { orders: r.orders, revenue: r.revenue || 0, profit: r.profit || 0 };
         }
@@ -2694,7 +2697,7 @@ const server = http.createServer(async (req, res) => {
             AND utm_campaign IS NOT NULL AND utm_campaign != ''
             AND LOWER(billing_name) NOT LIKE '%test%'
             GROUP BY utm_campaign, country
-          `).all(start, end);
+          `).all(start, end, (getSessionUser(req))?.orgId || 1);
           const distMap = {};
           for (const r of _dRows) {
             if (!distMap[r.utm_campaign]) distMap[r.utm_campaign] = {};
@@ -2771,7 +2774,7 @@ const server = http.createServer(async (req, res) => {
             AND utm_campaign IS NOT NULL AND utm_campaign != ''
             AND LOWER(billing_name) NOT LIKE '%test%'
             GROUP BY utm_campaign, country
-          `).all(start, end);
+          `).all(start, end, (getSessionUser(req))?.orgId || 1);
           const campCountryDist = {};
           for (const row of _distRows) {
             if (!campCountryDist[row.utm_campaign]) campCountryDist[row.utm_campaign] = {};
@@ -2818,7 +2821,7 @@ const server = http.createServer(async (req, res) => {
           FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1
           AND utm_campaign IS NOT NULL AND utm_campaign != ''
           GROUP BY utm_campaign, country
-        `).all(start, end);
+        `).all(start, end, (getSessionUser(req))?.orgId || 1);
 
         // Map campaign_id → type
         const campaignTypeMap = {};
@@ -2865,7 +2868,7 @@ const server = http.createServer(async (req, res) => {
         // byCountryAll: ALL orders (not just FB-attributed) with spend from FB data
         const byCountryAll = {};
         try {
-          const allRows = db.prepare("SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY country").all(start, end, userOrgId || 1);
+          const allRows = db.prepare("SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY country").all(start, end, (getSessionUser(req))?.orgId || 1);
           for (const r of allRows) {
             const fbSpend = (byCountry[r.country] && byCountry[r.country].spend) || 0;
             const netProfit = Math.round(((r.profit||0) - fbSpend) * 100) / 100;
@@ -2906,7 +2909,7 @@ const server = http.createServer(async (req, res) => {
         const rows = db.prepare(`
           SELECT order_date, gross_eur, profit, is_fb_attributed, utm_source, utm_medium, utm_campaign, raw_meta
           FROM wc_orders WHERE order_date >= ? AND order_date <= ?
-        `).all(start, end);
+        `).all(start, end, (getSessionUser(req))?.orgId || 1);
 
         function classifyOrigin(r) {
           const src = (r.utm_source || '').toLowerCase();
@@ -3137,7 +3140,7 @@ const server = http.createServer(async (req, res) => {
             const today = new Date().toISOString().slice(0, 10);
             const d7 = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
             try {
-              const campaigns = await getCampaigns(d7, today);
+              const campaigns = await getCampaigns(d7, today, (getSessionUser(req))?.orgId || 1);
               const active = campaigns.filter(c => c.status === 'ACTIVE');
               let ctxStr = `[Context: ${active.length} active campaigns, period ${d7} to ${today}]\n`;
               for (const c of active.slice(0, 10)) {
@@ -3170,7 +3173,7 @@ const server = http.createServer(async (req, res) => {
 
           if (mode === 'campaign' && campaignId) {
             // Single campaign deep analysis
-            const campaignData = await getCampaigns(aiStart, aiEnd);
+            const campaignData = await getCampaigns(aiStart, aiEnd, (getSessionUser(req))?.orgId || 1);
             const searchLower = campaignId.toLowerCase();
             const campaign = campaignData.find(c => c.id === campaignId || (c.name || '').toLowerCase().includes(searchLower));
             if (!campaign) return sendJSON(res, { error: 'Campaign not found: ' + campaignId }, 404);
@@ -3209,7 +3212,7 @@ ${question ? 'USER QUESTION: ' + question : 'Provide a comprehensive analysis wi
 
           } else if (mode === 'general') {
             // Overall account analysis
-            const campaignData = await getCampaigns(aiStart, aiEnd);
+            const campaignData = await getCampaigns(aiStart, aiEnd, (getSessionUser(req))?.orgId || 1);
             const active = campaignData.filter(c => c.status === 'ACTIVE');
             let totalSpend = 0, totalPurch = 0, totalOrders = 0, totalProfit = 0;
 
@@ -3486,7 +3489,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
 
         // Campaign-specific analysis mode
         if (campaignId) {
-          const campaignData = await getCampaigns(aiStart, aiEnd);
+          const campaignData = await getCampaigns(aiStart, aiEnd, (getSessionUser(req))?.orgId || 1);
           // Find campaign by ID or name (partial match)
           const searchLower = campaignId.toLowerCase();
           const campaign = campaignData.find(c => c.id === campaignId || (c.name || '').toLowerCase().includes(searchLower));
@@ -3581,7 +3584,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         }
 
         // General analysis (existing behavior)
-        const campaignData = await getCampaigns(aiStart, aiEnd);
+        const campaignData = await getCampaigns(aiStart, aiEnd, (getSessionUser(req))?.orgId || 1);
 
         let totalSpend = 0, totalOrders = 0, totalRevenue = 0, totalProfit = 0, totalPurchases = 0;
         const campDetails = [];
@@ -3985,7 +3988,7 @@ function getRates2(orgId) {
 }
 
       if (urlPath === '/api/dashboard') {
-        const userOrgId = user?.orgId || 1;
+        const userOrgId = (getSessionUser(req))?.orgId || 1;
         const dashFrom = query.date_from || getToday(); const dashTo = query.date_to || getToday();
         // Dashboard reads from SQLite - no Meta API calls, instant response
         const today = getToday();
@@ -4000,7 +4003,7 @@ function getRates2(orgId) {
         
         // Top campaigns - from Meta API (has campaign names)
         let topCampaignsRaw = [];
-        try { topCampaignsRaw = await getCampaigns(dashFrom, dashTo); } catch(e) {}
+        try { topCampaignsRaw = await getCampaigns(dashFrom, dashTo, userOrgId); } catch(e) {}
         
         // Top products
         const topProducts = db.prepare("SELECT product_type, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? GROUP BY product_type ORDER BY orders DESC").all(dashFrom, dashTo, userOrgId);
@@ -4095,7 +4098,7 @@ function getRates2(orgId) {
             } catch(e) {}
           }
           // Get WC orders per ad_id from SQLite
-          const wcAdOrders = db.prepare("SELECT ad_id, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND ad_id IS NOT NULL AND ad_id != '' GROUP BY ad_id").all(dashFrom, dashTo);
+          const wcAdOrders = db.prepare("SELECT ad_id, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND ad_id IS NOT NULL AND ad_id != '' GROUP BY ad_id").all(dashFrom, dashTo, userOrgId);
           const wcAdMap = {};
           for (const row of wcAdOrders) { wcAdMap[row.ad_id] = row; }
           
@@ -4125,7 +4128,7 @@ function getRates2(orgId) {
         } catch(e) { console.warn('[DASH] Top creatives fetch error:', e.message); }
 
         // FB KPI data
-        const fbAttributedProfit = db.prepare("SELECT COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
+        const fbAttributedProfit = db.prepare("SELECT COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1 AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo, userOrgId);
         // ADV manipulation: per-campaign tier cut on net PPO (same basis as Ads Manager).
         // Guarantee: advCutTotal = FB Profit − ADV Profit, always.
         let advCutTotal = 0; let advTierName = 'light';
@@ -4165,7 +4168,7 @@ function getRates2(orgId) {
           }
         }
         const fbOrderCount = fbOrders?.orders || 0;
-        const fbMeasuredResult = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != '' AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo);
+        const fbMeasuredResult = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != '' AND LOWER(billing_name) NOT LIKE '%test%'").get(dashFrom, dashTo, userOrgId);
         const fbMeasuredOrders = fbMeasuredResult?.cnt || 0;
         const fbUnmeasuredOrders = fbOrderCount - fbMeasuredOrders;
         const fbCpa = fbOrderCount > 0 ? Math.round((fbSpendRange / fbOrderCount) * 100) / 100 : 0;
@@ -4357,7 +4360,7 @@ function getRates2(orgId) {
         // FB spend (live or cache)
         let fbSpendRange = 0;
         try {
-          const camps = await getCampaigns(dashFrom, dashTo);
+          const camps = await getCampaigns(dashFrom, dashTo, userOrgId);
           if (Array.isArray(camps)) fbSpendRange = camps.reduce((s,c) => s + parseFloat(c.insights?.spend||0), 0);
         } catch(e) {}
         if (fbSpendRange === 0) {
@@ -4384,13 +4387,14 @@ function getRates2(orgId) {
             fbProfit: Math.round(fbProfitFinal * 100) / 100,
             fbProfitPerOrder: fbOrders > 0 ? Math.round(fbProfitFinal/fbOrders*100)/100 : 0,
             fbCpa: fbOrders > 0 ? Math.round(fbSpendRange/fbOrders*100)/100 : 0,
-            fbMeasuredOrders: (() => { try { return db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.cnt || 0; } catch(e) { return 0; } })(),
-            fbUnmeasuredOrders: (() => { try { var t = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1").get(dashFrom, dashTo)?.cnt || 0; var m = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo)?.cnt || 0; return Math.max(0, t - m); } catch(e) { return 0; } })()
+            fbMeasuredOrders: (() => { try { return db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo, userOrgId)?.cnt || 0; } catch(e) { return 0; } })(),
+            fbUnmeasuredOrders: (() => { try { var t = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1").get(dashFrom, dashTo, userOrgId)?.cnt || 0; var m = db.prepare("SELECT COUNT(*) as cnt FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1 AND utm_campaign IS NOT NULL AND utm_campaign != ''").get(dashFrom, dashTo, userOrgId)?.cnt || 0; return Math.max(0, t - m); } catch(e) { return 0; } })()
           }
         });
       }
 
       if (urlPath === '/api/activity-log') {
+        const user = getSessionUser(req);
         const page = parseInt(query.page) || 1;
         const limit = Math.min(parseInt(query.limit) || 50, 200);
         const offset = (page - 1) * limit;
@@ -4602,7 +4606,7 @@ server.listen(PORT, () => {
       const today = getToday();
       const d7ago = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
       const dashFrom = today, dashTo = today;
-      const campaignData = await getCampaigns(dashFrom, dashTo);
+      const campaignData = await getCampaigns(dashFrom, dashTo, userOrgId);
       let totalSpend = 0, totalPurchases = 0, totalOrders = 0, totalRevenue = 0, totalProfit = 0, activeCampaigns = 0;
       const topCampaigns = [];
       for (const c of campaignData) {
@@ -4633,7 +4637,7 @@ server.listen(PORT, () => {
   async function prewarmDashboard() {
     try {
       const today = getToday();
-      await getCampaigns(today, today);
+      await getCampaigns(today, today, 1);
       _dashboardCacheTime = 0; // Force refresh next dashboard call
       console.log('[FLORES] Campaign cache pre-warmed');
     } catch(e) { console.log('[FLORES] Pre-warm failed:', e.message); }
