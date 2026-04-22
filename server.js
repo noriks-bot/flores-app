@@ -2836,13 +2836,14 @@ const server = http.createServer(async (req, res) => {
         }
 
         // Fill in orders/revenue/profit from DB
-        for (const cc of Object.keys(WC_STORES)) {
+        const _reportCountries = _useCountryBreakdown ? (getOrgActiveCountries(_reportOrgId) || Object.keys(WC_STORES)) : Object.keys(WC_STORES);
+        for (const cc of _reportCountries) {
           const dbData = dbOrdersByCountry[cc] || { orders: 0, revenue: 0, profit: 0 };
           if (!byCountry[cc]) byCountry[cc] = { spend: 0, orders: 0, revenue: 0, profit: 0, purchases: 0 };
           byCountry[cc].orders = dbData.orders;
           byCountry[cc].revenue = Math.round(dbData.revenue * 100) / 100;
           byCountry[cc].profit = Math.round(dbData.profit * 100) / 100;
-          byCountry[cc].spend = Math.round(byCountry[cc].spend * 100) / 100;
+          if (_useCountryBreakdown && _metaSpendByCountry[cc] !== undefined) { byCountry[cc].spend = _metaSpendByCountry[cc]; } else { byCountry[cc].spend = Math.round(byCountry[cc].spend * 100) / 100; }
           byCountry[cc].purchases = Math.round(byCountry[cc].purchases);
           byCountry[cc].cpa = byCountry[cc].purchases > 0 ? Math.round(byCountry[cc].spend / byCountry[cc].purchases * 100) / 100 : 0;
           byCountry[cc].roas = byCountry[cc].spend > 0 ? Math.round(byCountry[cc].revenue / byCountry[cc].spend * 100) / 100 : 0;
