@@ -2420,7 +2420,7 @@ const server = http.createServer(async (req, res) => {
           SELECT wc_order_id, country, order_date, gross_eur, net_revenue, product_cost, shipping_cost, profit, product_type, adset_id, ad_id, adset_name, ad_name, billing_name, billing_city, raw_meta
           FROM wc_orders WHERE utm_campaign = ? AND order_date >= ? AND order_date <= ? AND org_id = ?
           ORDER BY order_date DESC
-        `).all(campaignId, dateFrom, dateTo);
+        `).all(campaignId, dateFrom, dateTo, (getSessionUser(req))?.orgId || 1);
         
         const allOrders = rows.map(r => {
           let items = [];
