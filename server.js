@@ -1410,7 +1410,7 @@ async function getCampaigns(dateFrom, dateTo, orgId) {
   const orgMeta = getOrgMetaConfig(orgId);
   const cacheKey = `campaigns_${dateFrom}_${dateTo}_org${orgId}`;
   const isToday = dateTo === new Date().toISOString().slice(0,10);
-  let cached = isToday ? null : getCached(cacheKey, CACHE_TTL);
+  let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
   if (cached) return cached;
   try {
 
@@ -1523,7 +1523,7 @@ async function getCampaigns(dateFrom, dateTo, orgId) {
 async function getAdsets(campaignId, dateFrom, dateTo) {
   const cacheKey = `adsets_${campaignId}_${dateFrom}_${dateTo}`;
   const isToday = dateTo === new Date().toISOString().slice(0,10);
-  let cached = isToday ? null : getCached(cacheKey, CACHE_TTL);
+  let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
   if (cached) return cached;
   try {
 
@@ -1591,7 +1591,7 @@ async function getAdsets(campaignId, dateFrom, dateTo) {
 async function getAds(adsetId, dateFrom, dateTo) {
   const cacheKey = `ads_${adsetId}_${dateFrom}_${dateTo}`;
   const isToday = dateTo === new Date().toISOString().slice(0,10);
-  let cached = isToday ? null : getCached(cacheKey, CACHE_TTL);
+  let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
   if (cached) return cached;
   try {
 
@@ -1715,7 +1715,7 @@ async function getAllAdsets(dateFrom, dateTo, orgId) {
   orgId = orgId || 1;
   const cacheKey = `all_adsets_${dateFrom}_${dateTo}_org${orgId}`;
   const isToday = dateTo === new Date().toISOString().slice(0,10);
-  let cached = isToday ? null : getCached(cacheKey, CACHE_TTL);
+  let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
   if (cached) return cached;
 
   const insights = await metaGetAll(`${AD_ACCOUNT}/insights`, {
@@ -1786,7 +1786,7 @@ async function getAllAds(dateFrom, dateTo, orgId) {
   orgId = orgId || 1;
   const cacheKey = `all_ads_${dateFrom}_${dateTo}_org${orgId}`;
   const isToday = dateTo === new Date().toISOString().slice(0,10);
-  let cached = isToday ? null : getCached(cacheKey, CACHE_TTL);
+  let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
   if (cached) return cached;
 
   // Fetch from ALL ad accounts
@@ -1862,7 +1862,7 @@ async function getAllAds(dateFrom, dateTo, orgId) {
 async function getInsights(level, dateFrom, dateTo, breakdown) {
   const cacheKey = `insights_${level}_${dateFrom}_${dateTo}_${breakdown || 'none'}`;
   const isToday = dateTo === new Date().toISOString().slice(0,10);
-  let cached = isToday ? null : getCached(cacheKey, CACHE_TTL);
+  let cached = getCached(cacheKey, isToday ? 300000 : CACHE_TTL);
   if (cached) return cached;
 
   const params = {
