@@ -4234,7 +4234,7 @@ function getRates2(orgId) {
               advCutTotal += cutFor(netPpo) * camp.wc.orders;
             }
           }
-          console.log('[ADV] cut total:', advCutTotal, 'tier:', advTierName);
+          console.log("[ADV] cut total:", advCutTotal, "campaigns with wc:", (topCampaignsRaw||[]).filter(c=>c&&c.wc&&c.wc.orders>0).length, "total camps:", (topCampaignsRaw||[]).length, 'tier:', advTierName);
           if (_skipManip) { advCutTotal = 0; advTierName = "none"; }
         } catch(e) { console.warn('[ADV] cut calc failed', e.message); }
         // FB pixel purchases from Meta API (what FB reports)
