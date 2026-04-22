@@ -2359,7 +2359,7 @@ const server = http.createServer(async (req, res) => {
     const _appOrgId = _appUser ? _appUser.orgId || 1 : 1;
     const _manipVal = getOrgSetting(_appOrgId, 'adv_config', 'manipulation_enabled'); const _appManipDisabled = _manipVal === '0' || _manipVal === 0;
     const _appActiveCountries = getOrgActiveCountries(_appOrgId);
-    const _appInject = '<script>window._manipDisabled=' + JSON.stringify(!!_appManipDisabled) + ';window._activeCountries=' + JSON.stringify(_appActiveCountries) + ';<\/script>';
+    const _appInject = '<script>window._manipDisabled=' + JSON.stringify(!!_appManipDisabled) + ';window._activeCountries=' + JSON.stringify(_appActiveCountries) + ';<\/script>' + (_appManipDisabled ? '<style>.adv-col,.adv-only{display:none!important}</style>' : '');
     const appHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8').replace('</head>', '<meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">' + _appInject + '</head>').replace('</body>', '<script>/* v' + Date.now() + ' */</script></body>');
     res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' });
     res.end(appHtml);
