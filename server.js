@@ -4411,8 +4411,9 @@ function getRates2(orgId) {
       if (urlPath === '/api/dashboard2') {
         const user = getSessionUser(req);
         if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) return sendJSON(res, { error: 'Admin required' }, 403);
+        const userOrgId = user.orgId || 1;
         const dashFrom = query.date_from || getToday(); const dashTo = query.date_to || getToday();
-        const rates2 = getRates2();
+        const rates2 = getRates2(userOrgId);
         const VAT_RATES_LOCAL = { HR: 0.25, CZ: 0.21, PL: 0.23, GR: 0.24, IT: 0.22, HU: 0.27, SK: 0.23, SI: 0.22, RO: 0.19 };
         const rows = db.prepare("SELECT country, gross_eur, product_cost, shipping_cost, profit, is_fb_attributed FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND LOWER(billing_name) NOT LIKE '%test%'").all(dashFrom, dashTo, userOrgId);
         let orders = 0, revenue = 0, profit2Total = 0, fbOrders = 0, fbProfit2Total = 0;
