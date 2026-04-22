@@ -46,11 +46,14 @@ function detectProduct(name, useOverride = true, metadata = null, sku = null) {
         const packNumMatch = lower.match(/(\d+)[-\s]?pake?t/i) || lower.match(/(\d+)[-\s]?pakie?t/i) || 
                              lower.match(/(\d+)[-\s]?balí[čk]/i) || lower.match(/(\d+)\s*ks/i) ||
                              lower.match(/συσκευασία\s*(\d+)/i) || lower.match(/(\d+)\s*τεμ/i) ||
-                             lower.match(/pacco\s*da\s*(\d+)/i);
+                             lower.match(/pacco\s*da\s*(\d+)/i) ||
+                             lower.match(/(\d+)\s*бр/i) || lower.match(/(\d+)er[-\s]?set/i) ||
+                             lower.match(/(\d+)[-\s]?pack/i) || lower.match(/(\d+)\s*buc/i);
         const skuPackCount = packNumMatch ? parseInt(packNumMatch[1]) : 1;
         
         // BOX-BUNDLE or BOXERS in SKU → always boxers
-        if (skuUp.includes('BOX-BUNDLE') || skuUp.includes('BOXERS') || skuUp.includes('BOX-PACK')) {
+        // BUT skip ORTO products - they need metadata analysis for correct count
+        if ((skuUp.includes('BOX-BUNDLE') || skuUp.includes('BOXERS') || skuUp.includes('BOX-PACK')) && !skuUp.includes('-ORTO')) {
             return { tshirts: 0, boxers: skuPackCount, socks: 0 };
         }
         // MONOCHROME without BOX → always tshirts
@@ -79,12 +82,14 @@ function detectProduct(name, useOverride = true, metadata = null, sku = null) {
             for (const meta of bundleMetaItems) {
                 const val = (meta.value || '').toString().toLowerCase();
                 const key = (meta.key || '').toLowerCase();
-                const isShirt = val.includes('majic') || val.includes('shirt') || val.includes('tričk') || val.includes('triko') || val.includes('tricka') ||
+                const isShirt = val.includes('majic') || val.includes('shirt') || val.includes('t-shirt') || val.includes('tričk') || val.includes('triko') || val.includes('tricka') ||
                                val.includes('μπλουζάκ') || val.includes('μπλούζ') || val.includes('magliett') || val.includes('póló') ||
                                val.includes('tricou') || val.includes('tricouri') ||
+                               val.includes('тениск') ||
                                key.includes('majic') || key.includes('shirt') || key.includes('tričk') || key.includes('tricka') || key.includes('mployz');
                 const isBoxer = val.includes('bokser') || val.includes('boxer') || val.includes('trenýr') || val.includes('trenk') || val.includes('boxerky') ||
                                val.includes('μπόξερ') || val.includes('εσώρουχ') || val.includes('gatk') || val.includes('boxeri') ||
+                               val.includes('боксер') ||
                                key.includes('bokser') || key.includes('boxer') || key.includes('mpoxer') || key.includes('boxerky');
                 
                 if (isShirt) tshirtCount++;
@@ -106,38 +111,50 @@ function detectProduct(name, useOverride = true, metadata = null, sku = null) {
     // EARLY CHECK: Socks
     const isSocksProduct = lower.includes('ponožk') || lower.includes('sock') || lower.includes('κάλτσ') || 
                            lower.includes('calzin') || lower.includes('zokni') || lower.includes('skarpet') ||
-                           lower.includes('nogav') || lower.includes('čarap');
+                           lower.includes('nogav') || lower.includes('čarap') || lower.includes('чорап') ||
+                           lower.includes('socken') || lower.includes('strumpf');
     if (isSocksProduct) {
-        const sockPackMatch = lower.match(/(\d+)\s*pár/i) || lower.match(/(\d+)\s*pair/i);
+        const sockPackMatch = lower.match(/(\d+)\s*pár/i) || lower.match(/(\d+)\s*pair/i) || lower.match(/(\d+)\s*чифт/i);
         const sockPairs = sockPackMatch ? parseInt(sockPackMatch[1]) : 1;
         const sockCount = Math.floor(sockPairs / 5);
         return { tshirts: 0, boxers: 0, socks: sockCount };
     }
     
-    // EARLY CHECK: Pobřežní/Coastal/Nadbrzeżny packs = T-shirts (NOT boxers!)
-    if (lower.includes('pobřežní') || lower.includes('coastal') || lower.includes('nadbrzeżny') || lower.includes('nadbrze')) {
-        const packMatch = lower.match(/(\d+)[-\s]?balí[čk]/i) || lower.match(/(\d+)[-\s]?pakie?t/i) || lower.match(/(\d+)[-\s]?pake?t/i) || lower.match(/(\d+)\s*τεμ/i);
+    // EARLY CHECK: Pobřežní/Coastal/Nadbrzeżny/Крайбрежен packs = T-shirts (NOT boxers!)
+    if (lower.includes('pobřežní') || lower.includes('coastal') || lower.includes('nadbrzeżny') || lower.includes('nadbrze') || lower.includes('крайбрежен')) {
+        const packMatch = lower.match(/(\d+)[-\s]?balí[čk]/i) || lower.match(/(\d+)[-\s]?pakie?t/i) || lower.match(/(\d+)[-\s]?pake?t/i) || lower.match(/(\d+)\s*τεμ/i) || lower.match(/(\d+)\s*бр/i) || lower.match(/(\d+)[-\s]?pack/i);
         const packCount = packMatch ? parseInt(packMatch[1]) : 1;
         return { tshirts: packCount, boxers: 0, socks: 0 };
     }
     
     // Determine product type
-    const isTshirt = lower.includes('majic') || lower.includes('shirt') || lower.includes('triko') || 
+    const isTshirt = lower.includes('majic') || lower.includes('shirt') || lower.includes('t-shirt') || lower.includes('triko') || 
                      lower.includes('tričk') || lower.includes('triček') || lower.includes('koszulk') || lower.includes('koszulek') ||
                      lower.includes('μπλουζάκ') || lower.includes('μπλούζ') ||
                      lower.includes('magliett') || lower.includes('magli') ||
                      lower.includes('póló') ||
-                     lower.includes('tricou') || lower.includes('tricouri');
+                     lower.includes('tricou') || lower.includes('tricouri') ||
+                     lower.includes('тениск');
     const isExplicitBoxers = lower.includes('bokser') || lower.includes('boxer') || lower.includes('trenk') || lower.includes('trenýr') ||
                              lower.includes('μπόξερ') || lower.includes('εσώρουχ') ||
-                             lower.includes('boxerals') || lower.includes('boxeri');
+                             lower.includes('boxerals') || lower.includes('boxeri') ||
+                             lower.includes('боксер');
     const isBoxerPack = (lower.includes('miješan') || lower.includes('tamni') || lower.includes('ponoćn') || 
                         lower.includes('urbano') || lower.includes('monokrom') || lower.includes('airflow') || lower.includes('modal') ||
                         lower.includes('μεσονύκτ') || lower.includes('μονόχρωμ') ||
                         lower.includes('αστικό') || lower.includes('astiko') ||
                         lower.includes('městsk') || lower.includes('polnočn') ||
                         lower.includes('urbánn') ||
-                        lower.includes('balíček') || lower.includes('balík')) && !isTshirt;  // Don't mark as boxer pack if name contains T-shirt terms
+                        lower.includes('balíček') || lower.includes('balík') ||
+                        // DE
+                        lower.includes('mitternacht') || lower.includes('er-set') ||
+                        // EN
+                        lower.includes('midnight') || lower.includes('all black') || lower.includes('city combo') ||
+                        lower.includes('everyday') || lower.includes('urban earth') || lower.includes('one black') ||
+                        lower.includes('one brown') || lower.includes('one dark') || lower.includes('one gray') ||
+                        lower.includes('one green') || lower.includes('one white') || lower.includes('one blue') ||
+                        // BG
+                        lower.includes('полунощ') || lower.includes('градск') || lower.includes('монохром')) && !isTshirt;  // Don't mark as boxer pack if name contains T-shirt terms
     const isBoxers = isExplicitBoxers || isBoxerPack;
     
     // ORTO products (configurable bundles)
@@ -192,16 +209,40 @@ function detectProduct(name, useOverride = true, metadata = null, sku = null) {
         return { tshirts: 1, boxers: 1, socks: 0 };
     }
     
+    // BG mixed bundle: "Комплект: 5 тениски + 5 боксерки"
+    const bgSetMatch = lower.match(/(\d+)\s*тениск.*?(\d+)\s*боксер/i);
+    if (bgSetMatch) return { tshirts: parseInt(bgSetMatch[1]), boxers: parseInt(bgSetMatch[2]), socks: 0 };
+
+    // DE/EN mixed bundle: "Set: 2 T-Shirts + 5 Boxershorts" or "2 T-Shirts + 3 Boxers"
+    const deSetMatch = lower.match(/(\d+)\s*t-?shirts?.*?(\d+)\s*boxers?h?o?r?t?s?/i);
+    if (deSetMatch) return { tshirts: parseInt(deSetMatch[1]), boxers: parseInt(deSetMatch[2]), socks: 0 };
+    const enSetMatch = lower.match(/(\d+)\s*(?:tee|t-?shirt)s?.*?(\d+)\s*boxers?/i);
+    if (enSetMatch) return { tshirts: parseInt(enSetMatch[1]), boxers: parseInt(enSetMatch[2]), socks: 0 };
+
+    // EN single "One [Color]" = 1 boxer
+    if (lower.match(/^one\s+(black|brown|dark|gray|grey|green|white|blue|red|navy)/i)) {
+        return { tshirts: 0, boxers: 1, socks: 0 };
+    }
+
     // Starter packs
-    if (lower.includes('starter') || lower.includes('εκκίνησης') || lower.includes('εκκινησης') || lower.includes('pachet de start')) {
-        if ((lower.includes('μπλουζάκ') || lower.includes('majic') || lower.includes('tričk') || lower.includes('magliett')) && 
-            (lower.includes('μπόξερ') || lower.includes('bokser') || lower.includes('boxer'))) {
+    if (lower.includes('starter') || lower.includes('εκκίνησης') || lower.includes('εκκινησης') || lower.includes('pachet de start') || lower.includes('starterpaket') || lower.includes('стартов пакет')) {
+        if ((lower.includes('μπλουζάκ') || lower.includes('majic') || lower.includes('tričk') || lower.includes('magliett') || lower.includes('тениск') || lower.includes('shirt')) && 
+            (lower.includes('μπόξερ') || lower.includes('bokser') || lower.includes('boxer') || lower.includes('боксерк'))) {
             return { tshirts: 1, boxers: 1, socks: 0 };
         }
-        const boxerMatch = lower.match(/(\d+)\s*bokser/i);
+        const boxerMatch = lower.match(/(\d+)\s*bokser/i) || lower.match(/(\d+)\s*боксер/i) || lower.match(/(\d+)\s*boxer/i);
         if (boxerMatch) return { tshirts: 0, boxers: parseInt(boxerMatch[1]), socks: 0 };
-        const shirtMatch = lower.match(/(\d+)\s*majic/i);
+        const shirtMatch = lower.match(/(\d+)\s*majic/i) || lower.match(/(\d+)\s*тениск/i) || lower.match(/(\d+)\s*shirt/i);
         if (shirtMatch) return { tshirts: parseInt(shirtMatch[1]), boxers: 0, socks: 0 };
+        // BG: "Стартов пакет | 2 тениски" - check if name has тениск but no боксерк
+        if (lower.includes('тениск') && !lower.includes('боксерк')) {
+            const numMatch = lower.match(/(\d+)/);
+            return { tshirts: numMatch ? parseInt(numMatch[1]) : 2, boxers: 0, socks: 0 };
+        }
+        if (lower.includes('shirt') && !lower.includes('boxer')) {
+            const numMatch = lower.match(/(\d+)/);
+            return { tshirts: numMatch ? parseInt(numMatch[1]) : 2, boxers: 0, socks: 0 };
+        }
         return { tshirts: 0, boxers: 2, socks: 0 };
     }
     
@@ -212,12 +253,23 @@ function detectProduct(name, useOverride = true, metadata = null, sku = null) {
     const itPackMatch = lower.match(/pacco\s*da\s*(\d+)/i);
     const czPackMatch = lower.match(/(\d+)[-\s]?balí[čk]/i) || lower.match(/balí[čk]ek\s*(\d+)/i) || lower.match(/balení\s*(\d+)/i) || lower.match(/(\d+)\s*ks/i);
     const roPackMatch = lower.match(/(\d+)\s*buc/i);
+    const dePackMatch = lower.match(/(\d+)er[-\s]?set/i) || lower.match(/(\d+)er[-\s]?pack/i);
+    const enPackMatch = lower.match(/(\d+)[-\s]?pack/i);
+    const bgPackMatch = lower.match(/(\d+)\s*бр/i) || lower.match(/комплект\s*(\d+)/i) || lower.match(/(\d+)\s*чифт/i);
     
     if (packMatch) packCount = parseInt(packMatch[1]);
     else if (grPackMatch) packCount = parseInt(grPackMatch[1]);
     else if (itPackMatch) packCount = parseInt(itPackMatch[1]);
     else if (czPackMatch) packCount = parseInt(czPackMatch[1]);
     else if (roPackMatch) packCount = parseInt(roPackMatch[1]);
+    else if (dePackMatch) packCount = parseInt(dePackMatch[1]);
+    else if (enPackMatch) packCount = parseInt(enPackMatch[1]);
+    else if (bgPackMatch) packCount = parseInt(bgPackMatch[1]);
+
+    // EN "Custom - 3 Pack" = boxers
+    if (lower.includes('custom') && enPackMatch) {
+        return { tshirts: 0, boxers: parseInt(enPackMatch[1]), socks: 0 };
+    }
     
     if (packCount > 0) {
         if (isTshirt && !isBoxers) return { tshirts: packCount, boxers: 0, socks: 0 };
