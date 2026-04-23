@@ -1639,6 +1639,33 @@ async function getAdsets(campaignId, dateFrom, dateTo) {
   }
 
   const result = Object.values(insightAdsets);
+
+  // Enrich with WC order data by adset_id
+  try {
+    const wcByAdset = db.prepare(`
+      SELECT adset_id, COUNT(*) as orders, ROUND(SUM(gross_eur),2) as revenue, ROUND(SUM(profit),2) as profit
+      FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = 1 AND is_fb_attributed = 1
+      AND adset_id IS NOT NULL AND adset_id != ''
+      GROUP BY adset_id
+    `).all(dateFrom, dateTo, 1);
+    const wcMap = {};
+    for (const r of wcByAdset) wcMap[r.adset_id] = r;
+    for (const as of result) {
+      const wcData = wcMap[as.id];
+      const spend = parseFloat(as.insights?.spend || 0);
+      if (wcData) {
+        as.wc = {
+          orders: wcData.orders,
+          revenueGross: wcData.revenue,
+          profit: Math.round((wcData.profit - spend) * 100) / 100,
+          roas: spend > 0 ? Math.round(wcData.revenue / spend * 100) / 100 : 0
+        };
+      } else {
+        as.wc = { orders: 0, revenueGross: 0, profit: spend > 0 ? Math.round(-spend * 100) / 100 : 0, roas: 0 };
+      }
+    }
+  } catch(e) { console.error('[getAdsets] WC enrich error:', e.message); }
+
   result.sort((a, b) => {
     if (a.status === 'ACTIVE' && b.status !== 'ACTIVE') return -1;
     if (b.status === 'ACTIVE' && a.status !== 'ACTIVE') return 1;
@@ -1703,6 +1730,33 @@ async function getAds(adsetId, dateFrom, dateTo) {
     }
   }
   const result = Object.values(insightAds);
+
+  // Enrich with WC order data by ad_id
+  try {
+    const wcByAd = db.prepare(`
+      SELECT ad_id, COUNT(*) as orders, ROUND(SUM(gross_eur),2) as revenue, ROUND(SUM(profit),2) as profit
+      FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = 1 AND is_fb_attributed = 1
+      AND ad_id IS NOT NULL AND ad_id != ''
+      GROUP BY ad_id
+    `).all(dateFrom, dateTo, 1);
+    const wcMap = {};
+    for (const r of wcByAd) wcMap[r.ad_id] = r;
+    for (const ad of result) {
+      const wcData = wcMap[ad.id];
+      const spend = parseFloat(ad.insights?.spend || 0);
+      if (wcData) {
+        ad.wc = {
+          orders: wcData.orders,
+          revenueGross: wcData.revenue,
+          profit: Math.round((wcData.profit - spend) * 100) / 100,
+          roas: spend > 0 ? Math.round(wcData.revenue / spend * 100) / 100 : 0
+        };
+      } else {
+        ad.wc = { orders: 0, revenueGross: 0, profit: spend > 0 ? Math.round(-spend * 100) / 100 : 0, roas: 0 };
+      }
+    }
+  } catch(e) { console.error('[getAds] WC enrich error:', e.message); }
+
   result.sort((a, b) => parseFloat(b.insights?.spend || 0) - parseFloat(a.insights?.spend || 0));
 
   setCache(cacheKey, result);
