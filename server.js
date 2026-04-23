@@ -1647,7 +1647,7 @@ async function getAdsets(campaignId, dateFrom, dateTo) {
       FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = 1 AND is_fb_attributed = 1
       AND adset_id IS NOT NULL AND adset_id != ''
       GROUP BY adset_id
-    `).all(dateFrom, dateTo, 1);
+    `).all(dateFrom, dateTo);
     const wcMap = {};
     for (const r of wcByAdset) wcMap[r.adset_id] = r;
     for (const as of result) {
@@ -1664,7 +1664,7 @@ async function getAdsets(campaignId, dateFrom, dateTo) {
         as.wc = { orders: 0, revenueGross: 0, profit: spend > 0 ? Math.round(-spend * 100) / 100 : 0, roas: 0 };
       }
     }
-  } catch(e) { console.error('[getAdsets] WC enrich error:', e.message); }
+  } catch(e) { console.error('[getAdsets] WC enrich error:', e.message, 'dateFrom:', dateFrom, 'dateTo:', dateTo); }
 
   result.sort((a, b) => {
     if (a.status === 'ACTIVE' && b.status !== 'ACTIVE') return -1;
@@ -1738,7 +1738,7 @@ async function getAds(adsetId, dateFrom, dateTo) {
       FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = 1 AND is_fb_attributed = 1
       AND ad_id IS NOT NULL AND ad_id != ''
       GROUP BY ad_id
-    `).all(dateFrom, dateTo, 1);
+    `).all(dateFrom, dateTo);
     const wcMap = {};
     for (const r of wcByAd) wcMap[r.ad_id] = r;
     for (const ad of result) {
