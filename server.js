@@ -1812,34 +1812,28 @@ async function getAllAdsets(dateFrom, dateTo, orgId) {
     insights: i
   }));
 
-  // Enrich with profit: distribute parent campaign WC data proportionally
-  // First get campaign-level profit data
-  const campaignData = await getCampaigns(dateFrom, dateTo, (getSessionUser(req))?.orgId || 1);
-  const campaignMap = {};
-  for (const c of campaignData) campaignMap[c.id] = c;
+  // Enrich with profit: direct WC order matching by adset_id
+  const wcByAdset = db.prepare(`
+    SELECT adset_id, COUNT(*) as orders, ROUND(SUM(gross_eur),2) as revenue, ROUND(SUM(profit),2) as profit
+    FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1
+    AND adset_id IS NOT NULL AND adset_id != ''
+    GROUP BY adset_id
+  `).all(dateFrom, dateTo, orgId);
+  const wcAdsetMap = {};
+  for (const r of wcByAdset) wcAdsetMap[r.adset_id] = r;
 
-  // Group adsets by campaign and distribute profit
-  const byCampaign = {};
   for (const as of result) {
-    if (!byCampaign[as.campaign_id]) byCampaign[as.campaign_id] = [];
-    byCampaign[as.campaign_id].push(as);
-  }
-  for (const [cid, adsets] of Object.entries(byCampaign)) {
-    const camp = campaignMap[cid];
-    if (camp?.wc) {
-      const totalSpend = adsets.reduce((s, a) => s + parseFloat(a.insights?.spend || 0), 0);
-      if (totalSpend > 0) {
-        for (const as of adsets) {
-          const ratio = parseFloat(as.insights?.spend || 0) / totalSpend;
-          const spend = parseFloat(as.insights?.spend || 0);
-          as.wc = {
-            orders: Math.round(camp.wc.orders * ratio),
-            revenueGross: Math.round(camp.wc.revenueGross * ratio * 100) / 100,
-            profit: Math.round((camp.wc.profit + parseFloat(camp.insights?.spend || 0)) * ratio * 100) / 100 - spend,
-            roas: spend > 0 ? Math.round(camp.wc.revenueGross * ratio / spend * 100) / 100 : 0
-          };
-        }
-      }
+    const wcData = wcAdsetMap[as.id];
+    const spend = parseFloat(as.insights?.spend || 0);
+    if (wcData) {
+      as.wc = {
+        orders: wcData.orders,
+        revenueGross: wcData.revenue,
+        profit: Math.round((wcData.profit - spend) * 100) / 100,
+        roas: spend > 0 ? Math.round(wcData.revenue / spend * 100) / 100 : 0
+      };
+    } else {
+      as.wc = { orders: 0, revenueGross: 0, profit: spend > 0 ? Math.round(-spend * 100) / 100 : 0, roas: 0 };
     }
   }
 
@@ -1892,32 +1886,28 @@ async function getAllAds(dateFrom, dateTo, orgId) {
     insights: i
   }));
 
-  // Distribute campaign profit proportionally by spend
-  const campaignData = await getCampaigns(dateFrom, dateTo, (getSessionUser(req))?.orgId || 1);
-  const campaignMap = {};
-  for (const c of campaignData) campaignMap[c.id] = c;
+  // Enrich with profit: direct WC order matching by ad_id
+  const wcByAd = db.prepare(`
+    SELECT ad_id, COUNT(*) as orders, ROUND(SUM(gross_eur),2) as revenue, ROUND(SUM(profit),2) as profit
+    FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND is_fb_attributed = 1
+    AND ad_id IS NOT NULL AND ad_id != ''
+    GROUP BY ad_id
+  `).all(dateFrom, dateTo, orgId);
+  const wcAdMap = {};
+  for (const r of wcByAd) wcAdMap[r.ad_id] = r;
 
-  const byCampaign = {};
   for (const ad of result) {
-    if (!byCampaign[ad.campaign_id]) byCampaign[ad.campaign_id] = [];
-    byCampaign[ad.campaign_id].push(ad);
-  }
-  for (const [cid, ads] of Object.entries(byCampaign)) {
-    const camp = campaignMap[cid];
-    if (camp?.wc) {
-      const totalSpend = ads.reduce((s, a) => s + parseFloat(a.insights?.spend || 0), 0);
-      if (totalSpend > 0) {
-        for (const ad of ads) {
-          const ratio = parseFloat(ad.insights?.spend || 0) / totalSpend;
-          const spend = parseFloat(ad.insights?.spend || 0);
-          ad.wc = {
-            orders: Math.round(camp.wc.orders * ratio),
-            revenueGross: Math.round(camp.wc.revenueGross * ratio * 100) / 100,
-            profit: Math.round((camp.wc.profit + parseFloat(camp.insights?.spend || 0)) * ratio * 100) / 100 - spend,
-            roas: spend > 0 ? Math.round(camp.wc.revenueGross * ratio / spend * 100) / 100 : 0
-          };
-        }
-      }
+    const wcData = wcAdMap[ad.id];
+    const spend = parseFloat(ad.insights?.spend || 0);
+    if (wcData) {
+      ad.wc = {
+        orders: wcData.orders,
+        revenueGross: wcData.revenue,
+        profit: Math.round((wcData.profit - spend) * 100) / 100,
+        roas: spend > 0 ? Math.round(wcData.revenue / spend * 100) / 100 : 0
+      };
+    } else {
+      ad.wc = { orders: 0, revenueGross: 0, profit: spend > 0 ? Math.round(-spend * 100) / 100 : 0, roas: 0 };
     }
   }
 
