@@ -4130,7 +4130,8 @@ async function toggle(level,id) {
     expandedCampaigns[id]=true;
     renderTable(); // show loading state
     if(!adsetCache[id]){
-      try{const res=await fetch(`/api/adsets?campaign_id=${id}&date_from=${from}&date_to=${to}`);adsetCache[id]=await res.json();if(adsetCache[id].error){console.error('Adset API error:',adsetCache[id].error);adsetCache[id]=[];}const c=campaigns.find(c=>c.id===id);if(c?.wc) distributeWC(c.wc,adsetCache[id]);
+      try{const res=await fetch(`/api/adsets?campaign_id=${id}&date_from=${from}&date_to=${to}`);adsetCache[id]=await res.json();if(adsetCache[id].error){console.error('Adset API error:',adsetCache[id].error);adsetCache[id]=[];}const c=campaigns.find(c=>c.id===id);// Server provides direct WC matching - no client-side distribution needed
+      if (!adsetCache[id].some(a => a.wc)) { if(c?.wc) distributeWC(c.wc,adsetCache[id]); }
         // Load multi-profit for adsets in background
         fetch('/api/multi-profit-children?campaign_id='+id).then(r=>r.json()).then(d=>{if(!d.error){Object.assign(multiProfitChildren,d);renderTable();}}).catch(()=>{});}
       catch(e){console.error('Adset fetch error:',e);adsetCache[id]=[];}
@@ -4140,7 +4141,7 @@ async function toggle(level,id) {
     expandedAdsets[id]=true;
     renderTable(); // show loading state
     if(!adCache[id]){
-      try{const res=await fetch(`/api/ads?adset_id=${id}&date_from=${from}&date_to=${to}`);adCache[id]=await res.json();if(adCache[id].error){console.error('Ad API error:',adCache[id].error);adCache[id]=[];}for(const cid of Object.keys(adsetCache)){const as=adsetCache[cid]?.find(a=>a.id===id);if(as?.wc){distributeWC(as.wc,adCache[id]);break;}}}
+      try{const res=await fetch(`/api/ads?adset_id=${id}&date_from=${from}&date_to=${to}`);adCache[id]=await res.json();if(adCache[id].error){console.error('Ad API error:',adCache[id].error);adCache[id]=[];}for(const cid of Object.keys(adsetCache)){const as=adsetCache[cid]?.find(a=>a.id===id);if (!adCache[id].some(a => a.wc)) { if(as?.wc){distributeWC(as.wc,adCache[id]);break;} }}}
       catch(e){console.error('Ad fetch error:',e);adCache[id]=[];}
     }
   }
