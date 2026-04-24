@@ -779,7 +779,7 @@ function fetchWcOrdersForCountry(country, modifiedAfter, storeOverride) {
     while (hasMore) {
       try {
         let wcUrl = `${store.url}/wp-json/wc/v3/orders?per_page=100&page=${page}&status=processing,completed&consumer_key=${store.ck}&consumer_secret=${store.cs}`;
-        if (modifiedAfter) wcUrl += `&modified_after=${modifiedAfter}&after=${modifiedAfter}`;
+        if (modifiedAfter) wcUrl += `&modified_after=${modifiedAfter}`;
 
         const data = await new Promise((res, rej) => {
           https.get(wcUrl, resp => {
@@ -811,7 +811,7 @@ function fetchWcOrdersForCountry(country, modifiedAfter, storeOverride) {
           await new Promise(r => setTimeout(r, 5000));
           try {
             let retryUrl = `${store.url}/wp-json/wc/v3/orders?per_page=100&page=${page}&status=processing,completed&consumer_key=${store.ck}&consumer_secret=${store.cs}`;
-            if (modifiedAfter) retryUrl += `&modified_after=${modifiedAfter}&after=${modifiedAfter}`;
+            if (modifiedAfter) retryUrl += `&modified_after=${modifiedAfter}`;
             const retryData = await new Promise((res2, rej2) => {
               https.get(retryUrl, resp2 => {
                 if (resp2.statusCode !== 200) { resp2.resume(); rej2(new Error(`HTTP ${resp2.statusCode}`)); return; }
