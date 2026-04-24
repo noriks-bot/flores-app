@@ -4261,13 +4261,13 @@ function getRates2(orgId) {
         try { topCampaignsRaw = await getCampaigns(dashFrom, dashTo, userOrgId); } catch(e) {}
         
         // Top products
-        const topProducts = db.prepare("SELECT product_type, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? GROUP BY product_type ORDER BY orders DESC").all(dashFrom, dashTo, userOrgId);
+        const topProducts = db.prepare("SELECT product_type, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND LOWER(billing_name) NOT LIKE '%test%' GROUP BY product_type ORDER BY orders DESC").all(dashFrom, dashTo, userOrgId);
         
         // By country (today)
-        const byCountry = db.prepare("SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ? AND org_id = ?" + _countryFilter + " GROUP BY country ORDER BY orders DESC").all(today, userOrgId);
+        const byCountry = db.prepare("SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ? AND org_id = ? AND LOWER(billing_name) NOT LIKE '%test%'" + _countryFilter + " GROUP BY country ORDER BY orders DESC").all(today, userOrgId);
         
         // 7-day totals
-        const weekStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND org_id = ?').get(d7ago, userOrgId);
+        const weekStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND org_id = ? AND LOWER(billing_name) NOT LIKE '%test%'').get(d7ago, userOrgId);
         
         // FB spend: live from Meta campaigns (primary), dash-cache (fallback for 7d)
         let fbSpendToday = 0, fbSpend7d = 0, fbSpendRange = 0;
@@ -4486,7 +4486,7 @@ function getRates2(orgId) {
         }
 
         // Orders list for table
-        const ordersList = db.prepare("SELECT wc_order_id, order_date, order_datetime, country, gross_eur, profit, utm_source, utm_medium, utm_campaign, campaign_name, is_fb_attributed, product_type, billing_name, billing_city, billing_email, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ?" + _countryFilter + " ORDER BY order_datetime DESC, wc_order_id DESC").all(dashFrom, dashTo, userOrgId);
+        const ordersList = db.prepare("SELECT wc_order_id, order_date, order_datetime, country, gross_eur, profit, utm_source, utm_medium, utm_campaign, campaign_name, is_fb_attributed, product_type, billing_name, billing_city, billing_email, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND LOWER(billing_name) NOT LIKE '%test%'" + _countryFilter + " ORDER BY order_datetime DESC, wc_order_id DESC").all(dashFrom, dashTo, userOrgId);
         const ordersListFormatted = ordersList.map(o => {
           // Use dash classification from raw_meta
           let origin = 'Direct';
@@ -4524,7 +4524,7 @@ function getRates2(orgId) {
             fbPixelPurchases,
             profitPerOrder: todayStats.orders > 0 ? Math.round(((todayStats.profit || 0) - fbSpendRange) / todayStats.orders * 100) / 100 : 0,
             fbProfitPerOrder: fbOrderCount > 0 ? Math.round(fbProfit / fbOrderCount * 100) / 100 : 0,
-            ordersBySource: (() => { try { const allOrd = db.prepare("SELECT wc_order_id, utm_source, utm_medium, utm_campaign, is_fb_attributed, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ?").all(dashFrom, dashTo, userOrgId); const m = {}; allOrd.forEach(o => { let origin = 'Direct'; try { const rawM2 = JSON.parse(o.raw_meta || '{}'); origin = classifySourceDash(rawM2, []); } catch(e2) { if (o.is_fb_attributed === 1) origin = 'Facebook'; else if (o.utm_source === 'callcenter') origin = 'Call Center'; else if ((o.utm_source||'').includes('google') && (o.utm_medium === 'cpc' || o.utm_medium === 'paid' || (o.utm_campaign||'').includes('google_cpc'))) origin = 'Google Paid'; else if ((o.utm_source||'').includes('google')) origin = 'Google Organic'; } m[origin] = (m[origin] || 0) + 1; }); return m; } catch(e) { return {}; } })(),
+            ordersBySource: (() => { try { const allOrd = db.prepare("SELECT wc_order_id, utm_source, utm_medium, utm_campaign, is_fb_attributed, raw_meta FROM wc_orders WHERE order_date >= ? AND order_date <= ? AND org_id = ? AND LOWER(billing_name) NOT LIKE '%test%'").all(dashFrom, dashTo, userOrgId); const m = {}; allOrd.forEach(o => { let origin = 'Direct'; try { const rawM2 = JSON.parse(o.raw_meta || '{}'); origin = classifySourceDash(rawM2, []); } catch(e2) { if (o.is_fb_attributed === 1) origin = 'Facebook'; else if (o.utm_source === 'callcenter') origin = 'Call Center'; else if ((o.utm_source||'').includes('google') && (o.utm_medium === 'cpc' || o.utm_medium === 'paid' || (o.utm_campaign||'').includes('google_cpc'))) origin = 'Google Paid'; else if ((o.utm_source||'').includes('google')) origin = 'Google Organic'; } m[origin] = (m[origin] || 0) + 1; }); return m; } catch(e) { return {}; } })(),
             fbMeasuredOrders,
             fbUnmeasuredOrders,
             fbCpa,
