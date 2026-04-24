@@ -4267,7 +4267,7 @@ function getRates2(orgId) {
         const byCountry = db.prepare("SELECT country, COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date = ? AND org_id = ? AND LOWER(billing_name) NOT LIKE '%test%'" + _countryFilter + " GROUP BY country ORDER BY orders DESC").all(today, userOrgId);
         
         // 7-day totals
-        const weekStats = db.prepare('SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND org_id = ? AND LOWER(billing_name) NOT LIKE '%test%'').get(d7ago, userOrgId);
+        const weekStats = db.prepare("SELECT COUNT(*) as orders, COALESCE(SUM(gross_eur),0) as revenue, COALESCE(SUM(profit),0) as profit FROM wc_orders WHERE order_date >= ? AND org_id = ? AND LOWER(billing_name) NOT LIKE '%test%'").get(d7ago, userOrgId);
         
         // FB spend: live from Meta campaigns (primary), dash-cache (fallback for 7d)
         let fbSpendToday = 0, fbSpend7d = 0, fbSpendRange = 0;
