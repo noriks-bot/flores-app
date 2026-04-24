@@ -806,7 +806,7 @@ function fetchWcOrdersForCountry(country, modifiedAfter, storeOverride) {
         }
       } catch (e) {
         const is502 = e.message.includes('502') || e.message.includes('503') || e.message.includes('429');
-        if (is502 && page === 1) {
+        if (is502) {
           console.warn(`[FLORES] WC ${country} ${e.message}, backoff 5s then retry...`);
           await new Promise(r => setTimeout(r, 5000));
           try {
