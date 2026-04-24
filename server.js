@@ -840,6 +840,7 @@ async function syncCountry(country, orgId, storeOverride) {
   const _fallbackDate = (syncOrgId !== 1) ? "2026-04-03T00:00:00.000Z" : null;
   const modifiedAfter = rawSyncAt ? new Date(new Date(rawSyncAt).getTime() - 60000).toISOString() : _fallbackDate;
 
+  const _syncStartedAt = new Date().toISOString(); // Timestamp BEFORE fetch — used for sync state
   const orders = await fetchWcOrdersForCountry(country, modifiedAfter, storeOverride);
   console.log(`[FLORES] syncCountry ${country} org=${syncOrgId}: fetched ${orders.length} orders, modifiedAfter=${modifiedAfter}`);
   let count = 0;
@@ -1071,7 +1072,7 @@ async function syncCountry(country, orgId, storeOverride) {
   updateSyncState.run({
     country: _syncKey,
     last_synced_order_id: maxId,
-    last_sync_at: new Date().toISOString(),
+    last_sync_at: _syncStartedAt,
     total_orders: totalOrders
   });
 
