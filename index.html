@@ -1200,21 +1200,6 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
       </a>
     </div>
     <div class="nav-section">
-      <div class="nav-section-label">Upload</div>
-      <a class="nav-item" data-section="upload" onclick="navigateTo('upload')">
-        <i class="fas fa-cloud-upload-alt"></i><span class="nav-item-text">Upload Planer</span>
-      </a>
-      <a class="nav-item" data-section="bulk-uploader" onclick="navigateTo('bulk-uploader')">
-        <i class="fas fa-layer-group"></i><span class="nav-item-text">Bulk Uploader</span>
-      </a>
-      <a class="nav-item" data-section="videos" onclick="navigateTo('videos')">
-        <i class="fas fa-video"></i><span class="nav-item-text">Videos</span>
-      </a>
-      <a class="nav-item" data-section="upload-settings" onclick="navigateTo('upload-settings')">
-        <i class="fas fa-cog"></i><span class="nav-item-text">Upload Settings</span>
-      </a>
-    </div>
-    <div class="nav-section">
       <div class="nav-section-label">AI</div>
       <a class="nav-item" data-section="ai-hints" onclick="navigateTo('ai-hints')">
         <i class="fas fa-robot"></i><span class="nav-item-text">AI Hints</span>
@@ -1318,7 +1303,6 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 
         <!-- Quick Actions -->
         <div class="dash-quick-actions" style="display:none">
-          <button class="dash-action-btn" onclick="navigateTo('bulk-uploader')"><i class="fas fa-layer-group"></i> Bulk Uploader</button>
           <button class="dash-action-btn" onclick="navigateTo('optimizer')"><i class="fas fa-sliders-h"></i> Optimizer</button>
           <button class="dash-action-btn" onclick="navigateTo('ai-hints')"><i class="fas fa-robot"></i> AI Hints</button>
           <button class="dash-action-btn" onclick="navigateTo('creative-reporting')"><i class="fas fa-palette"></i> Creatives</button>
@@ -2106,325 +2090,6 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     </div>
   </div>
 
-    <!-- UPLOAD -->
-  <div id="section-upload" class="content-section">
-    <div class="content" style="padding:20px 24px">
-      <!-- Summary card -->
-      <div id="uploadSummary" style="display:none;background:linear-gradient(135deg,#1E3A5F,#2a5a8f);border-radius:var(--card-radius);padding:24px;margin-bottom:20px;color:#fff">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <div>
-            <div style="font-size:22px;font-weight:800" id="uploadSummaryTitle">—</div>
-            <div style="font-size:13px;opacity:0.7;margin-top:4px" id="uploadSummarySubtitle">—</div>
-          </div>
-          <button class="refresh-btn" onclick="generateUploadPlan()" id="uploadGenBtn" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3)">
-            <i class="fas fa-sync-alt"></i> Regenerate
-          </button>
-        </div>
-      </div>
-      <!-- Premium Filters -->
-      <div id="uploadFilters" style="background:linear-gradient(135deg,#fafbff 0%,#f0f4ff 100%);border:1px solid #c7d2fe;border-radius:12px;padding:28px 32px;margin-bottom:20px;box-shadow:0 4px 16px rgba(30,58,95,0.06)">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
-          <div style="width:36px;height:36px;background:linear-gradient(135deg,#1E3A5F,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">🚀</div>
-          <div>
-            <div style="font-size:18px;font-weight:800;color:#1E3A5F;letter-spacing:-0.3px">Creative Expansion Planner</div>
-            <div style="font-size:11px;color:#6b7280;margin-top:1px">AI-powered creative scaling recommendations</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-end">
-          <div>
-            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Product</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:6px 12px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;transition:all .15s"><input type="checkbox" class="upProd" value="shirts" checked style="accent-color:#6366f1"> Shirts</label>
-              <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:6px 12px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;transition:all .15s"><input type="checkbox" class="upProd" value="boxers" checked style="accent-color:#6366f1"> Boxers</label>
-              <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:6px 12px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;transition:all .15s"><input type="checkbox" class="upProd" value="starter" checked style="accent-color:#6366f1"> Starter</label>
-              <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:6px 12px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;transition:all .15s"><input type="checkbox" class="upProd" value="kompleti" checked style="accent-color:#6366f1"> Komplet</label>
-            </div>
-          </div>
-          <div>
-            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Target Countries</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px"><input type="checkbox" class="upCountry" value="HR" checked style="accent-color:#6366f1"> 🇭🇷</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px"><input type="checkbox" class="upCountry" value="CZ" checked style="accent-color:#6366f1"> 🇨🇿</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px"><input type="checkbox" class="upCountry" value="PL" checked style="accent-color:#6366f1"> 🇵🇱</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px"><input type="checkbox" class="upCountry" value="GR" checked style="accent-color:#6366f1"> 🇬🇷</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px"><input type="checkbox" class="upCountry" value="SK" checked style="accent-color:#6366f1"> 🇸🇰</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px"><input type="checkbox" class="upCountry" value="IT" checked style="accent-color:#6366f1"> 🇮🇹</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px"><input type="checkbox" class="upCountry" value="HU" checked style="accent-color:#6366f1"> 🇭🇺</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px"><input type="checkbox" class="upCountry" value="SI" checked style="accent-color:#6366f1"> 🇸🇮</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px"><input type="checkbox" class="upCountry" value="RO" checked style="accent-color:#6366f1"> 🇷🇴</label>
-            </div>
-          </div>
-          <div>
-            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Max CPA</div>
-            <div style="display:flex;align-items:center;gap:4px">
-              <input type="number" id="upMaxCpa" value="20" style="width:72px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;font-weight:600;text-align:center;background:#fff">
-              <span style="font-size:14px;font-weight:600;color:#6b7280">€</span>
-            </div>
-          </div>
-          <div>
-            <button onclick="generateUploadPlan()" style="padding:14px 32px;background:linear-gradient(135deg,#1E3A5F 0%,#2563eb 100%);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(37,99,235,0.3);transition:all .2s;letter-spacing:-0.2px" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 20px rgba(37,99,235,0.4)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 4px 14px rgba(37,99,235,0.3)'">
-              <i class="fas fa-rocket"></i> Generate Plan
-            </button>
-          </div>
-        </div>
-      </div>
-      <div id="uploadInitial" style="display:none"></div>
-      <!-- Loading -->
-      <div id="uploadLoading" style="display:none;text-align:center;padding:60px;color:var(--text-muted)">
-        <div class="spinner" style="width:24px;height:24px;display:inline-block;margin-bottom:12px"></div>
-        <div style="font-size:13px">Analyzing creative performance across all countries...</div>
-      </div>
-      <!-- Card-based expansion results -->
-      <div id="uploadTable" style="display:none">
-        <div class="table-card">
-          <div style="padding:14px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border-color)">📋 Expansion Opportunities</div>
-          <div class="table-scroll" style="max-height:calc(100vh - 320px)">
-            <table class="cr-table">
-              <thead><tr>
-                <th class="cr-th" style="text-align:left">Creative ID</th>
-                <th class="cr-th">Total Spend</th>
-                <th class="cr-th">Purchases</th>
-                <th class="cr-th">Overall CPA</th>
-                <th class="cr-th" style="text-align:left">Winning in</th>
-                <th class="cr-th">Best CPA</th>
-                <th class="cr-th" style="text-align:left">Expand to</th>
-                <th class="cr-th">Priority</th>
-              </tr></thead>
-              <tbody id="uploadBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-      <div id="uploadWaitingTable" style="display:none;margin-top:16px">
-        <div class="table-card">
-          <div style="padding:14px 18px;font-weight:700;font-size:14px;border-bottom:1px solid #e6e8ea">
-            <span style="margin-right:8px">🇨🇿</span> Creatives waiting for CZ
-            <span id="waitingCZCount" style="font-size:11px;color:#9ca3af;margin-left:8px"></span>
-          </div>
-          <div class="table-scroll" style="max-height:400px">
-            <table class="cr-table">
-              <thead><tr>
-                <th class="cr-th" style="text-align:left">Creative ID</th>
-                <th class="cr-th">Best Country</th>
-                <th class="cr-th">Best CPA</th>
-                <th class="cr-th">Spend (other)</th>
-                <th class="cr-th">CZ Spend</th>
-                <th class="cr-th">Status</th>
-              </tr></thead>
-              <tbody id="waitingCZBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ORIGIN REPORT -->
-  <div id="section-origin-report" class="content-section">
-  <div style="background:linear-gradient(135deg,#fafbff,#f0f4ff);border:1px solid #c7d2fe;border-radius:12px;padding:20px 24px;margin:16px 24px;box-shadow:0 4px 16px rgba(30,58,95,0.06)"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:linear-gradient(135deg,#1E3A5F,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">🔍</div><div><div style="font-size:18px;font-weight:800;color:#1E3A5F">Origin Report</div><div style="font-size:11px;color:#6b7280;margin-top:1px">Track order attribution sources</div></div></div></div>
-    <div class="filters-bar" id="orFilters">
-      <span class="filter-label">Period</span>
-      <div class="preset-tabs" id="orPresetTabs">
-        <button class="preset-tab active" data-range="today">Today</button>
-        <button class="preset-tab" data-range="yesterday">Yesterday</button>
-        <button class="preset-tab" data-range="3d">3D</button>
-        <button class="preset-tab" data-range="7d">7D</button>
-        <button class="preset-tab" data-range="14d">14D</button>
-        <button class="preset-tab" data-range="30d">30D</button>
-        <button class="preset-tab" data-range="custom">Custom</button>
-      </div>
-      <input type="date" id="orDateFrom" class="date-input" style="display:none">
-      <span class="date-sep or-date-sep" style="display:none">→</span>
-      <input type="date" id="orDateTo" class="date-input" style="display:none">
-      <button class="refresh-btn" onclick="loadOriginReport()" style="margin-left:8px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-        Refresh
-      </button>
-    </div>
-    <div class="content" style="padding:20px 24px">
-      <!-- Summary Cards -->
-      <div class="or-summary-cards" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px">
-        <div class="or-card" style="background:var(--card-bg);border-radius:var(--card-radius);box-shadow:var(--card-shadow);padding:20px">
-          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:8px">Total Orders</div>
-          <div id="orTotalOrders" style="font-size:28px;font-weight:800;color:var(--text-primary)">—</div>
-        </div>
-        <div class="or-card" style="background:var(--card-bg);border-radius:var(--card-radius);box-shadow:var(--card-shadow);padding:20px;border-left:3px solid #3b82f6">
-          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:8px">FB Total</div>
-          <div id="orFBTotal" style="font-size:28px;font-weight:800;color:#3b82f6">—</div>
-          <div id="orFBSub" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
-        </div>
-        <div class="or-card" style="background:var(--card-bg);border-radius:var(--card-radius);box-shadow:var(--card-shadow);padding:20px;border-left:3px solid #7c3aed">
-          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:8px">Assigned in Ads Manager</div>
-          <div id="orAssigned" style="font-size:28px;font-weight:800;color:#7c3aed">—</div>
-        </div>
-        <div class="or-card" style="background:var(--card-bg);border-radius:var(--card-radius);box-shadow:var(--card-shadow);padding:20px;border-left:3px solid #64748b">
-          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:8px">Non-FB Orders</div>
-          <div id="orNonFB" style="font-size:28px;font-weight:800;color:#64748b">—</div>
-        </div>
-      </div>
-
-      <!-- Daily Breakdown -->
-      <div class="table-card" style="margin-bottom:20px">
-        <div style="padding:14px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border-color)">📅 Daily Breakdown</div>
-        <div class="table-scroll">
-          <table>
-            <thead><tr>
-              <th style="text-align:left">Date</th>
-              <th>Total</th>
-              <th style="background:rgba(59,130,246,0.06)">FB Total</th>
-              <th style="background:rgba(59,130,246,0.06)">FB Measured</th>
-              <th style="background:rgba(59,130,246,0.06)">FB Unmeasured</th>
-              <th style="background:rgba(124,58,237,0.06)">Assigned</th>
-              <th>Google Ads</th>
-              <th>Google Organic</th>
-              <th>Klaviyo</th>
-              <th>Call Center</th>
-              <th>Direct</th>
-              <th>Other</th>
-            </tr></thead>
-            <tbody id="orDailyBody"><tr><td colspan="12" style="text-align:center;padding:30px;color:var(--text-muted)">Select a date range and click Refresh</td></tr></tbody>
-            <tbody id="orDailyTotals"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Origin Breakdown -->
-      <div class="table-card">
-        <div style="padding:14px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border-color)">🔍 Origin Breakdown</div>
-        <div class="table-scroll">
-          <table>
-            <thead><tr>
-              <th style="text-align:left">Origin</th>
-              <th>Orders</th>
-              <th>Revenue (EUR)</th>
-              <th>Profit (EUR)</th>
-              <th>Avg Order Value</th>
-              <th>% of Total</th>
-            </tr></thead>
-            <tbody id="orOriginBody"><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">—</td></tr></tbody>
-            <tbody id="orOriginTotals"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- BULK UPLOADER -->
-  <div id="section-bulk-uploader" class="content-section">
-    <div class="content" style="padding:20px 24px">
-      <!-- Summary bar -->
-      <div id="bulkSummaryBar" style="background:linear-gradient(135deg,#1E3A5F,#2a5a8f);border-radius:var(--card-radius);padding:20px 24px;margin-bottom:20px;color:#fff;display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <div style="font-size:20px;font-weight:800"><i class="fas fa-layer-group" style="margin-right:8px"></i>Bulk Campaign Creator</div>
-          <div style="font-size:13px;opacity:0.7;margin-top:4px">Create multiple Facebook campaigns at once</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:16px">
-          <div id="bulkStats" style="text-align:right">
-            <div style="font-size:22px;font-weight:800"><span id="bulkCampCount">0</span> campaigns</div>
-            <div style="font-size:13px;opacity:0.7">Total budget: €<span id="bulkTotalBudget">0</span>/day</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Campaign rows -->
-      <div id="bulkCampaignRows"></div>
-
-      <!-- Add campaign button -->
-      <div style="display:flex;gap:12px;margin:0 0 24px 0">
-        <button onclick="bulkAddRow()" style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px">
-          <i class="fas fa-plus"></i> Add Campaign
-        </button>
-      </div>
-
-      <!-- Create button -->
-      <div style="margin-top:20px;display:flex;gap:12px;align-items:center">
-        <button id="bulkCreateBtn" onclick="bulkCreateAll()" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:16px 40px;border-radius:12px;font-weight:800;font-size:16px;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 4px 15px rgba(16,185,129,0.3)">
-          <i class="fas fa-rocket"></i> Create All Campaigns
-        </button>
-        <div id="bulkProgress" style="display:none;color:var(--text-muted);font-size:13px"><i class="fas fa-spinner fa-spin"></i> <span id="bulkProgressText">Creating...</span></div>
-      </div>
-
-      <!-- Results -->
-      <div id="bulkResults" style="display:none;margin-top:20px">
-        <div style="background:var(--card-bg);border-radius:var(--card-radius);border:1px solid var(--border-color);overflow:hidden">
-          <div style="padding:16px 20px;border-bottom:1px solid var(--border-color);font-weight:700;font-size:15px"><i class="fas fa-clipboard-list" style="margin-right:8px;color:var(--accent)"></i>Creation Results</div>
-          <div style="overflow-x:auto">
-            <table class="data-table"><thead><tr>
-              <th style="text-align:left">Campaign</th><th>Status</th><th>Campaign ID</th><th>Adset ID</th><th>Ad ID</th><th>Error</th>
-            </tr></thead><tbody id="bulkResultsBody"></tbody></table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- VIDEOS -->
-  <div id="section-videos" class="content-section">
-    <div class="content" style="padding:20px 24px">
-      <div style="background:linear-gradient(135deg,#1E3A5F,#2a5a8f);border-radius:var(--card-radius);padding:20px 24px;margin-bottom:20px;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-        <div>
-          <div style="font-size:20px;font-weight:800"><i class="fas fa-video" style="margin-right:8px"></i>Video Creatives</div>
-          <div style="font-size:13px;opacity:0.7;margin-top:4px">Browse Dropbox creatives · <span id="vidTotalCount">0</span> videos · <span id="vidSelectedCount">0</span> selected</div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <button onclick="loadVideos(true)" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer"><i class="fas fa-sync-alt"></i> Refresh</button>
-        </div>
-      </div>
-
-      <!-- Filters -->
-      <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--card-radius);padding:16px 20px;margin-bottom:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
-        <div style="display:flex;align-items:center;gap:8px">
-          <i class="fas fa-search" style="color:var(--text-muted)"></i>
-          <input id="vidSearchInput" type="text" placeholder="Search by ID or name..." oninput="filterVideos()" style="background:var(--bg);border:1px solid var(--border-color);color:var(--text);padding:8px 14px;border-radius:8px;font-size:13px;width:200px">
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap" id="vidCountryFilters">
-          <button class="vid-filter-pill active" data-country="all" onclick="setVidCountry('all',this)">All</button>
-          <button class="vid-filter-pill" data-country="HR" onclick="setVidCountry('HR',this)">🇭🇷 HR</button>
-          <button class="vid-filter-pill" data-country="CZ" onclick="setVidCountry('CZ',this)">🇨🇿 CZ</button>
-          <button class="vid-filter-pill" data-country="PL" onclick="setVidCountry('PL',this)">🇵🇱 PL</button>
-          <button class="vid-filter-pill" data-country="GR" onclick="setVidCountry('GR',this)">🇬🇷 GR</button>
-          <button class="vid-filter-pill" data-country="SK" onclick="setVidCountry('SK',this)">🇸🇰 SK</button>
-          <button class="vid-filter-pill" data-country="IT" onclick="setVidCountry('IT',this)">🇮🇹 IT</button>
-          <button class="vid-filter-pill" data-country="HU" onclick="setVidCountry('HU',this)">🇭🇺 HU</button>
-          <button class="vid-filter-pill" data-country="SI" onclick="setVidCountry('SI',this)">🇸🇮 SI</button>
-          <button class="vid-filter-pill" data-country="RO" onclick="setVidCountry('RO',this)">🇷🇴 RO</button>
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap" id="vidProductFilters">
-          <button class="vid-filter-pill active" data-product="all" onclick="setVidProduct('all',this)">All</button>
-          <button class="vid-filter-pill" data-product="shirts" onclick="setVidProduct('shirts',this)">👕 Shirts</button>
-          <button class="vid-filter-pill" data-product="boxers" onclick="setVidProduct('boxers',this)">🩲 Boxers</button>
-          <button class="vid-filter-pill" data-product="starter" onclick="setVidProduct('starter',this)">📦 Starter</button>
-          <button class="vid-filter-pill" data-product="kompleti" onclick="setVidProduct('kompleti',this)">🎁 Kompleti</button>
-        </div>
-      </div>
-
-      <!-- Loading -->
-      <div id="vidLoading" style="display:none;text-align:center;padding:60px 20px;color:var(--text-muted)">
-        <i class="fas fa-spinner fa-spin" style="font-size:28px;margin-bottom:12px;display:block;color:var(--accent)"></i>
-        <div style="font-size:15px;font-weight:600">Loading videos from Dropbox...</div>
-      </div>
-
-      <!-- Grid -->
-      <div id="vidGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px"></div>
-      <div id="vidEmpty" style="display:none;text-align:center;padding:60px;color:var(--text-muted)"><i class="fas fa-film" style="font-size:40px;margin-bottom:12px;display:block;opacity:0.4"></i>No videos found</div>
-    </div>
-  </div>
-
-  <!-- UPLOAD SETTINGS -->
-  <div id="section-upload-settings" class="content-section">
-    <div class="content" style="padding:20px 24px">
-      <div style="background:linear-gradient(135deg,#1E3A5F,#2a5a8f);border-radius:var(--card-radius);padding:20px 24px;margin-bottom:20px;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-        <div>
-          <div style="font-size:20px;font-weight:800"><i class="fas fa-cog" style="margin-right:8px"></i>Upload Settings</div>
-          <div style="font-size:12px;opacity:0.7;margin-top:4px">Configure upload defaults and preferences</div>
-        </div>
-      </div>
-      <div class="table-card" style="padding:24px">
-        <p style="color:var(--text-muted);text-align:center;padding:40px">Upload settings coming soon...</p>
-      </div>
-    </div>
-  </div>
-
   <!-- SAAS DASHBOARD -->
   <div id="section-saas-dashboard" class="content-section">
     <div class="content" style="padding:20px 24px">
@@ -2880,11 +2545,8 @@ const sectionTitles = {
   'creative-reporting': 'Creative Reporting',
   'ai-hints': 'AI Hints',
   'dominik-chat': 'Chat Dominik',
-  'upload': 'Upload Planer',
   'origin-report': 'Origin Report',
   'optimizer': '',
-  'bulk-uploader': 'Bulk Uploader',
-  'videos': 'Videos',
   'fb-integration': 'FB Integration',
   'users': 'Users',
   'settings': 'Settings',
@@ -6556,7 +6218,7 @@ async function toggleOpt(campaignId) {
   };
   // Handle initial hash if it's a new section
   const h = window.location.hash.replace('#','');
-  if (['fb-integration','users','settings','videos','bulk-uploader'].includes(h)) {
+  if (['fb-integration','users','settings'].includes(h)) {
     setTimeout(() => navigateTo(h), 100);
   }
 })();
@@ -7726,9 +7388,6 @@ const cmdPages = [
   { label: 'Origin Report', icon: 'fas fa-sitemap', action: () => navigateTo('origin-report'), section: 'Pages' },
   { label: 'AI Hints', icon: 'fas fa-robot', action: () => navigateTo('ai-hints'), section: 'Pages' },
   { label: 'Chat Dominik', icon: 'fas fa-comments', action: () => navigateTo('dominik-chat'), section: 'Pages' },
-  { label: 'Upload', icon: 'fas fa-cloud-upload-alt', action: () => navigateTo('upload'), section: 'Pages' },
-  { label: 'Bulk Uploader', icon: 'fas fa-layer-group', action: () => navigateTo('bulk-uploader'), section: 'Pages' },
-  { label: 'Videos', icon: 'fas fa-video', action: () => navigateTo('videos'), section: 'Pages' },
   { label: 'FB Integration', icon: 'fab fa-facebook', action: () => navigateTo('fb-integration'), section: 'Pages' },
   { label: 'Users', icon: 'fas fa-users', action: () => navigateTo('users'), section: 'Pages' },
   { label: 'Settings', icon: 'fas fa-cog', action: () => navigateTo('settings'), section: 'Pages' },
@@ -7802,7 +7461,7 @@ document.getElementById('cmdInput').addEventListener('keydown', e => {
 });
 
 /* ═══ KEYBOARD SHORTCUTS ═══ */
-const sectionOrder = ['dashboard','ads-manager','optimizer','base-report','creative-reporting','origin-report','ai-hints','dominik-chat','upload','bulk-uploader','videos','fb-integration','users','settings','activity-log'];
+const sectionOrder = ['dashboard','ads-manager','optimizer','base-report','creative-reporting','origin-report','ai-hints','dominik-chat','fb-integration','users','settings','activity-log'];
 
 document.addEventListener('keydown', e => {
   // Don't trigger in inputs/textareas
