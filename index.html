@@ -2147,7 +2147,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           <div style="margin-bottom:12px">
             <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Creative (Ad ID)</div>
             <div style="position:relative">
-              <input type="text" id="upCreativeInput" placeholder="Search creative..." autocomplete="off" style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;background:#f8fafc;box-sizing:border-box;transition:border .15s" onfocus="this.style.borderColor='#3b82f6';this.style.background='#fff';upFilterCreatives(this.value)" onblur="this.style.borderColor='#e2e8f0';this.style.background='#f8fafc'" oninput="upFilterCreatives(this.value)">
+              <input type="text" id="upCreativeInput" placeholder="Search creative..." autocomplete="off" style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;background:#f8fafc;box-sizing:border-box;transition:border .15s" onfocus="this.style.borderColor='#3b82f6';this.style.background='#fff';upFilterCreatives(this.value)" oninput="upFilterCreatives(this.value)">
               <div id="upCreativeDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:#fff;border:1.5px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:100"></div>
             </div>
           </div>
@@ -2156,7 +2156,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           <div style="margin-bottom:12px">
             <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Ad Copy</div>
             <div style="position:relative">
-              <input type="text" id="upCopyInput" placeholder="Search ad copy..." autocomplete="off" style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;background:#f8fafc;box-sizing:border-box;transition:border .15s" onfocus="this.style.borderColor='#3b82f6';this.style.background='#fff';upFilterCopies(this.value)" onblur="this.style.borderColor='#e2e8f0';this.style.background='#f8fafc'" oninput="upFilterCopies(this.value)">
+              <input type="text" id="upCopyInput" placeholder="Search ad copy..." autocomplete="off" style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;background:#f8fafc;box-sizing:border-box;transition:border .15s" onfocus="this.style.borderColor='#3b82f6';this.style.background='#fff';upFilterCopies(this.value)" oninput="upFilterCopies(this.value)">
               <div id="upCopyDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:#fff;border:1.5px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:100"></div>
             </div>
           </div>
@@ -2211,7 +2211,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           <div style="margin-bottom:12px">
             <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Existing Campaign</div>
             <div style="position:relative">
-              <input type="text" id="upDupCampInput" placeholder="Search campaign..." autocomplete="off" style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;background:#f8fafc;box-sizing:border-box;transition:border .15s" onfocus="this.style.borderColor='#7c3aed';this.style.background='#fff';upFilterCampaigns(this.value)" onblur="this.style.borderColor='#e2e8f0';this.style.background='#f8fafc'" oninput="upFilterCampaigns(this.value)">
+              <input type="text" id="upDupCampInput" placeholder="Search campaign..." autocomplete="off" style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;background:#f8fafc;box-sizing:border-box;transition:border .15s" onfocus="this.style.borderColor='#7c3aed';this.style.background='#fff';upFilterCampaigns(this.value)" oninput="upFilterCampaigns(this.value)">
               <div id="upDupCampDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:#fff;border:1.5px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:100"></div>
             </div>
           </div>
@@ -5780,9 +5780,9 @@ function upFilterCreatives(query) {
   const filtered = q ? upCreatives.filter(c => c.id.toLowerCase().includes(q) || (c.name && c.name.toLowerCase().includes(q))).slice(0, 30) : upCreatives.slice(0, 30);
   if (!filtered.length) { dd.style.display = 'none'; return; }
   dd.innerHTML = filtered.map(c =>
-    '<div style="padding:8px 14px;cursor:pointer;font-size:12px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center" onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'#fff\'" onclick="upPickCreative(\'' + c.id.replace(/'/g,"\\'" ) + '\')">' +
+    '<div style="padding:8px 14px;cursor:pointer;font-size:12px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center" onmousedown="event.preventDefault()" onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'#fff\'" onclick="upPickCreative(\'' + c.id.replace(/'/g,"\\'" ) + '\')">' +
     '<span style="font-weight:600">' + c.id + '</span>' +
-    '<span style="color:#9ca3af;font-size:10px">' + (c.spend > 0 ? c.spend.toFixed(0) + '€ / ' + c.purchases + 'p' : '') + '</span>' +
+    '<span style="color:#9ca3af;font-size:10px">' + (c.product ? c.product : '') + '</span>' +
     '</div>'
   ).join('');
   dd.style.display = 'block';
@@ -5804,7 +5804,7 @@ function upFilterCopies(query) {
   dd.innerHTML = filtered.map(c => {
     const preview = c.primary_text ? c.primary_text.slice(0, 80) + (c.primary_text.length > 80 ? '...' : '') : '';
     const hl = c.headline ? '<div style="font-size:10px;color:#4338ca;font-weight:600;margin-top:2px">' + c.headline + '</div>' : '';
-    return '<div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f3f4f6" onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'#fff\'" onclick="upPickCopy(\'' + c.name.replace(/'/g, "\\\'" ) + '\')">' +
+    return '<div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f3f4f6" onmousedown="event.preventDefault()" onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'#fff\'" onclick="upPickCopy(\'' + c.name.replace(/'/g, "\\\'" ) + '\')">' +
       '<div style="font-weight:600;font-size:12px;margin-bottom:2px">' + c.name + '</div>' +
       (preview ? '<div style="font-size:11px;color:#6b7280;line-height:1.3">' + preview + '</div>' : '') +
       hl +
@@ -5976,7 +5976,7 @@ function upFilterCampaigns(query) {
   if (!filtered.length) { dd.style.display = 'none'; return; }
   dd.innerHTML = filtered.map(c => {
     const statusBadge = c.status === 'ACTIVE' ? '<span style="color:#16a34a;font-size:9px">● ACTIVE</span>' : c.status === 'PAUSED' ? '<span style="color:#f59e0b;font-size:9px">● PAUSED</span>' : '';
-    return '<div style="padding:8px 14px;cursor:pointer;font-size:12px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center" onmouseover="this.style.background=\'#f5f3ff\'" onmouseout="this.style.background=\'#fff\'" onclick="upPickCampaign(\'' + (c.id || '').replace(/'/g,"\\\'" ) + '\')">' +
+    return '<div style="padding:8px 14px;cursor:pointer;font-size:12px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center" onmousedown="event.preventDefault()" onmouseover="this.style.background=\'#f5f3ff\'" onmouseout="this.style.background=\'#fff\'" onclick="upPickCampaign(\'' + (c.id || '').replace(/'/g,"\\\'" ) + '\')">' +
     '<span style="font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + c.name + '</span>' +
     '<span style="margin-left:8px;flex-shrink:0">' + statusBadge + (c.spend > 0 ? ' <span style="color:#9ca3af;font-size:10px">' + c.spend.toFixed(0) + '€</span>' : '') + '</span></div>';
   }).join('');
