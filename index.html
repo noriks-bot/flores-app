@@ -2305,6 +2305,22 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         </div>
       </div>
 
+      <!-- Calendar View -->
+      <div id="upCalendarCard" style="display:none;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);margin-top:16px">
+        <div style="padding:14px 18px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:28px;height:28px;background:linear-gradient(135deg,#f59e0b,#f97316);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff"><i class="fas fa-calendar-alt"></i></div>
+            <span style="font-size:14px;font-weight:700;color:#1e293b">Calendar</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button onclick="upCalPrev()" style="width:28px;height:28px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#64748b;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'"><i class="fas fa-chevron-left"></i></button>
+            <span id="upCalMonthLabel" style="font-size:13px;font-weight:700;color:#1e293b;min-width:120px;text-align:center"></span>
+            <button onclick="upCalNext()" style="width:28px;height:28px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#64748b;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'"><i class="fas fa-chevron-right"></i></button>
+          </div>
+        </div>
+        <div id="upCalGrid" style="padding:12px 14px"></div>
+      </div>
+
     </div>
   </div>
 
@@ -5883,6 +5899,7 @@ function upAddCampaign() {
   const item = { type, product, creative, copy, countries, budget, startDate, startTime, id: Date.now() };
   upQueue.push(item);
   upRenderQueue();
+  upRenderCalendar();
   upSaveToDb(item);
 
   // Reset creative & copy inputs
@@ -5949,6 +5966,7 @@ function upPushToFB() {
   upQueue.length = 0;
   upRenderQueue();
   upRenderUploaded();
+  upRenderCalendar();
 }
 
 function upRenderUploaded() {
@@ -6015,8 +6033,78 @@ async function upLoadQueue() {
       }
       upRenderQueue();
       upRenderUploaded();
+      upRenderCalendar();
     }
   } catch(e) { console.error('Load queue failed:', e); }
+}
+
+// ═══ CALENDAR VIEW ═══
+let upCalMonth = new Date().getMonth();
+let upCalYear = new Date().getFullYear();
+
+function upCalPrev() { upCalMonth--; if (upCalMonth < 0) { upCalMonth = 11; upCalYear--; } upRenderCalendar(); }
+function upCalNext() { upCalMonth++; if (upCalMonth > 11) { upCalMonth = 0; upCalYear++; } upRenderCalendar(); }
+
+function upRenderCalendar() {
+  const card = document.getElementById('upCalendarCard');
+  const grid = document.getElementById('upCalGrid');
+  const label = document.getElementById('upCalMonthLabel');
+  // Show calendar if there are any uploaded items
+  if (!upUploaded.length && !upQueue.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  label.textContent = months[upCalMonth] + ' ' + upCalYear;
+
+  // Aggregate campaigns per day
+  const dayData = {};
+  const allItems = [...upUploaded, ...upQueue];
+  for (const item of allItems) {
+    const d = item.startDate;
+    if (!d) continue;
+    if (!dayData[d]) dayData[d] = { count: 0, spend: 0, pushed: 0, queued: 0 };
+    dayData[d].count++;
+    dayData[d].spend += (item.budget || 0);
+    if (item.status === 'pushed') dayData[d].pushed++;
+    else dayData[d].queued++;
+  }
+
+  const firstDay = new Date(upCalYear, upCalMonth, 1).getDay();
+  const daysInMonth = new Date(upCalYear, upCalMonth + 1, 0).getDate();
+  const today = new Date().toISOString().slice(0, 10);
+
+  let html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">';
+  // Day headers
+  ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(d => {
+    html += '<div style="text-align:center;font-size:9px;font-weight:700;color:#94a3b8;padding:4px 0;text-transform:uppercase">' + d + '</div>';
+  });
+  // Offset (JS Sunday=0, we want Monday=0)
+  const offset = firstDay === 0 ? 6 : firstDay - 1;
+  for (let i = 0; i < offset; i++) html += '<div></div>';
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = upCalYear + '-' + String(upCalMonth + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+    const dd = dayData[dateStr];
+    const isToday = dateStr === today;
+    let bg = '#fff';
+    let border = '1px solid #f1f5f9';
+    if (isToday) { border = '2px solid #3b82f6'; }
+    if (dd) { bg = dd.pushed > 0 ? '#f0fdf4' : '#fffbeb'; }
+
+    html += '<div style="background:' + bg + ';border:' + border + ';border-radius:8px;padding:6px;min-height:52px;position:relative">';
+    html += '<div style="font-size:11px;font-weight:' + (isToday ? '800' : '600') + ';color:' + (isToday ? '#3b82f6' : '#475569') + '">' + day + '</div>';
+    if (dd) {
+      if (dd.pushed > 0) {
+        html += '<div style="font-size:9px;font-weight:700;color:#16a34a;margin-top:2px">✅ ' + dd.pushed + ' pushed</div>';
+      }
+      if (dd.queued > 0) {
+        html += '<div style="font-size:9px;font-weight:700;color:#f59e0b;margin-top:1px">⏳ ' + dd.queued + ' queued</div>';
+      }
+      html += '<div style="font-size:9px;font-weight:700;color:#1e293b;margin-top:1px">' + dd.spend.toFixed(0) + '€</div>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  grid.innerHTML = html;
 }
 
 // ═══ DUPLICATE CAMPAIGN ═══
@@ -6094,6 +6182,7 @@ function upDuplicateCampaign() {
   const item = { type, product, creative, copy: 'DUP: ' + name, countries, budget, startDate, startTime, id: Date.now(), isDuplicate: true, sourceCampaign: upSelectedDupCamp.id };
   upQueue.push(item);
   upRenderQueue();
+  upRenderCalendar();
   upSaveToDb(item);
 
   // Reset
