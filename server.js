@@ -4191,6 +4191,122 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         } catch(e) { return sendJSON(res, { error: e.message }, 500); }
       }
 
+      // ═══ UPLOAD: AI SUGGESTION ═══
+      if (urlPath === '/api/upload/ai-suggestion') {
+        try {
+          // 1. Get yesterday spend per country
+          const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+          const yStr = yesterday.toISOString().slice(0, 10);
+          const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+          const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+          const orgId = (getSessionUser(req))?.orgId || 1;
+          const orgMeta = getOrgMetaConfig(orgId);
+          const spendInsights = await metaGetAll(`${orgMeta.adAccount}/insights`, {
+            fields: 'spend', level: 'account', breakdowns: 'country',
+            time_range: JSON.stringify({ since: yStr, until: yStr }), limit: 500
+          }, orgMeta.token);
+          const countrySpend = {};
+          let totalSpend = 0;
+          for (const row of spendInsights) {
+            const cc = row.country || 'UNKNOWN';
+            const spend = parseFloat(row.spend || 0);
+            countrySpend[cc] = (countrySpend[cc] || 0) + spend;
+            totalSpend += spend;
+          }
+
+          // 2. Get creative report (last 60 days)
+          const startStr = new Date(Date.now() - 60*86400000).toISOString().slice(0,10);
+          const todayStr = new Date().toISOString().slice(0,10);
+          const crCacheKey = 'creative_report_' + startStr + '_' + todayStr;
+          let crData = getCached(crCacheKey);
+          if (!crData) {
+            // Use the creative-report logic inline
+            const allAdsData = await getAllAds(startStr, todayStr, orgId);
+            const COUNTRIES = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
+            const creativeMap = {};
+            for (const ad of allAdsData) {
+              const name = (ad.name || '').replace(/\s*[\u2013\u2014-]\s*copy\s*\d*/gi, '').replace(/\s*\(\d+\)\s*$/, '').trim();
+              const ins = ad.insights; if (!ins) continue;
+              const idMatch = name.match(/\b(ID\d+)/i);
+              let creativeId;
+              if (idMatch) { creativeId = idMatch[1].toUpperCase(); }
+              else { const prefix = name.split('|')[0].trim().split('_').slice(0, 3).join('_') || name; creativeId = prefix.length > 40 ? prefix.substring(0, 40) : prefix; }
+              if (!creativeMap[creativeId]) creativeMap[creativeId] = { id: creativeId, name: name, countries: {}, totalSpend: 0, totalPurchases: 0 };
+              const c = creativeMap[creativeId];
+              const spend = parseFloat(ins.spend || 0);
+              const purchases = ((ins.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase')?.value || 0) * 1;
+              c.totalSpend += spend; c.totalPurchases += purchases;
+              const adCountry = ins.country || (name.match(/_(HR|CZ|PL|GR|SK|IT|HU|SI|RO)_/)?.[1]) || '';
+              if (adCountry && COUNTRIES.includes(adCountry)) {
+                if (!c.countries[adCountry]) c.countries[adCountry] = { spend: 0, purchases: 0 };
+                c.countries[adCountry].spend += spend;
+                c.countries[adCountry].purchases += purchases;
+              }
+            }
+            crData = { creatives: Object.values(creativeMap) };
+          }
+
+          // 3. Find winners (CPA <= 20, purchases > 1)
+          const CBO_COST = 30;
+          const MIN_CBOS = 5;
+          const ALL_CC = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
+          const winners = crData.creatives.filter(cr => {
+            if (cr.id === 'Other') return false;
+            if (cr.totalPurchases < 2) return false;
+            const cpa = cr.totalSpend / cr.totalPurchases;
+            return cpa <= 20;
+          }).sort((a,b) => (a.totalSpend/a.totalPurchases) - (b.totalSpend/b.totalPurchases));
+
+          // 4. Per-country: how many CBOs can we afford, and which creatives to test
+          const suggestions = [];
+          for (const cc of ALL_CC) {
+            const ccSpend = countrySpend[cc] || 0;
+            const uploadBudget = ccSpend * 0.2;
+            let maxCbos = Math.max(MIN_CBOS, Math.floor(uploadBudget / CBO_COST));
+            
+            // Find winners NOT tested in this country (spend < 10)
+            const untested = [];
+            for (const cr of winners) {
+              const ccData = cr.countries[cc];
+              if (!ccData || ccData.spend < 10) {
+                const cpa = cr.totalSpend / cr.totalPurchases;
+                // Find best performing country for this creative
+                let bestCC = '', bestCPA = Infinity;
+                for (const [bcc, bd] of Object.entries(cr.countries)) {
+                  if (bd.purchases > 0) {
+                    const bcpa = bd.spend / bd.purchases;
+                    if (bcpa < bestCPA) { bestCPA = bcpa; bestCC = bcc; }
+                  }
+                }
+                untested.push({
+                  creative_id: cr.id, name: cr.name || cr.id,
+                  overall_cpa: Math.round(cpa * 100) / 100,
+                  best_country: bestCC, best_cpa: Math.round(bestCPA * 100) / 100,
+                  current_spend_in_country: ccData ? Math.round(ccData.spend * 100) / 100 : 0,
+                  total_purchases: cr.totalPurchases
+                });
+              }
+            }
+            untested.sort((a,b) => a.overall_cpa - b.overall_cpa);
+            const toUpload = untested.slice(0, maxCbos);
+            if (toUpload.length) {
+              suggestions.push({
+                country: cc, yesterday_spend: Math.round(ccSpend), upload_budget: Math.round(uploadBudget),
+                max_cbos: maxCbos, campaigns: toUpload, total_upload_spend: toUpload.length * CBO_COST
+              });
+            }
+          }
+
+          return sendJSON(res, {
+            date: yStr, upload_date: tomorrowStr, totalSpend: Math.round(totalSpend),
+            total_upload_budget: Math.round(totalSpend * 0.2),
+            total_suggested_campaigns: suggestions.reduce((s, c) => s + c.campaigns.length, 0),
+            total_suggested_spend: suggestions.reduce((s, c) => s + c.total_upload_spend, 0),
+            suggestions
+          });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+
       if (urlPath === '/api/upload/queue/status' && req.method === 'POST') {
         try {
           const body = JSON.parse(await readBody(req));
