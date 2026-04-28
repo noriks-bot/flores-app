@@ -2137,12 +2137,13 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           <!-- Product Type -->
           <div style="flex:1;min-width:200px">
             <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Product</div>
-            <div style="display:flex;gap:8px" id="upProductWrap">
+            <div style="display:flex;gap:8px;flex-wrap:wrap" id="upProductWrap">
               <button class="up-prod-btn active" data-product="shirts" onclick="upSelectProduct(this)" style="padding:10px 16px;border-radius:8px;border:2px solid #6366f1;background:#eef2ff;color:#4338ca;font-weight:600;font-size:13px;cursor:pointer;transition:all .15s">👕 Shirts</button>
               <button class="up-prod-btn" data-product="boxers" onclick="upSelectProduct(this)" style="padding:10px 16px;border-radius:8px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-weight:600;font-size:13px;cursor:pointer;transition:all .15s">🩳 Boxers</button>
               <button class="up-prod-btn" data-product="starter" onclick="upSelectProduct(this)" style="padding:10px 16px;border-radius:8px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-weight:600;font-size:13px;cursor:pointer;transition:all .15s">📦 Starter</button>
               <button class="up-prod-btn" data-product="komplet" onclick="upSelectProduct(this)" style="padding:10px 16px;border-radius:8px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-weight:600;font-size:13px;cursor:pointer;transition:all .15s">🎁 Komplet</button>
             </div>
+            <div id="upProductLink" style="margin-top:6px;font-size:11px;color:#6b7280"></div>
           </div>
         </div>
 
@@ -2196,8 +2197,11 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           </div>
 
           <div>
-            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Start Date</div>
-            <input type="date" id="upStartDate" style="padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;font-weight:600;background:#fff">
+            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Start Date & Time</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="date" id="upStartDate" style="padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;font-weight:600;background:#fff">
+              <input type="time" id="upStartTime" value="00:00" style="padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;font-weight:600;background:#fff;width:100px">
+            </div>
           </div>
 
           <div style="flex:1"></div>
@@ -5690,11 +5694,28 @@ function upStylePill(pill, active) {
   else { pill.style.background = '#fff'; pill.style.border = '2px solid #e5e7eb'; pill.style.color = '#9ca3af'; pill.style.fontWeight = '400'; }
 }
 
+const UP_PRODUCT_LINKS = {
+  shirts: { slug: '9-paket-crnih-majica', label: 'Majice' },
+  boxers: { slug: 'crne-bokserice-7-paket', label: 'Bokserice' },
+  starter: { slug: 'noriks-starter-paket-2', label: 'Starter paket' },
+  komplet: { slug: 'komplet-5-majica-5-bokserica-gratis-4', label: 'Komplet: 5 majic + 5 bokseric' }
+};
+const UP_COUNTRY_URLS = {HR:'hr',CZ:'cz',PL:'pl',GR:'gr',SK:'sk',IT:'it',HU:'hu',SI:'si',RO:'ro'};
+
 function upSelectProduct(btn) {
   document.querySelectorAll('.up-prod-btn').forEach(b => {
     b.style.border = '2px solid #e5e7eb'; b.style.background = '#fff'; b.style.color = '#374151';
   });
   btn.style.border = '2px solid #6366f1'; btn.style.background = '#eef2ff'; btn.style.color = '#4338ca';
+  upShowProductLink(btn.dataset.product);
+}
+
+function upShowProductLink(product) {
+  const el = document.getElementById('upProductLink');
+  const info = UP_PRODUCT_LINKS[product];
+  if (!info || !el) return;
+  const exampleUrl = 'https://noriks.com/hr/product/' + info.slug + '/';
+  el.innerHTML = '🔗 <span style="color:#4338ca;font-weight:600">' + info.label + '</span> — <a href="' + exampleUrl + '" target="_blank" style="color:#3b82f6;text-decoration:underline;font-size:11px">' + exampleUrl + '</a> <span style="color:#9ca3af">(slug: ' + info.slug + ')</span>';
 }
 
 // Load creatives from DB (synced from FB)
@@ -5765,17 +5786,24 @@ function upFilterCopies(query) {
   upLoadCreatives();
   const dd = document.getElementById('upCopyDropdown');
   const q = (query || '').toLowerCase();
-  const filtered = upCopies.filter(c => c.name.toLowerCase().includes(q)).slice(0, 30);
+  const filtered = upCopies.filter(c => {
+    return c.name.toLowerCase().includes(q) || (c.primary_text || '').toLowerCase().includes(q) || (c.headline || '').toLowerCase().includes(q);
+  }).slice(0, 30);
   if (!filtered.length && !q) { dd.style.display = 'none'; return; }
-  dd.innerHTML = filtered.map(c =>
-    '<div style="padding:8px 14px;cursor:pointer;font-size:12px;border-bottom:1px solid #f3f4f6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'#fff\'" onclick="upPickCopy(this)">' +
-    c.name + '</div>'
-  ).join('');
+  dd.innerHTML = filtered.map(c => {
+    const preview = c.primary_text ? c.primary_text.slice(0, 80) + (c.primary_text.length > 80 ? '...' : '') : '';
+    const hl = c.headline ? '<div style="font-size:10px;color:#4338ca;font-weight:600;margin-top:2px">' + c.headline + '</div>' : '';
+    return '<div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f3f4f6" onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'#fff\'" onclick="upPickCopy(\'' + c.name.replace(/'/g, "\\\'" ) + '\')">' +
+      '<div style="font-weight:600;font-size:12px;margin-bottom:2px">' + c.name + '</div>' +
+      (preview ? '<div style="font-size:11px;color:#6b7280;line-height:1.3">' + preview + '</div>' : '') +
+      hl +
+    '</div>';
+  }).join('');
   dd.style.display = 'block';
 }
 
-function upPickCopy(el) {
-  document.getElementById('upCopyInput').value = el.textContent;
+function upPickCopy(name) {
+  document.getElementById('upCopyInput').value = name;
   document.getElementById('upCopyDropdown').style.display = 'none';
 }
 
@@ -5810,11 +5838,12 @@ function upAddCampaign() {
   const countries = [...document.querySelectorAll('.upCountryCb:checked')].map(c => c.value);
   const budget = parseFloat(document.getElementById('upBudget').value) || (type === 'SOFI' ? 60 : 30);
   const startDate = document.getElementById('upStartDate').value;
+  const startTime = document.getElementById('upStartTime').value || '00:00';
 
   if (!creative) { alert('Please select a creative'); return; }
   if (!countries.length) { alert('Please select at least one country'); return; }
 
-  upQueue.push({ type, product, creative, copy, countries, budget, startDate, id: Date.now() });
+  upQueue.push({ type, product, creative, copy, countries, budget, startDate, startTime, id: Date.now() });
   upRenderQueue();
 
   // Reset creative & copy inputs
@@ -5841,7 +5870,7 @@ function upRenderQueue() {
       '<td style="padding:12px 14px">' + (UP_PRODUCT_EMOJI[c.product] || '') + ' ' + c.product + '</td>' +
       '<td style="padding:12px 14px;font-size:13px">' + flags + '</td>' +
       '<td style="padding:12px 14px;text-align:center;font-weight:600">' + c.budget + '€</td>' +
-      '<td style="padding:12px 14px;text-align:center;font-size:12px">' + c.startDate + '</td>' +
+      '<td style="padding:12px 14px;text-align:center;font-size:12px">' + c.startDate + ' ' + (c.startTime || '00:00') + '</td>' +
       '<td style="padding:12px 14px;text-align:center"><button onclick="upRemoveCampaign(' + i + ')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:14px;padding:4px" title="Remove"><i class="fas fa-times"></i></button></td>' +
     '</tr>';
   }).join('');
@@ -5863,7 +5892,7 @@ function upPushToFB() {
   alert('Push to FB coming soon! ' + upQueue.length + ' campaigns ready.');
 }
 
-// Init country pills click behavior
+// Init country pills click behavior + show initial product link
 (function() {
   const pills = document.querySelectorAll('.up-country-pill');
   pills.forEach(p => {
@@ -5874,6 +5903,9 @@ function upPushToFB() {
       upStylePill(p, cb.checked);
     };
   });
+  upShowProductLink('shirts');
+  // Pre-load creatives
+  upLoadCreatives();
 })();
 
 // OLD generateUploadPlan kept for compat (no-op now)
