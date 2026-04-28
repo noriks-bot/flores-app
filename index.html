@@ -5910,7 +5910,7 @@ async function upLoadCreatives() {
       }));
     }
     if (cpData.copies) {
-      upCopies = cpData.copies.map(c => ({ name: c.name, primary_text: c.primary_text || '', headline: c.headline || '' }));
+      upCopies = cpData.copies.map(c => ({ name: c.name, primary_text: c.primary_text || '', headline: c.headline || '', description: c.description || '', cta: c.cta || '' }));
     }
     upCreativesLoaded = true;
   } catch(e) { console.error('Failed to load creatives:', e); }
@@ -5918,12 +5918,12 @@ async function upLoadCreatives() {
 
 
 
-function upFilterCreatives(query) {
-  upLoadCreatives();
+async function upFilterCreatives(query) {
+  await upLoadCreatives();
   const dd = document.getElementById('upCreativeDropdown');
   const q = (query || '').toLowerCase();
   const filtered = q ? upCreatives.filter(c => c.id.toLowerCase().includes(q) || (c.name && c.name.toLowerCase().includes(q))).slice(0, 30) : upCreatives.slice(0, 30);
-  if (!filtered.length) { dd.style.display = 'none'; return; }
+  if (!filtered.length) { dd.innerHTML = '<div style="padding:12px;text-align:center;color:#94a3b8;font-size:11px">No creatives found</div>'; dd.style.display = 'block'; return; }
   dd.innerHTML = filtered.map(c =>
     '<div style="padding:8px 14px;cursor:pointer;font-size:12px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center" onmousedown="event.preventDefault()" onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'#fff\'" onclick="upPickCreative(\'' + c.id.replace(/'/g,"\\'" ) + '\')">' +
     '<span style="font-weight:600">' + c.id + '</span>' +
@@ -5938,8 +5938,8 @@ function upPickCreative(id) {
   document.getElementById('upCreativeDropdown').style.display = 'none';
 }
 
-function upFilterCopies(query) {
-  upLoadCreatives();
+async function upFilterCopies(query) {
+  await upLoadCreatives();
   const dd = document.getElementById('upCopyDropdown');
   const q = (query || '').toLowerCase();
   const filtered = q ? upCopies.filter(c => {
@@ -6460,8 +6460,8 @@ async function upLoadCampaigns() {
   } catch(e) { console.error('Load campaigns failed:', e); }
 }
 
-function upFilterCampaigns(query) {
-  upLoadCampaigns();
+async function upFilterCampaigns(query) {
+  await upLoadCampaigns();
   const dd = document.getElementById('upDupCampDropdown');
   const q = (query || '').toLowerCase();
   const filtered = q ? upCampaigns.filter(c => c.name.toLowerCase().includes(q)).slice(0, 30) : upCampaigns.slice(0, 30);
