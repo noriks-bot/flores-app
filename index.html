@@ -6444,10 +6444,17 @@ async function upLoadCampaigns() {
     const res = await fetch('/api/campaigns?start=2026-01-01&end=' + todayStr);
     const data = await res.json();
     if (Array.isArray(data)) {
-      upCampaigns = data.map(c => ({
-        id: c.campaign_id || c.id, name: c.campaign_name || c.name || '',
-        status: c.status || '', spend: c.spend || 0
-      })).filter(c => c.name);
+      upCampaigns = data.map(c => {
+        const ins = c.insights || {};
+        const spend = parseFloat(ins.spend || c.spend || 0);
+        const purchases = ((ins.actions || []).find(a => a.action_type === 'offsite_conversion.fb_pixel_purchase' || a.action_type === 'purchase' || a.action_type === 'omni_purchase') || {}).value || 0;
+        const purch = parseInt(purchases) || 0;
+        const cpa = purch > 0 ? spend / purch : 0;
+        return {
+          id: c.campaign_id || c.id, name: c.campaign_name || c.name || '',
+          status: c.status || '', spend, purchases: purch, cpa: Math.round(cpa * 100) / 100
+        };
+      }).filter(c => c.name).sort((a, b) => b.purchases - a.purchases);
     }
     upCampaignsLoaded = true;
   } catch(e) { console.error('Load campaigns failed:', e); }
@@ -6460,10 +6467,13 @@ function upFilterCampaigns(query) {
   const filtered = q ? upCampaigns.filter(c => c.name.toLowerCase().includes(q)).slice(0, 30) : upCampaigns.slice(0, 30);
   if (!filtered.length) { dd.style.display = 'none'; return; }
   dd.innerHTML = filtered.map(c => {
-    const statusBadge = c.status === 'ACTIVE' ? '<span style="color:#16a34a;font-size:9px">● ACTIVE</span>' : c.status === 'PAUSED' ? '<span style="color:#f59e0b;font-size:9px">● PAUSED</span>' : '';
-    return '<div style="padding:8px 14px;cursor:pointer;font-size:12px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center" onmousedown="event.preventDefault()" onmouseover="this.style.background=\'#f5f3ff\'" onmouseout="this.style.background=\'#fff\'" onclick="upPickCampaign(\'' + (c.id || '').replace(/'/g,"\\\'" ) + '\')">' +
+    const statusBadge = c.status === 'ACTIVE' ? '<span style="color:#16a34a;font-size:9px">●</span>' : c.status === 'PAUSED' ? '<span style="color:#f59e0b;font-size:9px">●</span>' : '';
+    const purchBadge = c.purchases > 0 ? '<span style="background:#f0fdf4;color:#16a34a;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700">' + c.purchases + ' purch</span>' : '';
+    const cpaBadge = c.cpa > 0 ? '<span style="color:' + (c.cpa <= 15 ? '#16a34a' : c.cpa <= 20 ? '#f59e0b' : '#ef4444') + ';font-size:9px;font-weight:700">CPA ' + c.cpa.toFixed(1) + '€</span>' : '';
+    return '<div style="padding:8px 12px;cursor:pointer;font-size:11px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:6px" onmousedown="event.preventDefault()" onmouseover="this.style.background=\'#f5f3ff\'" onmouseout="this.style.background=\'#fff\'" onclick="upPickCampaign(\'' + (c.id || '').replace(/'/g,"\\\'" ) + '\')">' +
+    statusBadge +
     '<span style="font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + c.name + '</span>' +
-    '<span style="margin-left:8px;flex-shrink:0">' + statusBadge + (c.spend > 0 ? ' <span style="color:#9ca3af;font-size:10px">' + c.spend.toFixed(0) + '€</span>' : '') + '</span></div>';
+    '<span style="flex-shrink:0;display:flex;gap:6px;align-items:center">' + purchBadge + cpaBadge + '<span style="color:#94a3b8;font-size:9px">' + c.spend.toFixed(0) + '€</span></span></div>';
   }).join('');
   dd.style.display = 'block';
 }
