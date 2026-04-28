@@ -4165,6 +4165,14 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         } catch(e) { return sendJSON(res, { error: e.message }, 500); }
       }
 
+      if (urlPath === '/api/upload/queue/status' && req.method === 'POST') {
+        try {
+          const body = JSON.parse(await readBody(req));
+          db.prepare('UPDATE upload_queue SET status = ? WHERE id = ?').run(body.status || 'pushed', body.id);
+          return sendJSON(res, { ok: true });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+
       if (urlPath === '/api/upload/queue' && req.method === 'DELETE') {
         try {
           const body = JSON.parse(await readBody(req));

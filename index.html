@@ -2279,6 +2279,32 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         </div>
       </div>
 
+      <!-- Uploaded Table -->
+      <div id="upUploadedCard" style="display:none;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);margin-top:16px">
+        <div style="padding:14px 18px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px">
+          <div style="width:28px;height:28px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff"><i class="fab fa-facebook"></i></div>
+          <span style="font-size:14px;font-weight:700;color:#1e293b">Uploaded</span>
+          <span id="upUploadedCount" style="font-size:10px;background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:100px;font-weight:700">0</span>
+        </div>
+        <div class="table-scroll">
+          <table style="width:100%;border-collapse:collapse">
+            <thead>
+              <tr style="background:#f8fafc">
+                <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Type</th>
+                <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Creative</th>
+                <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Product</th>
+                <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Countries</th>
+                <th style="padding:8px 12px;text-align:center;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Budget</th>
+                <th style="padding:8px 12px;text-align:center;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Start</th>
+                <th style="padding:8px 12px;text-align:center;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Status</th>
+                <th style="padding:8px 12px;text-align:center;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Pushed</th>
+              </tr>
+            </thead>
+            <tbody id="upUploadedBody"></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -5904,9 +5930,51 @@ function upClearQueue() {
   upRenderQueue();
 }
 
+const upUploaded = [];
+
 function upPushToFB() {
   if (!upQueue.length) return;
-  alert('Push to FB coming soon! ' + upQueue.length + ' campaigns ready.');
+  if (!confirm('Push ' + upQueue.length + ' campaigns to Facebook?')) return;
+  // Move all queued items to uploaded (dummy — no actual FB call yet)
+  const now = new Date().toISOString().slice(0, 16).replace('T', ' ');
+  for (const item of upQueue) {
+    item.status = 'pushed';
+    item.pushedAt = now;
+    upUploaded.push({ ...item });
+    // Update DB status
+    if (item.dbId) {
+      fetch('/api/upload/queue/status', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id: item.dbId, status: 'pushed' }) });
+    }
+  }
+  upQueue.length = 0;
+  upRenderQueue();
+  upRenderUploaded();
+}
+
+function upRenderUploaded() {
+  const card = document.getElementById('upUploadedCard');
+  const body = document.getElementById('upUploadedBody');
+  const count = document.getElementById('upUploadedCount');
+  if (!upUploaded.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  count.textContent = upUploaded.length;
+  body.innerHTML = upUploaded.map(c => {
+    const typeBadge = c.type === 'SOFI'
+      ? '<span style="background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700">🌍 SOFI</span>'
+      : '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700">🎯 CBO</span>';
+    const flags = (c.countries || []).map(cc => UP_FLAGS[cc] || cc).join(' ');
+    const statusBadge = '<span style="background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700">✅ Pushed</span>';
+    return '<tr style="border-bottom:1px solid #f1f5f9">' +
+      '<td style="padding:8px 12px">' + typeBadge + '</td>' +
+      '<td style="padding:8px 12px;font-weight:700;font-size:12px;color:#1e293b">' + (c.creative || '—') + '</td>' +
+      '<td style="padding:8px 12px;font-size:11px">' + (UP_PRODUCT_EMOJI[c.product] || '') + ' ' + (c.product || '') + '</td>' +
+      '<td style="padding:8px 12px;font-size:12px">' + flags + '</td>' +
+      '<td style="padding:8px 12px;text-align:center;font-weight:700;font-size:12px">' + c.budget + '€</td>' +
+      '<td style="padding:8px 12px;text-align:center;font-size:11px;color:#64748b">' + (c.startDate || '') + ' ' + (c.startTime || '') + '</td>' +
+      '<td style="padding:8px 12px;text-align:center">' + statusBadge + '</td>' +
+      '<td style="padding:8px 12px;text-align:center;font-size:10px;color:#94a3b8">' + (c.pushedAt || '') + '</td>' +
+    '</tr>';
+  }).join('');
 }
 
 async function upSaveToDb(item) {
@@ -5930,19 +5998,23 @@ async function upLoadQueue() {
     const data = await res.json();
     if (data.queue && data.queue.length) {
       upQueue.length = 0;
+      upUploaded.length = 0;
       for (const row of data.queue) {
-        if (row.status !== 'queued') continue;
         let countries = [];
         try { countries = JSON.parse(row.countries); } catch(e) {}
         const [datePart, timePart] = (row.start_date || '').split(' ');
-        upQueue.push({
+        const item = {
           type: row.campaign_type, product: row.product, creative: row.creative_id,
           copy: row.ad_copy_name, countries, budget: row.daily_budget,
           startDate: datePart || '', startTime: timePart || '00:00',
-          id: row.id, dbId: row.id
-        });
+          id: row.id, dbId: row.id, status: row.status,
+          pushedAt: row.status === 'pushed' ? (row.created_at || '').slice(0,16).replace('T',' ') : ''
+        };
+        if (row.status === 'pushed') { upUploaded.push(item); }
+        else { upQueue.push(item); }
       }
       upRenderQueue();
+      upRenderUploaded();
     }
   } catch(e) { console.error('Load queue failed:', e); }
 }
