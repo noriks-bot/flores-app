@@ -4165,6 +4165,32 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         } catch(e) { return sendJSON(res, { error: e.message }, 500); }
       }
 
+      // ═══ UPLOAD: YESTERDAY SPEND ═══
+      if (urlPath === '/api/upload/yesterday-spend') {
+        try {
+          const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+          const yStr = yesterday.toISOString().slice(0, 10);
+          const orgId = (getSessionUser(req))?.orgId || 1;
+          const orgMeta = getOrgMetaConfig(orgId);
+          const insights = await metaGetAll(`${orgMeta.adAccount}/insights`, {
+            fields: 'spend,actions,action_values',
+            level: 'account',
+            breakdowns: 'country',
+            time_range: JSON.stringify({ since: yStr, until: yStr }),
+            limit: 500
+          }, orgMeta.token);
+          const countrySpend = {};
+          let totalSpend = 0;
+          for (const row of insights) {
+            const cc = row.country || 'UNKNOWN';
+            const spend = parseFloat(row.spend || 0);
+            countrySpend[cc] = (countrySpend[cc] || 0) + spend;
+            totalSpend += spend;
+          }
+          return sendJSON(res, { date: yStr, totalSpend, countrySpend, uploadBudget: Math.round(totalSpend * 0.2), countryUploadBudget: Object.fromEntries(Object.entries(countrySpend).map(([k,v]) => [k, Math.round(v * 0.2)])) });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+
       if (urlPath === '/api/upload/queue/status' && req.method === 'POST') {
         try {
           const body = JSON.parse(await readBody(req));

@@ -2112,6 +2112,29 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         </div>
       </div>
 
+      <!-- Yesterday Spend Bar -->
+      <div id="upSpendBar" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:28px;height:28px;background:linear-gradient(135deg,#f59e0b,#f97316);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff"><i class="fas fa-chart-bar"></i></div>
+            <span style="font-size:14px;font-weight:700;color:#1e293b">Yesterday's Spend</span>
+            <span id="upSpendDate" style="font-size:10px;color:#94a3b8;font-weight:600"></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="text-align:right">
+              <div style="font-size:10px;color:#94a3b8;font-weight:600">TOTAL</div>
+              <div id="upSpendTotal" style="font-size:20px;font-weight:800;color:#1e293b">—</div>
+            </div>
+            <div style="width:1px;height:32px;background:#e2e8f0"></div>
+            <div style="text-align:right">
+              <div style="font-size:10px;color:#16a34a;font-weight:600">UPLOAD BUDGET (20%)</div>
+              <div id="upSpendUpload" style="font-size:20px;font-weight:800;color:#16a34a">—</div>
+            </div>
+          </div>
+        </div>
+        <div id="upSpendCountries" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+
       <!-- Two-column layout: New + Duplicate side by side -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
 
@@ -6038,6 +6061,29 @@ async function upLoadQueue() {
   } catch(e) { console.error('Load queue failed:', e); }
 }
 
+// ═══ YESTERDAY SPEND ═══
+async function upLoadYesterdaySpend() {
+  try {
+    const res = await fetch('/api/upload/yesterday-spend');
+    const data = await res.json();
+    if (data.error) return;
+    document.getElementById('upSpendDate').textContent = data.date;
+    document.getElementById('upSpendTotal').textContent = data.totalSpend.toFixed(0) + '€';
+    document.getElementById('upSpendUpload').textContent = data.uploadBudget + '€';
+    const FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴',DE:'🇩🇪',BG:'🇧🇬'};
+    const sorted = Object.entries(data.countrySpend).sort((a,b) => b[1] - a[1]);
+    const el = document.getElementById('upSpendCountries');
+    el.innerHTML = sorted.map(([cc, spend]) => {
+      const upBudget = data.countryUploadBudget[cc] || 0;
+      return '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;min-width:80px;text-align:center">' +
+        '<div style="font-size:14px;margin-bottom:2px">' + (FLAGS[cc] || cc) + '</div>' +
+        '<div style="font-size:12px;font-weight:700;color:#1e293b">' + spend.toFixed(0) + '€</div>' +
+        '<div style="font-size:9px;font-weight:600;color:#16a34a">↑ ' + upBudget + '€</div>' +
+      '</div>';
+    }).join('');
+  } catch(e) { console.error('Load yesterday spend failed:', e); }
+}
+
 // ═══ CALENDAR VIEW ═══
 let upCalMonth = new Date().getMonth();
 let upCalYear = new Date().getFullYear();
@@ -6217,9 +6263,10 @@ document.addEventListener('click', function(e) {
     };
   });
   upShowProductLink('shirts');
-  // Pre-load creatives + queue
+  // Pre-load data
   upLoadCreatives();
   upLoadQueue();
+  upLoadYesterdaySpend();
 })();
 
 // OLD generateUploadPlan kept for compat (no-op now)
