@@ -2266,6 +2266,22 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         </div>
       </div>
 
+      <!-- AI Upload Suggestion -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:28px;height:28px;background:linear-gradient(135deg,#8b5cf6,#a855f7);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff"><i class="fas fa-magic"></i></div>
+            <span style="font-size:14px;font-weight:700;color:#1e293b">AI Upload Suggestion</span>
+          </div>
+          <button onclick="upGenerateAISuggestion()" id="upAIBtn" style="padding:6px 14px;background:linear-gradient(135deg,#8b5cf6,#a855f7);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;box-shadow:0 2px 6px rgba(139,92,246,0.25);transition:all .12s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+            <i class="fas fa-bolt"></i> Generate
+          </button>
+        </div>
+        <div id="upAISuggestion" style="font-size:12px;color:#64748b;line-height:1.6">
+          <div style="padding:20px;text-align:center;color:#94a3b8">Click <strong>Generate</strong> to get AI-powered upload recommendations based on yesterday's spend and top performing creatives.</div>
+        </div>
+      </div>
+
       <!-- Campaign Queue Table -->
       <div id="upQueueCard" style="display:none;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
         <div style="padding:14px 18px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
@@ -6059,6 +6075,92 @@ async function upLoadQueue() {
       upRenderCalendar();
     }
   } catch(e) { console.error('Load queue failed:', e); }
+}
+
+// ═══ AI UPLOAD SUGGESTION ═══
+async function upGenerateAISuggestion() {
+  const btn = document.getElementById('upAIBtn');
+  const el = document.getElementById('upAISuggestion');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+  el.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8"><div class="spinner" style="width:20px;height:20px;display:inline-block;margin-bottom:8px"></div><br>Analyzing spend patterns and creative performance...</div>';
+  try {
+    const [spendRes, crRes] = await Promise.all([
+      fetch('/api/upload/yesterday-spend'),
+      fetch('/api/creative-report?start=2026-03-01&end=' + new Date().toISOString().slice(0,10))
+    ]);
+    const spendData = await spendRes.json();
+    const crData = await crRes.json();
+    if (spendData.error || crData.error) throw new Error(spendData.error || crData.error);
+
+    // Find top creatives by CPA
+    const topCreatives = (crData.creatives || []).filter(c => c.id !== 'Other' && c.totalPurchases > 2 && c.cpa > 0 && c.cpa <= 20)
+      .sort((a,b) => a.cpa - b.cpa).slice(0, 5);
+
+    // Find underserved countries (low spend relative to others)
+    const sorted = Object.entries(spendData.countrySpend).sort((a,b) => b[1] - a[1]);
+    const avgSpend = spendData.totalSpend / Math.max(sorted.length, 1);
+    const underserved = sorted.filter(([cc, s]) => s < avgSpend * 0.7).map(([cc]) => cc);
+
+    // Build suggestion HTML
+    let html = '';
+
+    // Top creatives to scale
+    html += '<div style="margin-bottom:12px">';
+    html += '<div style="font-size:11px;font-weight:700;color:#8b5cf6;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">🏆 Top Creatives to Scale</div>';
+    if (topCreatives.length) {
+      html += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+      for (const cr of topCreatives) {
+        const countries = Object.entries(cr.countries || {}).filter(([cc, d]) => d.purchases > 0).sort((a,b) => (a[1].spend/a[1].purchases) - (b[1].spend/b[1].purchases));
+        const bestCC = countries[0] ? countries[0][0] : '';
+        html += '<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:8px 12px;flex:1;min-width:140px">';
+        html += '<div style="font-weight:700;font-size:12px;color:#6b21a8">' + cr.id + '</div>';
+        html += '<div style="font-size:10px;color:#7c3aed;margin-top:2px">CPA: ' + cr.cpa.toFixed(1) + '€ • ' + cr.totalPurchases + ' purchases</div>';
+        if (bestCC) html += '<div style="font-size:9px;color:#94a3b8;margin-top:1px">Best in: ' + (UP_FLAGS[bestCC]||bestCC) + '</div>';
+        html += '</div>';
+      }
+      html += '</div>';
+    } else {
+      html += '<div style="font-size:11px;color:#94a3b8">No high-performing creatives found (CPA ≤20€, >2 purchases)</div>';
+    }
+    html += '</div>';
+
+    // Recommended uploads
+    html += '<div style="margin-bottom:12px">';
+    html += '<div style="font-size:11px;font-weight:700;color:#8b5cf6;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">🚀 Recommended Uploads</div>';
+    html += '<div style="background:#f8fafc;border-radius:8px;padding:10px 14px;font-size:11px;line-height:1.8;color:#334155">';
+    html += '• <strong>Total upload budget:</strong> ' + spendData.uploadBudget + '€ (20% of ' + spendData.totalSpend.toFixed(0) + '€)<br>';
+    if (topCreatives.length) {
+      html += '• <strong>Scale:</strong> ' + topCreatives.slice(0,3).map(c => c.id).join(', ') + ' — proven performers<br>';
+    }
+    if (underserved.length) {
+      html += '• <strong>Expand to:</strong> ' + underserved.map(cc => (UP_FLAGS[cc]||cc) + ' ' + cc).join(', ') + ' — below average spend<br>';
+    }
+    html += '• <strong>Strategy:</strong> SOFI for top creatives across countries, CBO for testing in new markets';
+    html += '</div>';
+    html += '</div>';
+
+    // Per-country recommendation
+    html += '<div>';
+    html += '<div style="font-size:11px;font-weight:700;color:#8b5cf6;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">🇲🇦 Per-Country Upload Budget</div>';
+    html += '<div style="display:flex;gap:4px;flex-wrap:wrap">';
+    for (const [cc, spend] of sorted) {
+      const upB = spendData.countryUploadBudget[cc] || 0;
+      if (upB === 0) continue;
+      const isLow = underserved.includes(cc);
+      html += '<div style="background:' + (isLow ? '#fefce8' : '#f0fdf4') + ';border:1px solid ' + (isLow ? '#fde68a' : '#bbf7d0') + ';border-radius:6px;padding:5px 10px;text-align:center;min-width:56px">';
+      html += '<div style="font-size:12px">' + (UP_FLAGS[cc]||cc) + '</div>';
+      html += '<div style="font-size:11px;font-weight:700;color:#1e293b">' + upB + '€</div>';
+      if (isLow) html += '<div style="font-size:8px;color:#d97706">⚠ low</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '</div>';
+
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<div style="color:#ef4444;padding:12px">Error: ' + e.message + '</div>';
+  }
+  btn.disabled = false; btn.innerHTML = '<i class="fas fa-bolt"></i> Generate';
 }
 
 // ═══ YESTERDAY SPEND ═══
