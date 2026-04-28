@@ -4202,8 +4202,12 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             const uploadBudget = Math.round(spend * 0.2);
             const cbos = Math.max(MIN_CBOS, Math.floor(uploadBudget / CBO_COST));
             const cp = countryProfit[cc] || { profit: 0, orders: 0, revenue: 0 };
-            countryDetail[cc] = { spend: Math.round(spend), uploadBudget, cbos, profit: cp.profit, orders: cp.orders, revenue: cp.revenue };
+            // Real profit = WC gross profit - ad spend
+            const realProfit = Math.round((cp.profit || 0) - spend);
+            countryDetail[cc] = { spend: Math.round(spend), uploadBudget, cbos, wcProfit: cp.profit, profit: realProfit, orders: cp.orders, revenue: cp.revenue };
           }
+          // Total real profit = total WC profit - total ad spend
+          totalProfit = Math.round(totalProfit - totalSpend);
           return sendJSON(res, { date: yStr, totalSpend, totalProfit, countrySpend, countryDetail, uploadBudget: Math.round(totalSpend * 0.2), countryUploadBudget: Object.fromEntries(Object.entries(countrySpend).map(([k,v]) => [k, Math.round(v * 0.2)])) });
         } catch(e) { return sendJSON(res, { error: e.message }, 500); }
       }
