@@ -4235,6 +4235,22 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         } catch(e) { return sendJSON(res, { error: e.message }, 500); }
       }
 
+      // ═══ UPLOAD: PRODUCT LINKS ═══
+      if (urlPath === '/api/upload/product-links' && req.method === 'GET') {
+        try {
+          const row = db.prepare("SELECT value FROM flores_settings WHERE org_id = 1 AND category = 'upload' AND key = 'product_links'").get();
+          return sendJSON(res, { links: row ? JSON.parse(row.value) : null });
+        } catch(e) { return sendJSON(res, { links: null }); }
+      }
+
+      if (urlPath === '/api/upload/product-links' && req.method === 'POST') {
+        try {
+          const body = JSON.parse(await readBody(req));
+          db.prepare("INSERT OR REPLACE INTO flores_settings (org_id, category, key, value) VALUES (1, 'upload', 'product_links', ?)").run(JSON.stringify(body));
+          return sendJSON(res, { ok: true });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+
       // ═══ UPLOAD: SYNC AD COPIES FROM FB API ═══
       if (urlPath === '/api/upload/sync-ad-copies' && req.method === 'POST') {
         try {

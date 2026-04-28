@@ -2422,6 +2422,12 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           </div>
           <div id="upSettingsSaved" style="display:none;margin-top:8px;font-size:10px;color:#16a34a;font-weight:600">✓ Saved</div>
         </div>
+
+        <!-- Product Links -->
+        <div style="border-top:1px solid #f1f5f9;padding-top:14px;margin-top:14px">
+          <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:10px">🔗 Product Links per Country</div>
+          <div id="upProductLinksTable" style="overflow-x:auto"></div>
+        </div>
       </div>
 
     </div>
@@ -5888,10 +5894,14 @@ function upSelectProduct(btn) {
 
 function upShowProductLink(product) {
   const el = document.getElementById('upProductLink');
-  const info = UP_PRODUCT_LINKS[product];
-  if (!info || !el) return;
-  const exampleUrl = 'https://noriks.com/hr/product/' + info.slug + '/';
-  el.innerHTML = '🔗 <span style="color:#4338ca;font-weight:600">' + info.label + '</span> — <a href="' + exampleUrl + '" target="_blank" style="color:#3b82f6;text-decoration:underline;font-size:11px">' + exampleUrl + '</a> <span style="color:#9ca3af">(slug: ' + info.slug + ')</span>';
+  if (!el) return;
+  const linkKey = product === 'shirts' ? 'orto-majice' : product === 'boxers' ? 'orto-bokserice' : product === 'starter' ? 'starter' : 'kompleti';
+  const links = upProductLinks || UP_DEFAULT_LINKS;
+  const samples = Object.entries(links).slice(0, 3).map(([cc, urls]) => {
+    const url = urls[linkKey] || '';
+    return url ? (UP_FLAGS[cc]||cc) + ' <a href="' + url + '" target="_blank" style="color:#3b82f6;font-size:9px">' + url.replace('https://noriks.com/','') + '</a>' : '';
+  }).filter(Boolean).join(' &nbsp;|&nbsp; ');
+  el.innerHTML = samples ? '🔗 ' + samples : '';
 }
 
 // Load creatives from DB (synced from FB)
@@ -6207,6 +6217,137 @@ async function upSaveSettings() {
     el.style.display = 'block';
     setTimeout(() => { el.style.display = 'none'; }, 2000);
   } catch(e) { console.error('Save settings failed:', e); }
+}
+
+// ═══ PRODUCT LINKS ═══
+const UP_DEFAULT_LINKS = {
+  HR: {
+    'orto-majice': 'https://noriks.com/hr/product/noriks-majica/',
+    'multi-majice': 'https://noriks.com/hr/collections/akcija-proljece-stize/',
+    'orto-bokserice': 'https://noriks.com/hr/product/noriks-bokserice/',
+    'vodne': 'https://noriks.com/hr/product/noriks-airflow-modal-savrsene-za-ispod-kupacih/',
+    'mail-499': 'https://noriks.com/hr/product/noriks-airflow-modal-mega-ponuda-za-vjerne-kupce/',
+    '3+3': 'https://noriks.com/hr/product/noriks-airflow-modal-33-gratis/',
+    'starter': 'https://noriks.com/hr/product/noriks-bokserice/',
+    'kompleti': 'https://noriks.com/hr/product-category/kompleti/'
+  },
+  GR: {
+    'orto-majice': 'https://noriks.com/gr/product/noriks-mplouzoaki/',
+    'multi-majice': 'https://noriks.com/gr/collections/anoixi-erchetai/',
+    'orto-bokserice': 'https://noriks.com/gr/product/noriks-airflow-modal-mpoxer/',
+    'mail-499': 'https://noriks.com/gr/product/noriks-airflow-modal-mega-%cf%80%cf%81%ce%bf%cf%83%cf%86%ce%bf%cf%81%ce%ac-%ce%b3%ce%b9%ce%b1-%cf%80%ce%b9%cf%83%cf%84%ce%bf%cf%8d%cf%82-%cf%80%ce%b5%ce%bb%ce%ac%cf%84%ce%b5%cf%82/',
+    '3+3': 'https://noriks.com/gr/product/noriks-airflow-modal-33-gratis/',
+    'starter': 'https://noriks.com/gr/product/noriks-set-ekkinisis/',
+    'kompleti': 'https://noriks.com/gr/product-category/set/'
+  },
+  HU: {
+    'orto-majice': 'https://noriks.com/hu/product/noriks-polo/',
+    'multi-majice': 'https://noriks.com/hu/collections/tavasz-jon/',
+    'orto-bokserice': 'https://noriks.com/hu/product/noriks-boxer/',
+    'mail-499': 'https://noriks.com/hu/product/noriks-airflow-modal-modal-mega-ajanlat-huseges-ugyfeleknek/',
+    '3+3': 'https://noriks.com/hu/product/noriks-airflow-modal-33-gratis/',
+    'starter': 'https://noriks.com/hu/product/noriks-kezdo-csomag/',
+    'kompleti': 'https://noriks.com/hu/product-category/szettek/'
+  },
+  IT: {
+    'orto-majice': 'https://noriks.com/it/product/noriks-maglietta/',
+    'multi-majice': 'https://noriks.com/it/collections/primavera-arriva/',
+    'orto-bokserice': 'https://noriks.com/it/product/noriks-airflow-modal/',
+    'mail-499': 'https://noriks.com/it/product/noriks-airflow-modal-offerta-imperdibile-per-i-clienti-fedeli/',
+    '3+3': 'https://noriks.com/it/product/noriks-airflow-modal-33-gratis/',
+    'starter': 'https://noriks.com/it/product/noriks-pacchetto-starter/',
+    'kompleti': 'https://noriks.com/it/product-category/set/'
+  },
+  SK: {
+    'orto-majice': 'https://noriks.com/sk/product/noriks-tricka/',
+    'multi-majice': 'https://noriks.com/sk/collections/jar-prichadza/',
+    'orto-bokserice': 'https://noriks.com/sk/product/noriks-airflow-modal/',
+    'mail-499': 'https://noriks.com/sk/product/noriks-airflow-modal-mega-ponuka-pre-vernych-zakaznikov/',
+    '3+3': 'https://noriks.com/sk/product/noriks-airflow-modal-33-gratis/',
+    'starter': 'https://noriks.com/sk/product/noriks-startovaci-balicek/',
+    'kompleti': 'https://noriks.com/sk/product-category/sady/'
+  },
+  CZ: {
+    'orto-majice': 'https://noriks.com/cz/product/noriks-tricko/',
+    'multi-majice': 'https://noriks.com/cz/collections/jaro-prichazi/',
+    'orto-bokserice': 'https://noriks.com/cz/product/noriks-airflow-modal/',
+    'mail-499': 'https://noriks.com/cz/product/noriks-airflow-modal-mega-nabidka-pro-verne-zakazniky/',
+    '3+3': 'https://noriks.com/cz/product/noriks-airflow-modal-33-gratis/',
+    'starter': 'https://noriks.com/cz/product/noriks-startovaci-balicek/',
+    'kompleti': 'https://noriks.com/cz/product-category/sady/'
+  },
+  PL: {
+    'orto-majice': 'https://noriks.com/pl/product/noriks-koszulki/',
+    'multi-majice': 'https://noriks.com/pl/collections/wiosna-nadchodzi/',
+    'orto-bokserice': 'https://noriks.com/pl/product/noriks-airflow-modal/',
+    'mail-499': 'https://noriks.com/pl/product/noriks-airflow-modal-mega-oferta-dla-stalych-klientow/',
+    '3+3': 'https://noriks.com/pl/product/noriks-airflow-modal-33-gratis/',
+    'starter': 'https://noriks.com/pl/product/noriks-pakiet-startowy/',
+    'kompleti': 'https://noriks.com/pl/product-category/komplety/'
+  },
+  SI: {
+    'orto-majice': 'https://noriks.com/si/product/noriks-majica/',
+    'orto-bokserice': 'https://noriks.com/si/product/noriks-bokserice/',
+    '3+3': 'https://noriks.com/si/product/noriks-airflow-modal-33-gratis/',
+    'starter': 'https://noriks.com/si/product/noriks-zacetni-paket/',
+    'kompleti': 'https://noriks.com/si/product-category/kompleti/'
+  },
+  RO: {
+    'orto-majice': 'https://noriks.com/ro/product/noriks-tricou/',
+    'orto-bokserice': 'https://noriks.com/ro/product/noriks-boxeri/',
+    '3+3': 'https://noriks.com/ro/product/noriks-airflow-modal-33-gratis/',
+    'starter': 'https://noriks.com/ro/product/noriks-pachet-de-start-2/',
+    'kompleti': 'https://noriks.com/ro/product-category/seturi/'
+  },
+  DE: {
+    'orto-majice': 'https://noriks.com/de/product/noriks-tshirt/',
+    'orto-bokserice': 'https://noriks.com/de/product/noriks-boxershorts/',
+    'starter': 'https://noriks.com/de/product/noriks-starter-paket/',
+    'kompleti': 'https://noriks.com/de/product-category/sets/'
+  }
+};
+
+let upProductLinks = null;
+
+async function upLoadProductLinks() {
+  try {
+    const res = await fetch('/api/upload/product-links');
+    const data = await res.json();
+    upProductLinks = data.links || UP_DEFAULT_LINKS;
+  } catch(e) { upProductLinks = UP_DEFAULT_LINKS; }
+  // If not saved yet, save defaults
+  if (!upProductLinks || !Object.keys(upProductLinks).length) {
+    upProductLinks = UP_DEFAULT_LINKS;
+    fetch('/api/upload/product-links', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(upProductLinks) });
+  }
+  upRenderProductLinks();
+}
+
+function upRenderProductLinks() {
+  const el = document.getElementById('upProductLinksTable');
+  if (!upProductLinks) return;
+  const countries = Object.keys(upProductLinks);
+  const linkTypes = ['orto-majice','multi-majice','orto-bokserice','vodne','mail-499','3+3','starter','kompleti'];
+  const typeLabels = {  'orto-majice':'👕 Majice','multi-majice':'👕 Multi','orto-bokserice':'🩳 Bokserice','vodne':'🌊 Vodne','mail-499':'📧 Mail-499','3+3':'🎁 3+3','starter':'📦 Starter','kompleti':'🌟 Kompleti'};
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:9px">';
+  html += '<thead><tr style="background:#f8fafc"><th style="padding:4px 6px;text-align:left;font-weight:700;color:#94a3b8;position:sticky;left:0;background:#f8fafc">Type</th>';
+  countries.forEach(cc => { html += '<th style="padding:4px 6px;text-align:center;font-weight:700;color:#1e293b">' + (UP_FLAGS[cc]||cc) + ' ' + cc + '</th>'; });
+  html += '</tr></thead><tbody>';
+  linkTypes.forEach(lt => {
+    html += '<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:3px 6px;font-weight:700;color:#475569;white-space:nowrap;position:sticky;left:0;background:#fff">' + (typeLabels[lt]||lt) + '</td>';
+    countries.forEach(cc => {
+      const url = (upProductLinks[cc] || {})[lt] || '';
+      if (url) {
+        const short = url.replace('https://noriks.com/','').slice(0,25);
+        html += '<td style="padding:3px 6px;text-align:center"><a href="' + url + '" target="_blank" style="color:#3b82f6;text-decoration:none;font-size:8px" title="' + url + '">' + short + '</a></td>';
+      } else {
+        html += '<td style="padding:3px 6px;text-align:center;color:#e2e8f0">—</td>';
+      }
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
 }
 
 // ═══ AI UPLOAD SUGGESTION ═══
@@ -6557,6 +6698,7 @@ document.addEventListener('click', function(e) {
   upLoadQueue();
   upLoadYesterdaySpend();
   upLoadSettings();
+  upLoadProductLinks();
 })();
 
 // OLD generateUploadPlan kept for compat (no-op now)
