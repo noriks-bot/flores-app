@@ -2097,172 +2097,165 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 
     <!-- UPLOAD -->
   <div id="section-upload" class="content-section">
-    <div class="content" style="padding:20px 24px">
+    <div class="content" style="padding:16px 20px">
 
       <!-- Header -->
-      <div style="background:linear-gradient(135deg,#fafbff 0%,#f0f4ff 100%);border:1px solid #c7d2fe;border-radius:12px;padding:16px 24px;margin-bottom:14px;box-shadow:0 4px 16px rgba(30,58,95,0.06)">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-        <div style="display:flex;align-items:center;gap:12px">
-          <div style="width:40px;height:40px;background:linear-gradient(135deg,#1E3A5F,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px">📤</div>
+      <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#1e40af 100%);border-radius:14px;padding:20px 24px;margin-bottom:16px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:-20px;right:-20px;width:120px;height:120px;background:rgba(255,255,255,0.03);border-radius:50%"></div>
+        <div style="position:absolute;bottom:-30px;right:60px;width:80px;height:80px;background:rgba(255,255,255,0.02);border-radius:50%"></div>
+        <div style="display:flex;align-items:center;gap:14px;position:relative">
+          <div style="width:44px;height:44px;background:rgba(255,255,255,0.12);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;backdrop-filter:blur(8px)">🚀</div>
           <div>
-            <div style="font-size:20px;font-weight:800;color:#1E3A5F;letter-spacing:-0.3px">Upload-Šajtrga</div>
-            <div style="font-size:12px;color:#6b7280;margin-top:2px">Create and push campaigns to Facebook Ads</div>
+            <div style="font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px">Upload-Šajtrga</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px">Campaign builder • Push to Facebook Ads</div>
           </div>
-        </div>
-        </div>
-      </div>
-      </div>
-
-      <!-- Campaign Builder Card -->
-      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px 24px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.04)">
-        <div style="font-size:15px;font-weight:700;color:#1E3A5F;margin-bottom:14px">➕ New Campaign</div>
-
-        <!-- Row 1: Campaign Type -->
-        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;margin-bottom:14px">
-          <div style="flex:1;min-width:200px">
-            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Campaign Type</div>
-            <div style="display:flex;gap:8px" id="upCampTypeWrap">
-              <button class="up-type-btn active" data-type="SOFI" onclick="upSelectType(this)" style="flex:1;padding:12px 16px;border-radius:10px;border:2px solid #6366f1;background:#eef2ff;color:#4338ca;font-weight:700;font-size:14px;cursor:pointer;transition:all .15s;text-align:center">
-                🌍 SOFI<br><span style="font-size:10px;font-weight:400;opacity:0.7">Multiple countries</span>
-              </button>
-              <button class="up-type-btn" data-type="CBO" onclick="upSelectType(this)" style="flex:1;padding:12px 16px;border-radius:10px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-weight:700;font-size:14px;cursor:pointer;transition:all .15s;text-align:center">
-                🎯 CBO<br><span style="font-size:10px;font-weight:400;opacity:0.7">Single country</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Product Type -->
-          <div style="flex:1;min-width:200px">
-            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Product</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap" id="upProductWrap">
-              <button class="up-prod-btn active" data-product="shirts" onclick="upSelectProduct(this)" style="padding:10px 16px;border-radius:8px;border:2px solid #6366f1;background:#eef2ff;color:#4338ca;font-weight:600;font-size:13px;cursor:pointer;transition:all .15s">👕 Shirts</button>
-              <button class="up-prod-btn" data-product="boxers" onclick="upSelectProduct(this)" style="padding:10px 16px;border-radius:8px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-weight:600;font-size:13px;cursor:pointer;transition:all .15s">🩳 Boxers</button>
-              <button class="up-prod-btn" data-product="starter" onclick="upSelectProduct(this)" style="padding:10px 16px;border-radius:8px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-weight:600;font-size:13px;cursor:pointer;transition:all .15s">📦 Starter</button>
-              <button class="up-prod-btn" data-product="komplet" onclick="upSelectProduct(this)" style="padding:10px 16px;border-radius:8px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-weight:600;font-size:13px;cursor:pointer;transition:all .15s">🎁 Komplet</button>
-            </div>
-            <div id="upProductLink" style="margin-top:6px;font-size:11px;color:#6b7280"></div>
-          </div>
-        </div>
-
-        <!-- Row 2: Creative & Ad Copy -->
-        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;margin-bottom:14px">
-          <div style="flex:1;min-width:220px">
-            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Creative (Ad ID)</div>
-            <div style="position:relative">
-              <input type="text" id="upCreativeInput" placeholder="Search or enter creative ID..." autocomplete="off"
-                style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;background:#fff;box-sizing:border-box"
-                oninput="upFilterCreatives(this.value)" onfocus="upFilterCreatives(this.value)">
-              <div id="upCreativeDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:240px;overflow-y:auto;background:#fff;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100"></div>
-            </div>
-          </div>
-
-          <div style="flex:1;min-width:220px">
-            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Ad Copy</div>
-            <div style="position:relative">
-              <input type="text" id="upCopyInput" placeholder="Search or enter ad copy..." autocomplete="off"
-                style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;background:#fff;box-sizing:border-box"
-                oninput="upFilterCopies(this.value)" onfocus="upFilterCopies(this.value)">
-              <div id="upCopyDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:240px;overflow-y:auto;background:#fff;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Row 3: Countries (CBO = single, SOFI = multi) -->
-        <div style="margin-bottom:14px">
-          <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px" id="upCountryLabel">Target Countries</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap" id="upCountryPicker">
-            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="HR" checked style="display:none"> 🇭🇷 HR</label>
-            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="CZ" checked style="display:none"> 🇨🇿 CZ</label>
-            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="PL" checked style="display:none"> 🇵🇱 PL</label>
-            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="GR" checked style="display:none"> 🇬🇷 GR</label>
-            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="SK" checked style="display:none"> 🇸🇰 SK</label>
-            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="IT" checked style="display:none"> 🇮🇹 IT</label>
-            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="HU" checked style="display:none"> 🇭🇺 HU</label>
-            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="SI" checked style="display:none"> 🇸🇮 SI</label>
-            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="RO" checked style="display:none"> 🇷🇴 RO</label>
-          </div>
-        </div>
-
-        <!-- Row 4: Budget & Start Date -->
-        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px">
-          <div>
-            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Daily Budget</div>
-            <div style="display:flex;align-items:center;gap:6px">
-              <input type="number" id="upBudget" value="60" style="width:80px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;font-weight:600;text-align:center;background:#fff">
-              <span style="font-size:14px;font-weight:600;color:#6b7280">€</span>
-            </div>
-          </div>
-
-          <div>
-            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Start Date & Time</div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <input type="date" id="upStartDate" style="padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;font-weight:600;background:#fff">
-              <input type="time" id="upStartTime" value="00:00" style="padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;font-weight:600;background:#fff;width:100px">
-            </div>
-          </div>
-
-          <div style="flex:1"></div>
-
-          <button onclick="upAddCampaign()" style="padding:12px 28px;background:linear-gradient(135deg,#1E3A5F 0%,#2563eb 100%);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(37,99,235,0.3);transition:all .2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
-            <i class="fas fa-plus"></i> Add Campaign
-          </button>
         </div>
       </div>
 
-      <!-- Duplicate Campaign Card -->
-      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px 24px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.04)">
-        <div style="font-size:15px;font-weight:700;color:#1E3A5F;margin-bottom:14px">📋 Duplicate Campaign</div>
+      <!-- Two-column layout: New + Duplicate side by side -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
 
-        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end">
-          <!-- Existing Campaign Search -->
-          <div style="flex:2;min-width:280px">
-            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Existing Campaign</div>
+        <!-- NEW CAMPAIGN -->
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+            <div style="width:28px;height:28px;background:linear-gradient(135deg,#3b82f6,#2563eb);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff"><i class="fas fa-plus"></i></div>
+            <span style="font-size:14px;font-weight:700;color:#1e293b">New Campaign</span>
+          </div>
+
+          <!-- Type -->
+          <div style="margin-bottom:12px">
+            <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Type</div>
+            <div style="display:flex;gap:6px" id="upCampTypeWrap">
+              <button class="up-type-btn active" data-type="SOFI" onclick="upSelectType(this)" style="flex:1;padding:8px 10px;border-radius:8px;border:1.5px solid #3b82f6;background:#eff6ff;color:#1d4ed8;font-weight:700;font-size:12px;cursor:pointer;transition:all .15s;text-align:center">🌍 SOFI</button>
+              <button class="up-type-btn" data-type="CBO" onclick="upSelectType(this)" style="flex:1;padding:8px 10px;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-weight:700;font-size:12px;cursor:pointer;transition:all .15s;text-align:center">🎯 CBO</button>
+            </div>
+          </div>
+
+          <!-- Product -->
+          <div style="margin-bottom:12px">
+            <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Product</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap" id="upProductWrap">
+              <button class="up-prod-btn active" data-product="shirts" onclick="upSelectProduct(this)" style="padding:6px 12px;border-radius:6px;border:1.5px solid #3b82f6;background:#eff6ff;color:#1d4ed8;font-weight:600;font-size:11px;cursor:pointer;transition:all .12s">👕 Shirts</button>
+              <button class="up-prod-btn" data-product="boxers" onclick="upSelectProduct(this)" style="padding:6px 12px;border-radius:6px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-weight:600;font-size:11px;cursor:pointer;transition:all .12s">🩳 Boxers</button>
+              <button class="up-prod-btn" data-product="starter" onclick="upSelectProduct(this)" style="padding:6px 12px;border-radius:6px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-weight:600;font-size:11px;cursor:pointer;transition:all .12s">📦 Starter</button>
+              <button class="up-prod-btn" data-product="komplet" onclick="upSelectProduct(this)" style="padding:6px 12px;border-radius:6px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-weight:600;font-size:11px;cursor:pointer;transition:all .12s">🎁 Komplet</button>
+            </div>
+            <div id="upProductLink" style="margin-top:4px;font-size:10px;color:#94a3b8"></div>
+          </div>
+
+          <!-- Creative -->
+          <div style="margin-bottom:12px">
+            <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Creative (Ad ID)</div>
             <div style="position:relative">
-              <input type="text" id="upDupCampInput" placeholder="Search existing campaign..." autocomplete="off"
-                style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;background:#fff;box-sizing:border-box"
-                oninput="upFilterCampaigns(this.value)" onfocus="upFilterCampaigns(this.value)">
-              <div id="upDupCampDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:240px;overflow-y:auto;background:#fff;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100"></div>
+              <input type="text" id="upCreativeInput" placeholder="Search creative..." autocomplete="off" style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;background:#f8fafc;box-sizing:border-box;transition:border .15s" onfocus="this.style.borderColor='#3b82f6';this.style.background='#fff';upFilterCreatives(this.value)" onblur="this.style.borderColor='#e2e8f0';this.style.background='#f8fafc'" oninput="upFilterCreatives(this.value)">
+              <div id="upCreativeDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:#fff;border:1.5px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:100"></div>
             </div>
           </div>
 
-          <div>
-            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">New Budget</div>
-            <div style="display:flex;align-items:center;gap:6px">
-              <input type="number" id="upDupBudget" value="30" style="width:80px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;font-weight:600;text-align:center;background:#fff">
-              <span style="font-size:14px;font-weight:600;color:#6b7280">€</span>
+          <!-- Ad Copy -->
+          <div style="margin-bottom:12px">
+            <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Ad Copy</div>
+            <div style="position:relative">
+              <input type="text" id="upCopyInput" placeholder="Search ad copy..." autocomplete="off" style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;background:#f8fafc;box-sizing:border-box;transition:border .15s" onfocus="this.style.borderColor='#3b82f6';this.style.background='#fff';upFilterCopies(this.value)" onblur="this.style.borderColor='#e2e8f0';this.style.background='#f8fafc'" oninput="upFilterCopies(this.value)">
+              <div id="upCopyDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:#fff;border:1.5px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:100"></div>
             </div>
           </div>
 
-          <div>
-            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">New Start Date & Time</div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <input type="date" id="upDupStartDate" style="padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;font-weight:600;background:#fff">
-              <input type="time" id="upDupStartTime" value="00:00" style="padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;font-weight:600;background:#fff;width:100px">
+          <!-- Countries -->
+          <div style="margin-bottom:12px">
+            <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px" id="upCountryLabel">Countries</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap" id="upCountryPicker">
+              <label class="up-country-pill" style="display:flex;align-items:center;gap:3px;font-size:11px;cursor:pointer;padding:4px 8px;background:#eff6ff;border:1.5px solid #3b82f6;border-radius:6px;font-weight:600;color:#1d4ed8;transition:all .12s"><input type="checkbox" class="upCountryCb" value="HR" checked style="display:none">🇭🇷</label>
+              <label class="up-country-pill" style="display:flex;align-items:center;gap:3px;font-size:11px;cursor:pointer;padding:4px 8px;background:#eff6ff;border:1.5px solid #3b82f6;border-radius:6px;font-weight:600;color:#1d4ed8;transition:all .12s"><input type="checkbox" class="upCountryCb" value="CZ" checked style="display:none">🇨🇿</label>
+              <label class="up-country-pill" style="display:flex;align-items:center;gap:3px;font-size:11px;cursor:pointer;padding:4px 8px;background:#eff6ff;border:1.5px solid #3b82f6;border-radius:6px;font-weight:600;color:#1d4ed8;transition:all .12s"><input type="checkbox" class="upCountryCb" value="PL" checked style="display:none">🇵🇱</label>
+              <label class="up-country-pill" style="display:flex;align-items:center;gap:3px;font-size:11px;cursor:pointer;padding:4px 8px;background:#eff6ff;border:1.5px solid #3b82f6;border-radius:6px;font-weight:600;color:#1d4ed8;transition:all .12s"><input type="checkbox" class="upCountryCb" value="GR" checked style="display:none">🇬🇷</label>
+              <label class="up-country-pill" style="display:flex;align-items:center;gap:3px;font-size:11px;cursor:pointer;padding:4px 8px;background:#eff6ff;border:1.5px solid #3b82f6;border-radius:6px;font-weight:600;color:#1d4ed8;transition:all .12s"><input type="checkbox" class="upCountryCb" value="SK" checked style="display:none">🇸🇰</label>
+              <label class="up-country-pill" style="display:flex;align-items:center;gap:3px;font-size:11px;cursor:pointer;padding:4px 8px;background:#eff6ff;border:1.5px solid #3b82f6;border-radius:6px;font-weight:600;color:#1d4ed8;transition:all .12s"><input type="checkbox" class="upCountryCb" value="IT" checked style="display:none">🇮🇹</label>
+              <label class="up-country-pill" style="display:flex;align-items:center;gap:3px;font-size:11px;cursor:pointer;padding:4px 8px;background:#eff6ff;border:1.5px solid #3b82f6;border-radius:6px;font-weight:600;color:#1d4ed8;transition:all .12s"><input type="checkbox" class="upCountryCb" value="HU" checked style="display:none">🇭🇺</label>
+              <label class="up-country-pill" style="display:flex;align-items:center;gap:3px;font-size:11px;cursor:pointer;padding:4px 8px;background:#eff6ff;border:1.5px solid #3b82f6;border-radius:6px;font-weight:600;color:#1d4ed8;transition:all .12s"><input type="checkbox" class="upCountryCb" value="SI" checked style="display:none">🇸🇮</label>
+              <label class="up-country-pill" style="display:flex;align-items:center;gap:3px;font-size:11px;cursor:pointer;padding:4px 8px;background:#eff6ff;border:1.5px solid #3b82f6;border-radius:6px;font-weight:600;color:#1d4ed8;transition:all .12s"><input type="checkbox" class="upCountryCb" value="RO" checked style="display:none">🇷🇴</label>
             </div>
           </div>
 
-          <button onclick="upDuplicateCampaign()" style="padding:12px 28px;background:linear-gradient(135deg,#7c3aed 0%,#a855f7 100%);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(124,58,237,0.3);transition:all .2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
-            <i class="fas fa-copy"></i> Duplicate
-          </button>
+          <!-- Budget + Date + Button -->
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+            <div>
+              <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Budget</div>
+              <div style="display:flex;align-items:center;gap:4px">
+                <input type="number" id="upBudget" value="60" style="width:64px;padding:8px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-weight:700;text-align:center;background:#f8fafc">
+                <span style="font-size:12px;font-weight:700;color:#94a3b8">€</span>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Start</div>
+              <div style="display:flex;gap:4px">
+                <input type="date" id="upStartDate" style="padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;background:#f8fafc">
+                <input type="time" id="upStartTime" value="00:00" style="padding:8px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;background:#f8fafc;width:80px">
+              </div>
+            </div>
+            <div style="flex:1"></div>
+            <button onclick="upAddCampaign()" style="padding:10px 20px;background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(37,99,235,0.3);transition:all .15s;white-space:nowrap" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+              <i class="fas fa-plus"></i> Add
+            </button>
+          </div>
         </div>
 
-        <!-- Selected campaign preview -->
-        <div id="upDupPreview" style="display:none;margin-top:12px;padding:10px 14px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;font-size:12px;color:#5b21b6"></div>
+        <!-- DUPLICATE CAMPAIGN -->
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+            <div style="width:28px;height:28px;background:linear-gradient(135deg,#7c3aed,#a855f7);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff"><i class="fas fa-copy"></i></div>
+            <span style="font-size:14px;font-weight:700;color:#1e293b">Duplicate Campaign</span>
+          </div>
+
+          <!-- Campaign search -->
+          <div style="margin-bottom:12px">
+            <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Existing Campaign</div>
+            <div style="position:relative">
+              <input type="text" id="upDupCampInput" placeholder="Search campaign..." autocomplete="off" style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;background:#f8fafc;box-sizing:border-box;transition:border .15s" onfocus="this.style.borderColor='#7c3aed';this.style.background='#fff';upFilterCampaigns(this.value)" onblur="this.style.borderColor='#e2e8f0';this.style.background='#f8fafc'" oninput="upFilterCampaigns(this.value)">
+              <div id="upDupCampDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:#fff;border:1.5px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:100"></div>
+            </div>
+          </div>
+
+          <!-- Preview -->
+          <div id="upDupPreview" style="display:none;margin-bottom:12px;padding:10px 12px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;font-size:11px;color:#6b21a8"></div>
+
+          <!-- Budget + Date + Button -->
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+            <div>
+              <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">New Budget</div>
+              <div style="display:flex;align-items:center;gap:4px">
+                <input type="number" id="upDupBudget" value="30" style="width:64px;padding:8px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-weight:700;text-align:center;background:#f8fafc">
+                <span style="font-size:12px;font-weight:700;color:#94a3b8">€</span>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">New Start</div>
+              <div style="display:flex;gap:4px">
+                <input type="date" id="upDupStartDate" style="padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;background:#f8fafc">
+                <input type="time" id="upDupStartTime" value="00:00" style="padding:8px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;background:#f8fafc;width:80px">
+              </div>
+            </div>
+            <div style="flex:1"></div>
+            <button onclick="upDuplicateCampaign()" style="padding:10px 20px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(124,58,237,0.3);transition:all .15s;white-space:nowrap" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+              <i class="fas fa-copy"></i> Duplicate
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Campaign Queue Table -->
-      <div id="upQueueCard" style="display:none;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);margin-bottom:14px">
-        <div style="padding:16px 20px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between">
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:16px">📋</span>
-            <span style="font-size:15px;font-weight:700;color:#1E3A5F">Campaign Queue</span>
-            <span id="upQueueCount" style="font-size:11px;background:#eef2ff;color:#4338ca;padding:2px 8px;border-radius:100px;font-weight:600">0</span>
+      <div id="upQueueCard" style="display:none;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+        <div style="padding:14px 18px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:28px;height:28px;background:linear-gradient(135deg,#16a34a,#22c55e);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff"><i class="fas fa-list"></i></div>
+            <span style="font-size:14px;font-weight:700;color:#1e293b">Queue</span>
+            <span id="upQueueCount" style="font-size:10px;background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:100px;font-weight:700">0</span>
           </div>
-          <div style="display:flex;gap:8px">
-            <button onclick="upClearQueue()" style="padding:8px 16px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;font-size:12px;font-weight:600;color:#6b7280;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#ef4444';this.style.color='#ef4444'" onmouseout="this.style.borderColor='#e5e7eb';this.style.color='#6b7280'">
-              <i class="fas fa-trash"></i> Clear All
+          <div style="display:flex;gap:6px">
+            <button onclick="upClearQueue()" style="padding:6px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;font-weight:600;color:#94a3b8;cursor:pointer;transition:all .12s" onmouseover="this.style.borderColor='#ef4444';this.style.color='#ef4444'" onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#94a3b8'">
+              <i class="fas fa-trash"></i> Clear
             </button>
-            <button onclick="upPushToFB()" style="padding:8px 20px;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 12px rgba(22,163,74,0.3);transition:all .2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+            <button onclick="upPushToFB()" style="padding:6px 14px;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;box-shadow:0 2px 6px rgba(22,163,74,0.25);transition:all .12s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
               <i class="fab fa-facebook"></i> Push to FB
             </button>
           </div>
@@ -2270,15 +2263,15 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <div class="table-scroll">
           <table style="width:100%;border-collapse:collapse">
             <thead>
-              <tr style="background:#f9fafb">
-                <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Type</th>
-                <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Creative</th>
-                <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Ad Copy</th>
-                <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Product</th>
-                <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Countries</th>
-                <th style="padding:10px 14px;text-align:center;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Budget</th>
-                <th style="padding:10px 14px;text-align:center;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Start</th>
-                <th style="padding:10px 14px;text-align:center;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Actions</th>
+              <tr style="background:#f8fafc">
+                <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Type</th>
+                <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Creative</th>
+                <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Ad Copy</th>
+                <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Product</th>
+                <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Countries</th>
+                <th style="padding:8px 12px;text-align:center;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Budget</th>
+                <th style="padding:8px 12px;text-align:center;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Start</th>
+                <th style="padding:8px 12px;text-align:center;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px"></th>
               </tr>
             </thead>
             <tbody id="upQueueBody"></tbody>
@@ -5685,9 +5678,9 @@ let upCreativesLoaded = false;
 // Update budget default based on campaign type
 function upSelectType(btn) {
   document.querySelectorAll('.up-type-btn').forEach(b => {
-    b.style.border = '2px solid #e5e7eb'; b.style.background = '#fff'; b.style.color = '#374151';
+    b.style.border = '1.5px solid #e2e8f0'; b.style.background = '#fff'; b.style.color = '#64748b';
   });
-  btn.style.border = '2px solid #6366f1'; btn.style.background = '#eef2ff'; btn.style.color = '#4338ca';
+  btn.style.border = '1.5px solid #3b82f6'; btn.style.background = '#eff6ff'; btn.style.color = '#1d4ed8';
   const type = btn.dataset.type;
   const budgetEl = document.getElementById('upBudget');
   if (type === 'SOFI') { budgetEl.value = '60'; }
@@ -5728,8 +5721,8 @@ function upUpdateCountryMode(type) {
 }
 
 function upStylePill(pill, active) {
-  if (active) { pill.style.background = '#eef2ff'; pill.style.border = '2px solid #6366f1'; pill.style.color = '#4338ca'; pill.style.fontWeight = '600'; }
-  else { pill.style.background = '#fff'; pill.style.border = '2px solid #e5e7eb'; pill.style.color = '#9ca3af'; pill.style.fontWeight = '400'; }
+  if (active) { pill.style.background = '#eff6ff'; pill.style.border = '1.5px solid #3b82f6'; pill.style.color = '#1d4ed8'; pill.style.fontWeight = '600'; }
+  else { pill.style.background = '#fff'; pill.style.border = '1.5px solid #e2e8f0'; pill.style.color = '#cbd5e1'; pill.style.fontWeight = '400'; }
 }
 
 const UP_PRODUCT_LINKS = {
@@ -5742,9 +5735,9 @@ const UP_COUNTRY_URLS = {HR:'hr',CZ:'cz',PL:'pl',GR:'gr',SK:'sk',IT:'it',HU:'hu'
 
 function upSelectProduct(btn) {
   document.querySelectorAll('.up-prod-btn').forEach(b => {
-    b.style.border = '2px solid #e5e7eb'; b.style.background = '#fff'; b.style.color = '#374151';
+    b.style.border = '1.5px solid #e2e8f0'; b.style.background = '#fff'; b.style.color = '#64748b';
   });
-  btn.style.border = '2px solid #6366f1'; btn.style.background = '#eef2ff'; btn.style.color = '#4338ca';
+  btn.style.border = '1.5px solid #3b82f6'; btn.style.background = '#eff6ff'; btn.style.color = '#1d4ed8';
   upShowProductLink(btn.dataset.product);
 }
 
@@ -5880,18 +5873,18 @@ function upRenderQueue() {
   count.textContent = upQueue.length;
   body.innerHTML = upQueue.map((c, i) => {
     const typeBadge = c.type === 'SOFI'
-      ? '<span style="background:#eef2ff;color:#4338ca;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">🌍 SOFI</span>'
-      : '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">🎯 CBO</span>';
+      ? '<span style="background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700">🌍 SOFI</span>'
+      : '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700">🎯 CBO</span>';
     const flags = c.countries.map(cc => UP_FLAGS[cc] || cc).join(' ');
-    return '<tr style="border-bottom:1px solid #f3f4f6">' +
-      '<td style="padding:12px 14px">' + typeBadge + '</td>' +
-      '<td style="padding:12px 14px;font-weight:600;font-size:13px">' + c.creative + '</td>' +
-      '<td style="padding:12px 14px;font-size:12px;color:#6b7280;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (c.copy || '<span style="color:#d1d5db">—</span>') + '</td>' +
-      '<td style="padding:12px 14px">' + (UP_PRODUCT_EMOJI[c.product] || '') + ' ' + c.product + '</td>' +
-      '<td style="padding:12px 14px;font-size:13px">' + flags + '</td>' +
-      '<td style="padding:12px 14px;text-align:center;font-weight:600">' + c.budget + '€</td>' +
-      '<td style="padding:12px 14px;text-align:center;font-size:12px">' + c.startDate + ' ' + (c.startTime || '00:00') + '</td>' +
-      '<td style="padding:12px 14px;text-align:center"><button onclick="upRemoveCampaign(' + i + ')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:14px;padding:4px" title="Remove"><i class="fas fa-times"></i></button></td>' +
+    return '<tr style="border-bottom:1px solid #f1f5f9">' +
+      '<td style="padding:8px 12px">' + typeBadge + '</td>' +
+      '<td style="padding:8px 12px;font-weight:700;font-size:12px;color:#1e293b">' + c.creative + '</td>' +
+      '<td style="padding:8px 12px;font-size:11px;color:#64748b;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (c.copy || '<span style="color:#cbd5e1">—</span>') + '</td>' +
+      '<td style="padding:8px 12px;font-size:11px">' + (UP_PRODUCT_EMOJI[c.product] || '') + ' ' + c.product + '</td>' +
+      '<td style="padding:8px 12px;font-size:12px">' + flags + '</td>' +
+      '<td style="padding:8px 12px;text-align:center;font-weight:700;font-size:12px;color:#1e293b">' + c.budget + '€</td>' +
+      '<td style="padding:8px 12px;text-align:center;font-size:11px;color:#64748b">' + c.startDate + ' ' + (c.startTime || '00:00') + '</td>' +
+      '<td style="padding:8px 12px;text-align:center"><button onclick="upRemoveCampaign(' + i + ')" style="background:none;border:none;color:#e2e8f0;cursor:pointer;font-size:12px;padding:2px;transition:color .12s" onmouseover="this.style.color=\'#ef4444\'" onmouseout="this.style.color=\'#e2e8f0\'" title="Remove"><i class="fas fa-times"></i></button></td>' +
     '</tr>';
   }).join('');
 }
