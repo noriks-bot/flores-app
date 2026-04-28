@@ -4235,6 +4235,37 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         } catch(e) { return sendJSON(res, { error: e.message }, 500); }
       }
 
+      // ═══ UPLOAD: SYNC AD COPIES FROM FB API ═══
+      if (urlPath === '/api/upload/sync-ad-copies' && req.method === 'POST') {
+        try {
+          const orgId = (getSessionUser(req))?.orgId || 1;
+          const orgMeta = getOrgMetaConfig(orgId);
+          // Fetch ad creatives with text fields
+          const creatives = await metaGetAll(`${orgMeta.adAccount}/adcreatives`, {
+            fields: 'id,name,effective_object_story_spec,body,title,object_story_spec',
+            limit: 200
+          }, orgMeta.token);
+          const upsert = db.prepare(`INSERT OR REPLACE INTO fb_ad_copies (name, primary_text, headline, description, cta, source_ad_id) VALUES (?, ?, ?, ?, ?, ?)`);
+          let count = 0;
+          const tx = db.transaction(() => {
+            for (const cr of creatives) {
+              const spec = cr.effective_object_story_spec || cr.object_story_spec || {};
+              const ld = spec.link_data || spec.video_data || {};
+              const primaryText = ld.message || ld.body || cr.body || '';
+              const headline = ld.name || ld.title || cr.title || '';
+              const desc = ld.description || '';
+              const cta = ld.call_to_action?.type || 'SHOP_NOW';
+              const name = cr.name || cr.id || '';
+              if (!primaryText && !headline) continue;
+              upsert.run(name, primaryText, headline, desc, cta, cr.id);
+              count++;
+            }
+          });
+          tx();
+          return sendJSON(res, { ok: true, synced: count });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+
       // ═══ UPLOAD: AI SUGGESTION ═══
       if (urlPath === '/api/upload/ai-suggestion') {
         try {

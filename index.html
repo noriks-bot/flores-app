@@ -2182,11 +2182,16 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 
           <!-- Ad Copy -->
           <div style="margin-bottom:12px">
-            <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Ad Copy</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px">Ad Copy</div>
+              <button onclick="upSyncAdCopies()" id="upSyncCopyBtn" style="font-size:8px;color:#3b82f6;background:none;border:none;cursor:pointer;font-weight:600" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"><i class="fas fa-sync-alt"></i> sync from FB</button>
+            </div>
             <div style="position:relative">
               <input type="text" id="upCopyInput" placeholder="Search ad copy..." autocomplete="off" style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;background:#f8fafc;box-sizing:border-box;transition:border .15s" onfocus="this.style.borderColor='#3b82f6';this.style.background='#fff';upFilterCopies(this.value)" oninput="upFilterCopies(this.value)">
-              <div id="upCopyDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:#fff;border:1.5px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:100"></div>
+              <div id="upCopyDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:280px;overflow-y:auto;background:#fff;border:1.5px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:100"></div>
             </div>
+            <!-- Selected copy preview -->
+            <div id="upCopyPreview" style="display:none;margin-top:6px;padding:8px 10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;font-size:10px;line-height:1.5;color:#0c4a6e"></div>
           </div>
 
           <!-- Countries -->
@@ -5940,22 +5945,52 @@ function upFilterCopies(query) {
   const filtered = q ? upCopies.filter(c => {
     return c.name.toLowerCase().includes(q) || (c.primary_text || '').toLowerCase().includes(q) || (c.headline || '').toLowerCase().includes(q);
   }).slice(0, 30) : upCopies.slice(0, 30);
-  if (!filtered.length) { dd.style.display = 'none'; return; }
-  dd.innerHTML = filtered.map(c => {
-    const preview = c.primary_text ? c.primary_text.slice(0, 80) + (c.primary_text.length > 80 ? '...' : '') : '';
-    const hl = c.headline ? '<div style="font-size:10px;color:#4338ca;font-weight:600;margin-top:2px">' + c.headline + '</div>' : '';
-    return '<div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f3f4f6" onmousedown="event.preventDefault()" onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'#fff\'" onclick="upPickCopy(\'' + c.name.replace(/'/g, "\\\'" ) + '\')">' +
-      '<div style="font-weight:600;font-size:12px;margin-bottom:2px">' + c.name + '</div>' +
-      (preview ? '<div style="font-size:11px;color:#6b7280;line-height:1.3">' + preview + '</div>' : '') +
-      hl +
+  if (!filtered.length) { dd.innerHTML = '<div style="padding:12px;text-align:center;color:#94a3b8;font-size:11px">No ad copies found. Click "sync from FB" to load.</div>'; dd.style.display = 'block'; return; }
+  dd.innerHTML = filtered.map((c, i) => {
+    const pt = c.primary_text ? c.primary_text.slice(0, 60) + (c.primary_text.length > 60 ? '...' : '') : '';
+    const hl = c.headline || '';
+    return '<div style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9" onmousedown="event.preventDefault()" onmouseover="this.style.background=\'#f0f9ff\'" onmouseout="this.style.background=\'#fff\'" onclick="upPickCopy(' + i + ')">' +
+      '<div style="font-weight:700;font-size:11px;color:#1e293b;margin-bottom:1px">' + (c.name || 'Untitled') + '</div>' +
+      (hl ? '<div style="font-size:10px;color:#3b82f6;font-weight:600">📌 ' + hl + '</div>' : '') +
+      (pt ? '<div style="font-size:9px;color:#64748b;margin-top:1px;line-height:1.3">' + pt + '</div>' : '') +
     '</div>';
   }).join('');
   dd.style.display = 'block';
+  // Store filtered for picking
+  window._upFilteredCopies = filtered;
 }
 
-function upPickCopy(name) {
-  document.getElementById('upCopyInput').value = name;
+function upPickCopy(idx) {
+  const c = (window._upFilteredCopies || upCopies)[idx];
+  if (!c) return;
+  document.getElementById('upCopyInput').value = c.name;
   document.getElementById('upCopyDropdown').style.display = 'none';
+  // Show preview
+  const preview = document.getElementById('upCopyPreview');
+  let html = '';
+  if (c.primary_text) html += '<div><strong>Primary Text:</strong> ' + c.primary_text.slice(0, 150) + (c.primary_text.length > 150 ? '...' : '') + '</div>';
+  if (c.headline) html += '<div><strong>Headline:</strong> ' + c.headline + '</div>';
+  if (c.description) html += '<div><strong>Description:</strong> ' + c.description + '</div>';
+  if (c.cta) html += '<div><strong>CTA:</strong> ' + c.cta + '</div>';
+  if (html) { preview.innerHTML = html; preview.style.display = 'block'; }
+  else { preview.style.display = 'none'; }
+}
+
+async function upSyncAdCopies() {
+  const btn = document.getElementById('upSyncCopyBtn');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> syncing...';
+  try {
+    const res = await fetch('/api/upload/sync-ad-copies', { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      btn.innerHTML = '<i class="fas fa-check"></i> ' + data.synced + ' synced';
+      upCreativesLoaded = false;
+      await upLoadCreatives();
+    } else {
+      btn.innerHTML = '<i class="fas fa-times"></i> error';
+    }
+  } catch(e) { btn.innerHTML = '<i class="fas fa-times"></i> failed'; }
+  setTimeout(() => { btn.innerHTML = '<i class="fas fa-sync-alt"></i> sync from FB'; }, 3000);
 }
 
 // Close dropdowns on outside click
