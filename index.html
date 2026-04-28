@@ -2110,9 +2110,6 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
           </div>
         </div>
         </div>
-        <button id="upSyncBtn" onclick="upSyncFromFB()" style="padding:8px 16px;background:#fff;border:1px solid #c7d2fe;border-radius:8px;font-size:12px;font-weight:600;color:#4338ca;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s" onmouseover="this.style.background='#eef2ff'" onmouseout="this.style.background='#fff'">
-          <i class="fas fa-sync-alt"></i> Sync from FB
-        </button>
       </div>
       </div>
 
@@ -5740,27 +5737,7 @@ async function upLoadCreatives() {
   } catch(e) { console.error('Failed to load creatives:', e); }
 }
 
-// Sync creatives from FB to DB
-async function upSyncFromFB() {
-  const btn = document.getElementById('upSyncBtn');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...'; }
-  try {
-    const res = await fetch('/api/upload/sync-fb-creatives', { method: 'POST' });
-    const data = await res.json();
-    if (data.ok) {
-      upCreativesLoaded = false;
-      await upLoadCreatives();
-      if (btn) btn.innerHTML = '<i class="fas fa-check"></i> Synced ' + (data.synced || 0) + ' creatives';
-      setTimeout(() => { if (btn) btn.innerHTML = '<i class="fas fa-sync-alt"></i> Sync from FB'; }, 3000);
-    } else {
-      if (btn) btn.innerHTML = '<i class="fas fa-times"></i> Error';
-    }
-  } catch(e) {
-    console.error('Sync failed:', e);
-    if (btn) btn.innerHTML = '<i class="fas fa-times"></i> Failed';
-  }
-  if (btn) btn.disabled = false;
-}
+
 
 function upFilterCreatives(query) {
   upLoadCreatives();
@@ -5843,8 +5820,10 @@ function upAddCampaign() {
   if (!creative) { alert('Please select a creative'); return; }
   if (!countries.length) { alert('Please select at least one country'); return; }
 
-  upQueue.push({ type, product, creative, copy, countries, budget, startDate, startTime, id: Date.now() });
+  const item = { type, product, creative, copy, countries, budget, startDate, startTime, id: Date.now() };
+  upQueue.push(item);
   upRenderQueue();
+  upSaveToDb(item);
 
   // Reset creative & copy inputs
   document.getElementById('upCreativeInput').value = '';
@@ -5877,12 +5856,16 @@ function upRenderQueue() {
 }
 
 function upRemoveCampaign(index) {
-  upQueue.splice(index, 1);
+  const removed = upQueue.splice(index, 1)[0];
+  if (removed && removed.dbId) {
+    fetch('/api/upload/queue', { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id: removed.dbId }) });
+  }
   upRenderQueue();
 }
 
 function upClearQueue() {
   if (!confirm('Clear all campaigns from queue?')) return;
+  fetch('/api/upload/queue', { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ clear_all: true }) });
   upQueue.length = 0;
   upRenderQueue();
 }
@@ -5890,6 +5873,44 @@ function upClearQueue() {
 function upPushToFB() {
   if (!upQueue.length) return;
   alert('Push to FB coming soon! ' + upQueue.length + ' campaigns ready.');
+}
+
+async function upSaveToDb(item) {
+  try {
+    const res = await fetch('/api/upload/queue', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        campaign_type: item.type, product: item.product, creative_id: item.creative,
+        ad_copy_name: item.copy, countries: item.countries, daily_budget: item.budget,
+        start_date: item.startDate + ' ' + (item.startTime || '00:00')
+      })
+    });
+    const data = await res.json();
+    if (data.id) item.dbId = data.id;
+  } catch(e) { console.error('Save to DB failed:', e); }
+}
+
+async function upLoadQueue() {
+  try {
+    const res = await fetch('/api/upload/queue');
+    const data = await res.json();
+    if (data.queue && data.queue.length) {
+      upQueue.length = 0;
+      for (const row of data.queue) {
+        if (row.status !== 'queued') continue;
+        let countries = [];
+        try { countries = JSON.parse(row.countries); } catch(e) {}
+        const [datePart, timePart] = (row.start_date || '').split(' ');
+        upQueue.push({
+          type: row.campaign_type, product: row.product, creative: row.creative_id,
+          copy: row.ad_copy_name, countries, budget: row.daily_budget,
+          startDate: datePart || '', startTime: timePart || '00:00',
+          id: row.id, dbId: row.id
+        });
+      }
+      upRenderQueue();
+    }
+  } catch(e) { console.error('Load queue failed:', e); }
 }
 
 // Init country pills click behavior + show initial product link
@@ -5904,8 +5925,9 @@ function upPushToFB() {
     };
   });
   upShowProductLink('shirts');
-  // Pre-load creatives
+  // Pre-load creatives + queue
   upLoadCreatives();
+  upLoadQueue();
 })();
 
 // OLD generateUploadPlan kept for compat (no-op now)
