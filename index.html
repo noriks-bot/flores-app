@@ -2098,7 +2098,146 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
     <!-- UPLOAD -->
   <div id="section-upload" class="content-section">
     <div class="content" style="padding:20px 24px">
-      <!-- Upload page - empty, ready to build -->
+
+      <!-- Header -->
+      <div style="background:linear-gradient(135deg,#fafbff 0%,#f0f4ff 100%);border:1px solid #c7d2fe;border-radius:12px;padding:24px 28px;margin-bottom:24px;box-shadow:0 4px 16px rgba(30,58,95,0.06)">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:40px;height:40px;background:linear-gradient(135deg,#1E3A5F,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px">📤</div>
+          <div>
+            <div style="font-size:20px;font-weight:800;color:#1E3A5F;letter-spacing:-0.3px">Campaign Upload</div>
+            <div style="font-size:12px;color:#6b7280;margin-top:2px">Create and push campaigns to Facebook Ads</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Campaign Builder Card -->
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:28px 32px;margin-bottom:24px;box-shadow:0 2px 8px rgba(0,0,0,0.04)">
+        <div style="font-size:16px;font-weight:700;color:#1E3A5F;margin-bottom:20px">➕ New Campaign</div>
+
+        <!-- Row 1: Campaign Type -->
+        <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin-bottom:20px">
+          <div style="flex:1;min-width:200px">
+            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Campaign Type</div>
+            <div style="display:flex;gap:8px" id="upCampTypeWrap">
+              <button class="up-type-btn active" data-type="SOFI" onclick="upSelectType(this)" style="flex:1;padding:12px 16px;border-radius:10px;border:2px solid #6366f1;background:#eef2ff;color:#4338ca;font-weight:700;font-size:14px;cursor:pointer;transition:all .15s;text-align:center">
+                🌍 SOFI<br><span style="font-size:10px;font-weight:400;opacity:0.7">Multiple countries</span>
+              </button>
+              <button class="up-type-btn" data-type="CBO" onclick="upSelectType(this)" style="flex:1;padding:12px 16px;border-radius:10px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-weight:700;font-size:14px;cursor:pointer;transition:all .15s;text-align:center">
+                🎯 CBO<br><span style="font-size:10px;font-weight:400;opacity:0.7">Single country</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Product Type -->
+          <div style="flex:1;min-width:200px">
+            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Product</div>
+            <div style="display:flex;gap:8px" id="upProductWrap">
+              <button class="up-prod-btn active" data-product="shirts" onclick="upSelectProduct(this)" style="padding:10px 16px;border-radius:8px;border:2px solid #6366f1;background:#eef2ff;color:#4338ca;font-weight:600;font-size:13px;cursor:pointer;transition:all .15s">👕 Shirts</button>
+              <button class="up-prod-btn" data-product="boxers" onclick="upSelectProduct(this)" style="padding:10px 16px;border-radius:8px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-weight:600;font-size:13px;cursor:pointer;transition:all .15s">🩳 Boxers</button>
+              <button class="up-prod-btn" data-product="starter" onclick="upSelectProduct(this)" style="padding:10px 16px;border-radius:8px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-weight:600;font-size:13px;cursor:pointer;transition:all .15s">📦 Starter</button>
+              <button class="up-prod-btn" data-product="komplet" onclick="upSelectProduct(this)" style="padding:10px 16px;border-radius:8px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-weight:600;font-size:13px;cursor:pointer;transition:all .15s">🎁 Komplet</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Creative & Ad Copy -->
+        <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin-bottom:20px">
+          <div style="flex:1;min-width:220px">
+            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Creative (Ad ID)</div>
+            <div style="position:relative">
+              <input type="text" id="upCreativeInput" placeholder="Search or enter creative ID..." autocomplete="off"
+                style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;background:#fff;box-sizing:border-box"
+                oninput="upFilterCreatives(this.value)" onfocus="upFilterCreatives(this.value)">
+              <div id="upCreativeDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:240px;overflow-y:auto;background:#fff;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100"></div>
+            </div>
+          </div>
+
+          <div style="flex:1;min-width:220px">
+            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Ad Copy</div>
+            <div style="position:relative">
+              <input type="text" id="upCopyInput" placeholder="Search or enter ad copy..." autocomplete="off"
+                style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;background:#fff;box-sizing:border-box"
+                oninput="upFilterCopies(this.value)" onfocus="upFilterCopies(this.value)">
+              <div id="upCopyDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:240px;overflow-y:auto;background:#fff;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Countries (CBO = single, SOFI = multi) -->
+        <div style="margin-bottom:20px">
+          <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px" id="upCountryLabel">Target Countries</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap" id="upCountryPicker">
+            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="HR" checked style="display:none"> 🇭🇷 HR</label>
+            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="CZ" checked style="display:none"> 🇨🇿 CZ</label>
+            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="PL" checked style="display:none"> 🇵🇱 PL</label>
+            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="GR" checked style="display:none"> 🇬🇷 GR</label>
+            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="SK" checked style="display:none"> 🇸🇰 SK</label>
+            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="IT" checked style="display:none"> 🇮🇹 IT</label>
+            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="HU" checked style="display:none"> 🇭🇺 HU</label>
+            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="SI" checked style="display:none"> 🇸🇮 SI</label>
+            <label class="up-country-pill" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:#eef2ff;border:2px solid #6366f1;border-radius:8px;font-weight:600;color:#4338ca;transition:all .15s"><input type="checkbox" class="upCountryCb" value="RO" checked style="display:none"> 🇷🇴 RO</label>
+          </div>
+        </div>
+
+        <!-- Row 4: Budget & Start Date -->
+        <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-end;margin-bottom:24px">
+          <div>
+            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Daily Budget</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="number" id="upBudget" value="60" style="width:80px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;font-weight:600;text-align:center;background:#fff">
+              <span style="font-size:14px;font-weight:600;color:#6b7280">€</span>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Start Date</div>
+            <input type="date" id="upStartDate" style="padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;font-weight:600;background:#fff">
+          </div>
+
+          <div style="flex:1"></div>
+
+          <button onclick="upAddCampaign()" style="padding:12px 28px;background:linear-gradient(135deg,#1E3A5F 0%,#2563eb 100%);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(37,99,235,0.3);transition:all .2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+            <i class="fas fa-plus"></i> Add Campaign
+          </button>
+        </div>
+      </div>
+
+      <!-- Campaign Queue Table -->
+      <div id="upQueueCard" style="display:none;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);margin-bottom:24px">
+        <div style="padding:16px 20px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:16px">📋</span>
+            <span style="font-size:15px;font-weight:700;color:#1E3A5F">Campaign Queue</span>
+            <span id="upQueueCount" style="font-size:11px;background:#eef2ff;color:#4338ca;padding:2px 8px;border-radius:100px;font-weight:600">0</span>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button onclick="upClearQueue()" style="padding:8px 16px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;font-size:12px;font-weight:600;color:#6b7280;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#ef4444';this.style.color='#ef4444'" onmouseout="this.style.borderColor='#e5e7eb';this.style.color='#6b7280'">
+              <i class="fas fa-trash"></i> Clear All
+            </button>
+            <button onclick="upPushToFB()" style="padding:8px 20px;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 12px rgba(22,163,74,0.3);transition:all .2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+              <i class="fab fa-facebook"></i> Push to FB
+            </button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table style="width:100%;border-collapse:collapse">
+            <thead>
+              <tr style="background:#f9fafb">
+                <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Type</th>
+                <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Creative</th>
+                <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Ad Copy</th>
+                <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Product</th>
+                <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Countries</th>
+                <th style="padding:10px 14px;text-align:center;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Budget</th>
+                <th style="padding:10px 14px;text-align:center;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Start</th>
+                <th style="padding:10px 14px;text-align:center;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="upQueueBody"></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -5482,8 +5621,241 @@ const MARKET_SUGGESTIONS = {
 };
 const COUNTRY_FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴',DE:'🇩🇪',BG:'🇧🇬',EN:'🇬🇧'};
 
+// ═══ CAMPAIGN UPLOAD ═══
+const upQueue = [];
+let upCreatives = [];
+let upCopies = [];
+let upCreativesLoaded = false;
+
+// Set default start date to tomorrow
+(function() {
+  const tom = new Date(); tom.setDate(tom.getDate() + 1);
+  const el = document.getElementById('upStartDate');
+  if (el) el.value = tom.toISOString().slice(0,10);
+})();
+
+// Update budget default based on campaign type
+function upSelectType(btn) {
+  document.querySelectorAll('.up-type-btn').forEach(b => {
+    b.style.border = '2px solid #e5e7eb'; b.style.background = '#fff'; b.style.color = '#374151';
+  });
+  btn.style.border = '2px solid #6366f1'; btn.style.background = '#eef2ff'; btn.style.color = '#4338ca';
+  const type = btn.dataset.type;
+  const budgetEl = document.getElementById('upBudget');
+  if (type === 'SOFI') { budgetEl.value = '60'; }
+  else { budgetEl.value = '30'; }
+  // CBO = single country select, SOFI = multi
+  upUpdateCountryMode(type);
+}
+
+function upUpdateCountryMode(type) {
+  const pills = document.querySelectorAll('.up-country-pill');
+  const label = document.getElementById('upCountryLabel');
+  if (type === 'CBO') {
+    label.textContent = 'Target Country (single)';
+    // Uncheck all, check first
+    pills.forEach((p, i) => {
+      const cb = p.querySelector('input');
+      cb.checked = i === 0;
+      upStylePill(p, cb.checked);
+    });
+    // Make single-select
+    pills.forEach(p => {
+      p.onclick = function(e) {
+        e.preventDefault();
+        pills.forEach(pp => { pp.querySelector('input').checked = false; upStylePill(pp, false); });
+        const cb = p.querySelector('input'); cb.checked = true; upStylePill(p, true);
+      };
+    });
+  } else {
+    label.textContent = 'Target Countries';
+    pills.forEach(p => {
+      const cb = p.querySelector('input'); cb.checked = true; upStylePill(p, true);
+      p.onclick = function(e) {
+        e.preventDefault();
+        cb.checked = !cb.checked; upStylePill(p, cb.checked);
+      };
+    });
+  }
+}
+
+function upStylePill(pill, active) {
+  if (active) { pill.style.background = '#eef2ff'; pill.style.border = '2px solid #6366f1'; pill.style.color = '#4338ca'; pill.style.fontWeight = '600'; }
+  else { pill.style.background = '#fff'; pill.style.border = '2px solid #e5e7eb'; pill.style.color = '#9ca3af'; pill.style.fontWeight = '400'; }
+}
+
+function upSelectProduct(btn) {
+  document.querySelectorAll('.up-prod-btn').forEach(b => {
+    b.style.border = '2px solid #e5e7eb'; b.style.background = '#fff'; b.style.color = '#374151';
+  });
+  btn.style.border = '2px solid #6366f1'; btn.style.background = '#eef2ff'; btn.style.color = '#4338ca';
+}
+
+// Load creatives from existing data
+async function upLoadCreatives() {
+  if (upCreativesLoaded) return;
+  try {
+    const todayStr = new Date().toISOString().slice(0,10);
+    const res = await fetch('/api/creative-report?start=2026-01-01&end=' + todayStr);
+    const data = await res.json();
+    if (data.creatives) {
+      upCreatives = data.creatives.filter(c => c.id !== 'Other').map(c => ({
+        id: c.id, name: c.name || c.id, spend: c.totalSpend || 0, purchases: c.totalPurchases || 0
+      })).sort((a,b) => b.spend - a.spend);
+    }
+    // Get ad copies from existing ads
+    const adsRes = await fetch('/api/ads?start=2026-01-01&end=' + todayStr);
+    const adsData = await adsRes.json();
+    if (Array.isArray(adsData)) {
+      const copyMap = {};
+      adsData.forEach(ad => {
+        const name = ad.name || ad.ad_name || '';
+        if (name && !copyMap[name]) copyMap[name] = { name, id: ad.ad_id || ad.id };
+      });
+      upCopies = Object.values(copyMap).slice(0, 200);
+    }
+    upCreativesLoaded = true;
+  } catch(e) { console.error('Failed to load creatives:', e); }
+}
+
+function upFilterCreatives(query) {
+  upLoadCreatives();
+  const dd = document.getElementById('upCreativeDropdown');
+  const q = (query || '').toLowerCase();
+  const filtered = upCreatives.filter(c => c.id.toLowerCase().includes(q) || (c.name && c.name.toLowerCase().includes(q))).slice(0, 30);
+  if (!filtered.length && !q) { dd.style.display = 'none'; return; }
+  dd.innerHTML = filtered.map(c =>
+    '<div style="padding:8px 14px;cursor:pointer;font-size:12px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center" onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'#fff\'" onclick="upPickCreative(\'' + c.id.replace(/'/g,"\\'" ) + '\')">' +
+    '<span style="font-weight:600">' + c.id + '</span>' +
+    '<span style="color:#9ca3af;font-size:10px">' + (c.spend > 0 ? c.spend.toFixed(0) + '€ / ' + c.purchases + 'p' : '') + '</span>' +
+    '</div>'
+  ).join('');
+  dd.style.display = 'block';
+}
+
+function upPickCreative(id) {
+  document.getElementById('upCreativeInput').value = id;
+  document.getElementById('upCreativeDropdown').style.display = 'none';
+}
+
+function upFilterCopies(query) {
+  upLoadCreatives();
+  const dd = document.getElementById('upCopyDropdown');
+  const q = (query || '').toLowerCase();
+  const filtered = upCopies.filter(c => c.name.toLowerCase().includes(q)).slice(0, 30);
+  if (!filtered.length && !q) { dd.style.display = 'none'; return; }
+  dd.innerHTML = filtered.map(c =>
+    '<div style="padding:8px 14px;cursor:pointer;font-size:12px;border-bottom:1px solid #f3f4f6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'#fff\'" onclick="upPickCopy(this)">' +
+    c.name + '</div>'
+  ).join('');
+  dd.style.display = 'block';
+}
+
+function upPickCopy(el) {
+  document.getElementById('upCopyInput').value = el.textContent;
+  document.getElementById('upCopyDropdown').style.display = 'none';
+}
+
+// Close dropdowns on outside click
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#upCreativeInput') && !e.target.closest('#upCreativeDropdown')) {
+    const d = document.getElementById('upCreativeDropdown'); if(d) d.style.display = 'none';
+  }
+  if (!e.target.closest('#upCopyInput') && !e.target.closest('#upCopyDropdown')) {
+    const d = document.getElementById('upCopyDropdown'); if(d) d.style.display = 'none';
+  }
+});
+
+function upGetSelectedType() {
+  const btn = document.querySelector('.up-type-btn[style*="6366f1"]');
+  return btn ? btn.dataset.type : 'SOFI';
+}
+
+function upGetSelectedProduct() {
+  const btn = document.querySelector('.up-prod-btn[style*="6366f1"]');
+  return btn ? btn.dataset.product : 'shirts';
+}
+
+const UP_PRODUCT_EMOJI = { shirts: '👕', boxers: '🩳', starter: '📦', komplet: '🎁' };
+const UP_FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴'};
+
+function upAddCampaign() {
+  const type = upGetSelectedType();
+  const product = upGetSelectedProduct();
+  const creative = document.getElementById('upCreativeInput').value.trim();
+  const copy = document.getElementById('upCopyInput').value.trim();
+  const countries = [...document.querySelectorAll('.upCountryCb:checked')].map(c => c.value);
+  const budget = parseFloat(document.getElementById('upBudget').value) || (type === 'SOFI' ? 60 : 30);
+  const startDate = document.getElementById('upStartDate').value;
+
+  if (!creative) { alert('Please select a creative'); return; }
+  if (!countries.length) { alert('Please select at least one country'); return; }
+
+  upQueue.push({ type, product, creative, copy, countries, budget, startDate, id: Date.now() });
+  upRenderQueue();
+
+  // Reset creative & copy inputs
+  document.getElementById('upCreativeInput').value = '';
+  document.getElementById('upCopyInput').value = '';
+}
+
+function upRenderQueue() {
+  const card = document.getElementById('upQueueCard');
+  const body = document.getElementById('upQueueBody');
+  const count = document.getElementById('upQueueCount');
+  if (!upQueue.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  count.textContent = upQueue.length;
+  body.innerHTML = upQueue.map((c, i) => {
+    const typeBadge = c.type === 'SOFI'
+      ? '<span style="background:#eef2ff;color:#4338ca;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">🌍 SOFI</span>'
+      : '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">🎯 CBO</span>';
+    const flags = c.countries.map(cc => UP_FLAGS[cc] || cc).join(' ');
+    return '<tr style="border-bottom:1px solid #f3f4f6">' +
+      '<td style="padding:12px 14px">' + typeBadge + '</td>' +
+      '<td style="padding:12px 14px;font-weight:600;font-size:13px">' + c.creative + '</td>' +
+      '<td style="padding:12px 14px;font-size:12px;color:#6b7280;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (c.copy || '<span style="color:#d1d5db">—</span>') + '</td>' +
+      '<td style="padding:12px 14px">' + (UP_PRODUCT_EMOJI[c.product] || '') + ' ' + c.product + '</td>' +
+      '<td style="padding:12px 14px;font-size:13px">' + flags + '</td>' +
+      '<td style="padding:12px 14px;text-align:center;font-weight:600">' + c.budget + '€</td>' +
+      '<td style="padding:12px 14px;text-align:center;font-size:12px">' + c.startDate + '</td>' +
+      '<td style="padding:12px 14px;text-align:center"><button onclick="upRemoveCampaign(' + i + ')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:14px;padding:4px" title="Remove"><i class="fas fa-times"></i></button></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function upRemoveCampaign(index) {
+  upQueue.splice(index, 1);
+  upRenderQueue();
+}
+
+function upClearQueue() {
+  if (!confirm('Clear all campaigns from queue?')) return;
+  upQueue.length = 0;
+  upRenderQueue();
+}
+
+function upPushToFB() {
+  if (!upQueue.length) return;
+  alert('Push to FB coming soon! ' + upQueue.length + ' campaigns ready.');
+}
+
+// Init country pills click behavior
+(function() {
+  const pills = document.querySelectorAll('.up-country-pill');
+  pills.forEach(p => {
+    p.onclick = function(e) {
+      e.preventDefault();
+      const cb = p.querySelector('input');
+      cb.checked = !cb.checked;
+      upStylePill(p, cb.checked);
+    };
+  });
+})();
+
+// OLD generateUploadPlan kept for compat (no-op now)
 async function generateUploadPlan() {
-  document.getElementById('uploadInitial').style.display = 'none';
+  return;
   document.getElementById('uploadLoading').style.display = 'block';
   document.getElementById('uploadTable').style.display = 'none';
   document.getElementById('uploadSummary').style.display = 'none';
