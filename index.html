@@ -2365,6 +2365,60 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <div id="upCalGrid" style="padding:12px 14px"></div>
       </div>
 
+      <!-- Upload Settings -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);margin-top:16px">
+        <div style="padding:14px 18px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px">
+          <div style="width:28px;height:28px;background:linear-gradient(135deg,#475569,#64748b);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff"><i class="fas fa-cog"></i></div>
+          <span style="font-size:14px;font-weight:700;color:#1e293b">Settings</span>
+        </div>
+        <div style="padding:16px 18px">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+
+            <!-- CBO Budget -->
+            <div>
+              <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">CBO Budget</div>
+              <div style="display:flex;align-items:center;gap:4px">
+                <input type="number" id="upSettingCBO" style="width:70px;padding:8px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-weight:700;text-align:center;background:#f8fafc" onchange="upSaveSettings()">
+                <span style="font-size:11px;font-weight:700;color:#94a3b8">€/day</span>
+              </div>
+            </div>
+
+            <!-- SOFI Budget -->
+            <div>
+              <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">SOFI Budget</div>
+              <div style="display:flex;align-items:center;gap:4px">
+                <input type="number" id="upSettingSOFI" style="width:70px;padding:8px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-weight:700;text-align:center;background:#f8fafc" onchange="upSaveSettings()">
+                <span style="font-size:11px;font-weight:700;color:#94a3b8">€/day</span>
+              </div>
+            </div>
+
+            <!-- Upload % -->
+            <div>
+              <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Upload % of Spend</div>
+              <div style="display:flex;align-items:center;gap:4px">
+                <input type="number" id="upSettingPct" style="width:70px;padding:8px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-weight:700;text-align:center;background:#f8fafc" onchange="upSaveSettings()">
+                <span style="font-size:11px;font-weight:700;color:#94a3b8">%</span>
+              </div>
+            </div>
+
+            <!-- Ad Accounts -->
+            <div>
+              <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Ad Accounts</div>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#1e293b;cursor:pointer">
+                  <input type="checkbox" id="upSettingAcc2" onchange="upSaveSettings()" style="accent-color:#3b82f6"> Noriks 2
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#1e293b;cursor:pointer">
+                  <input type="checkbox" id="upSettingAcc4" onchange="upSaveSettings()" style="accent-color:#3b82f6"> Noriks 4
+                </label>
+              </div>
+            </div>
+
+          </div>
+          <div id="upSettingsSaved" style="display:none;margin-top:8px;font-size:10px;color:#16a34a;font-weight:600">✓ Saved</div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -6082,6 +6136,44 @@ async function upLoadQueue() {
   } catch(e) { console.error('Load queue failed:', e); }
 }
 
+// ═══ UPLOAD SETTINGS ═══
+const UP_DEFAULTS = { cbo_budget: 30, sofi_budget: 60, upload_pct: 20, acc_noriks2: true, acc_noriks4: false };
+
+async function upLoadSettings() {
+  try {
+    const res = await fetch('/api/upload/settings');
+    const data = await res.json();
+    const s = data.settings || UP_DEFAULTS;
+    document.getElementById('upSettingCBO').value = s.cbo_budget || 30;
+    document.getElementById('upSettingSOFI').value = s.sofi_budget || 60;
+    document.getElementById('upSettingPct').value = s.upload_pct || 20;
+    document.getElementById('upSettingAcc2').checked = s.acc_noriks2 !== false;
+    document.getElementById('upSettingAcc4').checked = s.acc_noriks4 === true;
+  } catch(e) {
+    document.getElementById('upSettingCBO').value = 30;
+    document.getElementById('upSettingSOFI').value = 60;
+    document.getElementById('upSettingPct').value = 20;
+    document.getElementById('upSettingAcc2').checked = true;
+    document.getElementById('upSettingAcc4').checked = false;
+  }
+}
+
+async function upSaveSettings() {
+  const settings = {
+    cbo_budget: parseInt(document.getElementById('upSettingCBO').value) || 30,
+    sofi_budget: parseInt(document.getElementById('upSettingSOFI').value) || 60,
+    upload_pct: parseInt(document.getElementById('upSettingPct').value) || 20,
+    acc_noriks2: document.getElementById('upSettingAcc2').checked,
+    acc_noriks4: document.getElementById('upSettingAcc4').checked
+  };
+  try {
+    await fetch('/api/upload/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(settings) });
+    const el = document.getElementById('upSettingsSaved');
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 2000);
+  } catch(e) { console.error('Save settings failed:', e); }
+}
+
 // ═══ AI UPLOAD SUGGESTION ═══
 let upAIData = null;
 
@@ -6419,6 +6511,7 @@ document.addEventListener('click', function(e) {
   upLoadCreatives();
   upLoadQueue();
   upLoadYesterdaySpend();
+  upLoadSettings();
 })();
 
 // OLD generateUploadPlan kept for compat (no-op now)

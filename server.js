@@ -4195,12 +4195,16 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             countryProfit[row.country] = { profit: row.profit || 0, orders: row.orders || 0, revenue: row.revenue || 0 };
             totalWcProfit += (row.profit || 0);
           }
-          const CBO_COST = 30;
+          // Load settings
+          let _upSettings = {};
+          try { const _r = db.prepare("SELECT value FROM flores_settings WHERE org_id = 1 AND category = 'upload' AND key = 'settings'").get(); if (_r) _upSettings = JSON.parse(_r.value); } catch(e) {}
+          const CBO_COST = _upSettings.cbo_budget || 30;
           const MIN_CBOS = 5;
+          const UPLOAD_PCT = (_upSettings.upload_pct || 20) / 100;
           const countryDetail = {};
           let totalProfit = 0;
           for (const [cc, spend] of Object.entries(countrySpend)) {
-            const uploadBudget = Math.round(spend * 0.2);
+            const uploadBudget = Math.round(spend * UPLOAD_PCT);
             const cbos = Math.max(MIN_CBOS, Math.floor(uploadBudget / CBO_COST));
             const cp = countryProfit[cc] || { profit: 0, orders: 0, revenue: 0 };
             // Net profit = WC gross profit (FB orders only) - ad spend
@@ -4211,7 +4215,23 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             totalProfit += netProfit;
             countryDetail[cc] = { spend: Math.round(spend), uploadBudget, cbos, orders: cp.orders, revenue: cp.revenue, profit: netProfit, roas, cpa, ppo };
           }
-          return sendJSON(res, { date: yStr, totalSpend, totalProfit, countrySpend, countryDetail, uploadBudget: Math.round(totalSpend * 0.2), countryUploadBudget: Object.fromEntries(Object.entries(countrySpend).map(([k,v]) => [k, Math.round(v * 0.2)])) });
+          return sendJSON(res, { date: yStr, totalSpend, totalProfit, countrySpend, countryDetail, uploadBudget: Math.round(totalSpend * UPLOAD_PCT), countryUploadBudget: Object.fromEntries(Object.entries(countrySpend).map(([k,v]) => [k, Math.round(v * UPLOAD_PCT)])) });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+
+      // ═══ UPLOAD: SETTINGS ═══
+      if (urlPath === '/api/upload/settings' && req.method === 'GET') {
+        try {
+          const row = db.prepare("SELECT value FROM flores_settings WHERE org_id = 1 AND category = 'upload' AND key = 'settings'").get();
+          return sendJSON(res, { settings: row ? JSON.parse(row.value) : null });
+        } catch(e) { return sendJSON(res, { settings: null }); }
+      }
+
+      if (urlPath === '/api/upload/settings' && req.method === 'POST') {
+        try {
+          const body = JSON.parse(await readBody(req));
+          db.prepare("INSERT OR REPLACE INTO flores_settings (org_id, category, key, value) VALUES (1, 'upload', 'settings', ?)").run(JSON.stringify(body));
+          return sendJSON(res, { ok: true });
         } catch(e) { return sendJSON(res, { error: e.message }, 500); }
       }
 
@@ -4271,8 +4291,11 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           }
 
           // 3. Find winners (CPA <= 20, purchases > 1)
-          const CBO_COST = 30;
+          let _upSettings2 = {};
+          try { const _r2 = db.prepare("SELECT value FROM flores_settings WHERE org_id = 1 AND category = 'upload' AND key = 'settings'").get(); if (_r2) _upSettings2 = JSON.parse(_r2.value); } catch(e) {}
+          const CBO_COST = _upSettings2.cbo_budget || 30;
           const MIN_CBOS = 5;
+          const UPLOAD_PCT2 = (_upSettings2.upload_pct || 20) / 100;
           const ALL_CC = ['HR','CZ','PL','GR','SK','IT','HU','SI','RO'];
           const winners = crData.creatives.filter(cr => {
             if (cr.id === 'Other') return false;
@@ -4285,7 +4308,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           const suggestions = [];
           for (const cc of ALL_CC) {
             const ccSpend = countrySpend[cc] || 0;
-            const uploadBudget = ccSpend * 0.2;
+            const uploadBudget = ccSpend * UPLOAD_PCT2;
             let maxCbos = Math.max(MIN_CBOS, Math.floor(uploadBudget / CBO_COST));
             
             // Find winners NOT tested in this country (spend < 10)
@@ -4323,7 +4346,7 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
 
           return sendJSON(res, {
             date: yStr, upload_date: tomorrowStr, totalSpend: Math.round(totalSpend),
-            total_upload_budget: Math.round(totalSpend * 0.2),
+            total_upload_budget: Math.round(totalSpend * UPLOAD_PCT2),
             total_suggested_campaigns: suggestions.reduce((s, c) => s + c.campaigns.length, 0),
             total_suggested_spend: suggestions.reduce((s, c) => s + c.total_upload_spend, 0),
             suggestions
