@@ -4187,7 +4187,24 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
             countrySpend[cc] = (countrySpend[cc] || 0) + spend;
             totalSpend += spend;
           }
-          return sendJSON(res, { date: yStr, totalSpend, countrySpend, uploadBudget: Math.round(totalSpend * 0.2), countryUploadBudget: Object.fromEntries(Object.entries(countrySpend).map(([k,v]) => [k, Math.round(v * 0.2)])) });
+          // Get profit per country from WC orders yesterday
+          const profitRows = db.prepare(`SELECT country, COUNT(*) as orders, ROUND(SUM(profit),2) as profit, ROUND(SUM(gross_eur),2) as revenue FROM wc_orders WHERE order_date = ? AND org_id = 1 GROUP BY country`).all(yStr);
+          const countryProfit = {};
+          let totalProfit = 0;
+          for (const row of profitRows) {
+            countryProfit[row.country] = { profit: row.profit || 0, orders: row.orders || 0, revenue: row.revenue || 0 };
+            totalProfit += (row.profit || 0);
+          }
+          const CBO_COST = 30;
+          const MIN_CBOS = 5;
+          const countryDetail = {};
+          for (const [cc, spend] of Object.entries(countrySpend)) {
+            const uploadBudget = Math.round(spend * 0.2);
+            const cbos = Math.max(MIN_CBOS, Math.floor(uploadBudget / CBO_COST));
+            const cp = countryProfit[cc] || { profit: 0, orders: 0, revenue: 0 };
+            countryDetail[cc] = { spend: Math.round(spend), uploadBudget, cbos, profit: cp.profit, orders: cp.orders, revenue: cp.revenue };
+          }
+          return sendJSON(res, { date: yStr, totalSpend, totalProfit, countrySpend, countryDetail, uploadBudget: Math.round(totalSpend * 0.2), countryUploadBudget: Object.fromEntries(Object.entries(countrySpend).map(([k,v]) => [k, Math.round(v * 0.2)])) });
         } catch(e) { return sendJSON(res, { error: e.message }, 500); }
       }
 

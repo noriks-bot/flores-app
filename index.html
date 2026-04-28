@@ -2130,6 +2130,11 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
               <div style="font-size:10px;color:#16a34a;font-weight:600">UPLOAD BUDGET (20%)</div>
               <div id="upSpendUpload" style="font-size:20px;font-weight:800;color:#16a34a">—</div>
             </div>
+            <div style="width:1px;height:32px;background:#e2e8f0"></div>
+            <div style="text-align:right">
+              <div style="font-size:10px;font-weight:600" id="upProfitLabel" style="color:#94a3b8">PROFIT</div>
+              <div id="upSpendProfit" style="font-size:20px;font-weight:800;color:#94a3b8">—</div>
+            </div>
           </div>
         </div>
         <div id="upSpendCountries" style="display:flex;gap:6px;flex-wrap:wrap"></div>
@@ -6187,15 +6192,26 @@ async function upLoadYesterdaySpend() {
     document.getElementById('upSpendDate').textContent = data.date;
     document.getElementById('upSpendTotal').textContent = data.totalSpend.toFixed(0) + '€';
     document.getElementById('upSpendUpload').textContent = data.uploadBudget + '€';
+    const tp = data.totalProfit || 0;
+    const profitEl = document.getElementById('upSpendProfit');
+    const profitLabelEl = document.getElementById('upProfitLabel');
+    profitEl.textContent = (tp >= 0 ? '+' : '') + tp.toFixed(0) + '€';
+    profitEl.style.color = tp > 0 ? '#16a34a' : tp < 0 ? '#ef4444' : '#94a3b8';
+    if (profitLabelEl) profitLabelEl.style.color = tp > 0 ? '#16a34a' : tp < 0 ? '#ef4444' : '#94a3b8';
     const FLAGS = {HR:'🇭🇷',CZ:'🇨🇿',PL:'🇵🇱',GR:'🇬🇷',SK:'🇸🇰',IT:'🇮🇹',HU:'🇭🇺',SI:'🇸🇮',RO:'🇷🇴',DE:'🇩🇪',BG:'🇧🇬'};
     const sorted = Object.entries(data.countrySpend).sort((a,b) => b[1] - a[1]);
     const el = document.getElementById('upSpendCountries');
     el.innerHTML = sorted.map(([cc, spend]) => {
-      const upBudget = data.countryUploadBudget[cc] || 0;
-      return '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;min-width:80px;text-align:center">' +
-        '<div style="font-size:14px;margin-bottom:2px">' + (FLAGS[cc] || cc) + '</div>' +
-        '<div style="font-size:12px;font-weight:700;color:#1e293b">' + spend.toFixed(0) + '€</div>' +
-        '<div style="font-size:9px;font-weight:600;color:#16a34a">↑ ' + upBudget + '€</div>' +
+      const d = data.countryDetail?.[cc] || {};
+      const upBudget = d.uploadBudget || data.countryUploadBudget[cc] || 0;
+      const cbos = d.cbos || Math.max(5, Math.floor(upBudget / 30));
+      const profit = d.profit || 0;
+      const profitColor = profit > 0 ? '#16a34a' : profit < 0 ? '#ef4444' : '#94a3b8';
+      return '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;min-width:90px;text-align:center">' +
+        '<div style="font-size:16px;margin-bottom:2px">' + (FLAGS[cc] || cc) + '</div>' +
+        '<div style="font-size:13px;font-weight:700;color:#1e293b">' + spend.toFixed(0) + '€</div>' +
+        '<div style="font-size:9px;font-weight:600;color:#16a34a;margin-top:1px">↑ ' + upBudget + '€ • ' + cbos + ' CBOs</div>' +
+        '<div style="font-size:9px;font-weight:700;color:' + profitColor + ';margin-top:2px;padding-top:3px;border-top:1px solid #e2e8f0">' + (profit >= 0 ? '+' : '') + profit.toFixed(0) + '€ profit</div>' +
       '</div>';
     }).join('');
   } catch(e) { console.error('Load yesterday spend failed:', e); }
