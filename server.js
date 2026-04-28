@@ -402,6 +402,48 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_pa_date ON passive_attributions(order_date);
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS fb_creatives (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    creative_id TEXT NOT NULL,
+    label TEXT DEFAULT '',
+    fb_ad_id TEXT DEFAULT '',
+    thumbnail_url TEXT DEFAULT '',
+    product_type TEXT DEFAULT '',
+    tags TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(creative_id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_fbc_creative ON fb_creatives(creative_id);
+  CREATE INDEX IF NOT EXISTS idx_fbc_product ON fb_creatives(product_type);
+
+  CREATE TABLE IF NOT EXISTS fb_ad_copies (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL DEFAULT '',
+    primary_text TEXT DEFAULT '',
+    headline TEXT DEFAULT '',
+    description TEXT DEFAULT '',
+    cta TEXT DEFAULT 'SHOP_NOW',
+    source_ad_id TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(name)
+  );
+
+  CREATE TABLE IF NOT EXISTS upload_queue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    campaign_type TEXT NOT NULL DEFAULT 'SOFI',
+    product TEXT DEFAULT 'shirts',
+    creative_id TEXT DEFAULT '',
+    ad_copy_name TEXT DEFAULT '',
+    countries TEXT DEFAULT '',
+    daily_budget REAL DEFAULT 60,
+    start_date TEXT DEFAULT '',
+    status TEXT DEFAULT 'queued',
+    fb_result TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`);
+
 // Seed Noriks as org_id=1 if not exists
 try {
   const orgCount = db.prepare('SELECT COUNT(*) as cnt FROM organizations').get();
@@ -4049,6 +4091,121 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
         } catch(e) {
           return sendJSON(res, { error: e.message }, 500);
         }
+      }
+
+      // ═══ UPLOAD-ŠAJTRGA: FB CREATIVES ═══
+      if (urlPath === '/api/upload/creatives' && req.method === 'GET') {
+        try {
+          const rows = db.prepare('SELECT * FROM fb_creatives ORDER BY created_at DESC').all();
+          return sendJSON(res, { creatives: rows });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+
+      if (urlPath === '/api/upload/creatives' && req.method === 'POST') {
+        try {
+          const body = JSON.parse(await readBody(req));
+          const { creative_id, label, fb_ad_id, thumbnail_url, product_type, tags } = body;
+          if (!creative_id) return sendJSON(res, { error: 'creative_id required' }, 400);
+          db.prepare(`INSERT OR REPLACE INTO fb_creatives (creative_id, label, fb_ad_id, thumbnail_url, product_type, tags) VALUES (?, ?, ?, ?, ?, ?)`)
+            .run(creative_id, label || '', fb_ad_id || '', thumbnail_url || '', product_type || '', tags || '');
+          return sendJSON(res, { ok: true });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+
+      if (urlPath === '/api/upload/creatives' && req.method === 'DELETE') {
+        try {
+          const body = JSON.parse(await readBody(req));
+          db.prepare('DELETE FROM fb_creatives WHERE creative_id = ?').run(body.creative_id);
+          return sendJSON(res, { ok: true });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+
+      // ═══ UPLOAD-ŠAJTRGA: AD COPIES ═══
+      if (urlPath === '/api/upload/copies' && req.method === 'GET') {
+        try {
+          const rows = db.prepare('SELECT * FROM fb_ad_copies ORDER BY created_at DESC').all();
+          return sendJSON(res, { copies: rows });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+
+      if (urlPath === '/api/upload/copies' && req.method === 'POST') {
+        try {
+          const body = JSON.parse(await readBody(req));
+          const { name, primary_text, headline, description, cta, source_ad_id } = body;
+          if (!name) return sendJSON(res, { error: 'name required' }, 400);
+          db.prepare(`INSERT OR REPLACE INTO fb_ad_copies (name, primary_text, headline, description, cta, source_ad_id) VALUES (?, ?, ?, ?, ?, ?)`)
+            .run(name, primary_text || '', headline || '', description || '', cta || 'SHOP_NOW', source_ad_id || '');
+          return sendJSON(res, { ok: true });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+
+      if (urlPath === '/api/upload/copies' && req.method === 'DELETE') {
+        try {
+          const body = JSON.parse(await readBody(req));
+          db.prepare('DELETE FROM fb_ad_copies WHERE name = ?').run(body.name);
+          return sendJSON(res, { ok: true });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+
+      // ═══ UPLOAD-ŠAJTRGA: QUEUE ═══
+      if (urlPath === '/api/upload/queue' && req.method === 'GET') {
+        try {
+          const rows = db.prepare('SELECT * FROM upload_queue ORDER BY created_at DESC LIMIT 100').all();
+          return sendJSON(res, { queue: rows });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+
+      if (urlPath === '/api/upload/queue' && req.method === 'POST') {
+        try {
+          const body = JSON.parse(await readBody(req));
+          const { campaign_type, product, creative_id, ad_copy_name, countries, daily_budget, start_date } = body;
+          const stmt = db.prepare(`INSERT INTO upload_queue (campaign_type, product, creative_id, ad_copy_name, countries, daily_budget, start_date) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+          stmt.run(campaign_type || 'SOFI', product || 'shirts', creative_id || '', ad_copy_name || '', JSON.stringify(countries || []), daily_budget || 60, start_date || '');
+          return sendJSON(res, { ok: true, id: db.prepare('SELECT last_insert_rowid() as id').get().id });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+
+      if (urlPath === '/api/upload/queue' && req.method === 'DELETE') {
+        try {
+          const body = JSON.parse(await readBody(req));
+          if (body.clear_all) { db.prepare('DELETE FROM upload_queue WHERE status = ?').run('queued'); }
+          else if (body.id) { db.prepare('DELETE FROM upload_queue WHERE id = ?').run(body.id); }
+          return sendJSON(res, { ok: true });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
+      }
+
+      // ═══ UPLOAD-ŠAJTRGA: SYNC FROM FB ═══
+      if (urlPath === '/api/upload/sync-fb-creatives' && req.method === 'POST') {
+        try {
+          // Fetch all ads from FB and extract unique creative IDs
+          const todayStr = new Date().toISOString().slice(0,10);
+          const startStr = '2026-01-01';
+          const allAds = await getAllAds(startStr, todayStr, 1);
+          const creativeMap = {};
+          for (const ad of allAds) {
+            const name = (ad.name || ad.ad_name || '').replace(/\s*[\u2013\u2014-]\s*copy\s*\d*/gi, '').replace(/\s*\(\d+\)\s*$/, '').trim();
+            const idMatch = name.match(/\b(ID\d+)/i);
+            if (idMatch) {
+              const cid = idMatch[1].toUpperCase();
+              if (!creativeMap[cid]) {
+                let pt = '';
+                const n = name.toLowerCase();
+                if (/shirt|majic/i.test(n)) pt = 'shirts';
+                else if (/boxer/i.test(n)) pt = 'boxers';
+                else if (/starter/i.test(n)) pt = 'starter';
+                else if (/komplet|2p5|bundle/i.test(n)) pt = 'komplet';
+                creativeMap[cid] = { creative_id: cid, label: name.slice(0, 100), fb_ad_id: ad.ad_id || ad.id || '', product_type: pt };
+              }
+            }
+          }
+          const upsert = db.prepare(`INSERT OR REPLACE INTO fb_creatives (creative_id, label, fb_ad_id, product_type) VALUES (?, ?, ?, ?)`);
+          const tx = db.transaction((items) => {
+            for (const c of items) upsert.run(c.creative_id, c.label, c.fb_ad_id, c.product_type);
+          });
+          const items = Object.values(creativeMap);
+          tx(items);
+          return sendJSON(res, { ok: true, synced: items.length });
+        } catch(e) { return sendJSON(res, { error: e.message }, 500); }
       }
 
       // ═══ BULK CREATE CAMPAIGNS ═══

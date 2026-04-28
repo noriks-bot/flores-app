@@ -1181,7 +1181,7 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
         <i class="fas fa-bullhorn"></i><span class="nav-item-text">Ads Manager</span>
       </a>
       <a class="nav-item" data-section="upload" onclick="navigateTo('upload')">
-        <i class="fas fa-cloud-upload-alt"></i><span class="nav-item-text">Upload</span>
+        <i class="fas fa-cloud-upload-alt"></i><span class="nav-item-text">Upload-Šajtrga</span>
       </a>
       <a class="nav-item" data-section="optimizer" onclick="navigateTo('optimizer')">
         <i class="fas fa-sliders-h"></i><span class="nav-item-text">Report</span>
@@ -2101,13 +2101,19 @@ tbody td.copyable:active { background: rgba(37,99,235,0.08) !important; }
 
       <!-- Header -->
       <div style="background:linear-gradient(135deg,#fafbff 0%,#f0f4ff 100%);border:1px solid #c7d2fe;border-radius:12px;padding:24px 28px;margin-bottom:24px;box-shadow:0 4px 16px rgba(30,58,95,0.06)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
         <div style="display:flex;align-items:center;gap:12px">
           <div style="width:40px;height:40px;background:linear-gradient(135deg,#1E3A5F,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px">📤</div>
           <div>
-            <div style="font-size:20px;font-weight:800;color:#1E3A5F;letter-spacing:-0.3px">Campaign Upload</div>
+            <div style="font-size:20px;font-weight:800;color:#1E3A5F;letter-spacing:-0.3px">Upload-Šajtrga</div>
             <div style="font-size:12px;color:#6b7280;margin-top:2px">Create and push campaigns to Facebook Ads</div>
           </div>
         </div>
+        </div>
+        <button id="upSyncBtn" onclick="upSyncFromFB()" style="padding:8px 16px;background:#fff;border:1px solid #c7d2fe;border-radius:8px;font-size:12px;font-weight:600;color:#4338ca;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s" onmouseover="this.style.background='#eef2ff'" onmouseout="this.style.background='#fff'">
+          <i class="fas fa-sync-alt"></i> Sync from FB
+        </button>
+      </div>
       </div>
 
       <!-- Campaign Builder Card -->
@@ -2902,7 +2908,7 @@ const sectionTitles = {
   'creative-reporting': 'Creative Reporting',
   'ai-hints': 'AI Hints',
   'dominik-chat': 'Chat Dominik',
-  'upload': 'Upload Planer',
+  'upload': 'Upload-Šajtrga',
   'origin-report': 'Origin Report',
   'optimizer': '',
   'bulk-uploader': 'Bulk Uploader',
@@ -5691,31 +5697,48 @@ function upSelectProduct(btn) {
   btn.style.border = '2px solid #6366f1'; btn.style.background = '#eef2ff'; btn.style.color = '#4338ca';
 }
 
-// Load creatives from existing data
+// Load creatives from DB (synced from FB)
 async function upLoadCreatives() {
   if (upCreativesLoaded) return;
   try {
-    const todayStr = new Date().toISOString().slice(0,10);
-    const res = await fetch('/api/creative-report?start=2026-01-01&end=' + todayStr);
-    const data = await res.json();
-    if (data.creatives) {
-      upCreatives = data.creatives.filter(c => c.id !== 'Other').map(c => ({
-        id: c.id, name: c.name || c.id, spend: c.totalSpend || 0, purchases: c.totalPurchases || 0
-      })).sort((a,b) => b.spend - a.spend);
+    const [crRes, cpRes] = await Promise.all([
+      fetch('/api/upload/creatives'),
+      fetch('/api/upload/copies')
+    ]);
+    const crData = await crRes.json();
+    const cpData = await cpRes.json();
+    if (crData.creatives) {
+      upCreatives = crData.creatives.map(c => ({
+        id: c.creative_id, name: c.label || c.creative_id, product: c.product_type || '', fb_ad_id: c.fb_ad_id || ''
+      }));
     }
-    // Get ad copies from existing ads
-    const adsRes = await fetch('/api/ads?start=2026-01-01&end=' + todayStr);
-    const adsData = await adsRes.json();
-    if (Array.isArray(adsData)) {
-      const copyMap = {};
-      adsData.forEach(ad => {
-        const name = ad.name || ad.ad_name || '';
-        if (name && !copyMap[name]) copyMap[name] = { name, id: ad.ad_id || ad.id };
-      });
-      upCopies = Object.values(copyMap).slice(0, 200);
+    if (cpData.copies) {
+      upCopies = cpData.copies.map(c => ({ name: c.name, primary_text: c.primary_text || '', headline: c.headline || '' }));
     }
     upCreativesLoaded = true;
   } catch(e) { console.error('Failed to load creatives:', e); }
+}
+
+// Sync creatives from FB to DB
+async function upSyncFromFB() {
+  const btn = document.getElementById('upSyncBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...'; }
+  try {
+    const res = await fetch('/api/upload/sync-fb-creatives', { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      upCreativesLoaded = false;
+      await upLoadCreatives();
+      if (btn) btn.innerHTML = '<i class="fas fa-check"></i> Synced ' + (data.synced || 0) + ' creatives';
+      setTimeout(() => { if (btn) btn.innerHTML = '<i class="fas fa-sync-alt"></i> Sync from FB'; }, 3000);
+    } else {
+      if (btn) btn.innerHTML = '<i class="fas fa-times"></i> Error';
+    }
+  } catch(e) {
+    console.error('Sync failed:', e);
+    if (btn) btn.innerHTML = '<i class="fas fa-times"></i> Failed';
+  }
+  if (btn) btn.disabled = false;
 }
 
 function upFilterCreatives(query) {
@@ -7981,7 +8004,7 @@ const cmdPages = [
   { label: 'Origin Report', icon: 'fas fa-sitemap', action: () => navigateTo('origin-report'), section: 'Pages' },
   { label: 'AI Hints', icon: 'fas fa-robot', action: () => navigateTo('ai-hints'), section: 'Pages' },
   { label: 'Chat Dominik', icon: 'fas fa-comments', action: () => navigateTo('dominik-chat'), section: 'Pages' },
-  { label: 'Upload', icon: 'fas fa-cloud-upload-alt', action: () => navigateTo('upload'), section: 'Pages' },
+  { label: 'Upload-Šajtrga', icon: 'fas fa-cloud-upload-alt', action: () => navigateTo('upload'), section: 'Pages' },
   { label: 'Bulk Uploader', icon: 'fas fa-layer-group', action: () => navigateTo('bulk-uploader'), section: 'Pages' },
   { label: 'Videos', icon: 'fas fa-video', action: () => navigateTo('videos'), section: 'Pages' },
   { label: 'FB Integration', icon: 'fab fa-facebook', action: () => navigateTo('fb-integration'), section: 'Pages' },
