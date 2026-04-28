@@ -4204,7 +4204,23 @@ ${question ? 'USER QUESTION: ' + question : 'Analyze creative performance: which
           });
           const items = Object.values(creativeMap);
           tx(items);
-          return sendJSON(res, { ok: true, synced: items.length });
+
+          // Also sync ad copies from ad names
+          const copyMap = {};
+          for (const ad of allAds) {
+            const adName = (ad.name || ad.ad_name || '').trim();
+            if (adName && !copyMap[adName]) {
+              copyMap[adName] = { name: adName, source_ad_id: ad.ad_id || ad.id || '' };
+            }
+          }
+          const upsertCopy = db.prepare(`INSERT OR IGNORE INTO fb_ad_copies (name, source_ad_id) VALUES (?, ?)`);
+          const txCopy = db.transaction((cpItems) => {
+            for (const c of cpItems) upsertCopy.run(c.name, c.source_ad_id);
+          });
+          const copyItems = Object.values(copyMap);
+          txCopy(copyItems);
+
+          return sendJSON(res, { ok: true, synced: items.length, copies: copyItems.length });
         } catch(e) { return sendJSON(res, { error: e.message }, 500); }
       }
 
