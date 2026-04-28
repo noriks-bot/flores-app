@@ -6206,14 +6206,27 @@ async function upLoadYesterdaySpend() {
       const upBudget = d.uploadBudget || data.countryUploadBudget[cc] || 0;
       const cbos = d.cbos || Math.max(5, Math.floor(upBudget / 30));
       const profit = d.profit || 0;
+      const roas = d.roas || 0;
+      const orders = d.orders || 0;
+      const cpa = d.cpa || 0;
+      const ppo = d.ppo || 0;
       const profitColor = profit > 0 ? '#16a34a' : profit < 0 ? '#ef4444' : '#94a3b8';
+      const roasColor = roas >= 3 ? '#16a34a' : roas >= 2 ? '#f59e0b' : '#ef4444';
       const cardBg = profit < 0 ? '#fef2f2' : '#f8fafc';
       const cardBorder = profit < 0 ? '#fecaca' : '#e2e8f0';
-      return '<div style="background:' + cardBg + ';border:1px solid ' + cardBorder + ';border-radius:8px;padding:8px 10px;min-width:90px;text-align:center">' +
-        '<div style="font-size:16px;margin-bottom:2px">' + (FLAGS[cc] || cc) + '</div>' +
-        '<div style="font-size:13px;font-weight:700;color:#1e293b">' + spend.toFixed(0) + '€</div>' +
-        '<div style="font-size:9px;font-weight:600;color:#16a34a;margin-top:1px">↑ ' + upBudget + '€ • ' + cbos + ' CBOs</div>' +
-        '<div style="font-size:9px;font-weight:700;color:' + profitColor + ';margin-top:2px;padding-top:3px;border-top:1px solid ' + cardBorder + '">' + (profit >= 0 ? '+' : '') + profit + '€ profit</div>' +
+      return '<div style="background:' + cardBg + ';border:1px solid ' + cardBorder + ';border-radius:8px;padding:8px 10px;min-width:100px">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">' +
+          '<span style="font-size:16px">' + (FLAGS[cc] || cc) + '</span>' +
+          '<span style="font-size:12px;font-weight:800;color:' + roasColor + '">' + roas.toFixed(2) + 'x</span>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:space-between;font-size:9px;color:#94a3b8;margin-bottom:1px"><span>SPEND</span><span>ORDERS</span></div>' +
+        '<div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:#1e293b;margin-bottom:3px"><span>' + spend.toFixed(0) + '€</span><span>' + orders + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;font-size:9px;color:#94a3b8;margin-bottom:1px"><span>CPA</span><span>PROFIT</span></div>' +
+        '<div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:3px"><span style="color:#1e293b">' + cpa.toFixed(0) + '€</span><span style="color:' + profitColor + '">' + (profit >= 0 ? '+' : '') + profit + '€</span></div>' +
+        '<div style="border-top:1px solid ' + cardBorder + ';padding-top:4px;margin-top:2px;display:flex;justify-content:space-between;font-size:9px">' +
+          '<span style="color:#94a3b8">P/O <strong style="color:' + profitColor + '">' + ppo.toFixed(0) + '€</strong></span>' +
+          '<span style="color:#16a34a;font-weight:600">↑' + upBudget + '€/' + cbos + 'cbo</span>' +
+        '</div>' +
       '</div>';
     }).join('');
   } catch(e) { console.error('Load yesterday spend failed:', e); }
